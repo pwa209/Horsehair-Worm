@@ -54,6 +54,41 @@ def test_checksum_mismatch_and_html_failure(tmp_path):
         verify_file(path, object_for(html))
 
 
+def test_pinned_software_internal_links_are_copied_as_regular_files(tmp_path):
+    import tarfile,io
+    archive=tmp_path/'software.tar'
+    with tarfile.open(archive,'w') as handle:
+        entry=tarfile.TarInfo('root/examples/input.txt');entry.size=4;handle.addfile(entry,io.BytesIO(b'data'))
+        link=tarfile.TarInfo('root/tests/input.txt');link.type=tarfile.SYMTYPE;link.linkname='../examples/input.txt';handle.addfile(link)
+    with pytest.raises(AcquisitionError,match='Unsafe TAR'):safe_extract(archive,tmp_path/'strict')
+    records=safe_extract(archive,tmp_path/'software',materialize_internal_links=True)
+    path=tmp_path/'software/root/tests/input.txt'
+    assert path.read_bytes()==b'data' and not path.is_symlink()
+    assert any(record.get('materialized_internal_link')=='../examples/input.txt' for record in records)
+    with pytest.raises(AcquisitionError,match='size'):safe_extract(archive,tmp_path/'cap',materialize_internal_links=True,max_unpacked_bytes=7)
+
+
+def test_software_link_permission_never_allows_external_or_missing_targets(tmp_path):
+    import tarfile
+    for target in ['../../escape','/etc/passwd','missing.txt']:
+        archive=tmp_path/(str(len(target))+'.tar')
+        with tarfile.open(archive,'w') as handle:
+            link=tarfile.TarInfo('root/link');link.type=tarfile.SYMTYPE;link.linkname=target;handle.addfile(link)
+        with pytest.raises(AcquisitionError):safe_extract(archive,tmp_path/'output',materialize_internal_links=True)
+
+
+def test_rna_pilot_selection_is_depth_based_and_excludes_refusal_outcomes():
+    from horsehair.acquire import rna_pilot_asset_ids
+    rows=[{'biological_id':name,'run_id':run,'read_count':depth,'included':True,'cohort':cohort}
+          for name,run,depth,cohort in [('low','SRR1',10,'discovery'),('middle','SRR2',20,'discovery'),('high','SRR3',30,'discovery'),('refused','SRR4',999999,'challenge')]]
+    assets=[{'asset_id':run,'source_id':'ant_rna','run_accession':run,'eligible':True} for run in ['SRR1','SRR2','SRR3','SRR4']]
+    assets += [{'asset_id':'reference','source_id':'ant_reference'},{'asset_id':'counts','source_id':'mantis_rna'},{'asset_id':'proteome','source_id':'fly_reference'}]
+    manifest={'sources':{'ant_rna':{'crosswalk_audit':{'status':'validated'},'crosswalk':rows}},'assets':assets}
+    assert set(rna_pilot_asset_ids(manifest))=={'SRR1','SRR3','reference','counts','proteome'}
+    manifest['sources']['ant_rna']['crosswalk_audit']['status']='unresolved'
+    with pytest.raises(AcquisitionError,match='validated'):rna_pilot_asset_ids(manifest)
+
+
 class Response:
     def __init__(self, body, status=200, headers=None):
         self.body, self.status_code, self.headers = body, status, headers or {}

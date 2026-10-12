@@ -1055,7 +1055,7 @@ def install_tool_runtime(root: str | Path, destination: str | Path, *, qualify: 
     for item in manifest["assets"]:
         archive = safe_destination(root, item["relative_path"])
         receipts.append(verify_file(archive, item))
-        safe_extract(archive, destination, max_unpacked_bytes=250*1024**2, max_members=10_000)
+        safe_extract(archive, destination, max_unpacked_bytes=250*1024**2, max_members=10_000,materialize_internal_links=True)
         # Restore only original executable bits for ordinary reviewed utility
         # members after the traversal/link gate; data extraction stays nonexec.
         with tarfile.open(archive, "r:gz") as handle:

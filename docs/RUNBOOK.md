@@ -19,6 +19,8 @@ Finite plans retain script and source hashes. Submission writes a ledger before 
 
 Biological downloads run directly on Narval through its documented transfer endpoint, with two finite transfer workers and a 64 MiB/s limit per worker. Independent `fly`, `rna`, `mantis` and `tools` receipts retain provider failures. Raw data, downloads and checkpoints never enter the GitHub source release. The first release freezes provider metadata before transfers; a later source change requires an explicit versioned manifest amendment.
 
+RNA transfer first retrieves the source-defined lowest and highest read-depth discovery brains, matched references, and processed mantis/FlyBase files. A separately verified `rna-pilot` milestone allows native benchmarks while the remaining cohort downloads. The full count array waits for independent verification of all eligible RNA files. Transfers have a finite five-day deadline and resumable partial files; source-wait allocations allow six days. These limits accommodate observed slow repository transfer rates without permitting numerical analysis of incomplete files.
+
 The initial queue qualifies Python/CUDA/R, verifies sources on compute nodes, checks the optional molecular runtime and benchmarks two ant brains, two fly experiments and two agent seeds. A separate CPU evaluation benchmark prevents treating GPU throughput as CPU throughput. The final assessment reads native accounting, personal quota and actual pilot receipts. With `--advance`, it submits only measured, admitted phases through new immutable plans; missing or over-budget measurements remain pending.
 
 ```bash

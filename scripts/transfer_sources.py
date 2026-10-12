@@ -9,7 +9,7 @@ import os
 import time
 from pathlib import Path
 from horsehair.core import atomic_json,canonical_hash,read_json,validate_config,source_identity
-from horsehair.acquire import discover_sources,download_manifest
+from horsehair.acquire import discover_sources,download_manifest,rna_pilot_asset_ids
 
 p=argparse.ArgumentParser()
 p.add_argument('--config',type=Path,required=True)
@@ -32,7 +32,12 @@ atomic_json(state,record)
 try:
  manifest=a.root/'manifests'/('tool_runtime_manifest.json' if a.group=='tools' else 'source_manifest.json')
  if not manifest.exists():raise FileNotFoundError('Freeze the provider metadata manifest before starting independent transfers')
- result=download_manifest(manifest,a.root,sources=groups[a.group],max_bytes=c['resources']['scratch_budget_bytes'],max_files=c['resources']['scratch_budget_files'],bandwidth_bytes_per_second=64*1024**2,max_seconds=22*3600)
+ if a.group=='rna':
+  pilot=download_manifest(manifest,a.root,sources=groups[a.group],asset_ids=rna_pilot_asset_ids(read_json(manifest)),max_bytes=c['resources']['scratch_budget_bytes'],max_files=c['resources']['scratch_budget_files'],bandwidth_bytes_per_second=64*1024**2,max_seconds=120*3600)
+  atomic_json(a.root/'state/transfer-rna-pilot.json',{**record,'group':'rna-pilot','status':'complete','verified_files':len(pilot['files']),'asset_ids':rna_pilot_asset_ids(read_json(manifest)),'source_manifest_sha256':canonical_hash(read_json(manifest))})
+ remaining=120*3600-(time.time()-started)
+ if remaining<=0:raise TimeoutError('Finite five-day transfer deadline expired')
+ result=download_manifest(manifest,a.root,sources=groups[a.group],max_bytes=c['resources']['scratch_budget_bytes'],max_files=c['resources']['scratch_budget_files'],bandwidth_bytes_per_second=64*1024**2,max_seconds=remaining)
  record.update(status='complete',elapsed_seconds=time.time()-started,source_manifest_sha256=canonical_hash(read_json(manifest)),verified_files=len(result['files']))
  atomic_json(state,record)
 except BaseException as e:

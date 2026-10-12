@@ -117,7 +117,7 @@ def source_audit(config,root):
 
 def wait_transfer(config,root,group):
     path=Path(root)/'state'/('transfer-'+group+'.json')
-    deadline=time.monotonic()+23*3600
+    deadline=time.monotonic()+143*3600
     while time.monotonic()<deadline:
         if path.exists():
             record=read_json(path)
@@ -134,9 +134,11 @@ def verify_sources(config,root,group):
     manifest=read_json(root/'manifests'/('tool_runtime_manifest.json' if group=='tools' else 'source_manifest.json'))
     acquire.validate_manifest(manifest)
     records=[]
-    groups={'fly':['fly'],'rna':['ant_rna','ant_reference','mantis_rna','fly_reference'],'mantis':['polarization','mating'],'tools':['tool_runtime']}
+    groups={'fly':['fly'],'rna':['ant_rna','ant_reference','mantis_rna','fly_reference'],'rna-pilot':['ant_rna','ant_reference','mantis_rna','fly_reference'],'mantis':['polarization','mating'],'tools':['tool_runtime']}
+    pilot_ids=set(acquire.rna_pilot_asset_ids(manifest)) if group=='rna-pilot' else None
     for item in manifest['assets']:
         if item['source_id'] not in groups[group]:continue
+        if pilot_ids is not None and item['asset_id'] not in pilot_ids:continue
         if item.get('eligible') is False:continue
         records.append(acquire.verify_file(acquire.safe_destination(root,item['relative_path']),item))
     record={'status':'complete','verified_files':records,'manifest_sha256':canonical_hash(manifest),'evidence_class':'native source integrity verification'}
@@ -183,7 +185,7 @@ def main(argv=None):
     q=sub.add_parser('qualify');q.add_argument('--gpu',action='store_true')
     sub.add_parser('source-audit')
     for command in ['wait-transfer','verify-sources']:
-        s=sub.add_parser(command);s.add_argument('--group',required=True,choices=['fly','rna','mantis','tools'])
+        s=sub.add_parser(command);s.add_argument('--group',required=True,choices=['fly','rna','rna-pilot','mantis','tools'])
     rna=sub.add_parser('rna-pilot');rna.add_argument('--prepare-only',action='store_true');rna.add_argument('--index',type=int)
     assessment=sub.add_parser('assess-pilot');assessment.add_argument('--advance',action='store_true')
     sub.add_parser('r-qualify')

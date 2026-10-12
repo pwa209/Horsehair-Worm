@@ -13,6 +13,7 @@ import hashlib
 import io
 import json
 import os
+import posixpath
 import re
 import shutil
 import stat
@@ -466,10 +467,30 @@ def download_asset(item: dict, root: str | Path, *, session: requests.Session | 
     raise AcquisitionError("Transfer exhausted retries")
 
 
-def download_manifest(manifest_path: str | Path, root: str | Path, *, sources: list[str] | None = None, max_bytes: int | None = None, max_files: int | None = None, bandwidth_bytes_per_second: int = 64 * 1024**2, max_seconds: float | None = None, receipt_path: str | Path | None = None) -> dict:
+def rna_pilot_asset_ids(manifest):
+    """Fixed low/high-depth discovery brains plus required processed references."""
+    source=manifest['sources']['ant_rna']
+    if source.get('crosswalk_audit',{}).get('status')!='validated':raise AcquisitionError('RNA pilot requires validated biological crosswalk')
+    rows=[r for r in source['crosswalk'] if str(r.get('included')).lower() in ['true','1'] and r.get('cohort')=='discovery']
+    depth={}
+    for row in rows:
+        depth[row['biological_id']]=depth.get(row['biological_id'],0)+int(row['read_count'])
+    if len(depth)<2 or min(depth.values())<=0:raise AcquisitionError('RNA pilot requires two positive-depth discovery brains')
+    ordered=sorted(depth,key=lambda key:(depth[key],key))
+    chosen={ordered[0],ordered[-1]}
+    runs={row['run_id'] for row in rows if row['biological_id'] in chosen}
+    selected=[a['asset_id'] for a in manifest['assets'] if a['source_id'] in ['ant_reference','mantis_rna','fly_reference'] or (a['source_id']=='ant_rna' and a.get('eligible') and a.get('run_accession') in runs)]
+    if not selected:raise AcquisitionError('No eligible fixed RNA pilot assets')
+    return selected
+
+
+def download_manifest(manifest_path: str | Path, root: str | Path, *, sources: list[str] | None = None, max_bytes: int | None = None, max_files: int | None = None, bandwidth_bytes_per_second: int = 64 * 1024**2, max_seconds: float | None = None, receipt_path: str | Path | None = None,asset_ids: list[str] | None = None) -> dict:
     manifest = json.loads(Path(manifest_path).read_text(encoding="utf-8"))
     validate_manifest(manifest)
     selected = [item for item in manifest["assets"] if (sources is None or item["source_id"] in sources) and (item.get("kind") != "fastq" or item.get("eligible"))]
+    if asset_ids is not None:
+        if len(asset_ids)!=len(set(asset_ids)) or set(asset_ids)-{a['asset_id'] for a in selected}:raise AcquisitionError('Invalid or ineligible explicit asset selection')
+        selected=[a for a in selected if a['asset_id'] in asset_ids]
     if not selected:
         raise AcquisitionError("No eligible assets selected")
     if max_files is not None and len(selected) > max_files:
@@ -499,7 +520,7 @@ def download_manifest(manifest_path: str | Path, root: str | Path, *, sources: l
     return report
 
 
-def safe_extract(archive: str | Path, destination: str | Path, *, max_unpacked_bytes: int = 100 * 1024**3, max_members: int = 100_000, include_pattern: str | None = None) -> list[dict]:
+def safe_extract(archive: str | Path, destination: str | Path, *, max_unpacked_bytes: int = 100 * 1024**3, max_members: int = 100_000, include_pattern: str | None = None, materialize_internal_links: bool = False) -> list[dict]:
     """Extract ordinary files only; links, traversal, device files and bombs fail."""
     archive, destination = Path(archive), Path(destination)
     destination.mkdir(parents=True, exist_ok=True)
@@ -537,26 +558,41 @@ def safe_extract(archive: str | Path, destination: str | Path, *, max_unpacked_b
             members = handle.getmembers()
             if len(members) > max_members:
                 raise AcquisitionError("Archive exceeds member limit")
+            index={posixpath.normpath(member.name):member for member in members}
+            if len(index)!=len(members):raise AcquisitionError('Duplicate TAR member paths')
+            def resolved_payload(member,seen=None):
+                if member.isfile():return member
+                if not materialize_internal_links or not (member.issym() or member.islnk()):raise AcquisitionError(f'Unsafe TAR member type: {member.name}')
+                seen=set() if seen is None else seen
+                if member.name in seen:raise AcquisitionError('Cyclic TAR internal link')
+                seen.add(member.name)
+                link=member.linkname
+                if not link or PurePosixPath(link).is_absolute() or '\\' in link or ':' in link:raise AcquisitionError('Unsafe TAR internal link target')
+                name=posixpath.normpath(posixpath.join(posixpath.dirname(member.name),link) if member.issym() else link)
+                safe_destination(destination,name)
+                if name not in index:raise AcquisitionError('TAR internal link target is absent from the archive')
+                return resolved_payload(index[name],seen)
+            payloads={}
             for member in members:
                 safe_destination(destination, member.name)
-                if not (member.isfile() or member.isdir()):
-                    raise AcquisitionError(f"Unsafe TAR member type: {member.name}")
-                if member.isfile() and (included is None or included.search(member.name)):
-                    total += member.size
+                if member.isdir():continue
+                payloads[member.name]=resolved_payload(member)
+                if included is None or included.search(member.name):total+=payloads[member.name].size
             if total > max_unpacked_bytes:
                 raise AcquisitionError("Archive exceeds unpacked-size ceiling")
             for member in members:
-                if not member.isfile() or (included is not None and not included.search(member.name)):
+                if member.isdir() or (included is not None and not included.search(member.name)):
                     continue
+                payload=payloads[member.name]
                 target = safe_destination(destination, member.name)
                 target.parent.mkdir(parents=True, exist_ok=True)
                 temporary = target.with_name(target.name + ".extracting")
-                with handle.extractfile(member) as source, temporary.open("wb") as out:
+                with handle.extractfile(payload) as source, temporary.open("wb") as out:
                     shutil.copyfileobj(source, out, length=8 * 1024 * 1024)
-                if temporary.stat().st_size != member.size:
+                if temporary.stat().st_size != payload.size:
                     raise AcquisitionError("TAR extracted size mismatch")
                 temporary.replace(target)
-                written.append({"path": str(target), "bytes": member.size, "sha256": file_hash(target)})
+                written.append({"path": str(target), "bytes": payload.size, "sha256": file_hash(target),**({'materialized_internal_link':member.linkname} if not member.isfile() else {})})
     else:
         raise AcquisitionError(f"Unsupported archive: {archive}")
     return written

@@ -66,8 +66,9 @@ def plan(config, release: Path, output: Path, phase='initial'):
         add('transfer-wait-tools',prefix+' wait-transfer --group tools',cpus=1,memory='4G',hours=24)
         add('molecular-runtime',prefix+' molecular --stage runtime',depends=['transfer-wait-tools','r-qualification'],cpus=8,memory='32G',hours=2,modules=['perl/5.36.1','r/4.4.0','r-bundle-bioconductor/3.20'])
         for group in ['fly','rna']:
-            add('transfer-wait-'+group,prefix+' wait-transfer --group '+group,cpus=1,memory='4G',hours=24)
-            add('source-verification-'+group,prefix+' verify-sources --group '+group,depends=['transfer-wait-'+group,'qualification'],cpus=4,memory='16G',hours=8)
+            selected='rna-pilot' if group=='rna' else group
+            add('transfer-wait-'+group,prefix+' wait-transfer --group '+selected,cpus=1,memory='4G',hours=144)
+            add('source-verification-'+group,prefix+' verify-sources --group '+selected,depends=['transfer-wait-'+group,'qualification'],cpus=4,memory='16G',hours=8)
         add('source-audit',prefix+' source-audit',depends=['source-verification-fly'],cpus=4,memory='64G',hours=8)
         add('rna-reference',prefix+' rna-pilot --prepare-only',depends=['source-verification-rna'],cpus=8,memory='64G',hours=4,modules=rna_modules)
         add('molecular-pilot',prefix+' molecular-pipeline --stage benchmark-primary',depends=['rna-reference','molecular-runtime'],cpus=8,memory='64G',hours=8)
@@ -91,8 +92,10 @@ def plan(config, release: Path, output: Path, phase='initial'):
         add('agent-analysis',prefix+' agent-analysis',depends=['agent-evaluation'],cpus=4,memory='32G',hours=12)
     elif phase=='rna-full':
         admission=require_admission(config,Path(root),'rna-full')
+        add('rna-all-wait',prefix+' wait-transfer --group rna',cpus=1,memory='4G',hours=144)
+        add('rna-all-verified',prefix+' verify-sources --group rna',depends=['rna-all-wait'],cpus=4,memory='16G',hours=8)
         add('rna-full-plan',prefix+' molecular --stage prepare-rna-full',cpus=2,memory='8G',hours=1)
-        add('rna-counts',prefix+' molecular --stage rna-run --task-index "$SLURM_ARRAY_TASK_ID"',depends=['rna-full-plan'],array='0-59%2',cpus=8,memory='64G',hours=24,modules=rna_modules)
+        add('rna-counts',prefix+' molecular --stage rna-run --task-index "$SLURM_ARRAY_TASK_ID"',depends=['rna-full-plan','rna-all-verified'],array='0-59%2',cpus=8,memory='64G',hours=24,modules=rna_modules)
         add('ant-phase',prefix+' molecular --stage ant',depends=['rna-counts'],cpus=8,memory='32G',hours=8,modules=['r/4.4.0','r-bundle-bioconductor/3.20'])
         add('ant-score-freeze',prefix+' molecular-pipeline --stage freeze',depends=['ant-phase'],external_deps=[initial_job('molecular-pilot')],cpus=4,memory='32G',hours=4)
         add('mantis-phase',prefix+' molecular --stage mantis',cpus=8,memory='32G',hours=8,modules=['r/4.4.0','r-bundle-bioconductor/3.20'])
