@@ -36,6 +36,15 @@ contains code, small source metadata and synthetic validation fixtures. Source
 archive inspection and scientific processing run under Slurm after native
 transfer/integrity verification.
 
+Dryad acquisition was resolved through the public browser workflow, with the
+user's explicit approval for a one-time 14,918-byte local relay of the mating CSV
+and two original README files. Their frozen provider SHA-256 values matched both
+before and after transfer to Narval. Together with the previously recovered
+workbook, all four Dryad originals are available. The failed direct-route
+receipts remain preserved; the source manifest and deposited data are unchanged.
+Large fly and RNA transfers continue directly on Narval. No registry description
+or similar dataset is substituted for the checksum-pinned originals.
+
 ## The independent ant unit
 
 Discovery retrieves the ENA run table and the public ENA BioSample XML for each
