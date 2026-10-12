@@ -74,10 +74,11 @@ subprocess.run(prefix+['verify-source','--identity','release.json'],cwd=release,
 subprocess.run(prefix+['accounting','--job-ids','5380869','5381567'],cwd=release,check=True)
 deployment={'status':'deployed','release':str(release),'release_id':record['release_id'],'git_commit':record['git_commit'],'source_sha256':record['source_identity']['sha256'],'config_sha256':record['config_sha256'],'created_unix':time.time()}
 if QUEUE:
+ assert json.loads((root/'state/environment.json').read_text())['status']=='complete','Environment bootstrap is not complete'
  plan=root/'plans'/(record['release_id']+'-initial')
  subprocess.run(prefix+['slurm-plan','--release',str(release),'--output',str(plan),'--phase','initial'],cwd=release,check=True)
  ledger=root/'state'/(record['release_id']+'-initial-submission.json')
- subprocess.run(prefix+['submit','--plan',str(plan/'plan.json'),'--ledger',str(ledger),'--environment-job','5381567'],cwd=release,check=True)
+ subprocess.run(prefix+['submit','--plan',str(plan/'plan.json'),'--ledger',str(ledger)],cwd=release,check=True)
  deployment['submission_ledger']=str(ledger);deployment['tasks']=json.loads(ledger.read_text())['tasks']
 if TRANSFERS:
  ledger=root/'state'/('transfer-start-'+record['release_id']+'.json')
