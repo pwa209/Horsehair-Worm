@@ -64,8 +64,15 @@ def validate_config(config: dict) -> None:
     if r['scratch_budget_bytes'] > 6_000_000_000_000:
         raise ValueError('Scratch reservation exceeds initial admitted budget')
     a = config['agents']
+    for field in ['development_seeds','final_seeds','pilot_seeds','architectures','envs','lr_grid','strengths','ranks']:
+        if len(a[field])!=len(set(a[field])):
+            raise ValueError(f'Duplicate agent {field} would change replication or matching')
+    if set(a['architectures']) != {'rnn','gru','modular'} or set(a['envs']) != {'foraging','corridor','delayed_choice'}:
+        raise ValueError('Primary architecture or task set changed')
     if set(a['development_seeds']) & set(a['final_seeds']):
         raise ValueError('Development and final agent seeds overlap')
+    if set(a['pilot_seeds']) & (set(a['development_seeds']) | set(a['final_seeds'])):
+        raise ValueError('Pilot seeds overlap scientific development or final replication')
     if len(a['final_seeds']) != 20 or len(a['development_seeds']) != 5:
         raise ValueError('Primary design requires twenty final and five development seeds per cell')
     if len(a['architectures']) != 3 or len(a['envs']) != 3:

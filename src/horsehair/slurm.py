@@ -9,7 +9,7 @@ from pathlib import Path
 from .core import atomic_json, canonical_hash, read_json, source_identity, validate_config
 
 
-def _script(config, release, name, command, *, cpus=4, memory='16G', hours=2, gpu=False, array=None, network=False):
+def _script(config, release, name, command, *, cpus=4, memory='16G', hours=2, gpu=False, array=None, network=False,modules=()):
     root=config['paths']['root']
     account=config['paths']['gpu_account' if gpu else 'cpu_account']
     lines=['#!/bin/bash',f'#SBATCH --account={account}',f'#SBATCH --job-name=hhw-{name}',
@@ -25,8 +25,9 @@ def _script(config, release, name, command, *, cpus=4, memory='16G', hours=2, gp
               'export MPLBACKEND=Agg', 'export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}',
               'export OPENBLAS_NUM_THREADS=${SLURM_CPUS_PER_TASK}',
               'export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK}',
-              'export PYTHONUNBUFFERED=1',f'export HHW_GPU_COUNT={int(gpu)}',f'export HHW_MAX_HOURS={hours}']
+              'export PYTHONUNBUFFERED=1','export CUBLAS_WORKSPACE_CONFIG=:4096:8',f'export HHW_GPU_COUNT={int(gpu)}',f'export HHW_MAX_HOURS={hours}']
     if network:lines += ['module load httpproxy/1.0']
+    if modules:lines += ['module load '+' '.join(shlex.quote(x) for x in modules)]
     lines += [f'python -m horsehair.cli --config configs/study.json --root {shlex.quote(root)} verify-source --identity release.json',command]
     return '\n'.join(lines)+'\n'
 
@@ -39,32 +40,78 @@ def plan(config, release: Path, output: Path, phase='initial'):
     root=config['paths']['root']
     prefix=f'python -m horsehair.cli --config configs/study.json --root {shlex.quote(root)}'
     tasks=[]
-    def add(name,command,depends=(),**resources):
+    admission={}
+    rna_modules=['star/2.7.11b','fastqc/0.12.1','trimmomatic/0.39','subread/2.0.6','samtools/1.20']
+    def add(name,command,depends=(),external_deps=(),**resources):
+        measured=admission.get('allocation_parameters',{}).get('rna-full' if name=='rna-counts' else name)
+        if measured:
+            measured=dict(measured);concurrency=measured.pop('concurrency')
+            resources.update(measured)
+            if resources.get('array'):
+                original=int(resources['array'].split('%')[1])
+                resources['array']=resources['array'].split('%')[0]+'%'+str(min(original,concurrency))
         filename=output/(name+'.sbatch')
         text=_script(config,release,name,command,**resources)
         filename.write_text(text,encoding='utf8',newline='\n')
-        tasks.append({'name':name,'script':str(filename),'script_sha256':canonical_hash(text),'depends':list(depends),'resources':resources})
+        tasks.append({'name':name,'script':str(filename),'script_sha256':canonical_hash(text),'depends':list(depends),'external_dependencies':list(external_deps),'resources':resources})
+    def initial_job(name):
+        identity=read_json(release/'release.json')
+        ledger=read_json(Path(root)/'state'/(identity['release_id']+'-initial-submission.json'))
+        task=ledger['tasks'][name]
+        if task['state']!='submitted':raise ValueError('Required initial stage has no confirmed native job')
+        return task['job_id']
     if phase=='initial':
         add('qualification',prefix+' qualify',cpus=4,memory='16G',hours=1)
-        add('discovery',f'python -m horsehair.acquire discover --output {root}/manifests/source_manifest.json',depends=['qualification'],cpus=2,memory='8G',hours=1,network=True)
-        add('acquisition',f'python -m horsehair.acquire download --manifest {root}/manifests/source_manifest.json --root {root}/raw',depends=['discovery'],cpus=2,memory='8G',hours=24,network=True)
-        add('source-audit',prefix+' source-audit',depends=['acquisition'],cpus=4,memory='32G',hours=4)
+        add('r-qualification',prefix+' r-qualify',depends=['qualification'],cpus=2,memory='8G',hours=1,modules=['r/4.4.0','r-bundle-bioconductor/3.20'])
+        add('transfer-wait-tools',prefix+' wait-transfer --group tools',cpus=1,memory='4G',hours=24)
+        add('molecular-runtime',prefix+' molecular --stage runtime',depends=['transfer-wait-tools','r-qualification'],cpus=8,memory='32G',hours=2,modules=['perl/5.36.1','r/4.4.0','r-bundle-bioconductor/3.20'])
+        for group in ['fly','rna']:
+            add('transfer-wait-'+group,prefix+' wait-transfer --group '+group,cpus=1,memory='4G',hours=24)
+            add('source-verification-'+group,prefix+' verify-sources --group '+group,depends=['transfer-wait-'+group,'qualification'],cpus=4,memory='16G',hours=8)
+        add('source-audit',prefix+' source-audit',depends=['source-verification-fly'],cpus=4,memory='64G',hours=8)
+        add('rna-reference',prefix+' rna-pilot --prepare-only',depends=['source-verification-rna'],cpus=8,memory='64G',hours=4,modules=rna_modules)
+        add('molecular-pilot',prefix+' molecular-pipeline --stage benchmark-primary',depends=['rna-reference','molecular-runtime'],cpus=8,memory='64G',hours=8)
+        for index in [0,1]:
+            add('rna-pilot-'+str(index),prefix+' rna-pilot --index '+str(index),depends=['rna-reference'],cpus=8,memory='64G',hours=24,modules=rna_modules)
+        add('fly-pilot',prefix+' behaviour --stage pilot',depends=['source-audit'],cpus=8,memory='64G',hours=4)
         add('gpu-qualification',prefix+' qualify --gpu',depends=['qualification'],cpus=4,memory='32G',hours=1,gpu=True)
         add('agent-pilot',prefix+' agents --mode pilot',depends=['gpu-qualification'],cpus=6,memory='64G',hours=2,gpu=True)
-        add('pilot-assessment',prefix+' assess-pilot',depends=['source-audit','agent-pilot'],cpus=2,memory='8G',hours=1)
+        add('agent-cpu-pilot',prefix+' agents --mode cpu-evaluation-pilot',depends=['agent-pilot'],cpus=4,memory='32G',hours=2)
+        add('pilot-assessment',prefix+' assess-pilot --advance',depends=['fly-pilot','rna-pilot-0','rna-pilot-1','agent-cpu-pilot'],cpus=2,memory='8G',hours=1)
     elif phase=='agents-development':
-        require_admission(config,Path(root),'agents-development')
-        add('agent-development',prefix+' agents --mode development --task-index "$SLURM_ARRAY_TASK_ID"',array='0-44%1',cpus=6,memory='64G',hours=4,gpu=True)
+        admission=require_admission(config,Path(root),'agents-development')
+        cells=3*(3+int(config['agents'].get('feedforward_baseline',True)))*5
+        add('agent-development',prefix+' agents --mode development --task-index "$SLURM_ARRAY_TASK_ID"',array=f'0-{cells-1}%1',cpus=6,memory='64G',hours=4,gpu=True)
         add('agent-freeze',prefix+' agents --mode freeze',depends=['agent-development'],cpus=2,memory='8G',hours=1)
     elif phase=='agents-final':
-        require_admission(config,Path(root),'agents-final')
-        add('agent-final',prefix+' agents --mode final --task-index "$SLURM_ARRAY_TASK_ID"',array='0-179%1',cpus=6,memory='64G',hours=2,gpu=True)
-        add('agent-evaluation',prefix+' agents --mode evaluate',depends=['agent-final'],cpus=6,memory='64G',hours=24,gpu=True)
+        admission=require_admission(config,Path(root),'agents-final')
+        cells=3*(3+int(config['agents'].get('feedforward_baseline',True)))*20
+        add('agent-final',prefix+' agents --mode final --task-index "$SLURM_ARRAY_TASK_ID"',array=f'0-{cells-1}%1',cpus=6,memory='64G',hours=2,gpu=True)
+        add('agent-evaluation',prefix+' agents --mode evaluate --task-index "$SLURM_ARRAY_TASK_ID"',array=f'0-{cells-1}%8',depends=['agent-final'],cpus=4,memory='32G',hours=12)
+        add('agent-analysis',prefix+' agent-analysis',depends=['agent-evaluation'],cpus=4,memory='32G',hours=12)
+    elif phase=='rna-full':
+        admission=require_admission(config,Path(root),'rna-full')
+        add('rna-full-plan',prefix+' molecular --stage prepare-rna-full',cpus=2,memory='8G',hours=1)
+        add('rna-counts',prefix+' molecular --stage rna-run --task-index "$SLURM_ARRAY_TASK_ID"',depends=['rna-full-plan'],array='0-59%2',cpus=8,memory='64G',hours=24,modules=rna_modules)
+        add('ant-phase',prefix+' molecular --stage ant',depends=['rna-counts'],cpus=8,memory='32G',hours=8,modules=['r/4.4.0','r-bundle-bioconductor/3.20'])
+        add('ant-score-freeze',prefix+' molecular-pipeline --stage freeze',depends=['ant-phase'],external_deps=[initial_job('molecular-pilot')],cpus=4,memory='32G',hours=4)
+        add('mantis-phase',prefix+' molecular --stage mantis',cpus=8,memory='32G',hours=8,modules=['r/4.4.0','r-bundle-bioconductor/3.20'])
     elif phase=='behaviour':
-        require_admission(config,Path(root),'behaviour')
+        admission=require_admission(config,Path(root),'behaviour')
         add('behaviour-recovery',prefix+' behaviour --stage recover',cpus=8,memory='32G',hours=24)
         add('behaviour-fit',prefix+' behaviour --stage fit',depends=['behaviour-recovery'],cpus=8,memory='64G',hours=48)
-        add('intervention-challenge',prefix+' interventions --stage challenge',depends=['behaviour-fit'],cpus=8,memory='32G',hours=24)
+        add('wp1-freeze',prefix+' behaviour --stage freeze-development',depends=['behaviour-fit'],cpus=8,memory='64G',hours=48)
+        add('behaviour-inference',prefix+' behaviour --stage inference',depends=['behaviour-fit'],cpus=4,memory='32G',hours=4)
+        add('intervention-challenge',prefix+' interventions --stage challenge',depends=['wp1-freeze'],cpus=8,memory='32G',hours=24)
+        add('intervention-inference',prefix+' interventions --stage inference',depends=['intervention-challenge'],cpus=4,memory='32G',hours=4)
+    elif phase=='molecular-transfer':
+        require_admission(config,Path(root),'molecular')
+        from .molecular import validate_freeze
+        validate_freeze(Path(root)/'data/molecular/freeze/freeze.json')
+        add('screen-gene-export',prefix+' interventions --stage screen',cpus=4,memory='32G',hours=4)
+        add('molecular-transfer',prefix+' molecular-pipeline --stage predict',depends=['screen-gene-export'],cpus=8,memory='64G',hours=8)
+    elif phase=='synthesis':
+        add('evidence-report',prefix+' report',cpus=4,memory='32G',hours=4)
     else:
         raise ValueError(f'Unknown finite phase {phase}')
     record={'schema_version':1,'phase':phase,'config_sha256':canonical_hash(config),'release_identity':source_identity(release),'tasks':tasks,
@@ -82,6 +129,8 @@ def require_admission(config,root,phase):
         raise ValueError('Invalid measured admission or changed scientific config')
     if record['projected_cpu_core_hours']>config['resources']['cpu_core_hours_cap'] or record['projected_gpu_hours']>config['resources']['gpu_hours_cap']:
         raise ValueError('Projected study workload exceeds budget')
+    if record.get('source_sha256')!=source_identity(Path(__file__).resolve().parents[2])['sha256']:raise ValueError('Measured admission uses different implementation')
+    return record
 
 
 def submit(plan_path,ledger_path,environment_job=None,runner=subprocess.run):
@@ -103,6 +152,9 @@ def submit(plan_path,ledger_path,environment_job=None,runner=subprocess.run):
             if canonical_hash(script.read_text(encoding='utf8'))!=task['script_sha256']:
                 raise ValueError('Slurm script changed after plan freeze')
             dependencies=[ledger['tasks'][n]['job_id'] for n in task['depends']]
+            extra=task.get('external_dependencies',[])
+            if any(not re.fullmatch(r'\d+',str(i)) for i in extra):raise ValueError('Invalid external native dependency')
+            dependencies.extend(map(str,extra))
             if environment_job and not task['depends']:dependencies.append(str(environment_job))
             command=['sbatch','--parsable']
             if dependencies:command += ['--dependency=afterok:'+':'.join(dependencies)]
