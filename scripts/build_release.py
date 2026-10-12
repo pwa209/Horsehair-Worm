@@ -54,7 +54,7 @@ case "$(hostname -f)" in *.narval.calcul.quebec) ;; *) exit 2 ;; esac
 module load StdEnv/2023 python/3.11.5 cuda/12.6 arrow/19.0.1
 source /home/pwa209/hhw-environment/bin/activate
 python - <<'PY'
-import base64,hashlib,io,json,pathlib,tarfile,subprocess,os,time
+import base64,hashlib,io,json,pathlib,tarfile,subprocess,os,time,sys
 payload=PAYLOAD
 record=RECORD
 c=CONFIG
@@ -72,6 +72,7 @@ with tarfile.open(fileobj=io.BytesIO(data),mode='r:gz') as archive:
   destination=release/member.name;destination.parent.mkdir(parents=True,exist_ok=True)
   with destination.open('xb') as output:output.write(archive.extractfile(member).read())
 os.environ['PYTHONPATH']=str(release/'src')+os.pathsep+os.environ.get('PYTHONPATH','')
+sys.path.insert(0,str(release/'src'))
 prefix=['python','-m','horsehair.cli','--config','configs/study.json','--root',str(root)]
 subprocess.run(prefix+['verify-source','--identity','release.json'],cwd=release,check=True)
 if MANAGED:
