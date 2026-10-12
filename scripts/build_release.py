@@ -68,10 +68,12 @@ with tarfile.open(fileobj=io.BytesIO(data),mode='r:gz') as archive:
   if not member.isfile() or path.is_absolute() or '..' in path.parts:raise ValueError('Unsafe release member')
   destination=release/member.name;destination.parent.mkdir(parents=True,exist_ok=True)
   with destination.open('xb') as output:output.write(archive.extractfile(member).read())
-os.environ['PYTHONPATH']=str(release/'src')
+os.environ['PYTHONPATH']=str(release/'src')+os.pathsep+os.environ.get('PYTHONPATH','')
 prefix=['python','-m','horsehair.cli','--config','configs/study.json','--root',str(root)]
 subprocess.run(prefix+['verify-source','--identity','release.json'],cwd=release,check=True)
-subprocess.run(prefix+['accounting','--job-ids','5380869','5381567'],cwd=release,check=True)
+budget=root/'state/resource-budget.json'
+known=list(json.loads(budget.read_text()).get('leases',{})) if budget.exists() else []
+subprocess.run(prefix+['accounting','--job-ids','5380869','5381567',*known],cwd=release,check=True)
 deployment={'status':'deployed','release':str(release),'release_id':record['release_id'],'git_commit':record['git_commit'],'source_sha256':record['source_identity']['sha256'],'config_sha256':record['config_sha256'],'created_unix':time.time()}
 if QUEUE:
  assert json.loads((root/'state/environment.json').read_text())['status']=='complete','Environment bootstrap is not complete'
@@ -90,7 +92,7 @@ if TRANSFERS:
  ledger.write_text(json.dumps({'status':'started','pid':proc.pid,'release':str(release),'created_unix':time.time(),'log':str(log)}))
  deployment['transfer_launch']=json.loads(ledger.read_text())
 (root/'state'/('deployment-'+record['release_id']+'.json')).write_text(json.dumps(deployment,indent=2)+'\n')
-(project/'deployment-'+record['release_id']+'.json').write_text(json.dumps(deployment,indent=2)+'\n')
+(project/('deployment-'+record['release_id']+'.json')).write_text(json.dumps(deployment,indent=2)+'\n')
 print('DEPLOYMENT_RECEIPT',json.dumps(deployment))
 PY
 '''

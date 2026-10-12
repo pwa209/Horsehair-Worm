@@ -53,6 +53,7 @@ def qualification(config,root,gpu=False):
                 'elapsed_seconds':time.monotonic()-started,'loss':float(loss.detach().cpu()),'cpu_cuda_regression':comparisons}
         atomic_json(root/'state/cuda-qualification.json',record)
     else:
+        (root/'tests').mkdir(parents=True,exist_ok=True)
         command=[sys.executable,'-m','pytest',str(source/'tests'),'-q','--basetemp',str(root/'tests'/('qualification-'+os.environ.get('SLURM_JOB_ID','local')))]
         response=subprocess.run(command,cwd=source,text=True,capture_output=True)
         record={'status':'complete' if response.returncode==0 else 'failed','returncode':response.returncode,

@@ -21,7 +21,7 @@ def _script(config, release, name, command, *, cpus=4, memory='16G', hours=2, gp
               'module load StdEnv/2023 python/3.11.5 cuda/12.6 arrow/19.0.1',
               f'source {shlex.quote(config["paths"]["environment"]+"/bin/activate")}',
               f'cd {shlex.quote(str(release))}',
-              f'export PYTHONPATH={shlex.quote(str(Path(release)/"src"))}',
+              f'export PYTHONPATH={shlex.quote(str(Path(release)/"src"))}:"${{PYTHONPATH:-}}"',
               'export MPLBACKEND=Agg', 'export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}',
               'export OPENBLAS_NUM_THREADS=${SLURM_CPUS_PER_TASK}',
               'export MKL_NUM_THREADS=${SLURM_CPUS_PER_TASK}',

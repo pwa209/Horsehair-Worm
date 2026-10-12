@@ -78,7 +78,7 @@ def native_accounting(root, job_ids, runner=subprocess.run):
         hours=int(seconds)/3600
         observed[ident]={'state':state,'exit_code':exit_code,'elapsed_seconds':int(seconds),'cpus':int(cpus),'gpus':gpu,
                          'cpu_core_hours':hours*int(cpus),'gpu_hours':hours*gpu,'basis':'sacct final allocated wall time'}
-        rows.append('|'.join([ident,state,seconds,cpus,peaks.get(ident,''),tres]))
+        if int(seconds)>0 and int(cpus)>0:rows.append('|'.join([ident,state,seconds,cpus,peaks.get(ident,''),tres]))
     path=Path(root)/'state/resource-budget.json';path.parent.mkdir(parents=True,exist_ok=True)
     lock=path.with_suffix('.lock')
     fd=os.open(lock,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600);os.close(fd)

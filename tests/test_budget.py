@@ -49,3 +49,10 @@ def test_native_accounting_keeps_maximum_step_memory(tmp_path):
     native_accounting(tmp_path,['10'],runner)
     assert '|12G|' in (tmp_path/'state/native-accounting.tsv').read_text()
 
+
+def test_unallocated_cancelled_jobs_cost_zero_without_invalid_benchmark_rows(tmp_path):
+    runner=lambda *a,**k:SimpleNamespace(returncode=0,stdout='10|CANCELLED|0|0||0:0|\n')
+    result=native_accounting(tmp_path,['10'],runner)
+    assert result['spent_cpu_core_hours']==0
+    assert (tmp_path/'state/native-accounting.tsv').read_text().strip()=='JobIDRaw|State|ElapsedRaw|AllocCPUS|MaxRSS|AllocTRES'
+
