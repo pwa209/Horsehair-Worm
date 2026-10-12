@@ -211,3 +211,156 @@ def test_required_biological_export_prevents_freeze_without_writing_a_protocol(t
     with pytest.raises(RuntimeError,match="Biological directions are required"):
         agents.run(config,tmp_path,mode="freeze")
     assert not (tmp_path/"results/agents/frozen_protocol.json").exists()
+
+
+def test_native_benchmark_design_covers_every_configured_cell_and_both_seeds():
+    config = {"agents":{"feedforward_baseline":True}}
+    cells = agents.benchmark_cells(config)
+    assert len(cells)==12
+    assert {(task,architecture) for task,architecture,_ in cells}=={
+        (task,architecture) for task in agents.TASKS for architecture in (*agents.ARCHITECTURES,"feedforward")}
+    assert all(seeds==(900,901) for _,_,seeds in cells)
+    spec = agents.benchmark_specification(config)
+    assert spec["training_steps"]==32768 and spec["calibration_episodes"]==32 and spec["kl_bisections"]==10
+    assert set(spec["mechanisms"])==set(agents.MECHANISMS)
+    with pytest.raises(ValueError,match="complete PPO rollouts"):
+        agents.benchmark_specification({"agents":{"benchmark_training_steps":17}})
+
+
+@pytest.fixture
+def measured_technical_agent_fixture(tmp_path):
+    """Real tiny CPU algorithms; temporary fixture is never a native GPU claim."""
+    pytest.importorskip("torch")
+    config = {"agents":{"architectures":["gru"],"tasks":["delayed_choice"],"pilot_seeds":[900,901],
+              "capacity":25000,"n_envs":4,"rollout_steps":4,"ppo_epochs":1,"total_steps":16,
+              "lr_grid":[.0003,.001,.003],
+              "benchmark_training_steps":16,"benchmark_evaluation_episodes":1,"baseline_episodes":1,
+              "evaluation_episodes":2,"calibration_episodes":8,"kl_bisections":3,"ranks":[1],"strengths":[0.],"device":"cpu"},
+              "resources":{"cpu_ceiling":64}}
+    training = agents.run(config,tmp_path,"benchmark-training",0)
+    cpu = agents.run(config,tmp_path,"benchmark-cpu-evaluation",0)
+    aggregate = agents.run(config,tmp_path,"benchmark-aggregate")
+    return config,training,cpu,aggregate
+
+
+def test_actual_benchmark_aggregation_full_grid_separate_competence_and_hashes(tmp_path,measured_technical_agent_fixture):
+    config,training,cpu,aggregate = measured_technical_agent_fixture
+    assert len(training["reports"])==len(cpu["reports"])==2
+    for record in training["reports"]:
+        assert record["training_steps"]==16 and record["software_qualified"]
+        assert record["seconds"]>0 and record["direction_selection_seconds"]>0 and record["working_files"]>=5
+        assert record["policy_competence_qualified"] is False
+    for record in cpu["reports"]:
+        assert record["training_steps"]==0 and record["evaluation_device"]=="cpu"
+        assert record["complete_mechanism_grid"] and record["grid_points"]==14 and record["condition_groups"]==112
+        assert record["trial_rows"]==112 and record["calibration_episodes"]==8 and record["kl_bisections"]==3
+        assert record["restoration_qualified"] and record["base_weights_unchanged"]
+    assert aggregate["measured_policies"]==2 and aggregate["architecture_task_cells"]==1
+    assert not aggregate["scientific_result"] and aggregate["complete_architecture_task_coverage"]
+    for path,value in aggregate["source_result_hashes"].items():
+        assert agents.digest(agents.Path(path))==value
+    changed = copy.deepcopy(config)
+    changed["agents"]["calibration_episodes"]=12
+    with pytest.raises(RuntimeError,match="configuration/source/specification"):
+        agents.aggregate_benchmarks(changed,tmp_path)
+
+
+def test_cpu_benchmark_cannot_claim_complete_after_missing_trial_condition(tmp_path,measured_technical_agent_fixture):
+    import pandas as pd
+    _,_,cpu,_ = measured_technical_agent_fixture
+    destination = tmp_path/"results/agents/benchmark-cpu-evaluation/delayed_choice_gru_900"
+    path = destination/"agent_trials.parquet"
+    trials = pd.read_parquet(path)
+    trials = trials.iloc[1:]
+    trials.to_parquet(path,index=False)
+    record = copy.deepcopy(cpu["reports"][0])
+    record["trial_rows"] = len(trials)
+    record["trial_file_sha256"] = agents.digest(path)
+    with pytest.raises(RuntimeError,match="complete configured"):
+        agents._validate_benchmark_grid(measured_technical_agent_fixture[0],destination,record)
+    with pytest.raises(RuntimeError,match="source evidence changed"):
+        agents.aggregate_benchmarks(measured_technical_agent_fixture[0],tmp_path)
+
+
+def test_admission_requires_native_cuda_and_does_not_use_competence_to_choose_timing(tmp_path,measured_technical_agent_fixture,monkeypatch):
+    from horsehair import admission
+    config,training,_,_ = measured_technical_agent_fixture
+    identity = agents.source_identity(agents.Path(agents.__file__).resolve().parents[2])["sha256"]
+    native = {"fixture":{"job_id":"fixture","state":"COMPLETED","elapsed_seconds":100.,"cpus":1,"gpus":1,"peak_rss_bytes":1024**3}}
+    # The actual local CPU fixture cannot qualify a native GPU allocation.
+    with pytest.raises(admission.AdmissionError):
+        admission._agents(config,tmp_path,native,identity,1.5,"agents-development")
+    # Hardware-only boundary is mocked explicitly; all numerical receipts,
+    # cohorts, file hashes and configured work units remain actual fixture data.
+    monkeypatch.setattr(admission,"_proof",lambda record,*args,**kwargs:native["fixture"])
+    original_checked = agents._benchmark_checked
+    def fixture_checked(*args,**kwargs):
+        record = original_checked(*args,**kwargs)
+        record["slurm_job_id"] = "fixture"
+        record["allocated_cpus"] = 1
+        return record
+    monkeypatch.setattr(agents,"_benchmark_checked",fixture_checked)
+    forecast = admission._agents(config,tmp_path,native,identity,1.5,"agents-development")
+    assert forecast["workload"]["timing_policies"]==2
+    assert forecast["workload"]["benchmark_competence_qualified_policies"]==0
+    assert forecast["workload"]["development_training_fits"]==15 and forecast["workload"]["final_training_fits"]==20
+    assert forecast["cpu_hours"]>0 and forecast["gpu_hours"]>0 and forecast["additional_files"]>0
+    assert forecast["all_remaining_training_gpu_hours"]>forecast["gpu_hours"]
+    missing = tmp_path/"results/agents/benchmark-training/delayed_choice_gru_901/training_benchmark.json"
+    missing.rename(missing.with_suffix(".fixture-removed"))
+    with pytest.raises(admission.AdmissionError,match="timing coverage is pending"):
+        admission._agents(config,tmp_path,native,identity,1.5,"agents-development")
+
+
+def test_benchmark_provenance_matches_native_array_task_identity(tmp_path,monkeypatch):
+    pytest.importorskip("torch")
+    (tmp_path/"actual-file.txt").write_text("generated software test fixture")
+    monkeypatch.setenv("SLURM_JOB_ID","34567")
+    monkeypatch.setenv("SLURM_ARRAY_JOB_ID","34500")
+    monkeypatch.setenv("SLURM_ARRAY_TASK_ID","11")
+    record = agents._benchmark_provenance({"agents":{}},tmp_path,"cpu")
+    assert record["slurm_job_id"]=="34500_11" and record["working_files"]==1
+
+
+def test_final_admission_consumes_actual_cpu_roster_and_counts_evaluation_storage(tmp_path,measured_technical_agent_fixture,monkeypatch):
+    from horsehair import admission
+    config,_,_,aggregate = measured_technical_agent_fixture
+    settings = config["agents"]
+    directory = tmp_path/"results/agents"
+    selected_weights = []
+    # Genuine tiny development PPO checkpoints; this reduced design is a
+    # software fixture, not the proposal's180 development fits or H4 evidence.
+    for task,architecture,seed,rate in agents._cells(settings,development=True):
+        destination = directory/"development"/agents._cell_name(task,architecture,seed,rate)
+        _,summary = agents.train(settings,task,architecture,seed,destination,rate)
+        if rate==settings["lr_grid"][0]:
+            selected_weights.append(summary["weight_sha256"])
+    protocol = {"config_sha256":agents._digest(settings),"full_config_sha256":canonical_hash(config),
+                "implementation_sha256":agents._implementation_sha256(),"H4_inference_specification":agents.h4_specification(config),
+                "learning_rate":settings["lr_grid"][0],"directions":{f"{mechanism}:1":[1.] for mechanism in agents.MECHANISMS},
+                "development_seeds":list(range(100,105)),"final_seeds":list(range(1000,1020)),
+                "source_development_weights":selected_weights}
+    agents._json(directory/"frozen_protocol.json",protocol)
+    identity = aggregate["source_sha256"]
+    native = {"gpu-fixture":{"job_id":"gpu-fixture","state":"COMPLETED","elapsed_seconds":100.,"cpus":1,"gpus":1,"peak_rss_bytes":1024**3},
+              "cpu-fixture":{"job_id":"cpu-fixture","state":"COMPLETED","elapsed_seconds":200.,"cpus":2,"gpus":0,"peak_rss_bytes":1024**3}}
+    original_checked = agents._benchmark_checked
+    def fixture_checked(*args,**kwargs):
+        record = original_checked(*args,**kwargs)
+        record["slurm_job_id"] = "gpu-fixture" if record["benchmark_kind"]=="training" else "cpu-fixture"
+        record["allocated_cpus"] = native[record["slurm_job_id"]]["cpus"]
+        return record
+    monkeypatch.setattr(agents,"_benchmark_checked",fixture_checked)
+    monkeypatch.setattr(admission,"_proof",lambda record,*args,**kwargs:native[record["slurm_job_id"]])
+    forecast = admission._agents(config,tmp_path,native,identity,1.5,"agents-final")
+    assert forecast["workload"]["final_training_fits"]==20
+    assert forecast["parameters"]["agent-evaluation"]["cpus"]==2 and not forecast["parameters"]["agent-evaluation"]["gpu"]
+    assert forecast["cpu_hours"]>forecast["gpu_hours"]
+    assert forecast["all_remaining_training_gpu_hours"]==pytest.approx(forecast["gpu_hours"])
+    assert forecast["additional_files"]>=20*9
+    assert tmp_path/"state/agent-cpu-evaluation-benchmark.json" in forecast["inputs"]
+    entry = aggregate["records"][0]
+    entry["sha256"] = "0"*64
+    agents._json(tmp_path/"state/agent-cpu-evaluation-benchmark.json",aggregate)
+    with pytest.raises(admission.AdmissionError,match="changed native evaluation evidence"):
+        admission._agents(config,tmp_path,native,identity,1.5,"agents-final")

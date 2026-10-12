@@ -17,7 +17,7 @@ from typing import Any
 
 import numpy as np
 
-from .core import canonical_hash, source_identity
+from .core import canonical_hash, source_identity, digest, read_json, native_job_id
 
 OBS_DIM = 32
 ACTION_DIM = 5
@@ -77,9 +77,10 @@ def _benchmark_provenance(config, destination, evaluation_device):
         pass
     return {"full_config_sha256":canonical_hash(config),
             "source_sha256":source_identity(Path(__file__).resolve().parents[2])["sha256"],
-            "slurm_job_id":os.environ.get("SLURM_JOB_ID"),
+            "slurm_job_id":native_job_id(),
             "allocated_cpus":int(os.environ.get("SLURM_CPUS_PER_TASK", str(_torch().get_num_threads()))),
             "working_bytes":sum(p.stat().st_size for p in Path(destination).rglob("*") if p.is_file()),
+             "working_files":sum(p.is_file() for p in Path(destination).rglob("*")),
             "peak_process_ram_bytes":peak, "evaluation_device":evaluation_device,
             "torch_threads":_torch().get_num_threads()}
 
@@ -1063,8 +1064,236 @@ def cpu_evaluation_pilot(config, root, task_index=None):
                   "forecast_coverage":"two foraging/RNN pilot policies only; other architecture/task and full calibration coverage pending",
                   "evidence_class":"technical CPU evaluation benchmark; not final H4 evidence"}
         _json(destination/"cpu_evaluation_benchmark.json",record)
+        record.update(_benchmark_provenance(config,destination,"cpu"))
+        _json(destination/"cpu_evaluation_benchmark.json",record)
         reports.append(record)
     return {"mode":"cpu-evaluation-pilot","reports":reports,"complete_architecture_task_forecast":False}
+
+
+def benchmark_cells(config):
+    """One array index per architecture/task, with both prespecified pilot seeds."""
+    settings = config.get("agents", config)
+    cells = _cells(settings)
+    pairs = list(dict.fromkeys((task, architecture) for task, architecture, _, _ in cells))
+    seeds = [cell[2] for cell in _cells(settings, pilot=True)]
+    return [(task, architecture, tuple(seeds)) for task, architecture in pairs]
+
+
+def benchmark_specification(config):
+    settings = config.get("agents", config)
+    steps = int(settings.get("benchmark_training_steps", 32768))
+    block = int(settings.get("n_envs", 16))*int(settings.get("rollout_steps", 128))
+    if steps < block or steps % block or steps > int(settings.get("total_steps", 1000000)):
+        raise ValueError("Benchmark training must contain complete PPO rollouts within the declared total budget")
+    episodes = int(settings.get("benchmark_evaluation_episodes", 4))
+    if not 1 <= episodes <= int(settings.get("evaluation_episodes", 64)):
+        raise ValueError("Benchmark evaluation episodes must be within the declared final episode count")
+    return {"training_steps":steps, "evaluation_episodes":episodes,
+            "calibration_episodes":int(settings.get("calibration_episodes",32)),
+            "kl_bisections":int(settings.get("kl_bisections",10)),
+            "ranks":list(settings.get("ranks",[1,2,4,8])),
+            "strengths":list(settings.get("strengths",[0,.05,.1,.2,.4,.8])),
+            "mechanisms":list(MECHANISMS), "matching_arms":["parameter_norm","policy_kl"],
+            "restoration_controls":["exact","random_subspace","cue_removal","lower_action_noise"],
+            "primary_rule_type":"synthetic", "max_episode_steps":200,
+            "scope":"actual primary algorithms; finite technical timing, never confirmatory H4 evidence"}
+
+
+def _benchmark_indices(config, task_index):
+    cells = benchmark_cells(config)
+    if task_index is not None:
+        if task_index not in range(len(cells)):
+            raise ValueError(f"Benchmark array index must be in [0, {len(cells)-1}]")
+        return [cells[task_index]]
+    return cells
+
+
+def _benchmark_checked(config, path, kind):
+    record = read_json(path)
+    identity = source_identity(Path(__file__).resolve().parents[2])["sha256"]
+    if (record.get("benchmark_kind") != kind or record.get("full_config_sha256") != canonical_hash(config)
+            or record.get("source_sha256") != identity
+            or record.get("benchmark_specification") != benchmark_specification(config)):
+        raise RuntimeError("Benchmark configuration/source/specification changed; require a fresh matching release benchmark")
+    paths = record.get("source_result_paths", [])
+    hashes = record.get("source_result_hashes", {})
+    if not paths or set(paths) != set(hashes) or any(not Path(p).is_file() or digest(Path(p)) != hashes[p] for p in paths):
+        raise RuntimeError("Benchmark source evidence changed or is missing")
+    return record
+
+
+def _benchmark_inputs(paths):
+    paths = list(dict.fromkeys(str(Path(path).resolve()) for path in paths))
+    return {"source_result_paths":paths, "source_result_hashes":{path:digest(Path(path)) for path in paths}}
+
+
+def benchmark_training(config, root, task_index=None):
+    """Measure PPO plus actual development direction-selection cost in all cells."""
+    root = Path(root)
+    settings = dict(config.get("agents", config))
+    spec = benchmark_specification(config)
+    directory = _directory(root, settings)/"benchmark-training"
+    reports = []
+    for task, architecture, seeds in _benchmark_indices(config, task_index):
+        for seed in seeds:
+            destination = directory/_cell_name(task, architecture, seed)
+            target = destination/"training_benchmark.json"
+            if target.exists():
+                record = _benchmark_checked(config,target,"training")
+                reports.append(record)
+                continue
+            measurement = destination
+            # A failed attempt's checkpoint can resume scientific training, but
+            # cannot prove a complete native timing interval in the new job.
+            # Preserve it and make at most three fresh finite measurements.
+            if (measurement/"checkpoint.pt").exists():
+                measurement = next((destination/f"measurement-{i}" for i in range(1,4)
+                                    if not (destination/f"measurement-{i}"/"checkpoint.pt").exists()),None)
+                if measurement is None:
+                    raise RuntimeError("Three incomplete native timing attempts remain; inspect the preserved benchmark checkpoints")
+            policy, summary = train(settings,task,architecture,seed,measurement,float(settings.get("lr_grid",[3e-4])[0]),steps=spec["training_steps"])
+            before = state_hash(policy)
+            started = time.perf_counter()
+            directions = calibrate_rule(policy,task,settings,seed)
+            selection_seconds = time.perf_counter()-started
+            if state_hash(policy) != before or not directions:
+                raise AssertionError("Technical direction-selection benchmark changed the base policy or omitted its grid")
+            _json(measurement/"calibrated_directions.json",directions)
+            threshold = float(settings.get("baseline_probe_accuracy_min",.8))
+            summary.update(full_config_sha256=canonical_hash(config),source_sha256=source_identity(Path(__file__).resolve().parents[2])["sha256"])
+            _json(measurement/"summary.json",summary)
+            record = {**summary, **_benchmark_provenance(config,destination,str(next(policy.parameters()).device)),
+                      "benchmark_kind":"training", "benchmark_specification":spec,
+                      "checkpoint_path":str((measurement/"checkpoint.pt").resolve()),
+                      "full_primary_algorithm":True,"software_qualified":True,
+                      "direction_selection_seconds":selection_seconds,
+                      "policy_competence_qualified":summary["baseline_success"]>=threshold and all(value>=threshold for value in summary["competence"].values()),
+                      "competence_interpretation":"measured shortened-budget validation; no seed exclusion or full-budget competence claim",
+                      "evidence_class":"technical native throughput benchmark; not scientific inference",
+                      **_benchmark_inputs([measurement/"checkpoint.pt",measurement/"summary.json",measurement/"training_metrics.json",measurement/"calibrated_directions.json"])}
+            _json(target,record)
+            record.update(_benchmark_provenance(config,destination,str(next(policy.parameters()).device)))
+            _json(target,record)
+            reports.append(record)
+    return {"mode":"benchmark-training","array_cells":len(benchmark_cells(config)),"reports":reports}
+
+
+def _validate_benchmark_grid(config, destination, record):
+    """Check measured episode/condition membership, rather than trust a flag."""
+    import pandas as pd
+    spec = benchmark_specification(config)
+    expected = {(mechanism,rank,float(strength),arm)
+                for mechanism in MECHANISMS for rank in spec["ranks"]
+                if mechanism!="motor_gain" or rank==1
+                for strength in spec["strengths"] for arm in spec["matching_arms"]}
+    trials = pd.read_parquet(Path(destination)/"agent_trials.parquet")
+    required = {"perturbation","rank","strength","matching_arm","rule_type","probe","restoration_control","episode_seed",
+                "training_seed","task","architecture"}
+    if not required.issubset(trials) or set(trials.rule_type)!={"synthetic"}:
+        raise RuntimeError("CPU benchmark omitted a required perturbation trial field or changed rule scope")
+    if (set(trials.training_seed)!={record["seed"]} or set(trials.task)!={record["task"]}
+            or set(trials.architecture)!={record["architecture"]}
+            or digest(Path(destination)/"agent_trials.parquet")!=record.get("trial_file_sha256")
+            or record.get("base_weights_unchanged") is not True):
+        raise RuntimeError("CPU benchmark trial policy identity/hash or frozen weights differ from its receipt")
+    grouped = trials.groupby(["perturbation","rank","strength","matching_arm","probe","restoration_control"],dropna=False)
+    actual = set()
+    for key, rows in grouped:
+        mechanism,rank,strength,arm,probe,control = key
+        actual.add((mechanism,int(rank),float(strength),arm,probe,control))
+        if len(rows)!=spec["evaluation_episodes"] or rows.episode_seed.nunique()!=len(rows):
+            raise RuntimeError("CPU benchmark episode replication is missing or duplicated")
+        expected_seeds = set(range(40_000_000+record["seed"]*1000,40_000_000+record["seed"]*1000+spec["evaluation_episodes"]))
+        if set(rows.episode_seed)!=expected_seeds:
+            raise RuntimeError("CPU benchmark changed prespecified evaluation episode seeds")
+    conditions = {(*point,probe,"none") for point in expected for probe in ("main",*PROBES)}
+    conditions |= {(*point,"main",control) for point in expected for control in spec["restoration_controls"]}
+    if actual!=conditions or record.get("trial_rows")!=len(trials):
+        raise RuntimeError("CPU benchmark does not contain the complete configured mechanism/rank/strength/matching/probe/restoration grid")
+    restoration = read_json(Path(destination)/"restoration_checks.json")
+    restored_points = [(row["mechanism"],int(row["rank"]),float(row["strength"]),row["matching_arm"]) for row in restoration]
+    if set(restored_points)!=expected or len(restored_points)!=len(expected) or any(
+            row["restoration_max_probability_error"]>1e-7 or row["base_weights_unchanged"] is not True for row in restoration):
+        raise RuntimeError("CPU benchmark restoration qualification is incomplete or failed")
+    return {"grid_points":len(expected),"condition_groups":len(conditions),"trial_rows":len(trials),
+            "complete_mechanism_grid":True,"full_calibration_algorithm":True,"restoration_qualified":True}
+
+
+def benchmark_cpu_evaluation(config, root, task_index=None):
+    """All configured cells, full calibration/grid, fixed reduced episode replication."""
+    root = Path(root)
+    settings = dict(config.get("agents",config))
+    directory = _directory(root,settings)
+    spec = benchmark_specification(config)
+    _torch().set_num_threads(int(os.environ.get("SLURM_CPUS_PER_TASK",settings.get("torch_threads",1))))
+    reports = []
+    for task, architecture, seeds in _benchmark_indices(config,task_index):
+        for seed in seeds:
+            original = directory/"benchmark-training"/_cell_name(task,architecture,seed)
+            training = _benchmark_checked(config,original/"training_benchmark.json","training")
+            checkpoint_path = Path(training["checkpoint_path"])
+            policy, checkpoint = _load_policy(checkpoint_path,"cpu",settings,seed=seed,architecture=architecture,task=task,
+                                               learning_rate=float(settings.get("lr_grid",[3e-4])[0]))
+            if checkpoint["steps"]!=spec["training_steps"] or state_hash(policy)!=training["weight_sha256"]:
+                raise RuntimeError("CPU benchmark checkpoint differs from its completed training timing receipt")
+            destination = directory/"benchmark-cpu-evaluation"/_cell_name(task,architecture,seed)
+            target = destination/"cpu_evaluation_benchmark.json"
+            if target.exists():
+                record = _benchmark_checked(config,target,"cpu-evaluation")
+                _validate_benchmark_grid(config,destination,record)
+                reports.append(record)
+                continue
+            # Runtime directions are fixed before any benchmark outcomes are seen.
+            directions = {f"{mechanism}:{rank}":_normalize(np.random.default_rng(419+rank).normal(size=rank)).tolist()
+                          for mechanism in MECHANISMS for rank in spec["ranks"] if mechanism!="motor_gain" or rank==1}
+            protocol = {"directions":directions,"biological_directions":None,"biological_direction_status":"pending; synthetic primary timing",
+                        "heldout_architecture":ARCHITECTURES[2],"heldout_task":TASKS[2],"technical_benchmark":True}
+            evaluation_settings = dict(settings,evaluation_episodes=spec["evaluation_episodes"])
+            evaluation = perturbation_experiment(policy,task,seed,evaluation_settings,protocol,destination)
+            record = {**evaluation,**_benchmark_provenance(config,destination,"cpu"),"seed":seed,
+                      "benchmark_kind":"cpu-evaluation","benchmark_specification":spec,
+                      "evaluation_episodes":spec["evaluation_episodes"],"calibration_episodes":spec["calibration_episodes"],
+                      "kl_bisections":spec["kl_bisections"],"training_steps":0,
+                      "training_checkpoint_steps":checkpoint["steps"],"full_primary_algorithm":True,
+                      "evidence_class":"technical native CPU evaluation benchmark; not confirmatory H4 evidence",
+                      "cost_extrapolation":"scale entire measured grid by final/benchmark episode ratio; full fixed calibration cost is conservatively scaled too",
+                      **_benchmark_inputs([original/"training_benchmark.json",checkpoint_path,destination/"agent_trials.parquet",
+                                           destination/"restoration_checks.json",destination/"evaluation_summary.json"])}
+            record.update(_validate_benchmark_grid(config,destination,record))
+            _json(target,record)
+            record.update(_benchmark_provenance(config,destination,"cpu"))
+            _json(target,record)
+            reports.append(record)
+    return {"mode":"benchmark-cpu-evaluation","array_cells":len(benchmark_cells(config)),"reports":reports}
+
+
+def aggregate_benchmarks(config, root):
+    """Write a complete source-bound CPU roster; native accounting is checked at admission."""
+    root = Path(root)
+    directory = _directory(root,config.get("agents",config))
+    records, inputs = [], []
+    for task,architecture,seeds in benchmark_cells(config):
+        for seed in seeds:
+            name = _cell_name(task,architecture,seed)
+            training_path = directory/"benchmark-training"/name/"training_benchmark.json"
+            _benchmark_checked(config,training_path,"training")
+            path = directory/"benchmark-cpu-evaluation"/name/"cpu_evaluation_benchmark.json"
+            record = _benchmark_checked(config,path,"cpu-evaluation")
+            if (record.get("task"),record.get("architecture"),record.get("seed"))!=(task,architecture,seed):
+                raise RuntimeError("CPU benchmark roster contains another policy cell")
+            record.update(_validate_benchmark_grid(config,path.parent,record))
+            records.append({"path":str(path.resolve()),"sha256":digest(path),"task":task,"architecture":architecture,"seed":seed})
+            inputs.extend([training_path,path])
+    result = {"benchmark_kind":"cpu-evaluation-aggregate","full_config_sha256":canonical_hash(config),
+              "source_sha256":source_identity(Path(__file__).resolve().parents[2])["sha256"],
+              "benchmark_specification":benchmark_specification(config),"evaluation_device":"cpu",
+              "complete_mechanism_grid":True,"complete_architecture_task_coverage":True,
+              "measured_policies":len(records),"architecture_task_cells":len(benchmark_cells(config)),
+              "records":records,"scientific_result":False,
+              "evidence_class":"complete technical benchmark roster; native completed-job accounting required for admission",
+              **_benchmark_inputs(inputs)}
+    _json(root/"state"/"agent-cpu-evaluation-benchmark.json",result)
+    return result
 
 
 def run(config: dict, root: Path | str, mode: str = "pilot", task_index: int | None = None):
@@ -1074,6 +1303,14 @@ def run(config: dict, root: Path | str, mode: str = "pilot", task_index: int | N
     exists. Pilot explicitly reports incomplete competence and projected training.
     """
     root = Path(root)
+    if mode == "benchmark-training":
+        return benchmark_training(config,root,task_index)
+    if mode == "benchmark-cpu-evaluation":
+        return benchmark_cpu_evaluation(config,root,task_index)
+    if mode == "benchmark-aggregate":
+        if task_index is not None:
+            raise ValueError("Benchmark aggregation is one task, not a policy array")
+        return aggregate_benchmarks(config,root)
     if mode == "cpu-evaluation-pilot":
         return cpu_evaluation_pilot(config,root,task_index)
     settings = dict(config.get("agents", config))
@@ -1179,6 +1416,9 @@ def run(config: dict, root: Path | str, mode: str = "pilot", task_index: int | N
             summary["projected_primary_evaluation_gpu_hours"] = primary_count*measured*int(settings.get("evaluation_episodes", 64))/int(probe_settings["evaluation_episodes"])/3600
             _json(destination/"pilot_benchmark.json", summary)
             _json(destination/"summary.json", summary)
+            summary.update(_benchmark_provenance(config,destination,str(next(policy.parameters()).device)))
+            _json(destination/"pilot_benchmark.json",summary)
+            _json(destination/"summary.json",summary)
         reports.append(summary)
     if development and task_index is None:
         frozen = freeze_protocol(settings, root, full_config=config)

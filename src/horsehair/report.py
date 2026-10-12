@@ -49,17 +49,42 @@ def _operational_gates(result, claim, config):
     if claim == "H1":
         for key in ("parameter_recovery_passed", "parameter_identifiability_passed"):
             if not isinstance(result.get(key), bool):missing.append(key)
+        for key in ("parameter_recovery_status", "parameter_identifiability_status", "posterior_check_status",
+                    "sensitivity_check_status", "bayesian_check_status"):
+            status = result.get(key)
+            if isinstance(status, str) and status.lower().startswith("pending"):
+                missing.append(key)
         diagnostic = result.get("multivariate_diagnostic_improvement")
         if not _finite(diagnostic):missing.append("multivariate_diagnostic_improvement")
         effect = result["estimate"] > 0 and result["ci95"][0] > 0
-        passed = effect and not missing and result["parameter_recovery_passed"] and result["parameter_identifiability_passed"] and diagnostic >= .05
+        passed = (effect and not missing and result["parameter_recovery_passed"] and result["parameter_identifiability_passed"] and diagnostic >= .05
+                  and result.get("sensitivity_check_passed", True) and result.get("bayesian_check_passed", True))
     elif claim == "H2":
         for key in ("family_generalization_passed", "shared_control_covariance_preserved"):
             if not isinstance(result.get(key), bool):missing.append(key)
         families = result.get("intervention_families_evaluated")
         if not isinstance(families, int) or isinstance(families, bool) or families < 1:missing.append("intervention_families_evaluated")
-        effect = result["estimate"] >= .1 and result["ci95"][0] > 0
-        passed = effect and not missing and result["family_generalization_passed"] and result["shared_control_covariance_preserved"] and families >= 2
+        flexible = result.get("unrestricted_comparison", {})
+        interval = flexible.get("ci95")
+        if not (_finite(flexible.get("estimate")) and isinstance(interval, list) and len(interval) == 2
+                and all(_finite(value) for value in interval)):
+            missing.append("unrestricted_comparison")
+        calibration = []
+        for label, evidence in (("gain", result), ("unrestricted", flexible)):
+            stability = evidence.get("maximum_derivative_relative_stability_error")
+            excursions = evidence.get("bootstrap_outside_validated_response_radius_fraction")
+            if not _finite(stability) or not _finite(excursions):
+                missing.append(f"{label}_calibration_response_validation")
+            else:
+                calibration.append(0 <= stability <= .1 and 0 <= excursions <= .05)
+                if not calibration[-1]:
+                    # A failed local uncertainty approximation requires actual
+                    # nonlocal recalibration, not a completed negative effect.
+                    missing.append(f"{label}_nonlocal_calibration_uncertainty")
+        unrestricted_effect = bool("unrestricted_comparison" not in missing and flexible["estimate"] >= .1 and interval[0] > 0)
+        effect = result["estimate"] >= .1 and result["ci95"][0] > 0 and unrestricted_effect
+        passed = (effect and not missing and result["family_generalization_passed"]
+                  and result["shared_control_covariance_preserved"] and families >= 2 and all(calibration))
     else:
         threshold = float(config.get("molecular", {}).get("incremental_rank_effect_threshold", .2))
         effect = result["estimate"] >= threshold and result["ci95"][0] > 0
@@ -209,8 +234,8 @@ def build_report(config, root):
             claim["primary_family_holm_pvalue"] = float(value)
             claim["operational_gates_passed"] = gates["passed"]
             claim["required_diagnostics_missing"] = gates["missing"]
-            if value >= float(config["inference"]["alpha"]) or not gates["effect_criterion_passed"]:claim["status"] = "not_supported"
-            elif gates["missing"]:claim["status"] = "required_diagnostics_pending"
+            if gates["missing"]:claim["status"] = "required_diagnostics_pending"
+            elif value >= float(config["inference"]["alpha"]) or not gates["effect_criterion_passed"]:claim["status"] = "not_supported"
             else:claim["status"] = "supported" if gates["passed"] else "not_supported"
     else:
         for claim in family:
@@ -231,7 +256,7 @@ def build_report(config, root):
     analysis_complete = family_complete and all(c["status"] in ("supported","not_supported") for c in claims)
     figures_complete = all(f.get("paths") for f in figures)
     visual_complete = figures_complete and all(f.get("visual_inspection_verified") for f in figures)
-    report = {"protocol_id":config["protocol_id"],"config_sha256":canonical_hash(config),"claims":claims,"figures":figures,
+    report = {"protocol_id":config["protocol_id"],"config_sha256":canonical_hash(config),"source_sha256":_source_sha(),"claims":claims,"figures":figures,
         "primary_family":{"tests":["H1","H2","H3"],"method":"Holm","status":"computed" if family_complete else "pending"},
         "analyses_available":all(c["result"] is not None for c in claims),
         "analysis_complete":analysis_complete,"figures_complete":bool(figures_complete),"visual_inspection_complete":bool(visual_complete),

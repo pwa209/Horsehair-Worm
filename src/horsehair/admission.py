@@ -176,53 +176,147 @@ def _rna(config, root, native, identity, safety):
 
 
 def _agents(config, root, native, identity, safety, phase):
-    from .agents import _cells, _directory
+    from .agents import _cells, _directory, benchmark_cells, benchmark_specification, _benchmark_checked, _validate_benchmark_grid, _implementation_sha256, h4_specification, _digest, MECHANISMS, _cell_name
     settings = config["agents"]
     directory = _directory(root, settings)
-    paths = sorted((directory / "pilot").rglob("pilot_benchmark.json"))
-    if not paths:
-        raise AdmissionError("Native agent pilot benchmarks are pending")
-    records, jobs = [], []
-    for path in paths:
-        record = read_json(path)
-        jobs.append(_proof(record, config, identity, native, require_cuda=True))
-        positive(record["steps_per_second"], "GPU environment throughput")
-        positive(record["working_bytes"], "checkpoint/output bytes")
-        records.append(record)
-    expected = {(task, architecture) for task, architecture, _, _ in _cells(settings)}
-    covered = {(rec["task"], rec["architecture"]) for rec in records}
-    if not expected.issubset(covered):
-        raise AdmissionError(f"Native GPU timing coverage is pending for architecture/task cells {sorted(expected-covered)}")
-    throughput = min(rec["steps_per_second"] for rec in records)
-    train_seconds = safety * settings["total_steps"] / throughput
+    spec = benchmark_specification(config)
+    cells = benchmark_cells(config)
+    records, jobs, paths = [], [], []
+    for task, architecture, seeds in cells:
+        for seed in seeds:
+            path = directory / "benchmark-training" / f"{task}_{architecture}_{seed}" / "training_benchmark.json"
+            if not path.is_file():
+                raise AdmissionError(f"Native GPU timing coverage is pending for {task}/{architecture}/seed{seed}")
+            try:
+                record = _benchmark_checked(config,path,"training")
+            except RuntimeError as error:
+                raise AdmissionError(str(error)) from error
+            if (record.get("task"),record.get("architecture"),record.get("seed")) != (task,architecture,seed):
+                raise AdmissionError("Native training benchmark cell is missing or duplicated")
+            job = _proof(record,config,identity,native,require_cuda=True)
+            if record.get("allocated_cpus") != job["cpus"] or record.get("training_steps") != spec["training_steps"] or record.get("full_primary_algorithm") is not True or record.get("software_qualified") is not True:
+                raise AdmissionError("Training timing is not a completed source-matched primary PPO algorithm measurement")
+            for key in ["steps_per_second","seconds","training_seconds","direction_selection_seconds","working_bytes","working_files"]:
+                positive(record[key],f"agent {key}")
+            records.append(record);jobs.append(job);paths.append(path)
+    # Account for all overhead in each actual allocation without treating both
+    # seeds in that allocation as if each occupied its entire walltime.
+    inflation = {}
+    for job_id in {job["job_id"] for job in jobs}:
+        measured = sum(rec["seconds"]+rec["direction_selection_seconds"] for rec in records if str(rec["slurm_job_id"])==job_id)
+        inflation[job_id] = max(1.,native[job_id]["elapsed_seconds"]/measured)
+    cell_training, cell_selection = {}, {}
+    for record in records:
+        key = record["task"],record["architecture"]
+        scale = inflation[str(record["slurm_job_id"])]
+        elapsed = max(record["seconds"],record["training_seconds"])*scale
+        cell_training[key] = max(cell_training.get(key,0.),safety*settings["total_steps"]*elapsed/record["training_steps"])
+        cell_selection[key] = max(cell_selection.get(key,0.),safety*record["direction_selection_seconds"]*scale)
     cpus = max(job["cpus"] for job in jobs)
     rss = max(job["peak_rss_bytes"] for job in jobs)
     development_fits = len(_cells(settings, development=True))
     final_fits = len(_cells(settings))
-    all_training_hours = train_seconds * (development_fits + final_fits) / 3600
-    count = development_fits if phase == "agents-development" else final_fits
-    parameters = {"agent-development" if phase == "agents-development" else "agent-final": _parameters(train_seconds * (len(settings["lr_grid"]) if phase == "agents-development" else 1), rss, cpus, gpu=True)}
-    cpu_hours, gpu_hours = count * train_seconds * cpus / 3600, count * train_seconds / 3600
+    eligible_arch = settings.get("transfer_training_architectures",settings.get("architectures",["rnn","gru"])[:2])
+    eligible_tasks = settings.get("transfer_training_tasks",settings.get("tasks",settings.get("envs",["foraging","corridor"]))[:2])
+    def training_cost(development):
+        return sum(cell_training[(task,arch)]+(cell_selection[(task,arch)] if development and arch in eligible_arch and task in eligible_tasks else 0.)
+                   for task,arch,_,_ in _cells(settings,development=development))
+    development_seconds, final_seconds = training_cost(True),training_cost(False)
+    seconds = development_seconds if phase=="agents-development" else final_seconds
+    remaining_seconds = development_seconds+final_seconds if phase=="agents-development" else final_seconds
+    count = development_fits if phase=="agents-development" else final_fits
+    maximum = max(cell_training[key]+(cell_selection[key] if key[1] in eligible_arch and key[0] in eligible_tasks else 0.) for key in cell_training) * len(settings["lr_grid"]) if phase=="agents-development" else max(cell_training.values())
+    parameters = {"agent-development" if phase=="agents-development" else "agent-final":_parameters(maximum,rss,cpus,gpu=True)}
+    cpu_hours, gpu_hours = seconds*cpus/3600,seconds/3600
+    evaluation_bytes,evaluation_files = 0,0
     if phase == "agents-final":
         frozen = directory / "frozen_protocol.json"
-        if not frozen.is_file() or read_json(frozen).get("full_config_sha256") != canonical_hash(config):
+        if not frozen.is_file() or read_json(frozen).get("full_config_sha256") != canonical_hash(config) or read_json(frozen).get("implementation_sha256") != _implementation_sha256():
             raise AdmissionError("Complete development protocol freeze is pending")
+        protocol = read_json(frozen)
+        directions = {f"{mechanism}:{rank}" for mechanism in MECHANISMS for rank in spec["ranks"] if mechanism!="motor_gain" or rank==1}
+        if (protocol.get("config_sha256")!=_digest(settings) or protocol.get("H4_inference_specification")!=h4_specification(config)
+                or protocol.get("learning_rate") not in settings["lr_grid"] or set(protocol.get("directions",{}))!=directions
+                or protocol.get("development_seeds")!=list(settings.get("development_seeds",range(100,105)))
+                or protocol.get("final_seeds")!=list(settings.get("final_seeds",range(1000,1020)))):
+            raise AdmissionError("Frozen computational protocol is incomplete or mismatched")
+        selected_weights = []
+        for task,architecture,seed,rate in _cells(settings,development=True):
+            path = directory/"development"/_cell_name(task,architecture,seed,rate)/"summary.json"
+            if not path.is_file():
+                raise AdmissionError("Frozen protocol lacks a complete development seed/rate roster")
+            summary = read_json(path)
+            checkpoint = path.parent/"checkpoint.pt"
+            if (summary.get("config_sha256")!=_digest(settings) or summary.get("implementation_sha256")!=_implementation_sha256()
+                    or summary.get("complete_training_budget") is not True or summary.get("training_steps")!=settings["total_steps"]
+                    or (summary.get("task"),summary.get("architecture"),summary.get("seed"),summary.get("learning_rate"))!=(task,architecture,seed,rate)
+                    or not checkpoint.is_file() or summary.get("checkpoint_sha256")!=digest(checkpoint)):
+                raise AdmissionError("Frozen development evidence is incomplete or changed")
+            if architecture in eligible_arch and task in eligible_tasks and rate==protocol["learning_rate"]:
+                selected_weights.append(summary["weight_sha256"])
+            paths.extend([path,checkpoint])
+        if protocol.get("source_development_weights")!=selected_weights:
+            raise AdmissionError("Frozen perturbations/LR refer to other development policy weights")
         paths.append(frozen)
         evaluation_path = root / "state" / "agent-cpu-evaluation-benchmark.json"
         if not evaluation_path.is_file():
             raise AdmissionError("Native CPU perturbation/probe evaluation benchmark is pending; GPU evaluation timings cannot replace it")
         evaluation = read_json(evaluation_path)
-        evaluation_job = _proof(evaluation, config, identity, native)
-        if evaluation.get("evaluation_device") != "cpu" or evaluation_job["gpus"] != 0 or evaluation.get("complete_mechanism_grid") is not True:
-            raise AdmissionError("Evaluation benchmark must execute the complete perturbation/probe grid on CPU")
-        eval_seconds = max(positive(evaluation["evaluation_seconds"], "CPU evaluation time"), evaluation_job["elapsed_seconds"]) * settings["evaluation_episodes"] / positive(evaluation["evaluation_episodes"], "benchmark evaluation episodes") * safety
-        cpu_hours += final_fits * eval_seconds * evaluation_job["cpus"] / 3600
-        parameters["agent-evaluation"] = _parameters(eval_seconds, evaluation_job["peak_rss_bytes"], evaluation_job["cpus"], concurrency=max(1, config["resources"]["cpu_ceiling"] // evaluation_job["cpus"]))
+        if (evaluation.get("full_config_sha256")!=canonical_hash(config) or evaluation.get("source_sha256")!=identity
+                or evaluation.get("benchmark_specification")!=spec or evaluation.get("evaluation_device")!="cpu"
+                or evaluation.get("complete_mechanism_grid") is not True or evaluation.get("complete_architecture_task_coverage") is not True):
+            raise AdmissionError("CPU aggregate belongs to another release or lacks complete configured coverage")
+        expected = {(task,arch,seed) for task,arch,seeds in cells for seed in seeds}
+        roster = evaluation.get("records",[])
+        if len(roster)!=len(expected) or {(r["task"],r["architecture"],r["seed"]) for r in roster}!=expected:
+            raise AdmissionError("CPU aggregate cell/seed roster is incomplete or duplicated")
+        evaluation_records,evaluation_jobs = [],[]
+        for entry in roster:
+            path = Path(entry["path"])
+            if not path.is_file() or entry.get("sha256")!=digest(path) or evaluation.get("source_result_hashes",{}).get(str(path.resolve()))!=digest(path):
+                raise AdmissionError("CPU aggregate points to changed native evaluation evidence")
+            try:
+                record = _benchmark_checked(config,path,"cpu-evaluation")
+                grid = _validate_benchmark_grid(config,path.parent,record)
+            except RuntimeError as error:
+                raise AdmissionError(str(error)) from error
+            if (record.get("task"),record.get("architecture"),record.get("seed"))!=(entry["task"],entry["architecture"],entry["seed"]) or not grid["complete_mechanism_grid"]:
+                raise AdmissionError("CPU evaluation native cell differs from its roster")
+            job = _proof(record,config,identity,native)
+            if job["gpus"]!=0 or record.get("evaluation_device")!="cpu" or record.get("allocated_cpus")!=job["cpus"] or record.get("calibration_episodes")!=spec["calibration_episodes"] or record.get("kl_bisections")!=spec["kl_bisections"]:
+                raise AdmissionError("Evaluation cost must use native CPU allocation and complete configured calibration")
+            positive(record["evaluation_seconds"],"CPU evaluation runtime")
+            positive(record["working_bytes"],"CPU evaluation bytes");positive(record["working_files"],"CPU evaluation files")
+            evaluation_records.append(record);evaluation_jobs.append(job);paths.append(path)
+        eval_inflation = {}
+        for job_id in {job["job_id"] for job in evaluation_jobs}:
+            measured = sum(rec["evaluation_seconds"] for rec in evaluation_records if str(rec["slurm_job_id"])==job_id)
+            eval_inflation[job_id] = max(1.,native[job_id]["elapsed_seconds"]/measured)
+        ratio = int(settings["evaluation_episodes"])/spec["evaluation_episodes"]
+        costs = {}
+        for record in evaluation_records:
+            key = record["task"],record["architecture"]
+            costs[key] = max(costs.get(key,0.),safety*record["evaluation_seconds"]*eval_inflation[str(record["slurm_job_id"]) ]*ratio)
+        evaluation_cpus = max(job["cpus"] for job in evaluation_jobs)
+        cpu_hours += sum(costs[(task,arch)]*evaluation_cpus/3600 for task,arch,_,_ in _cells(settings))
+        # Calibration already measures batches of32 by default. The final batch
+        # increase is bounded conservatively against that observed peak RSS.
+        memory_ratio = max(int(settings["evaluation_episodes"]),spec["calibration_episodes"])/max(spec["evaluation_episodes"],spec["calibration_episodes"])
+        evaluation_rss = max(job["peak_rss_bytes"] for job in evaluation_jobs)*memory_ratio
+        parameters["agent-evaluation"] = _parameters(max(costs.values()),evaluation_rss,evaluation_cpus,concurrency=max(1,config["resources"]["cpu_ceiling"]//evaluation_cpus))
+        evaluation_bytes = math.ceil(safety*final_fits*max(rec["working_bytes"] for rec in evaluation_records)*ratio)
+        evaluation_files = final_fits*max(int(rec["working_files"]) for rec in evaluation_records)
         paths.append(evaluation_path)
     working_bytes = max(rec["working_bytes"] for rec in records)
-    if any("working_files" not in rec for rec in records):
-        raise AdmissionError("Native agent working-file count is pending")
-    return {"cpu_hours": cpu_hours, "gpu_hours": gpu_hours, "all_remaining_training_gpu_hours": all_training_hours, "additional_bytes": math.ceil(safety * count * working_bytes), "additional_files": count * max(rec["working_files"] for rec in records), "parameters": parameters, "workload": {"development_training_fits": development_fits, "final_training_fits": final_fits, "cpu_evaluation_policies": final_fits, "configured_architecture_task_cells": len(expected)}, "inputs": paths}
+    return {"cpu_hours":cpu_hours,"gpu_hours":gpu_hours,"all_remaining_training_gpu_hours":remaining_seconds/3600,
+            "additional_bytes":math.ceil(safety*count*working_bytes)+evaluation_bytes,
+            "additional_files":count*max(int(rec["working_files"]) for rec in records)+evaluation_files,"parameters":parameters,
+            "workload":{"development_training_fits":development_fits,"final_training_fits":final_fits,
+                        "cpu_evaluation_policies":final_fits,"configured_architecture_task_cells":len(cells),
+                        "timing_policies":len(records),"training_seconds_by_cell":{f"{t}/{a}":v for (t,a),v in cell_training.items()},
+                        "direction_selection_measured":True,"competence_is_separate_qualification":True,
+                        "benchmark_competence_qualified_policies":sum(rec["policy_competence_qualified"] is True for rec in records),
+                        "forecast_rule":"worst of both fixed benchmark seeds within each cell; all native allocation overhead; safety factor; full evaluation/calibration grid scaled conservatively"},"inputs":paths}
 
 
 def _work_units(config, root, native, identity, safety, phase):

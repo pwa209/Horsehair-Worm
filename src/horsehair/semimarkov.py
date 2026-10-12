@@ -542,6 +542,7 @@ def simulate(model: MovementModel, template: Sequence, seed: int,
     initial_position = np.asarray(information.get("initial_position", np.zeros(model.dimension)), float)
     position = initial_position.copy()
     food_target = initial_position + template.food_vector[0]
+    food_axes = np.any(np.abs(template.food_vector) > 0, axis=0)
     with torch.no_grad():
         for t in range(len(y)):
             if t == 0 and not template.observed[0] and information.get("initial_position_known"):
@@ -551,7 +552,7 @@ def simulate(model: MovementModel, template: Sequence, seed: int,
                 if coordinate in feature_names:
                     index = feature_names.index(coordinate)
                     result.covariates[t, index] = (position[j] - feature_means[index]) / feature_scales[index]
-            result.food_vector[t] = food_target - position
+            result.food_vector[t] = np.where(food_axes, food_target - position, 0.)
             if t:
                 cap = model.max_duration_bins
                 dwell = min(age, cap) if cap else age

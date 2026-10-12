@@ -28,3 +28,36 @@ def test_receipts_do_not_recompute_or_silently_change_config(tmp_path):
         with stage_receipt(tmp_path, {'seed':2}, 'fit'):
             pass
 
+def test_atomic_receipt_retries_only_prepared_windows_replacement(tmp_path, monkeypatch):
+    from horsehair import core
+    path = tmp_path/'receipt.json'
+    core.atomic_json(path, {'state':'submitting'})
+    original = core.os.replace
+    calls=[]
+    def replace(source, destination):
+        calls.append((source,destination))
+        if len(calls)==1:
+            raise PermissionError('temporary Windows reader')
+        return original(source,destination)
+    monkeypatch.setattr(core.sys,'platform','win32')
+    monkeypatch.setattr(core.os,'replace',replace)
+    core.atomic_json(path, {'state':'submitted','job_id':'123'})
+    assert core.read_json(path)=={'state':'submitted','job_id':'123'}
+    assert len(calls)==2 and calls[0]==calls[1]
+
+
+def test_atomic_receipt_keeps_old_and_prepared_files_after_persistent_denial(tmp_path, monkeypatch):
+    from horsehair import core
+    import pytest
+    path = tmp_path/'receipt.json'
+    core.atomic_json(path, {'state':'submitting'})
+    monkeypatch.setattr(core.sys,'platform','win32')
+    clock=iter([0.,3.])
+    monkeypatch.setattr(core.time,'monotonic',lambda:next(clock))
+    def denied(*args):
+        raise PermissionError('persistent reader or ACL')
+    monkeypatch.setattr(core.os,'replace',denied)
+    with pytest.raises(PermissionError):
+        core.atomic_json(path, {'state':'submitted','job_id':'123'})
+    assert core.read_json(path)=={'state':'submitting'}
+    assert core.read_json(path.with_name('receipt.json.partial'))=={'state':'submitted','job_id':'123'}

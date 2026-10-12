@@ -33,11 +33,74 @@ def atomic_json(path: Path, value: Any) -> None:
         f.write('\n')
         f.flush()
         os.fsync(f.fileno())
-    os.replace(temp, path)
+    deadline = time.monotonic() + 2
+    while True:
+        try:
+            os.replace(temp, path)
+            break
+        except PermissionError:
+            # Windows readers/scanners can temporarily hold a file without
+            # delete sharing. Retry this same prepared receipt, never the action
+            # it records. Genuine access failures preserve both files and fail.
+            if sys.platform != 'win32' or time.monotonic() >= deadline:
+                raise
+            time.sleep(.05)
 
 
 def read_json(path: Path) -> Any:
     return json.loads(Path(path).read_text(encoding='utf8'))
+
+
+def native_job_id() -> str | None:
+    """Use the same array-task identity as native Slurm accounting receipts."""
+    parent, index = os.environ.get('SLURM_ARRAY_JOB_ID'), os.environ.get('SLURM_ARRAY_TASK_ID')
+    if parent is not None and index is not None:
+        if not parent.isdigit() or not index.isdigit():
+            raise ValueError('Invalid native Slurm array identity')
+        return parent + '_' + index
+    value = os.environ.get('SLURM_JOB_ID')
+    if value is not None and not value.isdigit():
+        raise ValueError('Invalid native Slurm job identity')
+    return value
+
+
+@contextmanager
+def exclusive_file_lock(path: Path, timeout: float = 30):
+    """Lock a permanent inode; process death releases the kernel lock.
+
+    The guard file must never be unlinked or replaced. The scientific receipt
+    remains a separate atomically replaced file protected by this guard.
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('a+b') as handle:
+        if os.name == 'nt':
+            import msvcrt
+            handle.seek(0, os.SEEK_END)
+            if handle.tell() == 0:
+                handle.write(b'0');handle.flush()
+            def acquire():
+                handle.seek(0);msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+            def release():
+                handle.seek(0);msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+            def acquire():
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            def release():
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        deadline = time.monotonic() + timeout
+        while True:
+            try:
+                acquire();break
+            except (BlockingIOError, PermissionError):
+                if time.monotonic() >= deadline:
+                    raise TimeoutError('Live process holds the receipt guard; preserve its owner')
+                time.sleep(min(.2, max(0, deadline-time.monotonic())))
+        try:
+            yield
+        finally:
+            release()
 
 
 def source_identity(root: Path) -> dict:

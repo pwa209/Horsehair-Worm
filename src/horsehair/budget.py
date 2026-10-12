@@ -8,7 +8,7 @@ import subprocess
 from datetime import datetime,timezone
 from contextlib import contextmanager
 from pathlib import Path
-from .core import atomic_json, read_json,digest
+from .core import atomic_json, read_json,digest,exclusive_file_lock
 
 
 def storage_snapshot(root,runner=subprocess.run):
@@ -80,9 +80,7 @@ def native_accounting(root, job_ids, runner=subprocess.run):
                          'cpu_core_hours':hours*int(cpus),'gpu_hours':hours*gpu,'basis':'sacct final allocated wall time'}
         if int(seconds)>0 and int(cpus)>0:rows.append('|'.join([ident,state,seconds,cpus,peaks.get(ident,''),tres]))
     path=Path(root)/'state/resource-budget.json';path.parent.mkdir(parents=True,exist_ok=True)
-    lock=path.with_suffix('.lock')
-    fd=os.open(lock,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600);os.close(fd)
-    try:
+    with exclusive_file_lock(path.with_suffix('.mutex')):
         record=read_json(path) if path.exists() else {'spent_cpu_core_hours':0.,'spent_gpu_hours':0.,'leases':{}}
         native=record.setdefault('native_jobs',{})
         for ident,item in observed.items():
@@ -104,7 +102,6 @@ def native_accounting(root, job_ids, runner=subprocess.run):
         accounting.write_text('JobIDRaw|State|ElapsedRaw|AllocCPUS|MaxRSS|AllocTRES\n'+'\n'.join(old_rows.values())+'\n',encoding='utf8')
         return {'reconciled':observed,'pending_native_records':[i for i in ids if i not in observed],
                 'spent_cpu_core_hours':record['spent_cpu_core_hours'],'spent_gpu_hours':record['spent_gpu_hours']}
-    finally:lock.unlink(missing_ok=True)
 
 
 @contextmanager
@@ -112,23 +109,11 @@ def resource_lease(root, config, *, cpus, gpus, max_hours, job_id):
     root=Path(root)
     path=root/'state/resource-budget.json'
     path.parent.mkdir(parents=True,exist_ok=True)
-    lock=path.with_suffix('.lock')
     def update(callback):
-        deadline=time.monotonic()+30
-        while True:
-            try:
-                fd=os.open(lock,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
-                os.close(fd)
-                break
-            except FileExistsError:
-                if time.monotonic()>deadline:raise TimeoutError('Study resource ledger locked; inspect owner before recovery')
-                time.sleep(.2)
-        try:
+        with exclusive_file_lock(path.with_suffix('.mutex')):
             record=read_json(path) if path.exists() else {'spent_cpu_core_hours':0.,'spent_gpu_hours':0.,'leases':{}}
             callback(record)
             atomic_json(path,record)
-        finally:
-            lock.unlink(missing_ok=True)
     start=time.time()
     def reserve(r):
         if job_id in r['leases']:raise ValueError('Existing resource lease; reconcile native accounting without replaying')

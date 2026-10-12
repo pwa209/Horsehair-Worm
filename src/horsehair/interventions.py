@@ -394,6 +394,10 @@ def h2_shared_control_bootstrap(predictions: pd.DataFrame, animals: pd.DataFrame
     groups = table.groupby(keys).model.agg(set)
     if any(models != {candidate, reference} for models in groups):
         raise ValueError("H2 reference must predict precisely the same withheld components/animals")
+    for column in ("treatment_condition", "control_condition", "family", "calibration_treatment",
+                   "calibration_controls", "evaluation_treatment", "evaluation_controls"):
+        if column in table and (table.groupby(keys)[column].nunique(dropna=False) != 1).any():
+            raise ValueError("H2 candidate/reference used different biological contrasts or withheld animals")
     for component in table.component.unique():
         if component not in scales or not np.isfinite(scales[component]) or scales[component] <= 0:
             raise ValueError("H2 component scales must be frozen from WP1 development data")
@@ -521,6 +525,7 @@ def write_h2(root: Path, config: dict[str, Any], output: Path | None = None) -> 
         pvalue=max(gain["pvalue"], flexible["pvalue"]), unrestricted_comparison=flexible,
         config_sha256=canonical_hash(config), source_sha256=source_identity(Path(__file__).resolve().parents[2])["sha256"],
         data_manifest_sha256=digest(manifest), relative_prediction_improvement=gain["estimate"],
+        intervention_families_evaluated=gain["families"],
         family_results=family_results, family_generalization_passed=bool(generalizes),
         shared_control_covariance_preserved=True, calibration_response_validated=calibration_validated,
         operational_gates_passed=bool(ten_percent and generalizes and calibration_validated),

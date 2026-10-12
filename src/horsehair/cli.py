@@ -7,7 +7,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from .core import atomic_json, canonical_hash, environment_record, read_json, source_identity, validate_config,digest
+from .core import atomic_json, canonical_hash, environment_record, read_json, source_identity, validate_config,digest,native_job_id
 
 
 def qualification(config,root,gpu=False):
@@ -78,7 +78,23 @@ def source_audit(config,root):
         if not path.exists():raise FileNotFoundError(f'Mandatory source missing: {path}')
         if path.suffix.lower()=='.zip':
             destination=root/'data/extracted'/item['source_id']
-            extracted.extend(acquire.safe_extract(path,destination,max_unpacked_bytes=400_000_000_000))
+            # Reuse only byte/CRC-validated members of the same checksum-pinned
+            # original ZIP. This preserves the earlier complete extraction.
+            import zipfile,zlib
+            members=[];cached=True
+            with zipfile.ZipFile(path) as archive:
+                for member in archive.infolist():
+                    if member.is_dir():continue
+                    target=acquire.safe_destination(destination,member.filename)
+                    if not target.is_file() or target.stat().st_size!=member.file_size:
+                        cached=False;break
+                    crc=0
+                    with target.open('rb') as handle:
+                        for chunk in iter(lambda:handle.read(8*1024**2),b''):crc=zlib.crc32(chunk,crc)
+                    if crc & 0xffffffff != member.CRC:
+                        raise ValueError('Previously extracted source member changed; preserve it for reviewed recovery')
+                    members.append(str(target))
+            extracted.extend(members if cached else acquire.safe_extract(path,destination,max_unpacked_bytes=400_000_000_000))
     inventory=acquire.inventory(root/'data/extracted',root/'manifests/source_inventory.json')
     from . import behaviour
     if hasattr(behaviour,'discover_fly_sources'):
@@ -89,9 +105,13 @@ def source_audit(config,root):
             active=copy.deepcopy(config)
             active['behaviour']['fly_sources']=discovered['fly_sources']
             behaviour.run(active,root,'ingest')
+    formal=behaviour.formal_behavior_readiness(config,root)
     report={'status':'source_inventory_complete','source_manifest_hash':manifest['manifest_hash'],
             'extracted_files':len(extracted),'inventoried_files':len(inventory['files']),
-            'scientific_fit_ready':(root/'data/fly_observations.parquet').exists(),'evidence_class':'source audit'}
+            'ingestion_ready':(root/'data/fly_observations.parquet').exists(),
+            'scientific_fit_ready':formal['ready'],'formal_exposure_readiness':formal,
+            'source_sha256':source_identity(Path(__file__).resolve().parents[2])['sha256'],
+            'config_sha256':canonical_hash(config),'evidence_class':'source audit'}
     atomic_json(root/'state/source-audit.json',report)
     from .interventions import intervention_readiness
     report['interventions']=intervention_readiness(config,root)
@@ -121,8 +141,14 @@ def wait_transfer(config,root,group):
     while time.monotonic()<deadline:
         if path.exists():
             record=read_json(path)
-            if record.get('config_sha256')!=canonical_hash(config):raise ValueError('Transfer configuration mismatch')
-            if record['status']=='complete':return record
+            if record['status']=='complete':
+                # Operational runtime-path amendments do not change deposited
+                # raw bytes. Consume an older transfer only against the exact
+                # current frozen manifest, then independently verify its files.
+                manifest=Path(root)/'manifests'/('tool_runtime_manifest.json' if group=='tools' else 'source_manifest.json')
+                if record.get('source_manifest_sha256')!=canonical_hash(read_json(manifest)):
+                    raise ValueError('Transfer belongs to a different frozen source manifest')
+                return record
             if record['status']=='failed':raise RuntimeError('Source transfer failed; inspect preserved receipt')
         time.sleep(30)
     raise TimeoutError('Finite transfer wait expired; preserve ledger and transfer checkpoint')
@@ -191,7 +217,7 @@ def main(argv=None):
     sub.add_parser('r-qualify')
     m=sub.add_parser('molecular');m.add_argument('--stage',required=True,choices=['runtime','prepare-rna-full','rna-run','ant','mantis']);m.add_argument('--task-index',type=int)
     sub.add_parser('agent-analysis')
-    pipeline=sub.add_parser('molecular-pipeline');pipeline.add_argument('--stage',required=True,choices=['prepare','orthology','freeze','predict','mantis-orfs','benchmark-primary'])
+    pipeline=sub.add_parser('molecular-pipeline');pipeline.add_argument('--stage',required=True,choices=['prepare','orthology','freeze','predict','mantis-orfs','mantis-orthology','benchmark-primary','benchmark-transfer'])
     accounting=sub.add_parser('accounting');accounting.add_argument('--job-ids',nargs='+',required=True)
     for name in ['behaviour','interventions']:
         s=sub.add_parser(name);s.add_argument('--stage',required=True)
@@ -199,14 +225,16 @@ def main(argv=None):
     planner=sub.add_parser('slurm-plan');planner.add_argument('--release',type=Path,required=True);planner.add_argument('--output',type=Path,required=True);planner.add_argument('--phase',default='initial')
     submit=sub.add_parser('submit');submit.add_argument('--plan',type=Path,required=True);submit.add_argument('--ledger',type=Path,required=True);submit.add_argument('--environment-job')
     sub.add_parser('report')
+    sub.add_parser('archive')
+    controller=sub.add_parser('pipeline');controller.add_argument('--segment',type=int,default=0);controller.add_argument('--max-seconds',type=float);controller.add_argument('--interval',type=int,default=60)
     a=p.parse_args(argv)
     config=read_json(a.config)
     validate_config(config)
     root=a.root or Path(config['paths']['root'])
-    numerical={'qualify','source-audit','assess-pilot','behaviour','interventions','agents','report','wait-transfer','verify-sources','rna-pilot','r-qualify','molecular','agent-analysis','molecular-pipeline'}
+    numerical={'qualify','source-audit','assess-pilot','behaviour','interventions','agents','report','archive','wait-transfer','verify-sources','rna-pilot','r-qualify','molecular','agent-analysis','molecular-pipeline','pipeline'}
     if os.environ.get('SLURM_JOB_ID') and a.command in numerical:
         from .budget import resource_lease
-        job_id=os.environ['SLURM_JOB_ID']
+        job_id=native_job_id()
         with resource_lease(root,config,cpus=int(os.environ.get('SLURM_CPUS_PER_TASK','1')),
                             gpus=int(os.environ.get('HHW_GPU_COUNT','0')),
                             max_hours=float(os.environ.get('HHW_MAX_HOURS','1')),job_id=job_id):
@@ -249,11 +277,14 @@ def execute(a,config,root):
         result=record
     elif a.command=='molecular':
         from . import molecular
-        if a.stage=='runtime':result=molecular.install_tool_runtime(root,Path(root)/'data/tool_runtime',qualify=True)
+        if a.stage=='runtime':
+            from .molecular_pipeline import runtime_directory
+            result=molecular.install_tool_runtime(root,runtime_directory(config,root),qualify=True)
         elif a.stage=='prepare-rna-full':result=molecular.prepare_full_rna(config,root)
         elif a.stage=='rna-run':
             if a.task_index is None:raise ValueError('Fixed biological task index required')
             result=molecular.run_rna_task(Path(root)/'data/rna_full_plan/rna_plan.json',a.task_index)
+            result.update(config_sha256=canonical_hash(config),full_config_sha256=canonical_hash(config))
             atomic_json(Path(root)/'state'/f'rna-full-{a.task_index}.json',result)
         elif a.stage=='ant':result=molecular.run_ant(root)
         else:result=molecular.run_mantis(root)
@@ -273,12 +304,18 @@ def execute(a,config,root):
     elif a.command=='agents':
         from .agents import run
         result=run(config,root,mode=a.mode,task_index=a.task_index)
+    elif a.command=='pipeline':
+        from .pipeline import run
+        result=run(config,root,segment=a.segment,max_seconds=a.max_seconds,interval=a.interval)
     elif a.command=='slurm-plan':
         from .slurm import plan
         result=plan(config,a.release,a.output,a.phase)
     elif a.command=='submit':
         from .slurm import submit
         result=submit(a.plan,a.ledger,a.environment_job)
+    elif a.command=='archive':
+        from .archive import run
+        result=run(config,root)
     else:
         from .report import build_report
         result=build_report(config,root)

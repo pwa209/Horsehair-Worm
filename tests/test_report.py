@@ -36,6 +36,12 @@ def biological_result(root,config,claim,estimate=.3,pvalue=.001):
               "source_result_paths":[str(source)],"source_result_hashes":{str(source):digest(source)},
               "parameter_recovery_passed":True,"parameter_identifiability_passed":True,"multivariate_diagnostic_improvement":.1,
               "family_generalization_passed":True,"shared_control_covariance_preserved":True,"intervention_families_evaluated":3}
+    if claim == "H2":
+        result.update(maximum_derivative_relative_stability_error=.02,
+                      bootstrap_outside_validated_response_radius_fraction=.01,
+                      unrestricted_comparison={"estimate":estimate,"ci95":[estimate-.05,estimate+.05],
+                        "maximum_derivative_relative_stability_error":.02,
+                        "bootstrap_outside_validated_response_radius_fraction":.01})
     atomic_json(root/f"results/inference/{claim}.json",result)
     return result
 
@@ -116,6 +122,30 @@ def test_four_valid_negative_analyses_do_not_mean_publication_ready(tmp_path):
     synthesis = (tmp_path/"results/figure_inputs/06.json").read_text()
     assert "mixed_study_evidence" in synthesis and "without pooling" in synthesis
     assert result["figures"][-1]["pages"]==1
+
+
+def test_missing_identifiability_is_pending_even_when_primary_effect_is_negative(tmp_path):
+    config = config_fixture()
+    result = biological_result(tmp_path,config,"H1",estimate=-.2,pvalue=.8)
+    result.update(parameter_identifiability_passed=False, parameter_identifiability_status="pending: recovery coverage unavailable")
+    atomic_json(tmp_path/"results/inference/H1.json",result)
+    biological_result(tmp_path,config,"H2",estimate=-.2,pvalue=.8)
+    biological_result(tmp_path,config,"H3",estimate=-.2,pvalue=.8)
+    observed = report.build_report(config,tmp_path)
+    assert observed["claims"][0]["status"] == "required_diagnostics_pending"
+    assert not observed["analysis_complete"]
+
+
+def test_h2_cannot_pass_without_unrestricted_or_valid_calibration_uncertainty(tmp_path):
+    config = config_fixture()
+    value = biological_result(tmp_path,config,"H2",estimate=.3,pvalue=.001)
+    assert report._operational_gates(value,"H2",config)["passed"]
+    value["unrestricted_comparison"]["estimate"] = .05
+    assert not report._operational_gates(value,"H2",config)["passed"]
+    value["unrestricted_comparison"]["estimate"] = .3
+    value["bootstrap_outside_validated_response_radius_fraction"] = .5
+    gate = report._operational_gates(value,"H2",config)
+    assert not gate["passed"] and "gain_nonlocal_calibration_uncertainty" in gate["missing"]
 
 
 def test_supported_H4_is_computational_with_a_separate_pending_bridge(tmp_path):

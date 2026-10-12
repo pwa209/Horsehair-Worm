@@ -10,12 +10,17 @@ from __future__ import annotations
 import argparse
 import csv
 import gzip
+import hashlib
 import io
 import json
 import math
+import os
+import posixpath
 import re
 import shlex
+import signal
 import subprocess
+import sys
 import time
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor
@@ -27,12 +32,25 @@ import pandas as pd
 from scipy.stats import norm, rankdata, spearmanr
 
 from .acquire import AcquisitionError, atomic_json, canonical_hash, ena_fastq_assets, fetch_ena_runs, file_hash, http_session, utc_now, validate_manifest
+from .core import native_job_id, source_identity
 
 BASELINE_COLUMNS = ["average_expression", "detection_rate", "protein_length", "orthology_confidence", "generic_infection_effect", "neuronal_circadian"]
 PHASE_CODES = {"10C": "attached", "25C": "detached", "wayup": "pre", "waydown": "newly_detached", "refuseAttach": "refused_attach", "refuseDetach": "refused_detach"}
 TOOL_RUNTIME = {
     "orthofinder": {"version": "2.5.5", "commit": "c85ab1df311fb4fe8d11c613382ad8914de8d896", "url": "https://github.com/davidemms/OrthoFinder/releases/download/2.5.5/OrthoFinder_source.tar.gz", "bytes": 15588113, "sha256": "43d034a66a13adba8872a0d4a76e32c25305a7fae638754adb61c37a3f957bd9", "directory": "OrthoFinder_source", "filename": "OrthoFinder_source_2.5.5.tar.gz"},
     "transdecoder": {"version": "5.7.1", "commit": "5791fde6a37903f803cc4f51f0882eca200ce437", "url": "https://codeload.github.com/TransDecoder/TransDecoder/tar.gz/5791fde6a37903f803cc4f51f0882eca200ce437", "bytes": 15752765, "sha256": "3f9bf74dd25e7573ab6cb072e399ab124c4d7e7929a8467c411e553a8a5a9964", "directory": "TransDecoder-5791fde6a37903f803cc4f51f0882eca200ce437", "filename": "TransDecoder_5.7.1.tar.gz"},
+}
+SITE_PERL = "/cvmfs/soft.computecanada.ca/easybuild/software/2020/Core/perl/5.30.2/bin/perl"
+RUNTIME_QUALIFICATION_RECIPE = {
+    "version": 2, "orthofinder_fixture_proteins": 8,
+    "orthofinder_fixture_species": ["qualification_a", "qualification_b"],
+    "orthofinder_fixture_definition": "Identical copies of eight distinct 80-400-aa proteins of different lengths from the first pinned official ExampleData FASTA; software identity check, not a species experiment",
+    "orthofinder_seconds": 300, "transdecoder_longorfs_seconds": 300,
+    "transdecoder_predict_seconds": 300, "binary_seconds": 30,
+    "threads": 2, "transdecoder_fixture": "sample_data/simple_transcriptome_target/Trinity.fasta.gz",
+    "transdecoder_max_uncompressed_bytes": 10 * 1024**2,
+    "fastme_numeric_fixture": "Four utility-only labels, distances AB=CD=1 and all cross-pair distances=3; require the AB|CD split",
+    "biological_workload_measured": False,
 }
 
 
@@ -544,7 +562,7 @@ def run_rna_pilot(config: dict, root: str | Path, index: int | None = None, prep
     started = time.monotonic()
     subprocess.run(["bash", job["script"]], check=True)
     report = {"status": "pilot_processed", "biological_id": job["biological_id"], "run_ids": job["runs"], "preprocessing": job["preprocessing"], "elapsed_seconds": time.monotonic()-started, "working_bytes": sum(path.stat().st_size for path in directory.rglob("*") if path.is_file()), "qc": json.loads((directory / "qc.json").read_text()), "source_manifest_hash": manifest["manifest_hash"], "scientific_evidence": "technical benchmark; no phase differential expression fitted"}
-    report.update(config_sha256=config_hash(config), source_sha256=source_identity(Path(__file__).resolve().parents[2])["sha256"], slurm_job_id=os.environ.get("SLURM_JOB_ID"), allocated_cpus=int(os.environ.get("SLURM_CPUS_PER_TASK", threads)), requested_memory_gb=config["resources"].get("rna_memory_gb"), read_count=int(pd.to_numeric(crosswalk.loc[crosswalk.biological_id == job["biological_id"], "read_count"], errors="raise").sum()), native_execution=bool(os.environ.get("SLURM_JOB_ID")))
+    report.update(config_sha256=config_hash(config), source_sha256=source_identity(Path(__file__).resolve().parents[2])["sha256"], slurm_job_id=native_job_id(), allocated_cpus=int(os.environ.get("SLURM_CPUS_PER_TASK", threads)), requested_memory_gb=config["resources"].get("rna_memory_gb"), read_count=int(pd.to_numeric(crosswalk.loc[crosswalk.biological_id == job["biological_id"], "read_count"], errors="raise").sum()), native_execution=native_job_id() is not None)
     report["working_files"] = sum(path.is_file() for path in directory.rglob("*"))
     atomic_json(root / "state" / f"rna-pilot-{index}.json", report)
     return report
@@ -568,7 +586,8 @@ def run_rna_task(plan_path: str | Path, index: int) -> dict:
     started = time.monotonic()
     subprocess.run(["bash", job["script"]], check=True)
     directory = Path(job["output"])
-    return {"status": "processed", "biological_id": job["biological_id"], "cohort": job["cohort"], "elapsed_seconds": time.monotonic()-started, "qc": json.loads((directory / "qc.json").read_text()), "plan_hash": canonical_hash(plan)}
+    from .core import source_identity
+    return {"status": "processed", "biological_id": job["biological_id"], "cohort": job["cohort"], "elapsed_seconds": time.monotonic()-started, "qc": json.loads((directory / "qc.json").read_text()), "plan_hash": canonical_hash(plan), "slurm_job_id": native_job_id(), "source_sha256": source_identity(Path(__file__).resolve().parents[2])["sha256"], "native_execution": native_job_id() is not None, "allocated_cpus": int(os.environ["SLURM_CPUS_PER_TASK"]) if os.environ.get("SLURM_CPUS_PER_TASK") else None, "working_bytes": sum(path.stat().st_size for path in directory.rglob("*") if path.is_file()), "working_files": sum(path.is_file() for path in directory.rglob("*"))}
 
 
 def run_ant(root: str | Path) -> dict:
@@ -1038,18 +1057,191 @@ def tool_runtime_manifest() -> dict:
     return manifest
 
 
-def install_tool_runtime(root: str | Path, destination: str | Path, *, qualify: bool = True) -> dict:
+def run_bounded_tool(command, log_path, *, env=None, cwd=None, timeout_seconds=300) -> dict:
+    """Stream an external utility's output and bound its entire process group."""
+    log_path = Path(log_path)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    started = time.monotonic()
+    status = "completed"
+    with log_path.open("xb") as log:
+        process = subprocess.Popen([str(value) for value in command], stdout=log,
+            stderr=subprocess.STDOUT, env=env, cwd=cwd, start_new_session=os.name == "posix")
+        try:
+            returncode = process.wait(timeout=timeout_seconds)
+        except subprocess.TimeoutExpired:
+            status = "timed_out"
+            if os.name == "posix":
+                os.killpg(process.pid, signal.SIGTERM)
+            else:
+                process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                if os.name == "posix":
+                    os.killpg(process.pid, signal.SIGKILL)
+                else:
+                    process.kill()
+                process.wait(timeout=5)
+            returncode = process.returncode
+    report = {"command": [str(value) for value in command], "status": status,
+        "returncode": returncode, "elapsed_seconds": time.monotonic()-started,
+        "timeout_seconds": timeout_seconds, "log_path": str(log_path.resolve()),
+        "log_sha256": file_hash(log_path)}
+    atomic_json(log_path.with_suffix(".receipt.json"), report)
+    if status != "completed" or returncode != 0:
+        raise MolecularError(f"External tool {status}, exit {returncode}; inspect {log_path}")
+    return report
+
+
+def qualification_proteomes(example, output) -> dict:
+    """A small identity fixture from the exact verified utility archive."""
+    example, output = Path(example), Path(output)
+    candidates = sorted(path for path in example.iterdir() if path.suffix in {".fa", ".faa", ".fasta"})
+    if not candidates:
+        raise MolecularError("Pinned OrthoFinder archive has no official example proteome")
+    source = candidates[0]
+    selected, sequences, lengths = [], set(), set()
+    for name, _, sequence in sorted(read_fasta(source)):
+        if 80 <= len(sequence) <= 400 and set(sequence).issubset(set("ACDEFGHIKLMNPQRSTVWY")) and sequence not in sequences and len(sequence) not in lengths:
+            selected.append((name, sequence)); sequences.add(sequence); lengths.add(len(sequence))
+        if len(selected) == RUNTIME_QUALIFICATION_RECIPE["orthofinder_fixture_proteins"]:
+            break
+    if len(selected) != RUNTIME_QUALIFICATION_RECIPE["orthofinder_fixture_proteins"]:
+        raise MolecularError("Official example lacks the required eight distinct bounded proteins")
+    output.mkdir(parents=True, exist_ok=False)
+    pairs = []
+    for species in RUNTIME_QUALIFICATION_RECIPE["orthofinder_fixture_species"]:
+        with (output / (species+".fa")).open("x", encoding="utf-8", newline="\n") as handle:
+            for index, (_, sequence) in enumerate(selected):
+                handle.write(f">{species}_p{index:03d}\n{sequence}\n")
+    for index, (source_id, sequence) in enumerate(selected):
+        pairs.append({"source_id": source_id, "sequence_sha256": hashlib.sha256(sequence.encode()).hexdigest(),
+            "pair": [f"{species}_p{index:03d}" for species in RUNTIME_QUALIFICATION_RECIPE["orthofinder_fixture_species"]]})
+    return {"source_path": str(source.resolve()), "source_sha256": file_hash(source),
+        "input_hashes": {str(path.resolve()): file_hash(path) for path in output.glob("*.fa")},
+        "expected_identical_pairs": pairs, "evidence_class": "software fixture; no biological species comparison"}
+
+
+def validate_qualification_orthogroups(path, fixture) -> dict:
+    frame = pd.read_csv(path, sep="\t", dtype=str).fillna("")
+    species = RUNTIME_QUALIFICATION_RECIPE["orthofinder_fixture_species"]
+    if not {"Orthogroup", *species}.issubset(frame):
+        raise MolecularError("Qualification lacks the actual two-species orthogroup table")
+    membership = {}
+    for row in frame.to_dict("records"):
+        for name in species:
+            for protein in filter(None, (value.strip() for value in row[name].split(","))):
+                if protein in membership:
+                    raise MolecularError("Qualification protein appears in multiple orthogroups")
+                membership[protein] = row["Orthogroup"]
+    expected = {protein for item in fixture["expected_identical_pairs"] for protein in item["pair"]}
+    if set(membership) != expected:
+        raise MolecularError("Qualification did not assign all and only the known fixture proteins")
+    for item in fixture["expected_identical_pairs"]:
+        if len({membership[protein] for protein in item["pair"]}) != 1:
+            raise MolecularError("An identical qualification protein pair did not share an orthogroup")
+    return {"validated_identical_pairs": len(fixture["expected_identical_pairs"]),
+        "shared_orthogroups": len(set(membership.values())), "orthogroups_path": str(Path(path).resolve()),
+        "orthogroups_sha256": file_hash(path), "biological_accuracy_claim": False}
+
+
+def validate_fastme_fixture(path) -> dict:
+    tree = Path(path).read_text().strip()
+    leaves = re.findall(r"[,(]\s*(qual_[abcd])\s*:", tree)
+    if len(leaves) != 4 or set(leaves) != {"qual_a", "qual_b", "qual_c", "qual_d"}:
+        raise MolecularError("FastME qualification lacks its four known utility fixture labels")
+    splits = [re.search(r"\(\s*"+first+r"\s*:[^,():;]+,\s*"+second+r"\s*:[^,():;]+\)", tree)
+        for first, second in [("qual_a", "qual_b"), ("qual_b", "qual_a"), ("qual_c", "qual_d"), ("qual_d", "qual_c")]]
+    if not any(splits):
+        raise MolecularError("FastME qualification did not recover the known AB|CD utility split")
+    return {"tree_path": str(Path(path).resolve()), "tree_sha256": file_hash(path),
+        "expected_split_recovered": True, "evidence_class": "synthetic numerical software fixture, not biological data"}
+
+
+def validate_tool_runtime(destination: str | Path) -> dict:
+    """Reuse only a completed, unchanged qualified runtime and its proof."""
+    destination = Path(destination)
+    receipt = destination / "runtime_qualification.json"
+    if not receipt.is_file():
+        raise MolecularError("Runtime destination is unqualified; preserve it and choose a new prospective directory")
+    report = json.loads(receipt.read_text())
+    if Path(report.get("bin", "")).resolve() != (destination / "bin").resolve():
+        raise MolecularError("Runtime receipt belongs to a different prospective directory")
+    if report.get("status") != "runtime_qualified" or report.get("recipe") != RUNTIME_QUALIFICATION_RECIPE or report.get("tools") != TOOL_RUNTIME:
+        raise MolecularError("Runtime qualification is incomplete or uses a different qualification recipe")
+    if report.get("qualification_hash") != canonical_hash({k: v for k, v in report.items() if k != "qualification_hash"}):
+        raise MolecularError("Runtime qualification receipt changed")
+    expected_archives = {item["sha256"]: item for item in TOOL_RUNTIME.values()}
+    archives = report.get("archives", [])
+    if len(archives) != len(expected_archives) or {item.get("sha256") for item in archives} != set(expected_archives):
+        raise MolecularError("Runtime receipt lacks the complete pinned source archive proof")
+    for archive in archives:
+        expected = expected_archives[archive["sha256"]]
+        path = Path(archive.get("path", ""))
+        if archive.get("provider_checksum") != "sha256:"+expected["sha256"] or archive.get("bytes") != expected["bytes"] or not path.is_file() or file_hash(path) != expected["sha256"]:
+            raise MolecularError("Pinned runtime source archive is missing or changed")
+    proof = report.get("runtime_file_hashes", {})
+    if any(not Path(path).resolve().is_relative_to(destination.resolve()) for path in proof):
+        raise MolecularError("Runtime file proof leaves its qualified directory")
+    if not proof or not all(Path(path).is_file() and file_hash(path) == digest for path, digest in proof.items()):
+        raise MolecularError("Qualified runtime, wrapper, fixture, or output is missing or changed")
+    for name in ["orthofinder", "TransDecoder.LongOrfs", "TransDecoder.Predict"]:
+        wrapper = (destination / "bin" / name).resolve()
+        if str(wrapper) not in proof or (os.name == "posix" and not os.access(wrapper, os.X_OK)):
+            raise MolecularError("Qualified runtime command wrapper is missing or not executable")
+    for interpreter in report.get("interpreters", {}).values():
+        if not Path(interpreter["path"]).is_file() or file_hash(interpreter["path"]) != interpreter["sha256"]:
+            raise MolecularError("Qualified runtime interpreter changed")
+    if set(report.get("interpreters", {})) != {"python", "perl"}:
+        raise MolecularError("Qualified runtime lacks exact Python and isolated Perl provenance")
+    if report.get("checks", {}).get("orthofinder_example", {}).get("validated_identical_pairs") != 8 or report.get("checks", {}).get("transdecoder_example", {}).get("peptides", 0) <= 0 or report.get("checks", {}).get("fastme_numerical", {}).get("expected_split_recovered") is not True:
+        raise MolecularError("Runtime receipt lacks actual orthogroup and peptide checks")
+    return report
+
+
+def restore_software_executable_modes(archive, destination):
+    """After safe extraction, preserve executable bits of internal-file aliases."""
+    import tarfile
+    from .acquire import safe_destination
+    with tarfile.open(archive, "r:gz") as handle:
+        index = {posixpath.normpath(member.name): member for member in handle.getmembers()}
+        for member in index.values():
+            if member.isdir():
+                continue
+            payload, seen = member, set()
+            while payload.issym() or payload.islnk():
+                if payload.name in seen:
+                    raise MolecularError("Cyclic software archive link")
+                seen.add(payload.name)
+                name = posixpath.normpath(posixpath.join(posixpath.dirname(payload.name), payload.linkname) if payload.issym() else payload.linkname)
+                safe_destination(destination, name)
+                if name not in index:
+                    raise MolecularError("Software archive link target is absent")
+                payload = index[name]
+            if not payload.isfile():
+                raise MolecularError("Software archive contains a non-file executable payload")
+            if payload.mode & 0o111:
+                safe_destination(destination, member.name).chmod(0o755)
+
+
+def install_tool_runtime(root: str | Path, destination: str | Path, *, qualify: bool = True, perl_binary: str | Path = SITE_PERL) -> dict:
     """Install from pretransferred verified archives; perform no network fetch.
 
     This job is numerical/software qualification and belongs in Slurm. The
     external tools are the explicit authorized analysis utilities, not commands
     copied from a dataset README. No downloaded installer is executed.
     """
-    import os
-    import tarfile
     from .acquire import safe_destination, safe_extract, verify_file
-    root, destination = Path(root), Path(destination)
+    root, destination = Path(root).resolve(), Path(destination).resolve()
+    if destination.exists() and any(destination.iterdir()):
+        return validate_tool_runtime(destination)
+    perl = Path(perl_binary)
+    if not perl.is_absolute() or not perl.is_file():
+        raise MolecularError("The verified isolated site Perl interpreter must be an existing absolute path")
     destination.mkdir(parents=True, exist_ok=True)
+    started = time.monotonic()
+    atomic_json(destination / "runtime_attempt.json", {"status": "started", "created_utc": utc_now(),
+        "recipe": RUNTIME_QUALIFICATION_RECIPE, "perl_binary": str(perl), "slurm_job_id": native_job_id()})
     manifest = tool_runtime_manifest()
     receipts = []
     for item in manifest["assets"]:
@@ -1058,54 +1250,82 @@ def install_tool_runtime(root: str | Path, destination: str | Path, *, qualify: 
         safe_extract(archive, destination, max_unpacked_bytes=250*1024**2, max_members=10_000,materialize_internal_links=True)
         # Restore only original executable bits for ordinary reviewed utility
         # members after the traversal/link gate; data extraction stays nonexec.
-        with tarfile.open(archive, "r:gz") as handle:
-            for member in handle.getmembers():
-                if member.isfile() and member.mode & 0o111:
-                    target = safe_destination(destination, member.name)
-                    target.chmod(0o755)
+        restore_software_executable_modes(archive, destination)
     bin_directory = destination / "bin"
     bin_directory.mkdir(exist_ok=True)
     orthofinder = destination / TOOL_RUNTIME["orthofinder"]["directory"] / "orthofinder.py"
     td = destination / TOOL_RUNTIME["transdecoder"]["directory"]
     wrapper = bin_directory / "orthofinder"
-    wrapper.write_text("#!/bin/sh\nexec python " + q(orthofinder) + ' "$@"\n', encoding="utf-8", newline="\n")
+    wrapper.write_text("#!/bin/sh\nexport PYTHONDONTWRITEBYTECODE=1\nexec " + q(sys.executable) + " " + q(orthofinder) + ' "$@"\n', encoding="utf-8", newline="\n")
     wrapper.chmod(0o755)
     for name in ["TransDecoder.LongOrfs", "TransDecoder.Predict"]:
         command = bin_directory / name
-        command.write_text("#!/bin/sh\nexec perl " + q(td / name) + ' "$@"\n', encoding="utf-8", newline="\n")
+        command.write_text("#!/bin/sh\nunset PERL5LIB PERL_LOCAL_LIB_ROOT PERL_MB_OPT PERL_MM_OPT\nPATH=" + q(perl.parent) + ':"$PATH"; export PATH\nexec ' + q(perl) + " " + q(td / name) + ' "$@"\n', encoding="utf-8", newline="\n")
         command.chmod(0o755)
     env = os.environ.copy()
     env["PATH"] = str(bin_directory) + os.pathsep + env.get("PATH", "")
-    subprocess.run(["perl", "-MDB_File", "-MURI::Escape", "-e", "print qq(perl_dependencies_ok\\n)"], check=True, env=env)
+    for name in ["PERL5LIB", "PERL_LOCAL_LIB_ROOT", "PERL_MB_OPT", "PERL_MM_OPT"]:
+        env.pop(name, None)
+    env.update(PYTHONDONTWRITEBYTECODE="1", PYTHONUNBUFFERED="1", OMP_NUM_THREADS="2", OPENBLAS_NUM_THREADS="2", MKL_NUM_THREADS="2")
+    qualification = destination / "qualification"
+    qualification.mkdir()
     checks = {}
+    checks["perl_dependencies"] = run_bounded_tool([str(perl), "-MDB_File", "-MURI::Escape", "-e", "print qq(perl=$^V DB_File=$DB_File::VERSION URI=$URI::VERSION\\n)"], qualification / "perl-dependencies.log", env=env, timeout_seconds=30)
+    if "perl=v5.30.2 DB_File=1.843 URI=" not in Path(checks["perl_dependencies"]["log_path"]).read_text():
+        raise MolecularError("Isolated site Perl does not match the independently verified 5.30.2/DB_File 1.843 environment")
     for name, command in [("orthofinder", [str(wrapper), "-h"]), ("transdecoder", [str(bin_directory / "TransDecoder.Predict"), "--version"])]:
-        completed = subprocess.run(command, env=env, text=True, capture_output=True, check=True)
-        checks[name] = {"stdout": completed.stdout[-8000:], "stderr": completed.stderr[-8000:], "returncode": completed.returncode}
+        checks[name] = run_bounded_tool(command, qualification / (name+"-version.log"), env=env, timeout_seconds=30)
+        if TOOL_RUNTIME[name]["version"] not in Path(checks[name]["log_path"]).read_text():
+            raise MolecularError(f"Pinned {name} did not report its declared version")
     # The pinned OrthoFinder source distribution includes mcl, diamond and fastme;
     # its normal distance-tree mode requires these, not an unpinned package solve.
     for name in ["mcl", "diamond", "fastme"]:
         binary = destination / "OrthoFinder_source" / "scripts_of" / "bin" / name
         if not binary.exists():
             raise MolecularError(f"Pinned OrthoFinder archive lacks {name}")
+        options = ["version"] if name == "diamond" else ["--version"] if name == "mcl" else ["-h"]
+        checks[name] = run_bounded_tool([str(binary), *options], qualification / (name+"-binary.log"), env=env, timeout_seconds=30)
     if qualify:
-        qualification = destination / "qualification"
-        qualification.mkdir(exist_ok=True)
+        matrix = qualification / "fastme-distances.phy"
+        matrix.write_text("4\nqual_a 0 1 3 3\nqual_b 1 0 3 3\nqual_c 3 3 0 1\nqual_d 3 3 1 0\n", encoding="utf-8", newline="\n")
+        tree = qualification / "fastme-tree.nwk"
+        fastme = destination / "OrthoFinder_source" / "scripts_of" / "bin" / "fastme"
+        command = run_bounded_tool([str(fastme), "-i", str(matrix), "-o", str(tree)], qualification / "fastme-numerical.log", env=env, cwd=qualification, timeout_seconds=30)
+        checks["fastme_numerical"] = {**command, **validate_fastme_fixture(tree)}
         example = destination / "OrthoFinder_source" / "ExampleData"
-        completed = subprocess.run([str(wrapper), "-f", str(example), "-t", "2", "-a", "2", "-S", "diamond", "-o", str(qualification / "orthofinder")], env=env, text=True, capture_output=True, check=True)
-        checks["orthofinder_example"] = {"stdout": completed.stdout[-8000:], "stderr": completed.stderr[-8000:], "returncode": completed.returncode}
-        input_fasta = td / "sample_data" / "simple_transcriptome_target" / "Trinity.fasta.gz"
+        fixture = qualification_proteomes(example, qualification / "proteomes")
+        atomic_json(qualification / "fixture.json", fixture)
+        command = run_bounded_tool([str(wrapper), "-f", str(qualification / "proteomes"), "-t", "2", "-a", "2", "-S", "diamond", "-o", str(qualification / "orthofinder")], qualification / "orthofinder-example.log", env=env, timeout_seconds=RUNTIME_QUALIFICATION_RECIPE["orthofinder_seconds"])
+        candidates = list((qualification / "orthofinder").rglob("Orthogroups/Orthogroups.tsv"))
+        if len(candidates) != 1:
+            raise MolecularError("Qualification lacks one unambiguous actual orthogroup output")
+        checks["orthofinder_example"] = {**command, **validate_qualification_orthogroups(candidates[0], fixture)}
+        input_fasta = td / RUNTIME_QUALIFICATION_RECIPE["transdecoder_fixture"]
         if not input_fasta.exists():
             raise MolecularError("Pinned TransDecoder archive lacks its official example FASTA")
         copied = qualification / "Trinity.fasta"
         with gzip.open(input_fasta, "rb") as source, copied.open("wb") as target:
-            import shutil
-            shutil.copyfileobj(source, target)
-        subprocess.run([str(bin_directory / "TransDecoder.LongOrfs"), "-t", str(copied)], cwd=qualification, env=env, check=True)
-        subprocess.run([str(bin_directory / "TransDecoder.Predict"), "-t", str(copied), "--single_best_only"], cwd=qualification, env=env, check=True)
-        if not Path(str(copied)+".transdecoder.pep").exists():
+            size = 0
+            while block := source.read(1024**2):
+                size += len(block)
+                if size > RUNTIME_QUALIFICATION_RECIPE["transdecoder_max_uncompressed_bytes"]:
+                    raise MolecularError("Official TransDecoder qualification fixture exceeds its declared ceiling")
+                target.write(block)
+        checks["transdecoder_longorfs"] = run_bounded_tool([str(bin_directory / "TransDecoder.LongOrfs"), "-t", str(copied), "-m", "100"], qualification / "transdecoder-longorfs.log", cwd=qualification, env=env, timeout_seconds=RUNTIME_QUALIFICATION_RECIPE["transdecoder_longorfs_seconds"])
+        command = run_bounded_tool([str(bin_directory / "TransDecoder.Predict"), "-t", str(copied), "--single_best_only"], qualification / "transdecoder-predict.log", cwd=qualification, env=env, timeout_seconds=RUNTIME_QUALIFICATION_RECIPE["transdecoder_predict_seconds"])
+        peptides = Path(str(copied)+".transdecoder.pep")
+        if not peptides.is_file() or not peptides.stat().st_size:
             raise MolecularError("TransDecoder qualification produced no peptides")
-        checks["transdecoder_example"] = {"peptide_sha256": file_hash(str(copied)+".transdecoder.pep"), "status": "example_executed"}
-    report = {"status": "runtime_qualified" if qualify else "runtime_installed_help_checked", "tools": TOOL_RUNTIME, "archives": receipts, "checks": checks, "bin": str(bin_directory), "evidence_class": "software qualification, not a biological result"}
+        transcripts = read_fasta(copied)
+        mapping = pd.DataFrame({"transcript_id": [item[0] for item in transcripts], "gene_id": [item[0] for item in transcripts]})
+        _, coverage = transdecoder_gene_map(peptides, mapping)
+        checks["transdecoder_example"] = {**command, "peptide_sha256": file_hash(peptides), "peptides": len(read_fasta(peptides)), "input_transcripts": len(transcripts), "source_fixture_sha256": file_hash(input_fasta), "input_fasta_sha256": file_hash(copied), "coverage": coverage, "status": "official_example_executed"}
+    report = {"schema_version": 2, "status": "runtime_qualified" if qualify else "runtime_installed_help_checked", "tools": TOOL_RUNTIME, "recipe": RUNTIME_QUALIFICATION_RECIPE, "archives": receipts, "checks": checks, "bin": str(bin_directory), "created_utc": utc_now(), "slurm_job_id": native_job_id(), "elapsed_seconds": time.monotonic()-started, "benchmark_uses_full_primary_numerics": False, "full_native_workload_completed": False, "evidence_class": "bounded software qualification; no biological result or full-proteome throughput measurement", "interpreters": {"python": {"path": str(Path(sys.executable).resolve()), "sha256": file_hash(sys.executable), "version": sys.version}, "perl": {"path": str(perl.resolve()), "sha256": file_hash(perl), "version_and_dependencies": Path(checks["perl_dependencies"]["log_path"]).read_text()[-2000:]}}, "runtime_file_hashes": {str(path.resolve()): file_hash(path) for path in sorted(destination.rglob("*")) if path.is_file() and path.name not in {"runtime_qualification.json", "runtime_attempt.json"}}}
+    report.update(source_sha256=source_identity(Path(__file__).resolve().parents[2])["sha256"],
+        allocated_cpus=int(os.environ["SLURM_CPUS_PER_TASK"]) if os.environ.get("SLURM_CPUS_PER_TASK") else None,
+        wrapper_targets={"orthofinder": str(orthofinder), "TransDecoder.LongOrfs": str(td / "TransDecoder.LongOrfs"), "TransDecoder.Predict": str(td / "TransDecoder.Predict")},
+        perl_environment_policy="Wrappers clear PERL5LIB/PERL_LOCAL_LIB_ROOT/PERL_MB_OPT/PERL_MM_OPT and prepend only the isolated Perl bin; outer R/Python module environment is retained")
+    report["qualification_hash"] = canonical_hash(report)
     atomic_json(destination / "runtime_qualification.json", report)
     return report
 
@@ -1222,8 +1442,14 @@ def run_external_prediction(config: dict, root: str | Path, *, genes: str | Path
     input_hashes = {str(path.resolve()): file_hash(path) for path in inputs}
     report.update(status="external_gene_prediction_computed", input_sha256=input_hashes,
         provenance={"config_sha256": config_hash(config), "source_identity_sha256": source_identity(Path(__file__).resolve().parents[2])["sha256"], "source_manifest_hash": manifest["manifest_hash"], "freeze_hash": freeze["freeze_hash"], "orthology_hash": freeze["provenance"]["orthology_hash"], "nuisance_descriptor_hash": freeze["provenance"]["nuisance_descriptor_hash"], "target_table_sha256": file_hash(genes), "target_family_map_sha256": file_hash(family_path), "phase_contrast_path": str(contrast_path.resolve()), "freeze_path": str(Path(freeze_path).resolve()), "target_provenance_path": str(target_provenance.resolve())})
-    if learned:
-        write_table(nested_gene_prediction(frame), output / "nested_gene_predictions.tsv")
+    if learned and report["secondary_learned_predictor_eligible"]:
+        secondary = nested_gene_prediction(frame)
+        secondary_path = output / "nested_gene_predictions.tsv"
+        write_table(secondary, secondary_path)
+        report["input_sha256"][str(secondary_path.resolve())] = file_hash(secondary_path)
+        report.update(secondary_learned_predictor_status="nested_orthogroup_validation_computed", secondary_models=sorted(secondary.model.unique().tolist()))
+    else:
+        report["secondary_learned_predictor_status"] = "ineligible_fewer_than_40_genes_or_20_orthogroups" if learned else "not_requested"
     atomic_json(output / "external_prediction.json", report)
     return report
 
@@ -1379,6 +1605,7 @@ def main(argv: list[str] | None = None) -> int:
     install_runtime.add_argument("--root", required=True)
     install_runtime.add_argument("--destination", required=True)
     install_runtime.add_argument("--skip-qualification", action="store_true")
+    install_runtime.add_argument("--perl-binary", default=SITE_PERL)
     analyze = sub.add_parser("analyze-primary")
     analyze.add_argument("--config", required=True)
     analyze.add_argument("--root", required=True)
@@ -1444,7 +1671,7 @@ def main(argv: list[str] | None = None) -> int:
         report = tool_runtime_manifest()
         atomic_json(output, report)
     elif args.command == "install-runtime":
-        report = install_tool_runtime(args.root, args.destination, qualify=not args.skip_qualification)
+        report = install_tool_runtime(args.root, args.destination, qualify=not args.skip_qualification, perl_binary=args.perl_binary)
     elif args.command == "target-family-map":
         report = write_target_family_map(pd.read_csv(args.orthology, sep="\t"), output)
     elif args.command == "analyze-primary":

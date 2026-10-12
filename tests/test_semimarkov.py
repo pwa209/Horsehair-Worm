@@ -27,6 +27,16 @@ def test_normalized_duration_filter_and_finite_gradient():
     assert all(parameter.grad is None or parameter.grad.isfinite().all() for parameter in model.parameters())
 
 
+def test_simulation_preserves_food_plane_zero_axes():
+    sequence = template(length=20)
+    sequence.food_vector[:] = [0., 1.]
+    model = MovementModel("MG", 2, 1)
+    generated, _ = simulate(model, sequence, seed=99)
+    assert np.max(np.abs(generated.observations[:, 0])) > 0
+    np.testing.assert_array_equal(generated.food_vector[:, 0], 0.)
+    np.testing.assert_allclose(generated.food_vector[1:, 1], 1 - np.cumsum(generated.observations[:-1, 1]))
+
+
 def test_transition_gradient_matches_finite_difference():
     torch.set_num_threads(1)
     model = MovementModel("MT", 2, 1)

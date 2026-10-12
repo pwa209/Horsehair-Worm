@@ -196,6 +196,49 @@ def mat_inventory(path: Path) -> dict[str, Any]:
     return result
 
 
+def _validated_roi_metadata(metadata: pd.DataFrame, rois: int, source: dict[str, Any]) -> tuple[pd.DataFrame, pd.Series, list[int]]:
+    column = source.get("roi_column", "ROI")
+    dropped = []
+    if column in metadata:
+        raw = metadata[column]
+        blank = raw.isna() | raw.astype(str).str.strip().eq("")
+        dropped = (metadata.index[blank] + 2).tolist()
+        metadata = metadata.loc[~blank].copy()
+        numbers = pd.to_numeric(metadata[column], errors="raise")
+        if not np.isfinite(numbers).all() or not np.equal(numbers, np.floor(numbers)).all():
+            raise ValueError("ROI IDs must be finite integers, not rounded labels")
+        indices = numbers.astype(int)
+    elif source.get("roi_by_row_verified") and len(metadata) == rois:
+        indices = pd.Series(np.arange(1, rois + 1), index=metadata.index)
+    else:
+        raise ValueError("ROI-to-animal mapping is ambiguous; inspect source identities")
+    if indices.duplicated().any() or not indices.between(1, rois).all():
+        raise ValueError("Duplicate or out-of-range metadata ROI")
+    if metadata.empty:
+        raise ValueError("No identified native ROI rows")
+    return metadata, indices, dropped
+
+
+def processed_clock_proof(directory: Path, root: Path) -> dict[str, Any] | None:
+    """Use the deposited author validator, rather than a universal rate guess."""
+    from .core import digest
+    candidates = []
+    for base in (Path(directory), Path(root) / "metadata"):
+        if base.exists():
+            candidates.extend(path for path in base.rglob("*.m") if path.name.lower() == "triggerondeath2019fun.m")
+    valid = []
+    for path in sorted(set(candidates)):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        if re.search(r"data\.params\.fr\s*=\s*3\s*;", text) and re.search(r"expmt\.parameters\.target_rate\s*~=\s*3", text):
+            valid.append(path)
+    if not valid:
+        return None
+    return {"author_processed_rate_hz": 3., "source_result_paths": [str(path.resolve()) for path in valid],
+            "source_result_hashes": {str(path.resolve()): digest(path) for path in valid},
+            "reference": "https://lab.debivort.org/zombie-summiting/Scripts/Summit%20behavior%20analysis/triggerOnDeath2019Fun.m",
+            "interpretation": "Published processed arrays use a uniform three-Hz frame index and author code rejects other declared rates; actual per-frame timestamp jitter is unavailable"}
+
+
 def discover_fly_sources(directory: Path, root: Path, config: dict[str, Any] | None = None
                          ) -> dict[str, Any]:
     """Resolve publication-associated chronological pairs; retain every ambiguity.
@@ -206,6 +249,7 @@ def discover_fly_sources(directory: Path, root: Path, config: dict[str, Any] | N
     """
     config = config or {}
     directory, root = Path(directory), Path(root)
+    uniform_proof = processed_clock_proof(directory, root)
     candidates, resolved, unresolved = [], [], []
     sources = sorted(directory.rglob("*margoConvert*.mat"))
     for path in sources:
@@ -224,12 +268,16 @@ def discover_fly_sources(directory: Path, root: Path, config: dict[str, Any] | N
             if len(preferred) != 1:
                 raise ValueError("No unique paired survival metadata workbook")
             metadata = read_table(preferred[0])
-            if len(metadata) != count or not {"Geno", "Sex"}.issubset(metadata):
+            metadata, roi_indices, excluded_rows = _validated_roi_metadata(metadata, count,
+                {"roi_by_row_verified": True})
+            if not {"Geno", "Sex"}.issubset(metadata):
                 raise ValueError("Survival rows/columns do not match source ROIs")
             source = {"mat": str(path.relative_to(root)), "metadata": str(preferred[0].relative_to(root)),
+                "native_roi_count": count,
                 "experiment_id": stem, "centroid_path": "expmt.Centroid.data",
                 "axis_order": "time,coordinate,roi", "roi_by_row_verified": True,
                 "roi_mapping_provenance": "Author triggerOnDeath2019Fun.m rows 1:height(survival), validated against centroid ROI dimension",
+                "excluded_blank_roi_excel_rows": excluded_rows,
                 "exposure_values": config.get("exposure_values", {})}
             time_paths = config.get("time_paths", ["expmt.Time.data", "expmt.timestamps", "expmt.time"])
             found = []
@@ -253,17 +301,19 @@ def discover_fly_sources(directory: Path, root: Path, config: dict[str, Any] | N
                 match = re.search(r"\d{2}-\d{2}-20\d{2}-(\d{2})-(\d{2})-(\d{2})", stem)
                 if match:
                     source["start_time_s"] = int(match[1]) * 3600 + int(match[2]) * 60 + int(match[3])
-            elif not found and config.get("allow_documented_nominal_frame_clock", False):
+            elif not found and (uniform_proof is not None or config.get("allow_documented_nominal_frame_clock", False)):
                 rate = float(np.asarray(nested(value, "expmt.parameters.target_rate")).squeeze())
                 if not np.isfinite(rate) or rate <= 0:
                     raise ValueError("Invalid per-experiment MARGO target_rate")
+                if uniform_proof is not None and rate != uniform_proof["author_processed_rate_hz"]:
+                    raise ValueError("Converted frame rate conflicts with the deposited author three-Hz validator")
                 match = re.search(r"(?P<m>\d{2})-(?P<d>\d{2})-(?P<y>20\d{2})-(?P<h>\d{2})-(?P<min>\d{2})-(?P<s>\d{2})", stem)
                 if not match:
                     raise ValueError("No source recording start clock in experiment identity")
                 start = int(match["h"]) * 3600 + int(match["min"]) * 60 + int(match["s"])
                 source.update(frame_rate=rate, start_time_s=start,
-                    timestamp_provenance="Per-experiment expmt.parameters.target_rate and source filename recording start; nominal frame clock, publication author conversion checks rate",
-                    clock_kind="nominal_frame_clock")
+                    timestamp_provenance="Per-file expmt.parameters.target_rate, filename start clock and deposited triggerOnDeath2019Fun.m validator; processed uniform frame index, no observed per-frame jitter",
+                    clock_kind="source_processed_uniform_frame_clock", clock_source_proof=uniform_proof)
             else:
                 raise ValueError("Missing or ambiguous recording timestamps")
             declaration = config.get("assays", {}).get(stem, config.get("assays", {}).get(path.parent.name, {}))
@@ -282,11 +332,14 @@ def discover_fly_sources(directory: Path, root: Path, config: dict[str, Any] | N
                     mm_scale = float(np.asarray(nested(value, "expmt.parameters.mm_per_pix")).squeeze())
                 except (ValueError, TypeError):
                     mm_scale = None
+                physical = bool(mm_scale and mm_scale > 0 and mm_scale != 1)
                 declaration = {"geometry": 30, "food_end": 0, "roi_arena_bounds": mapped,
                     "invert_y": True, "analysis_role": "behavioural_development",
-                    "arena_normalization": "local_physical" if mm_scale and mm_scale > 0 else "normalized_arena",
-                    "coordinate_scale": mm_scale if mm_scale and mm_scale > 0 else 1,
-                    "coordinate_units": "mm" if mm_scale and mm_scale > 0 else "normalized_arena",
+                    "arena_normalization": "local_physical" if physical else "relative_long_axis",
+                    "coordinate_scale": mm_scale if physical else 1,
+                    "coordinate_units": "mm" if physical else "native_ROI_height",
+                    "cohort_exposure_status": 1,
+                    "cohort_exposure_provenance": "eLife85410 Methods Real-time summiting classifier: all1306 training flies and the novel test cohort exposed to E.muscae; companion page maps these15 classifier experiments. Blank Rx does not denote an unexposed animal.",
                     "provenance": "Author companion page https://lab.debivort.org/zombie-summiting/ explicitly maps Fig 4 + Supp to classifier tracking; publication eLife.85410 Methods standard 30-degree food-bottom arenas; convertMargo.m preserves ROI.bounds; autoDenoise.m establishes [x,y,width,height]; scaleHt.m establishes reversed image-y orientation. Per-file native rectangles used, not observed-position extrema."}
             if not declaration:
                 declaration = config.get("documented_classifier_assay", {})
@@ -313,11 +366,15 @@ def discover_fly_sources(directory: Path, root: Path, config: dict[str, Any] | N
 def audit_exposure_source(source: dict[str, Any], root: Path) -> dict[str, Any]:
     metadata = read_table(Path(root) / source["metadata"], source.get("sheet"))
     metadata = metadata.rename(columns={value: key for key, value in source.get("metadata_columns", {}).items()})
+    if source.get("native_roi_count"):
+        metadata, _, _ = _validated_roi_metadata(metadata, int(source["native_roi_count"]), source)
     field = "exposure_status" if "exposure_status" in metadata else "Rx"
     if field not in metadata:
         return {"ready": False, "pending": ["Original source exposure/Rx column absent"]}
     raw = metadata[field]
     codes = raw.astype(str).map(source.get("exposure_values", {}))
+    if source.get("cohort_exposure_provenance") and source.get("cohort_exposure_status") in (0, 1):
+        codes.loc[raw.isna() | raw.astype(str).str.strip().eq("")] = source["cohort_exposure_status"]
     codes.loc[raw.astype(str).str.lower().isin(["uninfected", "unexposed"])] = 0
     pending = []
     unknown = sorted(raw[codes.isna()].astype(str).unique())
@@ -334,12 +391,164 @@ def audit_exposure_source(source: dict[str, Any], root: Path) -> dict[str, Any]:
             "rule": "Exposure is measured from original treatment assignment, never from future cadaver/survival labels"}
 
 
+def formal_behavior_readiness(config: dict[str, Any], root: Path) -> dict[str, Any]:
+    """Separate ingested processed clocks from validated biological progression."""
+    from .core import canonical_hash, digest, source_identity
+    root = Path(root)
+    path = root / "manifests" / "fly_adapters.json"
+    sources = config.get("behaviour", {}).get("fly_sources", [])
+    if not sources and path.exists():
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        sources = manifest if isinstance(manifest, list) else manifest.get("fly_sources", [])
+    development = [source for source in sources if source.get("analysis_role") == "behavioural_development"]
+    pending, audits = [], {}
+    if not development:
+        pending.append("No validated chronological development source adapters")
+    for source in development:
+        try:
+            audit = audit_exposure_source(source, root)
+            audits[source["experiment_id"]] = audit
+            pending.extend(f"{source['experiment_id']}: {reason}" for reason in audit["pending"])
+            if not source.get("timestamp_provenance") or ("time_path" not in source and "frame_rate" not in source):
+                pending.append(f"{source['experiment_id']}: processed clock provenance missing")
+            clock_proof = source.get("clock_source_proof")
+            if clock_proof:
+                for referenced, expected in clock_proof.get("source_result_hashes", {}).items():
+                    if digest(Path(referenced)) != expected:
+                        pending.append(f"{source['experiment_id']}: author clock-validator code changed")
+        except (ValueError, OSError, KeyError) as error:
+            pending.append(f"{source.get('experiment_id', 'unknown')}: {error}")
+    required = int(config.get("behaviour", {}).get("minimum_experiments", 10))
+    if len({source["experiment_id"] for source in development}) < required:
+        pending.append(f"Fewer than {required} independent development experiments")
+    native = root / "data" / "fly_observations.parquet"
+    if not native.exists():
+        pending.append("Validated native observations have not been ingested")
+    return {"ready": not pending, "pending": pending, "ingestion_ready": native.exists(),
+        "development_experiments": len(development), "exposure_audits": audits,
+        "clock_interpretation": "Source processed uniform frame indices are permitted only with per-file metadata and unchanged deposited author validator; no claim of observed frame jitter",
+        "config_sha256": canonical_hash(config), "source_sha256": source_identity(Path(__file__).resolve().parents[2])["sha256"],
+        "source_result_paths": [str(path.resolve())] if path.exists() else [],
+        "source_result_hashes": {str(path.resolve()): digest(path)} if path.exists() else {}}
+
+
 def read_table(path: Path, sheet: str | int | None = None) -> pd.DataFrame:
     if path.suffix.lower() in (".xlsx", ".xls"):
         return pd.read_excel(path, sheet_name=0 if sheet is None else sheet)
     if path.suffix.lower() == ".parquet":
         return pd.read_parquet(path)
     return pd.read_csv(path, sep="\t" if path.suffix.lower() == ".tsv" else ",")
+
+
+def source_summit_metric(speed: np.ndarray, height: np.ndarray, parameters: dict[str, Any],
+                         data_parameters: dict[str, Any]) -> dict[str, Any]:
+    """Numerical author-method replication only; never forecasting features."""
+    speed, height = np.asarray(speed, float), np.asarray(height, float)
+    if speed.ndim == 1:
+        speed, height = speed[:, None], height[:, None]
+    if speed.ndim != 2 or height.shape != speed.shape:
+        raise ValueError("Author death-aligned speed/height matrices must have identical time×fly dimensions")
+    scalar = lambda mapping, key: float(np.asarray(mapping[key]).squeeze())
+    window = int(scalar(parameters, "smoothWin"))
+    start = int(scalar(parameters, "summitStart")) - 1  # MATLAB one-based index.
+    last = int(scalar(data_parameters, "lastFrames")) - 1
+    padding = int(scalar(parameters, "endPad"))
+    rate = scalar(data_parameters, "fr")
+    if rate != 3 or not (window > 0 and 0 <= start < len(speed) and start < last):
+        raise ValueError("Unsupported source summit parameters; do not assume their clock/window")
+    smooth = lambda array: pd.DataFrame(array).rolling(window, center=True, min_periods=1).mean().to_numpy()
+    with np.errstate(invalid="ignore"):
+        count = np.isfinite(speed).sum(1)
+        average = np.nansum(speed, axis=1) / np.where(count > 0, count, np.nan)
+        count_height = np.isfinite(height).sum(1)
+        average_height = np.nansum(height, axis=1) / np.where(count_height > 0, count_height, np.nan)
+    average = smooth(average[:, None])[:, 0]
+    average_height = smooth(average_height[:, None])[:, 0]
+    normalized = average - average[start]
+    normalized[np.arange(len(normalized)) > last + padding] = -1
+    possible = np.flatnonzero(normalized >= 0)
+    if not len(possible):
+        raise ValueError("Source genotype has no finite baseline/summit endpoint")
+    end = max(int(possible[-1]), start + int(scalar(parameters, "minSumDur") * 60 * 3))
+    if end >= len(speed) or end <= start:
+        raise ValueError("Source summit window lies outside the deposited death-aligned data")
+    smoothed, smooth_height = smooth(speed), smooth(height)
+    normalized_individual = smoothed - smoothed[start]
+    integral = np.trapezoid(normalized_individual[start:end + 1], axis=0) / (end - start)
+    change = smooth_height[end] - smooth_height[start]
+    presummit_speed, presummit_distance = [], []
+    for column in range(speed.shape[1]):
+        values = smoothed[:start + 1, column]
+        values = values[np.isfinite(values)]
+        presummit_distance.append(float(np.trapezoid(values) / len(values)) if len(values) else np.nan)
+        values = speed[:start + 1, column]
+        values = values[values > scalar(parameters, "moveThresh")]
+        presummit_speed.append(float(np.mean(values)) if len(values) else np.nan)
+    finite_mean = lambda values: float(np.mean(np.asarray(values)[np.isfinite(values)])) if np.isfinite(values).any() else np.nan
+    return {"sumStart": start + 1, "sumEnd": end + 1, "sumDur": (end - start) / (rate * 3600),
+        "sumInt": integral, "sumHt": change, "psWalkSpeed": np.asarray(presummit_speed),
+        "psDist": np.asarray(presummit_distance), "numCad": speed.shape[1],
+        "meanSumInt": float(np.trapezoid(normalized[start:end + 1]) / (end - start)),
+        "meanSumHt": float(average_height[end] - average_height[start]),
+        "meanPsWalkSpeed": finite_mean(presummit_speed), "meanPsDist": finite_mean(presummit_distance)}
+
+
+def replicate_source_summit(config: dict[str, Any], root: Path) -> dict[str, Any]:
+    from .core import atomic_json, canonical_hash, digest, source_identity
+    root = Path(root)
+    directory = root / "data" / "extracted" / "fly"
+    files = sorted(directory.rglob("*QUANT*.mat"))
+    designated = config.get("behaviour", {}).get("source_replication_files")
+    if designated:
+        files = [root / path for path in designated]
+    rows, pending, inputs = [], [], []
+    for quant_path in files:
+        try:
+            expected = nested(load_mat(quant_path), "summit")
+            original = str(expected.get("sourceStruct", "")).replace("\\", "/").split("/")[-1]
+            paired = list(directory.rglob(original)) if original else []
+            if len(paired) != 1:
+                alias = quant_path.name.replace("_QUANT", "").replace("QUANT", "")
+                paired = list(directory.rglob(alias))
+            if len(paired) != 1:
+                raise ValueError("No unique deposited data struct for the source quantitative result")
+            data_path = paired[0]
+            data = nested(load_mat(data_path), "data")
+            computed = source_summit_metric(nested(data, "Cadavers.speed.toDmatrix"),
+                nested(data, "Cadavers.ypos.toDmatrix"), expected["params"], data["params"])
+            for name, value in computed.items():
+                if name not in expected:
+                    raise ValueError(f"Published quantitative source lacks {name}")
+                observed = np.asarray(expected[name], float).squeeze()
+                calculated = np.asarray(value, float).squeeze()
+                if observed.shape != calculated.shape:
+                    raise ValueError(f"Source {name} dimensions disagree")
+                finite = np.isfinite(observed) & np.isfinite(calculated)
+                matching_missingness = np.array_equal(np.isfinite(observed), np.isfinite(calculated))
+                error = float(np.max(np.abs(observed[finite] - calculated[finite]))) if finite.any() else 0.
+                passed = bool(matching_missingness and np.allclose(observed, calculated, rtol=1e-5, atol=1e-7, equal_nan=True))
+                rows.append({"source_quant": str(quant_path.resolve()), "source_data": str(data_path.resolve()),
+                    "quantity": name, "maximum_absolute_error": error, "passed": passed,
+                    "source_array_values": int(observed.size), "finite_values": int(finite.sum())})
+            inputs.extend([quant_path, data_path])
+        except (ValueError, KeyError, OSError, TypeError) as error:
+            pending.append({"source_quant": str(quant_path.resolve()), "reason": str(error)})
+    output = root / "results" / "behaviour" / "source_replication"
+    output.mkdir(parents=True, exist_ok=True)
+    table_path = output / "summit_metric_reproduction.tsv"
+    pd.DataFrame(rows).to_csv(table_path, sep="\t", index=False)
+    status = "pending" if not rows or pending else "complete" if all(row["passed"] for row in rows) else "failed"
+    inputs = sorted(set(inputs + [table_path]))
+    result = {"status": status, "source_replication_passed": status == "complete", "comparisons": len(rows),
+        "pending": pending or ([{"reason": "No paired deposited quantitative/data source structs"}] if not rows else []),
+        "evidence_class": "published source numerical replication; not prospective biological inference",
+        "analysis_scope": "Author death-aligned descriptive summit metric with stored original parameters and source arrays; no values enter prediction features or increase biological replication",
+        "algorithm_reference": "https://lab.debivort.org/zombie-summiting/Scripts/Dependencies/integrateSummitBump.m",
+        "config_sha256": canonical_hash(config), "source_sha256": source_identity(Path(__file__).resolve().parents[2])["sha256"],
+        "source_result_paths": [str(path.resolve()) for path in inputs],
+        "source_result_hashes": {str(path.resolve()): digest(path) for path in inputs}}
+    atomic_json(output / "source_replication.json", result)
+    return result
 
 
 def validate_observations(frame: pd.DataFrame, allow_identical_duplicates: bool = False
@@ -421,15 +630,7 @@ def iter_fly_source(source: dict[str, Any], root: Path) -> Any:
     metadata = read_table(metadata_path, source.get("sheet"))
     mapping = source.get("metadata_columns", {})
     metadata = metadata.rename(columns={v: k for k, v in mapping.items()})
-    roi_column = source.get("roi_column", "ROI")
-    if roi_column in metadata:
-        indices = pd.to_numeric(metadata[roi_column], errors="raise").astype(int)
-    elif source.get("roi_by_row_verified") and len(metadata) == rois:
-        indices = pd.Series(np.arange(1, rois + 1), index=metadata.index)
-    else:
-        raise ValueError("ROI-to-animal mapping is ambiguous; verify source ROI column or row convention")
-    if indices.duplicated().any() or not indices.between(1, rois).all():
-        raise ValueError("Duplicate or out-of-range metadata ROI")
+    metadata, indices, _ = _validated_roi_metadata(metadata, rois, source)
     experiment = str(source["experiment_id"])
     if not experiment or experiment.lower() == "nan":
         raise ValueError("Missing independent experiment identifier")
@@ -450,6 +651,8 @@ def iter_fly_source(source: dict[str, Any], root: Path) -> Any:
                 spatial_valid &= (xy[:, axis_index] >= lower) & (xy[:, axis_index] <= upper)
                 if source.get("arena_normalization", "normalized_arena") == "local_physical":
                     xy[:, axis_index] = (xy[:, axis_index] - lower) * scale
+                elif source.get("arena_normalization") == "relative_long_axis":
+                    xy[:, axis_index] = (xy[:, axis_index] - lower) / (local_bounds["y"][1] - local_bounds["y"][0])
                 else:
                     xy[:, axis_index] = (xy[:, axis_index] - lower) / (upper - lower)
             if source.get("invert_y", False):
@@ -462,6 +665,8 @@ def iter_fly_source(source: dict[str, Any], root: Path) -> Any:
             xy *= scale
         rx = info.get("exposure_status", info.get("Rx", None))
         exposure = exposure_values.get(str(rx), np.nan)
+        if (pd.isna(rx) or not str(rx).strip()) and source.get("cohort_exposure_provenance") and source.get("cohort_exposure_status") in (0, 1):
+            exposure = source["cohort_exposure_status"]
         if pd.isna(exposure) and str(rx).lower() in ("uninfected", "unexposed"):
             exposure = 0
         # A survivor is never automatically an unexposed animal.
@@ -483,7 +688,7 @@ def iter_fly_source(source: dict[str, Any], root: Path) -> Any:
             "tracking_valid": spatial_valid,
             "coordinate_units": (source.get("coordinate_units", "mm")
                                  if local_bounds and source.get("arena_normalization") == "local_physical"
-                                 else "normalized_arena" if local_bounds else source.get("coordinate_units", "source_units")),
+                                 else source.get("coordinate_units", "normalized_arena") if local_bounds else source.get("coordinate_units", "source_units")),
             "timestamp_provenance": source.get("timestamp_provenance", source.get("time_path")),
             "analysis_role": source.get("analysis_role", "undeclared")})
         # Future outcomes remain separate annotations and are never features.
@@ -797,6 +1002,7 @@ def simulate_comparator(fit: ComparatorFit, template: Any, seed: int, output_gai
     d, n = sequence.observations.shape[1], len(sequence.times)
     position = np.asarray(information.get("initial_position", np.zeros(d)), float).copy()
     food_target = position + sequence.food_vector[0]
+    food_axes = np.any(np.abs(sequence.food_vector) > 0, axis=0)
     generated = np.zeros((n, d), dtype=float)
     rng = np.random.default_rng(seed)
     device = next(fit.model.parameters()).device
@@ -823,7 +1029,7 @@ def simulate_comparator(fit: ComparatorFit, template: Any, seed: int, output_gai
             if not 0 <= modulation_column < len(modulation):
                 raise ValueError("Frozen unrestricted modulation column is out of bounds")
             modulation[modulation_column] += float(modulation_shift)
-            context = np.r_[context, modulation, (food_target - position) / fit.output_scale,
+            context = np.r_[context, modulation, np.where(food_axes, food_target - position, 0.) / fit.output_scale,
                             sequence.arena_vector[t]]
             conditional_mean, chol = fit.model(torch.as_tensor(history[None], device=device),
                 torch.as_tensor(context[None], dtype=torch.float32, device=device), scale)
@@ -1253,16 +1459,39 @@ def write_h1(root: Path, config: dict[str, Any], model_directory: Path) -> dict[
     recovery_path = root / "results" / "behaviour" / "recovery" / "recovery_summary.json"
     recovery = json.loads(recovery_path.read_text(encoding="utf-8")) if recovery_path.exists() else None
     false_positive = recovery.get("gain_only_false_selective_fraction") if recovery else None
-    recovery_passed = bool(false_positive is not None and false_positive <=
+    recovery_complete = bool(recovery and recovery.get("status") == "complete" and
+        recovery.get("parameter_recovery_replicates") == int(config.get("behaviour", {}).get("parameter_recovery_replicates", 100)) and
+        recovery.get("config_sha256") == canonical_hash(config) and recovery.get("source_sha256") == source_identity(Path(__file__).resolve().parents[2])["sha256"])
+    if recovery_complete:
+        for referenced in recovery.get("source_result_paths", []):
+            if recovery.get("source_result_hashes", {}).get(referenced) != digest(Path(referenced)):
+                raise ValueError("Recovery evidence changed after validation")
+    recovery_passed = bool(recovery_complete and false_positive is not None and false_positive <=
         config.get("behaviour", {}).get("maximum_gain_false_selective_fraction", .05))
     identifiability_path = root / "results" / "behaviour" / "parameter_identifiability.json"
     identifiability = json.loads(identifiability_path.read_text(encoding="utf-8")) if identifiability_path.exists() else None
+    if identifiability and (identifiability.get("config_sha256") != canonical_hash(config) or
+        identifiability.get("source_sha256") != source_identity(Path(__file__).resolve().parents[2])["sha256"]):
+        raise ValueError("Parameter identifiability evidence has a different configuration/source")
     identifiability_passed = bool(identifiability and identifiability.get("parameter_identifiability_passed") is True
         and identifiability.get("source_result_paths") and identifiability.get("source_result_hashes"))
-    if identifiability_passed:
+    if identifiability:
         for path in identifiability["source_result_paths"]:
             if identifiability["source_result_hashes"].get(path) != digest(Path(path)):
                 raise ValueError("Identifiability evidence changed after validation")
+    supplemental = {}
+    for label, filename in (("sensitivity", "sensitivity_checks.json"), ("bayesian", "bayesian_subset_diagnostics.json")):
+        supplement_path = root / "results" / "behaviour" / filename
+        supplement = json.loads(supplement_path.read_text(encoding="utf-8")) if supplement_path.exists() else None
+        if supplement:
+            if supplement.get("config_sha256") != canonical_hash(config) or supplement.get("source_sha256") != source_identity(Path(__file__).resolve().parents[2])["sha256"]:
+                raise ValueError(f"{label} evidence has changed scientific configuration/source")
+            for referenced in supplement.get("source_result_paths", []):
+                if supplement.get("source_result_hashes", {}).get(referenced) != digest(Path(referenced)):
+                    raise ValueError(f"{label} evidence input changed")
+        supplemental[label] = (supplement_path, supplement)
+    sensitivity_passed = bool(supplemental["sensitivity"][1] and supplemental["sensitivity"][1].get("status") == "complete" and supplemental["sensitivity"][1].get("sign_consistency") is True)
+    bayesian_passed = bool(supplemental["bayesian"][1] and supplemental["bayesian"][1].get("adequate_mixing") is True)
     diagnostic_path = model_directory / "posterior_predictive_checks.tsv"
     diagnostic_improvement = None
     if diagnostic_path.exists():
@@ -1282,7 +1511,7 @@ def write_h1(root: Path, config: dict[str, Any], model_directory: Path) -> dict[
         diagnostic_improvement = float((means.MG - means.selected_transition) / means.MG)
     supported_components = bool(result["estimate"] > 0 and result["ci95"][0] > 0
                                 and result["pvalue"] < .05 and recovery_passed and identifiability_passed
-                                and diagnostic_improvement is not None and diagnostic_improvement >= .05)
+                                and diagnostic_improvement is not None and diagnostic_improvement >= .05 and sensitivity_passed and bayesian_passed)
     manifest = root / "manifests" / "source_manifest.json"
     if not manifest.exists():
         raise FileNotFoundError("A frozen actual source manifest is required for H1 provenance")
@@ -1291,21 +1520,29 @@ def write_h1(root: Path, config: dict[str, Any], model_directory: Path) -> dict[
         data_manifest_sha256=digest(manifest), selected_by_outer_fold=choices,
         selection_rule="MT versus MX selected by grouped inner validation only; outer scores never select candidates",
         parameter_recovery_passed=recovery_passed, gain_false_selective_fraction=false_positive,
+        parameter_recovery_status="complete" if recovery_complete else "pending: complete declared recovery roster required",
         parameter_identifiability_passed=identifiability_passed,
-        parameter_identifiability_status=("validated evidence supplied" if identifiability_passed else
-            "pending: parameter separation, bias/coverage and posterior adequacy have not all been validated"),
+        parameter_identifiability_status=("complete" if identifiability and identifiability.get("status") == "complete" else
+            "pending: parameter separation, bias/coverage evidence unavailable or incomplete"),
+        posterior_check_status="complete" if diagnostic_improvement is not None else "pending: full posterior checks required",
+        sensitivity_check_status=("complete" if supplemental["sensitivity"][1] and supplemental["sensitivity"][1].get("status") == "complete" else "pending: declared 5/10/20-second fits required"),
+        sensitivity_check_passed=sensitivity_passed,
+        bayesian_check_status="complete" if bayesian_passed else "pending: adequate representative posterior sampling required",
+        bayesian_check_passed=bayesian_passed,
         multivariate_diagnostic_improvement=diagnostic_improvement,
-        operational_gates_passed=bool(identifiability_passed and recovery_passed and diagnostic_improvement is not None and diagnostic_improvement >= .05),
+        operational_gates_passed=bool(identifiability_passed and recovery_passed and diagnostic_improvement is not None and diagnostic_improvement >= .05 and sensitivity_passed and bayesian_passed),
         required_checks={"inner_only_candidate_selection": True, "complete_paired_outer_predictions": True,
             "parameter_identifiability": identifiability_passed,
             "gain_false_selective_recovery_passed": recovery_passed,
-            "five_percent_multivariate_diagnostic_improvement": diagnostic_improvement is not None and diagnostic_improvement >= .05},
+            "five_percent_multivariate_diagnostic_improvement": diagnostic_improvement is not None and diagnostic_improvement >= .05,
+            "time_scale_sensitivity": sensitivity_passed, "adequate_posterior_sampling": bayesian_passed},
         claim_status="pending_joint_Holm" if supported_components else "unsupported_or_required_diagnostic_pending",
         multiplicity_status="H1/H2/H3 joint Holm adjustment pending",
         source_result_paths=[str(score_path.resolve()), str(inner_path.resolve())] +
             ([str(recovery_path.resolve())] if recovery_path.exists() else []) +
             ([str(identifiability_path.resolve())] if identifiability_path.exists() else []) +
-            ([str(diagnostic_path.resolve())] if diagnostic_path.exists() else []))
+            ([str(diagnostic_path.resolve())] if diagnostic_path.exists() else []) +
+            [str(path.resolve()) for path, document in supplemental.values() if document is not None])
     result["source_result_hashes"] = {path: digest(Path(path)) for path in result["source_result_paths"]}
     atomic_json(root / "results" / "inference" / "H1.json", result)
     per_experiment = paired.difference.groupby(level=0).mean()
@@ -1430,6 +1667,116 @@ def fit_mantis_choice(frame: pd.DataFrame, config: dict[str, Any] | None = None)
             "independence_verified": "individual_id" in table}
 
 
+def _mantis_design_contract(train: pd.DataFrame, test: pd.DataFrame) -> tuple[np.ndarray, list[str], dict[str, Any]]:
+    continuous = ["infection", "dop", "log_illuminance"]
+    categorical = ["stimulus_side", "year", "box"]
+    parts = {"Intercept": np.ones(len(test))}
+    contract = {"continuous": {}, "categorical_levels": {}}
+    for column in continuous:
+        values = train[column].to_numpy(float)
+        if np.unique(values).size == 1 and column == "log_illuminance":
+            continue
+        raw = set(np.unique(values)).issubset({0, 1})
+        mean, scale = (0., 1.) if raw else (float(values.mean()), max(float(values.std()), 1e-10))
+        parts[column] = (test[column].to_numpy(float) - mean) / scale
+        contract["continuous"][column] = {"mean": mean, "scale": scale}
+    for column in categorical:
+        levels = sorted(train[column].astype(str).unique())
+        unknown = set(test[column].astype(str)) - set(levels)
+        if unknown:
+            raise ValueError(f"Held-out {column} levels are outside training context support: {sorted(unknown)}")
+        contract["categorical_levels"][column] = levels
+        for level in levels[1:]:
+            parts[f"{column}_{level}"] = test[column].astype(str).eq(level).to_numpy(float)
+    parts["infection:dop"] = parts["infection"] * parts["dop"]
+    names = list(parts)
+    matrix = np.column_stack(list(parts.values()))
+    if not np.isfinite(matrix).all():
+        raise ValueError("Nonfinite held-out mantis design")
+    return matrix, names, contract
+
+
+def validate_mantis_choice(frame: pd.DataFrame, config: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Training-only preprocessing; hold out all records of tested individuals."""
+    config = config or {}
+    table = frame.rename(columns={value: key for key, value in config.get("columns", {}).items()}).copy()
+    if not {"individual_id", "date", "year"}.issubset(table) or table.individual_id.isna().any():
+        return {"status": "pending", "pending": ["Independent individual IDs and assay dates are required"]}
+    table["individual_id"] = table.individual_id.astype(str)
+    table["log_illuminance"] = np.log(table.illuminance)
+    if config.get("dop_units") == "percent":
+        table.dop = table.dop / 100
+    elif config.get("dop_units") not in ("proportion", "source"):
+        raise ValueError("Mantis validation requires declared native polarization units")
+    table["assay_date"] = table.year.astype(str) + ":" + table.date.astype(str)
+    rules = config.get("response_values", {"middle": 0, "polarized": 1, "unpolarized": 2})
+    all_ids = sorted(table.individual_id.unique(), key=lambda value: hashlib.sha256(("mantis-holdout-v1\0" + value).encode()).hexdigest())
+    folds = []
+    if len(all_ids) >= 3:
+        for fold in range(3):
+            folds.append(("individual", str(fold), table.individual_id.isin(all_ids[fold::3])))
+    dates = sorted(table.assay_date.unique())
+    if len(dates) >= 2:
+        folds.extend(("assay_date", date, table.assay_date.eq(date)) for date in dates)
+    pending, rows, contracts = [], [], []
+    if len(all_ids) < 3:
+        pending.append("Fewer than three independent individuals for grouped validation")
+    if len(dates) < 2:
+        pending.append("Fewer than two distinct assay dates for date generalization")
+    nodes, weights = np.polynomial.hermite.hermgauss(9)
+    log_weights = np.log(weights / np.sqrt(np.pi))
+    for scheme, label, selection in folds:
+        test = table.loc[selection].copy()
+        test_ids = set(test.individual_id)
+        # Dates can contain individuals measured on other dates. All their other
+        # records are excluded from training as well, even outside this date.
+        train = table.loc[~selection & ~table.individual_id.isin(test_ids)].copy()
+        try:
+            if train.empty or test.empty or set(train.individual_id) & test_ids:
+                raise ValueError("No independent training individuals after complete date/individual holdout")
+            fitting_config = dict(config, dop_units="source", columns={})
+            fitted = fit_mantis_choice(train, fitting_config)
+            x, names, contract = _mantis_design_contract(train, test)
+            if names != fitted["engagement"]["terms"]:
+                raise ValueError("Training and held-out design terms disagree")
+            engagement, preference = fitted["engagement"], fitted["conditional_preference"]
+            eta_engagement = x @ np.asarray(engagement["coefficient"])
+            eta_preference = x @ np.asarray(preference["coefficient"])
+            e = special.expit(eta_engagement[:, None] + np.sqrt(2) * float(engagement["group_sd"] or 0) * nodes)
+            p = special.expit(eta_preference[:, None] + np.sqrt(2) * float(preference["group_sd"] or 0) * nodes)
+            response = test.response.map(rules).to_numpy(int)
+            marginal_e, marginal_p = e @ np.exp(log_weights), p @ np.exp(log_weights)
+            probabilities = np.column_stack([1 - marginal_e, marginal_e * marginal_p, marginal_e * (1 - marginal_p)])
+            mn = fitted["multinomial_sensitivity"]
+            logits = np.column_stack([x @ np.asarray(mn["middle_coefficients"]), x @ np.asarray(mn["polarized_coefficients"]), np.zeros(len(x))])
+            multinomial_log_score = logits - special.logsumexp(logits, axis=1, keepdims=True)
+            for individual in sorted(test_ids):
+                which = test.individual_id.eq(individual).to_numpy()
+                y, e_values, p_values = response[which], e[which], p[which]
+                # Integrate one shared intercept per withheld individual and
+                # hurdle, not a different latent intercept for every trial.
+                likelihood = np.zeros((len(nodes), len(nodes)))
+                for category, eng, pref in zip(y, e_values, p_values):
+                    probability = ((1 - eng)[:, None] * np.ones((1, len(nodes))) if category == 0 else
+                        eng[:, None] * (pref[None, :] if category == 1 else 1 - pref[None, :]))
+                    likelihood += np.log(np.maximum(probability, 1e-300))
+                joint = float(special.logsumexp(likelihood + log_weights[:, None] + log_weights[None, :]))
+                brier = float(np.mean(np.sum((probabilities[which] - np.eye(3)[y]) ** 2, axis=1)))
+                rows.append({"scheme": scheme, "fold": label, "individual_id": individual,
+                    "trials": int(which.sum()), "hurdle_log_score_per_trial": joint / which.sum(),
+                    "multinomial_log_score_per_trial": float(multinomial_log_score[which, y].mean()),
+                    "three_category_brier": brier})
+            contracts.append({"scheme": scheme, "fold": label, "training_individuals": sorted(set(train.individual_id)),
+                "test_individuals": sorted(test_ids), "training_context": contract})
+        except (ValueError, RuntimeError, KeyError) as error:
+            pending.append(f"{scheme}/{label}: {error}")
+    return {"status": "complete" if folds and not pending else "pending", "pending": pending,
+        "scores": rows, "training_contracts": contracts,
+        "independent_unit": "individual with nested trials; separate whole-assay-date generalization",
+        "future_outcomes_used_for_preprocessing": False,
+        "summary": (pd.DataFrame(rows).groupby("scheme")[["hurdle_log_score_per_trial", "multinomial_log_score_per_trial", "three_category_brier"]].mean().to_dict() if rows else {})}
+
+
 def aft_objective(theta: np.ndarray, x: np.ndarray, times: np.ndarray,
                   censored: np.ndarray) -> float:
     sigma = np.exp(theta[-1])
@@ -1539,6 +1886,22 @@ def run(config: dict[str, Any], root: Path, stage: str, **kwargs: Any) -> dict[s
     settings = config.get("behaviour", config)
     output = root / "results" / "behaviour"
     output.mkdir(parents=True, exist_ok=True)
+    aliases = {f"{operation}-{value}s": (operation, value) for operation in ("fit", "posterior-checks", "aggregate-folds") for value in (5, 20)}
+    if stage in aliases:
+        stage, kwargs["bin_seconds"] = aliases[stage]
+    if stage == "readiness":
+        from .core import atomic_json
+        result = formal_behavior_readiness(config, root)
+        atomic_json(root / "state" / "behaviour-readiness.json", result)
+        return result
+    if stage == "source-replication":
+        return replicate_source_summit(config, root)
+    if stage == "identifiability":
+        return parameter_identifiability_from_recovery(config, root)
+    if stage == "sensitivity-checks":
+        return sensitivity_checks(config, root)
+    if stage == "benchmark-workload":
+        return benchmark_workload(config, root)
     if stage == "inference":
         model_directory = root / "results" / "behaviour" / f"models_{float(settings.get('primary_bin_seconds', 10)):g}s"
         return write_h1(root, config, model_directory)
@@ -1646,6 +2009,7 @@ def run(config: dict[str, Any], root: Path, stage: str, **kwargs: Any) -> dict[s
             mating_settings = settings.get("mantis_mating", {})
             results["choice"] = fit_mantis_choice(choice_table, choice_settings)
             results["choice"]["source_audit"] = choice_audit
+            results["choice_validation"] = validate_mantis_choice(choice_table, choice_settings)
             results["mating"] = {outcome: fit_censored_latency(mating_table, outcome, mating_settings)
                                   for outcome in ("male_escape", "male_mounting")}
             results["mating"]["specificity"] = fit_mating_specificity(mating_table, mating_settings)
@@ -1657,6 +2021,7 @@ def run(config: dict[str, Any], root: Path, stage: str, **kwargs: Any) -> dict[s
             frame = read_table(root / source["path"], source.get("sheet"))
             if name == "choice":
                 results[name] = fit_mantis_choice(frame, source)
+                results["choice_validation"] = validate_mantis_choice(frame, source)
             elif name == "mating":
                 results[name] = {outcome: fit_censored_latency(frame, outcome, source)
                                  for outcome in source.get("latency_outcomes", ["male_escape", "male_mounting"])}
@@ -1664,6 +2029,12 @@ def run(config: dict[str, Any], root: Path, stage: str, **kwargs: Any) -> dict[s
         if not results:
             raise ValueError("No audited mantis source schemas")
         (output / "mantis_models.json").write_text(json.dumps(results, indent=2), encoding="utf-8")
+        from .core import atomic_json, canonical_hash, digest, source_identity
+        validation = results.get("choice_validation", {"status": "pending", "pending": ["Choice validation unavailable"]})
+        validation.update(config_sha256=canonical_hash(config), source_sha256=source_identity(Path(__file__).resolve().parents[2])["sha256"],
+            source_result_paths=[str((output / "mantis_models.json").resolve())],
+            source_result_hashes={str((output / "mantis_models.json").resolve()): digest(output / "mantis_models.json")})
+        atomic_json(output / "mantis_choice_validation.json", validation)
         return results
     path = root / "data" / "fly_observations.parquet"
     if stage == "pilot" and not path.exists() and operational_sources:
@@ -1759,12 +2130,33 @@ def run(config: dict[str, Any], root: Path, stage: str, **kwargs: Any) -> dict[s
         result = diagnose_outer_folds(sequences, config, model_directory, kwargs.get("outer_experiment"))
         return {"posterior_predictive_rows": len(result)}
     if stage == "recover":
-        return recovery_analysis(sequences, settings, output / "recovery")
+        from .core import atomic_json, canonical_hash, digest, source_identity
+        result = recovery_analysis(sequences, settings, output / "recovery")
+        result.update(config_sha256=canonical_hash(config), source_sha256=source_identity(Path(__file__).resolve().parents[2])["sha256"],
+            source_result_paths=[str(path.resolve()) for path in [output / "recovery" / "parameter_recovery.tsv", output / "recovery" / "model_recovery_confusion.tsv"]])
+        result["source_result_hashes"] = {path: digest(Path(path)) for path in result["source_result_paths"]}
+        atomic_json(output / "recovery" / "recovery_summary.json", result)
+        return result
     if stage == "bayesian-check":
         from .semimarkov import bayesian_check, fit_model
         selected = settings.get("bayesian_subset_animals")
         if not selected:
-            raise ValueError("Freeze representative Bayesian subset animal IDs before posterior checking")
+            # Clock-length strata and identity hashes use no infection/death
+            # outcome. Serialize the prospective roster before refitting.
+            lengths = {experiment: max(len(s.times) for s in sequences if s.experiment_id == experiment)
+                       for experiment in sorted({s.experiment_id for s in sequences})}
+            ordered = sorted(lengths, key=lambda experiment: (lengths[experiment], experiment))
+            strata = sorted(set([ordered[0], ordered[len(ordered) // 2], ordered[-1]]))
+            selected = [s.animal_id for experiment in strata for s in sorted(
+                [s for s in sequences if s.experiment_id == experiment],
+                key=lambda s: hashlib.sha256(("bayesian-clock-roster-v1\0" + s.animal_id).encode()).hexdigest())[:2]]
+        from .core import atomic_json, canonical_hash, digest, source_identity
+        roster_path = output / "bayesian_subset_roster.json"
+        roster = {"animal_ids": sorted(selected), "selection": "Declared IDs or shortest/median/longest experiment clocks and two identity-hashed animals per experiment; full original clocks",
+                  "config_sha256": canonical_hash(config), "source_sha256": source_identity(Path(__file__).resolve().parents[2])["sha256"]}
+        if roster_path.exists() and json.loads(roster_path.read_text(encoding="utf-8")) != roster:
+            raise ValueError("Prospective Bayesian subset roster changed")
+        atomic_json(roster_path, roster)
         subset = [s for s in sequences if s.animal_id in selected]
         if len(subset) != len(selected):
             raise ValueError("Bayesian subset includes unavailable or duplicated animals")
@@ -1772,7 +2164,10 @@ def run(config: dict[str, Any], root: Path, stage: str, **kwargs: Any) -> dict[s
         fit.save(output / "bayesian_subset_map.pt")
         result = bayesian_check(fit, subset, settings.get("bayesian_sampler", {}))
         np.save(output / "bayesian_subset_samples.npy", result.pop("samples"))
-        (output / "bayesian_subset_diagnostics.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+        result.update(status="complete", config_sha256=canonical_hash(config), source_sha256=roster["source_sha256"],
+            source_result_paths=[str(p.resolve()) for p in [roster_path, output / "bayesian_subset_map.pt", output / "bayesian_subset_samples.npy"]])
+        result["source_result_hashes"] = {p: digest(Path(p)) for p in result["source_result_paths"]}
+        atomic_json(output / "bayesian_subset_diagnostics.json", result)
         return result
     raise ValueError(f"Unsupported behavioural stage {stage!r}")
 
@@ -1892,6 +2287,249 @@ def native_pilot_selection(parquet_path: Path, settings: dict[str, Any]) -> dict
             "complete_experiment_membership": {experiment: sorted(membership[experiment]) for experiment in experiments}}
 
 
+def sensitivity_checks(config: dict[str, Any], root: Path) -> dict[str, Any]:
+    from .core import atomic_json, canonical_hash, digest, source_identity
+    settings = config.get("behaviour", {})
+    values = sorted(set([float(settings.get("primary_bin_seconds", 10)), *map(float, settings.get("sensitivity_bins_seconds", [5, 20]))]))
+    pending, rows, inputs, rosters = [], [], [], []
+    for value in values:
+        directory = Path(root) / "results" / "behaviour" / f"models_{value:g}s"
+        paths = [directory / "model_comparison.tsv", directory / "inner_selection.tsv"]
+        if not all(path.exists() for path in paths):
+            pending.append(f"{value:g}s grouped outer/inner fit outputs are unavailable")
+            continue
+        scores, inner = map(read_table, paths)
+        selected, _ = select_primary_from_inner(scores, inner)
+        paired = pd.concat([selected, scores[scores.model.eq("MG")]]).pivot(
+            index=["experiment_id", "animal_id"], columns="model", values="log_score")
+        if paired.isna().any().any() or not np.isfinite(paired.to_numpy()).all():
+            raise ValueError("Sensitivity comparison lacks complete same-animal predictions")
+        difference = (paired.selected_transition - paired.MG).groupby(level=0).mean()
+        rosters.append(set(difference.index.astype(str)))
+        rows.extend({"bin_seconds": value, "experiment_id": str(experiment), "selected_minus_gain_log_score": float(score)}
+                    for experiment, score in difference.items())
+        inputs.extend(paths)
+    if rosters and any(roster != rosters[0] for roster in rosters[1:]):
+        pending.append("Sensitivity scales do not retain the same independent experiment roster")
+    summaries = {str(value): float(np.mean([row["selected_minus_gain_log_score"] for row in rows if row["bin_seconds"] == value]))
+                 for value in values if any(row["bin_seconds"] == value for row in rows)}
+    result = {"status": "complete" if not pending and len(summaries) == len(values) else "pending", "pending": pending,
+        "scores": rows, "experiment_weighted_means": summaries,
+        "sign_consistency": bool(summaries and (all(score > 0 for score in summaries.values()) or all(score <= 0 for score in summaries.values()))),
+        "interpretation": "Scores within each time scale retain paired animals and equal experiment weights; absolute log scores across bin widths are not pooled",
+        "config_sha256": canonical_hash(config), "source_sha256": source_identity(Path(__file__).resolve().parents[2])["sha256"],
+        "source_result_paths": [str(path.resolve()) for path in inputs],
+        "source_result_hashes": {str(path.resolve()): digest(path) for path in inputs}}
+    atomic_json(Path(root) / "results" / "behaviour" / "sensitivity_checks.json", result)
+    return result
+
+
+def benchmark_workload(config: dict[str, Any], root: Path) -> dict[str, Any]:
+    """Full native numerical kernels; missing whole-design coverage stays pending.
+
+    This does not shorten clocks, cap duration support or optimize fewer starts
+    and pretend to have measured a complete model fit. Actual kernel counts and
+    the prospective full design are bound separately. Admission remains closed
+    until optimizer, full curvature/sampler, neural, mantis and H2 work units
+    have also been measured with their native dimensions.
+    """
+    import os
+    import torch
+    import pyarrow.parquet as pq
+    from .core import atomic_json, canonical_hash, digest, native_job_id, source_identity
+    from .semimarkov import Fit, MovementModel, TrainingScaler, simulate, training_duration_knots
+    root, settings = Path(root), config.get("behaviour", {})
+    output = root / "state" / "behaviour-workload-benchmark.json"
+    identity = {"full_config_sha256": canonical_hash(config), "source_sha256": source_identity(Path(__file__).resolve().parents[2])["sha256"],
+                "slurm_job_id": native_job_id(), "allocated_cpus": int(os.environ.get("SLURM_CPUS_PER_TASK", "1"))}
+    result = dict(identity, status="pending", benchmark_only=True, scientific_fit=False,
+        complete_declared_workload=False, tasks=[], pending=[],
+        biological_time_interpretation="Technical recording-relative covariate only; no inferred infection/exposure time or H1 output",
+        additional_working_bytes=0, additional_working_files=0)
+    native = root / "data" / "fly_observations.parquet"
+    provenance = root / "results" / "behaviour" / "streaming_bin_provenance.json"
+    if not native.exists() or not provenance.exists():
+        result["pending"] = ["Verified chronological ingestion and bin provenance are required"]
+        atomic_json(output, result)
+        return result
+    proof = json.loads(provenance.read_text(encoding="utf-8"))
+    if proof.get("native_input_sha256") != digest(native):
+        raise ValueError("Native observations changed after validated ingestion")
+    result["input_sha256"] = proof["native_input_sha256"]
+    widths = sorted(set([float(settings.get("primary_bin_seconds", 10)), *map(float, settings.get("sensitivity_bins_seconds", [5, 20]))]))
+    rosters, paths = {}, {}
+    for width in widths:
+        path = root / "results" / "behaviour" / f"fly_bins_{width:g}s.parquet"
+        if not path.exists() or proof.get("bin_files", {}).get(str(path.resolve())) != digest(path):
+            result["pending"].append(f"Verified {width:g}s chronological bins missing")
+            continue
+        rows = []
+        metadata = pq.ParquetFile(path).metadata
+        for i in range(metadata.num_row_groups):
+            group = metadata.row_group(i)
+            fields = {}
+            for name in ("animal_id", "experiment_id", "analysis_role"):
+                columns = [group.column(j) for j in range(group.num_columns) if group.column(j).path_in_schema == name]
+                if len(columns) != 1 or columns[0].statistics is None or columns[0].statistics.min != columns[0].statistics.max:
+                    raise ValueError("Workload roster requires constant independent identity/role per row group")
+                fields[name] = str(columns[0].statistics.min)
+            if fields["analysis_role"] == "behavioural_development":
+                rows.append(dict(fields, bins=group.num_rows))
+        rosters[f"{width:g}s"], paths[width] = rows, path
+    plan = {"clock_rosters": rosters, "models": settings.get("models", ["M0", "MG", "MT", "MD", "MX"]),
+        "learning_rates": settings.get("learning_rates", [.0003, .001, .003]), "starts": int(settings.get("starts", 5)),
+        "final_starts": int(settings.get("final_starts", 20)), "max_epochs": int(settings.get("max_epochs", 500)),
+        "lbfgs_iterations": int(settings.get("lbfgs_iterations", 200)), "inner_folds": int(settings.get("inner_folds", 3)),
+        "parameter_recovery_replicates": int(settings.get("parameter_recovery_replicates", 100)),
+        "recovery_models": settings.get("recovery_models", ["MG", "MT", "MD", "MX"]),
+        "recovery_effects": settings.get("recovery_effects", [0, .25, .5, 1]),
+        "selection": "Maximum native clock length, then identity lexicographic tie-break; no outcomes inspected"}
+    result.update(prospective_workload=plan, prospective_workload_sha256=canonical_hash(plan),
+        source_result_paths=[str(provenance.resolve()), *[str(path.resolve()) for path in paths.values()]],
+        source_result_hashes={str(path.resolve()): digest(path) for path in [provenance, *paths.values()]})
+    atomic_json(output, result)
+    torch.set_num_threads(max(1, int(settings.get("threads", identity["allocated_cpus"]))))
+    for width, path in paths.items():
+        roster = rosters[f"{width:g}s"]
+        if not roster:
+            result["pending"].append(f"No development animals at {width:g}s")
+            continue
+        chosen = sorted(roster, key=lambda row: (-row["bins"], row["animal_id"]))[0]
+        frame = pd.read_parquet(path, filters=[("animal_id", "=", chosen["animal_id"])])
+        sequences = to_sequences(frame, dict(settings, modulation=["elapsed_hours"]))
+        if len(sequences) != 1 or len(sequences[0].times) != chosen["bins"]:
+            raise ValueError("Native benchmark must retain the full prospectively selected clock")
+        sequence = sequences[0]
+        scaler = TrainingScaler.fit(sequences)
+        transformed = scaler.transform(sequence)
+        animals = [row["animal_id"] for row in roster]
+        experiments = sorted({row["experiment_id"] for row in roster})
+        for name in plan["models"]:
+            model = MovementModel(name, len(scaler.mean), len(scaler.modulation_mean), sequence.observations.shape[1],
+                training_duration_knots(sequences), animals, experiments, states=int(settings.get("states", 2)),
+                max_duration_bins=settings.get("max_duration_bins"), bin_seconds=width)
+            fit = Fit(model, scaler, {"tail_tolerance": settings.get("tail_tolerance", 1e-8)})
+            # Registered group dimensions match the entire source roster; timing
+            # one animal is explicitly one kernel, not a completed full-data fit.
+            def gradient_operation():
+                model.zero_grad()
+                objective = -model(transformed)["log_likelihood"].sum() - model.log_prior()
+                objective.backward()
+                if not torch.isfinite(objective) or any(p.grad is not None and not p.grad.isfinite().all() for p in model.parameters()):
+                    raise FloatingPointError("Full native benchmark gradient is nonfinite")
+            unseen = copy.deepcopy(sequence)
+            unseen.animal_id, unseen.experiment_id = "benchmark-unseen-animal", "benchmark-unseen-experiment"
+            for operation, callback in [("likelihood_gradient", gradient_operation),
+                    ("unseen_random_effect_score", lambda: fit.score(unseen, settings.get("warmup_seconds", 600))),
+                    ("causal_full_clock_simulation", lambda: simulate(model, transformed, int(config.get("seed", 0))))]:
+                start = time.perf_counter()
+                callback()
+                elapsed = time.perf_counter() - start
+                task = dict(identity, name=f"{name}_{width:g}s_{operation}", operation=operation, model=name,
+                    bin_seconds=width, native_animal_id=sequence.animal_id, native_bins=len(sequence.times),
+                    input_sha256=digest(path), elapsed_seconds=elapsed, measured_work_units=1,
+                    planned_work_units=None, maximum_job_work_units=None, concurrency=1,
+                    benchmark_uses_full_primary_numerics=True, full_roster_parameter_count=sum(p.numel() for p in model.parameters()),
+                    process_peak_ram_bytes=_process_peak_ram_bytes(),
+                    forecast_status="pending: kernel count is not a complete optimizer/uncertainty workload")
+                result["tasks"].append(task)
+                atomic_json(output, result)
+    result["pending"].extend(["Complete optimizer closure/line-search and neural comparator workload has not been measured",
+        "Full-data posterior curvature, recovery fitted intervals and representative MALA workload not measured",
+        "Mantis validation/bootstrap and curated H2 contrast/calibration workload not measured"])
+    result["status"] = "partial_native_measurements_complete"
+    atomic_json(output, result)
+    return result
+
+
+def full_parameter_laplace(fit: Any, sequences: list[Any], *, include_curvature: bool = False) -> dict[str, Any]:
+    """Observed posterior curvature including every nuisance and group effect.
+
+    Each animal likelihood depends on all global parameters and exactly its own
+    animal/experiment rows. Scattering those exact local Hessians is algebraically
+    identical to a dense full-data Hessian, while bounding the autograd graph to
+    one animal. No conditional covariance or ridge repair is substituted.
+    """
+    import torch
+    from torch.func import functional_call
+    from scipy.linalg import cho_factor, cho_solve
+    model = fit.model
+    transformed = [fit.scaler.transform(sequence) for sequence in sequences]
+    parameters = {name: value.detach() for name, value in model.named_parameters() if value.requires_grad}
+    offsets, cursor = {}, 0
+    for name, value in parameters.items():
+        offsets[name] = np.arange(cursor, cursor + value.numel()).reshape(tuple(value.shape))
+        cursor += value.numel()
+    hessian, gradient = np.zeros((cursor, cursor)), np.zeros(cursor)
+    for name, value in parameters.items():
+        indices = offsets[name].ravel()
+        array = value.cpu().numpy().ravel()
+        if name in ("animal_z", "experiment_z"):
+            diagonal, derivative = np.ones(len(array)), array
+        elif name in ("log_animal_sd", "log_experiment_sd"):
+            diagonal, derivative = 8 * np.exp(2 * array), 4 * np.exp(2 * array) - 1
+        else:
+            diagonal, derivative = np.full(len(array), 1 / 2.25), array / 2.25
+        hessian[indices, indices] += diagonal
+        gradient[indices] += derivative
+    for sequence in transformed:
+        local, pieces, descriptors = [], [], []
+        for name, value in parameters.items():
+            row = (model.animal_ids.index(sequence.animal_id) if name == "animal_z" else
+                   model.experiment_ids.index(sequence.experiment_id) if name == "experiment_z" else None)
+            selected = value if row is None else value[row]
+            selected_indices = offsets[name] if row is None else offsets[name][row]
+            local.extend(np.asarray(selected_indices).ravel().tolist())
+            pieces.append(selected.flatten())
+            descriptors.append((name, row, selected.shape, selected.numel()))
+        initial = torch.cat(pieces).requires_grad_(True)
+        def objective(theta):
+            values, at = {}, 0
+            for name, row, shape, size in descriptors:
+                replacement = theta[at:at + size].reshape(shape)
+                at += size
+                values[name] = replacement if row is None else parameters[name].index_copy(
+                    0, torch.as_tensor([row], device=theta.device), replacement[None])
+            return -functional_call(model, values, (sequence,))["log_likelihood"].sum()
+        value = objective(initial)
+        local_gradient = torch.autograd.grad(value, initial)[0].detach().cpu().numpy()
+        local_hessian = torch.autograd.functional.hessian(objective, initial).detach().cpu().numpy()
+        hessian[np.ix_(local, local)] += local_hessian
+        gradient[local] += local_gradient
+    observed = sum(int(sequence.observed.sum()) for sequence in sequences)
+    stationarity = float(np.max(np.abs(gradient)) / max(observed, 1))
+    result = {"parameter_uncertainty_method": "full_parameter_laplace", "parameter_uncertainty_validated": False,
+              "normalized_maximum_gradient": stationarity, "parameter_count": cursor,
+              "curvature_interpretation": "Full posterior Hessian including nuisance, animal and experiment effects; no diagonal covariance approximation"}
+    if include_curvature:
+        result["hessian"], result["gradient"] = hessian, gradient
+    if not np.isfinite(hessian).all() or not np.isfinite(gradient).all():
+        result["uncertainty_failure"] = "Nonfinite exact posterior curvature"
+        return result
+    try:
+        factor = cho_factor((hessian + hessian.T) / 2, check_finite=True)
+    except np.linalg.LinAlgError:
+        result["uncertainty_failure"] = "Full posterior curvature is not positive definite; no artificial ridge interval generated"
+        return result
+    if stationarity > .001:
+        result["uncertainty_failure"] = "MAP normalized maximum gradient exceeds .001; Laplace intervals are not validated"
+        return result
+    scale = np.asarray(fit.scaler.modulation_scale)
+    for component, name in (("transition", "transition_mod"), ("gain", "gain_mod"), ("direction", "direction_mod")):
+        if name not in parameters:
+            continue
+        indices = offsets[name].ravel()
+        rhs = np.zeros((cursor, len(indices)))
+        rhs[indices, np.arange(len(indices))] = 1
+        covariance_columns = cho_solve(factor, rhs)
+        standard_error = np.sqrt(covariance_columns[indices, np.arange(len(indices))]).reshape(parameters[name].shape) / scale
+        estimate = parameters[name].cpu().numpy() / scale
+        result[f"{component}_interval_low"] = (estimate - stats.norm.ppf(.975) * standard_error).tolist()
+        result[f"{component}_interval_high"] = (estimate + stats.norm.ppf(.975) * standard_error).tolist()
+    result["parameter_uncertainty_validated"] = True
+    return result
+
+
 def recovery_analysis(sequences: list[Any], config: dict[str, Any], output: Path) -> dict[str, Any]:
     from .semimarkov import MovementModel, TrainingScaler, fit_model, simulate, training_duration_knots
     output.mkdir(parents=True, exist_ok=True)
@@ -1927,13 +2565,22 @@ def recovery_analysis(sequences: list[Any], config: dict[str, Any], output: Path
                              for i, template in enumerate(templates)]
                 # Completely independent experiment validation for recovery too.
                 for candidate in config.get("models", ["M0", "MG", "MT", "MD", "MX"]):
-                    for train, test in grouped_folds(synthetic):
+                    for fold, (train, test) in enumerate(grouped_folds(synthetic, int(config.get("inner_folds", 3)))):
                         fit = fit_model(train, candidate, config)
+                        uncertainty = full_parameter_laplace(fit, train) if candidate == generating else {}
+                        scale = np.asarray(fit.scaler.modulation_scale)
                         for sequence in test:
                             record = fit.score(sequence, config.get("warmup_seconds", 600))
                             record.update(generating=generating, effect=effect, replicate=replicate,
-                                          transition_estimate=fit.model.transition_mod.detach().cpu().tolist(),
-                                          gain_estimate=fit.model.gain_mod.detach().cpu().tolist())
+                                recovery_fold=fold,
+                                transition_estimate=(fit.model.transition_mod.detach().cpu().numpy() / scale).tolist(),
+                                gain_estimate=(fit.model.gain_mod.detach().cpu().numpy() / scale).tolist(),
+                                direction_estimate=(fit.model.direction_mod.detach().cpu().numpy() / scale).tolist(),
+                                transition_true=truth.transition_mod.detach().cpu().tolist(),
+                                gain_true=truth.gain_mod.detach().cpu().tolist(),
+                                direction_true=truth.direction_mod.detach().cpu().tolist(),
+                                parameter_scale="Generating normalized covariate units; refit training scales explicitly undone")
+                            record.update(uncertainty)
                             records.append(record)
     frame = pd.DataFrame(records)
     frame.to_csv(output / "parameter_recovery.tsv", sep="\t", index=False)
@@ -1944,8 +2591,89 @@ def recovery_analysis(sequences: list[Any], config: dict[str, Any], output: Path
     confusion.to_csv(output / "model_recovery_confusion.tsv", sep="\t")
     gain = winners[winners.index.get_level_values("generating") == "MG"]
     false_selective = float(gain.isin(["MT", "MX"]).mean()) if len(gain) else None
-    result = {"n_fits_scored": len(frame), "gain_only_false_selective_fraction": false_selective,
+    result = {"status": "complete", "n_fits_scored": len(frame), "gain_only_false_selective_fraction": false_selective,
               "parameter_recovery_replicates": repetitions, "settings": config,
               "precision_interpretation": "Simulated observations are not additional brains or flies"}
     (output / "recovery_summary.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+    return result
+
+
+def parameter_identifiability_from_recovery(config: dict[str, Any], root: Path) -> dict[str, Any]:
+    """Bias/precision/coverage from actual known-truth runs, never invented SEs."""
+    from .core import atomic_json, canonical_hash, digest, source_identity
+    root = Path(root)
+    settings = config.get("behaviour", {})
+    path = root / "results" / "behaviour" / "recovery" / "parameter_recovery.tsv"
+    summary_path = path.parent / "recovery_summary.json"
+    pending, diagnostics = [], []
+    if not path.exists():
+        pending.append("Known-truth recovery outputs have not been generated")
+        frame = pd.DataFrame()
+    else:
+        frame = read_table(path)
+    required = {"generating", "effect", "replicate", "model", "recovery_fold", "experiment_id"}
+    required.update(f"{component}_{suffix}" for component in ("transition", "gain", "direction") for suffix in ("true", "estimate"))
+    if required - set(frame):
+        pending.append(f"Recovery table lacks auditable truth/fold/scale fields {sorted(required - set(frame))}")
+    else:
+        frame = frame[frame.model.eq(frame.generating)].copy()
+        keys = ["generating", "effect", "replicate", "model", "recovery_fold"]
+        # One fitted vector appears on every held-out animal score; these are
+        # repeated measurements of that fit, not additional recovery replicates.
+        for component in ("transition", "gain", "direction"):
+            for suffix in ("true", "estimate"):
+                if (frame.groupby(keys)[f"{component}_{suffix}"].nunique() != 1).any():
+                    raise ValueError("Recovery fit parameters differ across its repeated animal score rows")
+        fits = frame.drop_duplicates(keys).copy()
+        expected_replicates = int(settings.get("parameter_recovery_replicates", 100))
+        for (model, effect, fold), rows in fits.groupby(["model", "effect", "recovery_fold"]):
+            if set(rows.replicate) != set(range(expected_replicates)):
+                pending.append(f"{model}/{effect}/fold{fold}: incomplete independent simulation roster")
+                continue
+            components = {"MG": ["gain"], "MT": ["transition"], "MD": ["direction"],
+                          "MX": ["transition", "gain", "direction"]}[model]
+            for component in components:
+                decode = lambda value: np.asarray(json.loads(value) if isinstance(value, str) else value, float).ravel()
+                estimated = np.vstack([decode(value) for value in rows[f"{component}_estimate"]])
+                truth = np.vstack([decode(value) for value in rows[f"{component}_true"]])
+                if estimated.shape != truth.shape or not np.isfinite(estimated).all() or not np.isfinite(truth).all():
+                    raise ValueError("Recovery parameters have incompatible dimensions or nonfinite values")
+                bias = (estimated - truth).mean(0)
+                rmse = np.sqrt(np.mean((estimated - truth) ** 2, axis=0))
+                coverage = None
+                low_key, high_key = f"{component}_interval_low", f"{component}_interval_high"
+                if low_key in rows and high_key in rows:
+                    if not {"parameter_uncertainty_method", "parameter_uncertainty_validated"}.issubset(rows):
+                        pending.append("Recovery intervals lack their full-parameter uncertainty validation")
+                    elif not rows.parameter_uncertainty_validated.eq(True).all():
+                        pending.append("At least one recovery uncertainty calculation was not validated")
+                    elif not set(rows.parameter_uncertainty_method).issubset({"full_parameter_laplace", "adequate_posterior_sampling"}):
+                        pending.append("Conditional or empirical across-simulation SD cannot validate nominal fitted-parameter coverage")
+                    else:
+                        low, high = np.vstack([decode(value) for value in rows[low_key]]), np.vstack([decode(value) for value in rows[high_key]])
+                        if low.shape != truth.shape or high.shape != truth.shape or not np.isfinite(low).all() or not np.isfinite(high).all() or (low > high).any():
+                            raise ValueError("Recovery fitted-parameter intervals are invalid")
+                        coverage = np.mean((low <= truth) & (truth <= high), axis=0).tolist()
+                else:
+                    pending.append(f"{model}/{effect}/fold{fold}/{component}: nominal fitted-parameter interval coverage not measured")
+                diagnostics.append({"generating_model": model, "effect": float(effect), "recovery_fold": int(fold),
+                    "parameter_class": component, "independent_simulations": len(rows),
+                    "bias": bias.tolist(), "rmse": rmse.tolist(), "coverage95": coverage,
+                    "point_recovery_passed": bool(np.max(np.abs(bias)) <= .1 and np.max(rmse) <= .25),
+                    "coverage_passed": bool(coverage is not None and min(coverage) >= .9 and max(coverage) <= .99)})
+        planned = len(settings.get("recovery_models", ["MG", "MT", "MD", "MX"])) * len(settings.get("recovery_effects", [0, .25, .5, 1])) * min(int(settings.get("inner_folds", 3)), frame.experiment_id.nunique())
+        if len(fits.groupby(["model", "effect", "recovery_fold"])) != planned:
+            pending.append("Recovery does not cover every declared generating-model/effect/fold cell")
+    passed = bool(diagnostics and not pending and all(row["point_recovery_passed"] and row["coverage_passed"] for row in diagnostics))
+    inputs = [candidate for candidate in (path, summary_path) if candidate.exists()]
+    result = {"status": "pending" if pending else "complete", "parameter_identifiability_passed": passed,
+        "pending": sorted(set(pending)), "diagnostics": diagnostics,
+        "criteria": {"absolute_bias_max": .1, "rmse_max": .25, "nominal_fitted_interval": .95,
+                     "empirical_coverage_range": [.9, .99], "independent_simulations_per_cell": int(settings.get("parameter_recovery_replicates", 100))},
+        "independent_unit": "independent known-truth simulation, with grouped-fold estimates kept separate",
+        "evidence_class": "parameter recovery diagnostic using original clocks; simulations are not additional biological subjects",
+        "config_sha256": canonical_hash(config), "source_sha256": source_identity(Path(__file__).resolve().parents[2])["sha256"],
+        "source_result_paths": [str(candidate.resolve()) for candidate in inputs],
+        "source_result_hashes": {str(candidate.resolve()): digest(candidate) for candidate in inputs}}
+    atomic_json(root / "results" / "behaviour" / "parameter_identifiability.json", result)
     return result

@@ -1,0 +1,488 @@
+"""Finite scheduled control of the complete study's admitted phase graph.
+
+The controller runs in Slurm. It records missing scientific inputs explicitly,
+never replays an ambiguous submission and never substitutes qualification for
+scientific completion. Provider transfer workers remain independent.
+"""
+from __future__ import annotations
+
+import json
+import math
+import os
+import re
+import subprocess
+import time
+from pathlib import Path
+
+from .core import atomic_json, canonical_hash, digest, exclusive_file_lock, native_job_id, read_json, source_identity
+
+
+NODES = (
+    ('rna-full', ('initial:rna-pilot-0', 'initial:rna-pilot-1', 'initial:molecular-pilot'), 'rna-full'),
+    ('agents-development', ('initial:agent-benchmark-aggregate',), 'agents-development'),
+    ('agents-final', ('agents-development',), 'agents-final'),
+    ('behaviour-benchmark', ('initial:source-audit',), None),
+    ('behaviour', ('behaviour-benchmark',), 'behaviour'),
+    ('interventions', ('behaviour',), 'behaviour'),
+    ('screen', ('behaviour', 'rna-full'), 'behaviour'),
+    ('molecular-benchmark', ('screen', 'initial:molecular-pilot'), None),
+    ('molecular-transfer', ('molecular-benchmark',), 'molecular'),
+    ('molecular-corroboration', ('rna-full', 'initial:molecular-pilot'), None),
+    ('synthesis', ('behaviour', 'interventions', 'molecular-transfer', 'agents-final', 'molecular-corroboration'), None),
+)
+TERMINAL_FAILURE = {'FAILED', 'TIMEOUT', 'OUT_OF_MEMORY', 'CANCELLED', 'NODE_FAIL', 'BOOT_FAIL', 'PREEMPTED', 'DEADLINE', 'REVOKED'}
+
+
+def _recovery_guard(path):
+    """Permanent inode with a process lock: native termination releases it."""
+    return exclusive_file_lock(path, timeout=0)
+
+
+def _native_states(ids, runner=subprocess.run):
+    ids = list(dict.fromkeys(map(str, ids)))
+    if not ids:
+        return {}
+    if any(not re.fullmatch(r'\d+(?:_\d+)?', value) for value in ids):
+        raise ValueError('Invalid native study job identity')
+    response = runner(['sacct', '-j', ','.join(ids), '--format=JobIDRaw,State,ExitCode', '--noheader', '--parsable2'], text=True, capture_output=True)
+    if response.returncode:
+        raise RuntimeError('Native job state is unavailable; no phase will be submitted')
+    states = {}
+    for line in response.stdout.splitlines():
+        parts = line.strip().split('|')
+        if len(parts) >= 3 and re.fullmatch(r'\d+(?:_\d+)?', parts[0]):
+            states[parts[0]] = {'state': parts[1].split()[0].split('+')[0], 'exit_code': parts[2]}
+    return states
+
+
+def _array_indices(expression):
+    roster = set()
+    for term in expression.split('%', 1)[0].split(','):
+        match = re.fullmatch(r'(\d+)(?:-(\d+)(?::(\d+))?)?', term)
+        if not match:
+            raise ValueError('Unsupported native array roster')
+        start, stop, step = int(match[1]), int(match[2] or match[1]), int(match[3] or 1)
+        if stop < start or step < 1:
+            raise ValueError('Invalid native array roster')
+        roster.update(range(start, stop + 1, step))
+    return roster
+
+
+def _task_status(task, native, plan_task=None):
+    if task.get('state') != 'submitted' or not task.get('job_id'):
+        return 'ambiguous_submission'
+    ident = str(task['job_id'])
+    array = (plan_task or {}).get('resources', {}).get('array') or task.get('resources', {}).get('array')
+    expected = {ident + '_' + str(index) for index in _array_indices(array)} if array else {ident}
+    records = [value for key, value in native.items() if key in expected or key == ident]
+    if not records:
+        return 'awaiting_native_accounting'
+    if any(r['state'] in TERMINAL_FAILURE or (r['state'] == 'COMPLETED' and r['exit_code'] != '0:0') for r in records):
+        return 'failed'
+    if not expected <= set(native):
+        return 'awaiting_native_accounting'
+    if all(r['state'] == 'COMPLETED' and r['exit_code'] == '0:0' for r in records):
+        return 'complete'
+    return 'running' if any(r['state'] in {'RUNNING', 'COMPLETING'} for r in records) else 'queued'
+
+
+def _phase_status(ledger, native, plan_record=None):
+    planned = {task['name']: task for task in (plan_record or {}).get('tasks', [])}
+    if planned and set(ledger.get('tasks', {})) != set(planned):
+        return 'ambiguous_submission'
+    statuses = [_task_status(task, native, planned.get(name)) for name, task in ledger.get('tasks', {}).items()]
+    if not statuses:
+        return 'ambiguous_submission'
+    if 'ambiguous_submission' in statuses:
+        return 'ambiguous_submission'
+    if 'failed' in statuses:
+        return 'failed'
+    if all(value == 'complete' for value in statuses):
+        return 'complete'
+    return 'running' if 'running' in statuses else 'queued'
+
+
+def _task_terminal(task, native, plan_task):
+    ident = str(task.get('job_id', ''))
+    array = plan_task.get('resources', {}).get('array')
+    expected = {ident + '_' + str(index) for index in _array_indices(array)} if array else {ident}
+    return bool(task.get('state') == 'submitted' and expected <= set(native)
+                and all(native[key]['state'] in TERMINAL_FAILURE | {'COMPLETED'} for key in expected))
+
+
+def _weighted_antichain(weights, edges):
+    """Exact maximum simultaneous weight in a finite dependency partial order."""
+    keys=list(weights);reachable={key:set() for key in keys}
+    for left,right in edges:reachable[left].add(right)
+    for middle in keys:
+        for left in keys:
+            if middle in reachable[left]:reachable[left].update(reachable[middle])
+    if any(key in reachable[key] for key in keys):raise ValueError('Cyclic scientific job dependencies')
+    total=sum(weights.values());size=2*len(keys)+2;source=size-2;sink=size-1
+    graph=[[] for _ in range(size)]
+    def edge(a,b,capacity):
+        graph[a].append([b,capacity,len(graph[b])]);graph[b].append([a,0,len(graph[a])-1])
+    indexes={key:index for index,key in enumerate(keys)}
+    for key,index in indexes.items():
+        edge(source,index,weights[key]);edge(index+len(keys),sink,weights[key])
+        for right in reachable[key]:edge(index,indexes[right]+len(keys),total+1)
+    flow=0
+    while True:
+        level=[-1]*size;level[source]=0;queue=[source]
+        for node in queue:
+            for target,capacity,_ in graph[node]:
+                if capacity>0 and level[target]<0:level[target]=level[node]+1;queue.append(target)
+        if level[sink]<0:break
+        cursor=[0]*size
+        def push(node,amount):
+            if node==sink:return amount
+            while cursor[node]<len(graph[node]):
+                item=graph[node][cursor[node]];target,capacity,reverse=item
+                if capacity>0 and level[target]==level[node]+1:
+                    sent=push(target,min(amount,capacity))
+                    if sent:item[1]-=sent;graph[target][reverse][1]+=sent;return sent
+                cursor[node]+=1
+            return 0
+        while (amount:=push(source,total+1)):flow+=amount
+    return total-flow
+
+
+def prospective_capacity(plan_records, ledgers, native):
+    weights_cpu={};weights_gpu={};edges=[];native_nodes={}
+    for phase,plan_record in plan_records.items():
+        for task in plan_record['tasks']:
+            key=phase+':'+task['name'];record=ledgers.get(phase,{}).get('tasks',{}).get(task['name'])
+            finished=record is not None and _task_terminal(record,native,task)
+            resources=task['resources'];array=resources.get('array')
+            concurrency=min(int(array.split('%')[1]),len(_array_indices(array))) if array and '%' in array else len(_array_indices(array)) if array else 1
+            weights_cpu[key]=0 if finished else int(resources.get('cpus',4))*concurrency
+            weights_gpu[key]=0 if finished else int(bool(resources.get('gpu',False)))*concurrency
+            if record and record.get('job_id'):native_nodes[str(record['job_id'])]=key
+    for phase,plan_record in plan_records.items():
+        for task in plan_record['tasks']:
+            key=phase+':'+task['name']
+            edges.extend((phase+':'+parent,key) for parent in task.get('depends',[]))
+            edges.extend((native_nodes[str(ident)],key) for ident in task.get('external_dependencies',[]) if str(ident) in native_nodes)
+    return {'cpus':_weighted_antichain(weights_cpu,edges),'gpus':_weighted_antichain(weights_gpu,edges)}
+
+
+def prospective_registered_budget(plan_records, ledgers, native, accounting):
+    """Conservative allocation bounds for every unfinished registered task.
+
+    Pending arrays reserve all remaining members. Active allocations reserve
+    their entire declared walltime; the existing active-lease reservation is
+    not added again. Native completed cost is already in the accounting total.
+    """
+    cpu=float(accounting.get('spent_cpu_core_hours',0))
+    gpu=float(accounting.get('spent_gpu_hours',0))
+    for phase,plan_record in plan_records.items():
+        for task in plan_record['tasks']:
+            resources=task['resources'];array=resources.get('array')
+            record=ledgers.get(phase,{}).get('tasks',{}).get(task['name'],{})
+            ident=str(record.get('job_id',''))
+            identities=[ident+'_'+str(index) for index in _array_indices(array)] if array else [ident]
+            remaining=sum(not (record.get('state')=='submitted' and key in native
+                               and native[key]['state'] in TERMINAL_FAILURE|{'COMPLETED'}) for key in identities)
+            hours=float(resources.get('hours',2))*remaining
+            cpu+=hours*int(resources.get('cpus',4));gpu+=hours*int(bool(resources.get('gpu',False)))
+    return {'cpu_core_hours':cpu,'gpu_hours':gpu,'basis':'native spent plus full allocated bounds for every unfinished registered job member'}
+
+
+def _check_result(path, config, identity, *, status=None):
+    if not path.is_file():
+        return False, 'Completion artifact is not present: ' + path.name
+    result = read_json(path)
+    if result.get('source_sha256') != identity or result.get('config_sha256', result.get('full_config_sha256')) != canonical_hash(config):
+        return False, 'Completion artifact belongs to a different source or configuration: ' + path.name
+    if status is not None and result.get('status') not in status:
+        return False, 'Scientific completion is pending: ' + path.name
+    return True, None
+
+
+def _validate_plan(record, config, identity):
+    if record.get('config_sha256') != canonical_hash(config) or record.get('release_identity') != identity:
+        raise ValueError('Frozen plan belongs to a different configuration or source release')
+
+
+def _phase_outputs(phase, config, root, identity, release_id=None):
+    expected = {
+        'behaviour-benchmark': root/'state/behaviour-workload-benchmark.json',
+        'behaviour': root/'results/inference/H1.json',
+        'interventions': root/'results/inference/H2.json',
+        'molecular-benchmark': root/'state/molecular-workload-benchmark.json',
+        'molecular-transfer': root/'results/inference/H3.json',
+        'agents-final': root/'results/inference/H4.json',
+    }
+    if phase in expected:
+        valid, reason = _check_result(expected[phase], config, identity)
+        if not valid:
+            return valid, reason
+        result = read_json(expected[phase])
+        if phase.endswith('benchmark') and result.get('complete_declared_workload') is not True:
+            return False, 'Full numerical workload coverage has not been measured'
+        if result.get('status') in {'pending', 'incomplete', 'unavailable'} or result.get('analysis_complete') is False:
+            return False, 'Scientific diagnostics remain pending'
+        if phase in {'behaviour', 'interventions', 'molecular-transfer', 'agents-final'}:
+            from .report import CLAIMS, _operational_gates, validate_result
+            claim = {'behaviour':'H1', 'interventions':'H2', 'molecular-transfer':'H3', 'agents-final':'H4'}[phase]
+            unit = next(unit for ident, _, unit in CLAIMS if ident == claim)
+            try:
+                validate_result(result, claim, unit, config, root)
+                if claim != 'H4' and _operational_gates(result, claim, config)['missing']:
+                    return False, 'Required scientific diagnostics remain pending'
+            except (ValueError, FileNotFoundError, KeyError) as error:
+                return False, 'Scientific evidence validation is pending: ' + str(error)
+    if phase == 'agents-development':
+        from .agents import _directory
+        path = _directory(root, config['agents'])/'frozen_protocol.json'
+        if not path.is_file() or read_json(path).get('full_config_sha256') != canonical_hash(config):
+            return False, 'Complete development-only protocol freeze is pending'
+    if phase == 'rna-full':
+        freeze = root/'data/molecular/freeze/freeze.json'
+        valid, reason = _check_result(root/'state/molecular-freeze.json', config, identity)
+        if not valid:
+            return valid, reason
+        from .molecular import validate_freeze
+        from .report import verify_observed_inputs
+        try:
+            record, _ = validate_freeze(freeze)
+            verify_observed_inputs(record['provenance'])
+        except (ValueError, FileNotFoundError, KeyError) as error:
+            return False, 'Actual ant molecular score freeze is pending: ' + str(error)
+    if phase == 'screen':
+        proof = root/'results/interventions/target_provenance.json'
+        if not proof.is_file():
+            return False, 'Audited unique-gene/shared-control target provenance is pending'
+        from .report import verify_observed_inputs
+        try:
+            record=read_json(proof)
+            verify_observed_inputs(record)
+            required=['validated_gene_ids','shared_control_covariance_preserved','reagents_clustered_by_gene']
+            if any(record.get(key) is not True for key in required):
+                return False, 'Target identities and covariance remain pending'
+            if digest(root/'results/interventions/gene_effects.tsv')!=record.get('target_table_sha256'):
+                return False, 'Actual gene outcome table changed'
+        except (ValueError, FileNotFoundError, KeyError) as error:
+            return False, 'Actual target provenance validation is pending: ' + str(error)
+    if phase == 'molecular-corroboration':
+        valid, reason=_check_result(root/'state/molecular-mantis-orthology.json', config, identity,
+                                  status={'native_three_species_corroboration_computed'})
+        if not valid:
+            return valid, reason
+        if not (root/'data/molecular/orthology_mantis/gene_orthology.tsv').is_file():
+            return False, 'Actual three-species orthology output is pending'
+    if phase == 'synthesis':
+        path=root/'results/report/report.json'
+        valid, reason=_check_result(path,config,identity)
+        if not valid:
+            return valid, reason
+        if read_json(path).get('analysis_complete') is not True:
+            return False,'Actual completed claim decisions and multiplicity correction are pending'
+        if not release_id:
+            return False,'Durable preservation release identity is pending'
+        receipt=root/'state'/('archive-'+release_id+'.json')
+        valid, reason=_check_result(receipt,config,identity,status={'complete'})
+        if not valid:
+            return valid,reason
+        from .archive import verify
+        record=read_json(receipt)
+        directory=Path(config['paths']['project'])/'artifacts'/release_id
+        try:
+            if record.get('archive_directory')!=str(directory) or record.get('manifest_sha256')!=digest(directory/'archive_manifest.json'):
+                return False,'Durable archive receipt or destination changed'
+            verify(directory,config,{'sha256':identity},release_id)
+        except (ValueError,FileNotFoundError,KeyError) as error:
+            return False,'Verified durable preservation remains pending: '+str(error)
+    return True, None
+
+
+def _readiness(phase, config, root):
+    if phase in {'behaviour-benchmark', 'behaviour'}:
+        from .behaviour import formal_behavior_readiness
+        record = formal_behavior_readiness(config, root)
+        return bool(record.get('ingestion_ready' if phase == 'behaviour-benchmark' else 'ready')), record.get('pending', [])
+    if phase in {'interventions', 'screen'}:
+        from .interventions import intervention_readiness
+        record = intervention_readiness(config, root)
+        kind = 'challenge' if phase == 'interventions' else 'screen'
+        return bool(record.get(kind + '_ready')), record.get(kind + '_pending', [])
+    return True, []
+
+
+def _initial_ledger(root, release_id):
+    path = root/'state'/(release_id+'-managed-initial-submission.json')
+    if not path.is_file():
+        raise FileNotFoundError('Complete managed initial queue is not registered')
+    return path, read_json(path)
+
+
+def tick(config, root, release, *, native=None, planner=None, submitter=None, assessor=None, readiness=None):
+    from .admission import assess_admission
+    from .slurm import plan, submit
+    root, release = Path(root), Path(release)
+    identity = read_json(release/'release.json')
+    observed = source_identity(release)
+    if identity['source_identity'] != observed or identity['config_sha256'] != canonical_hash(config):
+        raise ValueError('Managed source/configuration changed; no submission is authorized')
+    release_id, sha = identity['release_id'], observed['sha256']
+    base = root/'state/pipeline'/release_id
+    base.mkdir(parents=True, exist_ok=True)
+    initial_path, initial = _initial_ledger(root, release_id)
+    if initial.get('source_sha256', sha) != sha:
+        raise ValueError('Initial queue belongs to a different source release')
+    ledgers = {'initial': initial}
+    initial_plan=read_json(root/'plans'/(release_id+'-managed-initial')/'plan.json')
+    _validate_plan(initial_plan, config, observed)
+    if initial.get('plan_sha256') != canonical_hash(initial_plan):
+        raise ValueError('Initial native ledger differs from its frozen plan')
+    plan_records={'initial':initial_plan}
+    for name, _, _ in NODES:
+        path = root/'state'/(release_id+'-'+name+'-submission.json')
+        if path.is_file():
+            ledgers[name] = read_json(path)
+            plan_records[name]=read_json(root/'plans'/(release_id+'-'+name)/'plan.json')
+            _validate_plan(plan_records[name], config, observed)
+            if ledgers[name].get('plan_sha256') != canonical_hash(plan_records[name]):
+                raise ValueError('Native phase ledger differs from its frozen plan')
+    ids = [task['job_id'] for ledger in ledgers.values() for task in ledger.get('tasks', {}).values() if task.get('state') == 'submitted']
+    states = _native_states(ids) if native is None else dict(native)
+    accounting_path = root/'state/resource-budget.json'
+    if accounting_path.is_file():
+        for ident, proof in read_json(accounting_path).get('native_jobs', {}).items():
+            if proof.get('basis') == 'sacct final allocated wall time' and proof.get('state') in TERMINAL_FAILURE | {'COMPLETED'}:
+                states.setdefault(ident, {'state':proof['state'], 'exit_code':proof['exit_code']})
+    initial_tasks = {task['name']: task for task in initial_plan['tasks']}
+    status = {'initial:'+name: _task_status(initial['tasks'].get(name, {}), states, task) for name, task in initial_tasks.items() if not name.startswith('pipeline-controller-')}
+    output_pending = {}
+    for name, ledger in ledgers.items():
+        if name == 'initial':
+            continue
+        status[name] = _phase_status(ledger, states, plan_records[name])
+        if status[name] == 'complete':
+            valid, reason = _phase_outputs(name, config, root, sha,release_id=release_id)
+            if not valid:
+                status[name] = 'pending_scientific_completion'
+                output_pending[name] = reason
+    previous = read_json(base/'status.json') if (base/'status.json').exists() else {}
+    phases = {}
+    planner, submitter, assessor = planner or plan, submitter or submit, assessor or assess_admission
+    readiness = readiness or _readiness
+    for name, depends, admission_phase in NODES:
+        if name in ledgers:
+            phases[name] = {'status': status[name], 'ledger': str(root/'state'/(release_id+'-'+name+'-submission.json'))}
+            if name in output_pending:
+                phases[name]['reason'] = output_pending[name]
+            continue
+        waiting = [dep for dep in depends if status.get(dep) != 'complete']
+        if waiting:
+            phases[name] = {'status': 'waiting_for_dependencies', 'dependencies': waiting}
+            continue
+        ready, missing = readiness(name, config, root)
+        if not ready:
+            phases[name] = {'status': 'waiting_for_scientific_inputs', 'pending': missing}
+            continue
+        if admission_phase:
+            record = assessor(config, root, phase=admission_phase)[admission_phase]
+            if record.get('status') != 'admitted':
+                phases[name] = {'status': 'resource_' + record.get('status', 'pending'), 'reasons': record.get('reasons', [])}
+                continue
+        directory = root/'plans'/(release_id+'-'+name)
+        ledger_path = root/'state'/(release_id+'-'+name+'-submission.json')
+        journal_path=base/(name+'-plan-journal.json')
+        if directory.exists():
+            journal=read_json(journal_path) if journal_path.exists() else {}
+            candidate=read_json(directory/'plan.json') if (directory/'plan.json').is_file() else None
+            if journal.get('state')!='plan_frozen' or journal.get('source_sha256') != sha or candidate is None or journal.get('plan_sha256')!=canonical_hash(candidate):
+                phases[name] = {'status': 'requires_submission_review', 'reason': 'Plan/ledger outcome is not confirmed; never replay ambiguity'}
+                continue
+        else:
+            atomic_json(journal_path,{'state':'planning','phase':name,'source_sha256':sha})
+            planner(config, release, directory, name)
+            candidate=read_json(directory/'plan.json')
+            atomic_json(journal_path,{'state':'plan_frozen','phase':name,'source_sha256':sha,'plan_sha256':canonical_hash(candidate)})
+        _validate_plan(candidate, config, observed)
+        capacity=prospective_capacity(dict(plan_records,**{name:candidate}),ledgers,states)
+        if capacity['cpus']>config['resources']['cpu_ceiling'] or capacity['gpus']>config['resources']['gpu_concurrency']:
+            phases[name]={'status':'waiting_for_study_capacity','prospective_capacity':capacity}
+            continue
+        allocations=prospective_registered_budget(dict(plan_records,**{name:candidate}),ledgers,states,
+                       read_json(accounting_path) if accounting_path.is_file() else {})
+        if allocations['cpu_core_hours']>config['resources']['cpu_core_hours_cap'] or allocations['gpu_hours']>config['resources']['gpu_hours_cap']:
+            phases[name]={'status':'waiting_for_registered_resource_budget','prospective_registered_budget':allocations}
+            continue
+        atomic_json(journal_path,{'state':'submitting','phase':name,'source_sha256':sha,'plan_sha256':canonical_hash(candidate)})
+        ledger = submitter(directory/'plan.json', ledger_path)
+        atomic_json(journal_path,{'state':'submitted','phase':name,'source_sha256':sha,'plan_sha256':canonical_hash(candidate),'ledger':str(ledger_path)})
+        ledgers[name]=ledger;plan_records[name]=candidate
+        phases[name] = {'status': 'queued', 'ledger': str(ledger_path), 'job_ids': [task['job_id'] for task in ledger['tasks'].values()]}
+        status[name] = 'queued'
+    now = time.time()
+    failed = [key for key, value in status.items() if value in {'failed', 'ambiguous_submission'}]
+    complete = all(phases[name]['status'] == 'complete' for name, _, _ in NODES)
+    record = {'schema_version': 1, 'release_id': release_id, 'source_sha256': sha, 'config_sha256': canonical_hash(config),
+              'checked_unix': now, 'controller_job_id': native_job_id(), 'status': 'complete' if complete else 'needs_repair' if failed else 'active',
+              'initial_tasks': {key.split(':', 1)[1]: value for key, value in status.items() if key.startswith('initial:')},
+              'phases': phases, 'failed_native_stages': failed, 'previous_checked_unix': previous.get('checked_unix'),
+              'scientific_results_complete': complete, 'publication_ready': False,
+              'scope': 'All declared phase controllers are deployed; scientific jobs launch only after native dependency, source-readiness and measured resource admission checks'}
+    atomic_json(base/'status.json', record)
+    return record
+
+
+def run(config, root, *, segment=0, max_seconds=None, interval=60):
+    from .budget import native_accounting, storage_snapshot
+    root = Path(root); release = Path(__file__).resolve().parents[2]
+    if not native_job_id():
+        raise RuntimeError('The sustained pipeline controller belongs in Slurm')
+    if segment not in range(4) or interval < 30:
+        raise ValueError('Invalid finite controller segment')
+    limit = min(float(140*3600 if max_seconds is None else max_seconds), 140*3600)
+    if not math.isfinite(limit) or limit < 30:
+        raise ValueError('Controller lifetime must be at least30seconds and bounded')
+    deadline = time.monotonic() + limit
+    identity = read_json(release/'release.json')
+    directory = root/'state/pipeline'/identity['release_id'];directory.mkdir(parents=True, exist_ok=True)
+    lock = directory/'controller.lock'
+    recovery=directory/'controller-recovery.lock'
+    with _recovery_guard(recovery):
+        if lock.exists():
+            original=lock.read_bytes();previous=json.loads(original);old=str(previous.get('job_id',''))
+            proof=_native_states([old]).get(old)
+            if not proof or proof['state'] not in TERMINAL_FAILURE|{'COMPLETED'}:
+                raise RuntimeError('Existing controller lock has no native terminal proof; never start a duplicate')
+            if not lock.exists() or lock.read_bytes()!=original:
+                raise RuntimeError('Controller lock owner changed during native recovery; preserve live ownership')
+            archived=directory/('controller-lock-'+old+'-'+str(time.time_ns())+'.json')
+            atomic_json(archived,{'original':previous,'native_terminal_proof':proof})
+            lock.unlink()
+        with lock.open('x') as handle:
+            json.dump({'job_id': native_job_id(), 'segment': segment, 'started_unix': time.time()}, handle)
+    owner=lock.read_bytes()
+    last_signature = None;last_storage = 0.
+    try:
+        record=None
+        while record is None or time.monotonic() < deadline:
+            ids = []
+            for path in (root/'state').glob('*submission*.json'):
+                ledger = read_json(path)
+                if ledger.get('job_id'):
+                    ids.append(str(ledger['job_id']))
+                ids.extend(str(task['job_id']) for task in ledger.get('tasks', {}).values() if task.get('state') == 'submitted')
+            if ids:
+                native_accounting(root, ids)
+            if time.monotonic() - last_storage > 6*3600:
+                storage_snapshot(root);last_storage = time.monotonic()
+            record = tick(config, root, release)
+            signature = canonical_hash({'phases': record['phases'], 'initial': record['initial_tasks'], 'status': record['status']})
+            if signature != last_signature:
+                print(json.dumps({'status': record['status'], 'phases': {key:value['status'] for key,value in record['phases'].items()}, 'failed_native_stages': record['failed_native_stages']}), flush=True)
+                last_signature = signature
+            if record['status'] == 'complete':
+                return record
+            time.sleep(min(interval, max(0, deadline-time.monotonic())))
+        record.update(segment=segment, segment_status='finite_segment_finished', continuation='next prequeued controller segment' if segment < 3 else 'four-segment window exhausted; preserve state for reviewed continuation')
+        atomic_json(directory/'status.json', record)
+        return record
+    finally:
+        if lock.exists() and lock.read_bytes()==owner:
+            lock.unlink()

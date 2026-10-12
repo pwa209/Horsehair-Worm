@@ -174,6 +174,110 @@ def test_pinned_software_manifest_is_a_valid_bounded_transfer_plan():
     assert manifest["sources"]["tool_runtime"]["orthofinder"]["version"] == "2.5.5"
 
 
+def test_bounded_official_fixture_checks_actual_shared_groups(tmp_path):
+    from horsehair.molecular import qualification_proteomes, validate_qualification_orthogroups
+    example = tmp_path / "official-example-fixture"
+    example.mkdir()
+    (example / "a.faa").write_text("".join(f">source_{i:02d}\n{letter*(100+i)}\n" for i, letter in enumerate("ACDEFGHIK")))
+    fixture = qualification_proteomes(example, tmp_path / "subset")
+    assert len(fixture["expected_identical_pairs"]) == 8
+    groups = tmp_path / "groups.tsv"
+    rows = [{"Orthogroup": f"OG{i}", "qualification_a": pair["pair"][0], "qualification_b": pair["pair"][1]} for i, pair in enumerate(fixture["expected_identical_pairs"])]
+    pd.DataFrame(rows).to_csv(groups, sep="\t", index=False)
+    proof = validate_qualification_orthogroups(groups, fixture)
+    assert proof["validated_identical_pairs"] == 8 and proof["biological_accuracy_claim"] is False
+    rows[0]["qualification_b"], rows[1]["qualification_b"] = rows[1]["qualification_b"], rows[0]["qualification_b"]
+    pd.DataFrame(rows).to_csv(groups, sep="\t", index=False)
+    with pytest.raises(MolecularError, match="identical qualification protein pair"):
+        validate_qualification_orthogroups(groups, fixture)
+
+
+def test_external_utility_deadline_preserves_streamed_output_and_failure_proof(tmp_path):
+    import sys
+    from horsehair.molecular import run_bounded_tool
+    log = tmp_path / "bounded.log"
+    with pytest.raises(MolecularError, match="timed_out"):
+        run_bounded_tool([sys.executable, "-c", "import time;print('started',flush=True);time.sleep(10)"], log, timeout_seconds=.5)
+    assert "started" in log.read_text()
+    receipt = json.loads(log.with_suffix(".receipt.json").read_text())
+    assert receipt["status"] == "timed_out" and receipt["elapsed_seconds"] < 5
+    assert receipt["log_sha256"] == file_hash(log)
+
+
+def test_fastme_numerical_fixture_requires_the_known_unrooted_split(tmp_path):
+    from horsehair.molecular import validate_fastme_fixture
+    tree = tmp_path / "tree.nwk"
+    tree.write_text("(qual_a:0.5,qual_b:0.5,(qual_c:0.5,qual_d:0.5):2);")
+    assert validate_fastme_fixture(tree)["expected_split_recovered"]
+    tree.write_text("(qual_a:0.5,qual_c:0.5,(qual_b:0.5,qual_d:0.5):2);")
+    with pytest.raises(MolecularError, match="known AB\\|CD"):
+        validate_fastme_fixture(tree)
+
+
+def test_unqualified_runtime_namespace_is_preserved(tmp_path):
+    from horsehair.molecular import install_tool_runtime
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    stale = runtime / "old-output.txt"
+    stale.write_text("historical interrupted command")
+    with pytest.raises(MolecularError, match="new prospective directory"):
+        install_tool_runtime(tmp_path, runtime)
+    assert stale.read_text() == "historical interrupted command"
+    assert not (runtime / "runtime_attempt.json").exists()
+
+
+def test_qualified_runtime_reuse_requires_every_hash_and_pinned_archive(tmp_path, monkeypatch):
+    import horsehair.molecular as module
+    runtime = tmp_path / "runtime"
+    (runtime / "bin").mkdir(parents=True)
+    for name in ["orthofinder", "TransDecoder.LongOrfs", "TransDecoder.Predict"]:
+        path = runtime / "bin" / name
+        path.write_text("synthetic test wrapper\n"); path.chmod(0o755)
+    python, perl = tmp_path / "python", tmp_path / "perl"
+    python.write_bytes(b"fixture interpreter A"); perl.write_bytes(b"fixture interpreter B")
+    archives, tools = [], {}
+    for name in ["orthofinder", "transdecoder"]:
+        path = tmp_path / (name+".tar.gz")
+        path.write_bytes(("synthetic archive "+name).encode())
+        digest = file_hash(path)
+        tools[name] = {"version": "test fixture", "sha256": digest, "bytes": path.stat().st_size}
+        archives.append({"path": str(path), "bytes": path.stat().st_size, "sha256": digest, "provider_checksum": "sha256:"+digest})
+    monkeypatch.setattr(module, "TOOL_RUNTIME", tools)
+    report = {"status": "runtime_qualified", "recipe": module.RUNTIME_QUALIFICATION_RECIPE, "tools": tools,
+        "archives": archives, "bin": str(runtime / "bin"),
+        "checks": {"orthofinder_example": {"validated_identical_pairs": 8}, "transdecoder_example": {"peptides": 2}, "fastme_numerical": {"expected_split_recovered": True}},
+        "interpreters": {name: {"path": str(path), "sha256": file_hash(path)} for name, path in [("python", python), ("perl", perl)]},
+        "runtime_file_hashes": {str(path.resolve()): file_hash(path) for path in (runtime / "bin").iterdir()}}
+    report["qualification_hash"] = canonical_hash(report)
+    atomic_json(runtime / "runtime_qualification.json", report)
+    assert module.validate_tool_runtime(runtime)["qualification_hash"] == report["qualification_hash"]
+    (runtime / "bin" / "orthofinder").write_text("changed command")
+    with pytest.raises(MolecularError, match="missing or changed"):
+        module.validate_tool_runtime(runtime)
+
+
+def test_materialized_software_alias_retains_verified_payload_executable_mode(tmp_path):
+    import io
+    import os
+    import tarfile
+    from horsehair.acquire import safe_extract
+    from horsehair.molecular import restore_software_executable_modes
+    archive = tmp_path / "software.tar.gz"
+    with tarfile.open(archive, "w:gz") as handle:
+        target = tarfile.TarInfo("utility/main.pl"); target.mode = 0o755
+        payload = b"#!/usr/bin/perl\nprint qq(ok\\n);\n"; target.size = len(payload)
+        handle.addfile(target, io.BytesIO(payload))
+        alias = tarfile.TarInfo("utility/alias.pl"); alias.type = tarfile.SYMTYPE; alias.linkname = "main.pl"
+        handle.addfile(alias)
+    output = tmp_path / "software"
+    safe_extract(archive, output, materialize_internal_links=True)
+    restore_software_executable_modes(archive, output)
+    assert not (output / "utility" / "alias.pl").is_symlink()
+    assert (output / "utility" / "alias.pl").read_bytes() == payload
+    if os.name == "posix":
+        assert (output / "utility" / "alias.pl").stat().st_mode & 0o111
+
+
 def test_h3_actual_computation_proof_and_changed_inputs_gate(tmp_path):
     root = tmp_path / "study"
     inputs = root / "inputs"

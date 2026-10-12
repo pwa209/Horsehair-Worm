@@ -20,13 +20,53 @@ import numpy as np
 import pandas as pd
 
 from .acquire import file_hash, safe_destination, validate_manifest, verify_file
-from .core import atomic_json, canonical_hash, read_json, source_identity
+from .core import atomic_json, canonical_hash, read_json, source_identity, native_job_id
 from .molecular import (MolecularError, freeze_scores, parse_orthogroups,
     prepare_reference, read_fasta, reversible_scores, run_external_prediction,
     select_representative_proteins, transdecoder_gene_map, write_h3,
-    write_table, write_target_family_map)
+    write_table, write_target_family_map, validate_tool_runtime, run_bounded_tool)
 
 GO_ROOTS = {"neuronal": "GO:0050877", "circadian": "GO:0007623"}
+
+
+def runtime_directory(config, root):
+    return safe_destination(root, config.get("molecular", {}).get("tool_runtime_directory", "data/tool_runtime"))
+
+
+def primary_directory(config, root):
+    return safe_destination(root, config.get("molecular", {}).get("orthology_directory", "data/molecular/orthology"))
+
+
+def prediction_directory(config, root):
+    return safe_destination(root, config.get("molecular", {}).get("prediction_directory", "results/molecular/prediction"))
+
+
+def _result_proof(paths):
+    paths = [Path(path).resolve() for path in paths]
+    if not paths or any(not path.is_file() for path in paths):
+        raise MolecularError("Native molecular stage is missing a declared input or output")
+    return {"source_result_paths": [str(path) for path in paths],
+        "source_result_hashes": {str(path): file_hash(path) for path in paths}}
+
+
+def _completed_stage(path, config, root, status):
+    if not Path(path).is_file():
+        raise MolecularError("Existing molecular output is ambiguous; preserve it and use a new prospective namespace")
+    report = read_json(path)
+    if report.get("status") != status or report.get("config_sha256") != canonical_hash(config) or report.get("source_manifest_hash") != _manifest(Path(root))["manifest_hash"]:
+        raise MolecularError("Completed molecular receipt belongs to different sources or configuration")
+    proof = report.get("source_result_hashes", {})
+    if set(proof) != set(report.get("source_result_paths", [])) or not proof or any(not Path(value).is_file() or file_hash(value) != digest for value, digest in proof.items()):
+        raise MolecularError("Completed molecular stage proof is missing or changed")
+    if report.get("completion_hash") != canonical_hash({key: value for key, value in report.items() if key != "completion_hash"}):
+        raise MolecularError("Completed molecular stage receipt changed")
+    return report
+
+
+def _write_completed_stage(path, report):
+    report["completion_hash"] = canonical_hash(report)
+    atomic_json(path, report)
+    return report
 
 
 def _open(path):
@@ -197,7 +237,9 @@ def _decompress(source, output):
 
 def prepare_native_proteomes(config, root):
     root = Path(root)
-    directory = root / "data" / "molecular" / "orthology"
+    directory = primary_directory(config, root)
+    if directory.exists() and any(directory.iterdir()):
+        return _completed_stage(directory / "reference_preparation.json", config, root, "native_ant_fly_proteomes_prepared")
     directory.mkdir(parents=True, exist_ok=True)
     references = prepare_reference(_manifest(root), root, root / "data" / "references")
     sources = _assets(root, "fly_reference")
@@ -221,34 +263,49 @@ def prepare_native_proteomes(config, root):
         representative_maps.append(select_representative_proteins(fasta, mapping, output))
         proteomes[species] = {"path": str(output.resolve()), "sha256": file_hash(output), "version": version}
     write_table(pd.concat(representative_maps, ignore_index=True), directory / "protein_gene_map.tsv")
-    report = {"status": "native_ant_fly_proteomes_prepared", "proteomes": proteomes, "fly_map": map_report, "go": go_report, "fly_gene_catalog": str((directory / "fly_gene_catalog.tsv").resolve()), "source_manifest_hash": _manifest(root)["manifest_hash"]}
+    report = {"status": "native_ant_fly_proteomes_prepared", "proteomes": proteomes, "fly_map": map_report, "go": go_report, "fly_gene_catalog": str((directory / "fly_gene_catalog.tsv").resolve()), "source_manifest_hash": _manifest(root)["manifest_hash"], "config_sha256": canonical_hash(config), "source_sha256": source_identity(Path(__file__).resolve().parents[2])["sha256"]}
     atomic_json(directory / "proteomes.json", proteomes)
-    atomic_json(directory / "reference_preparation.json", report)
-    return report
+    paths = [root / "manifests" / "source_manifest.json", *sources.values(),
+        references["gtf"], references["protein_fasta"], directory / "proteomes.json",
+        directory / "protein_gene_map.tsv", directory / "fly_gene_catalog.tsv",
+        *(item["path"] for item in proteomes.values())]
+    report.update(_result_proof(paths))
+    return _write_completed_stage(directory / "reference_preparation.json", report)
 
 
 def run_native_orthology(config, root):
     root = Path(root)
-    directory = root / "data" / "molecular" / "orthology"
-    runtime = root / "data" / "tool_runtime"
-    qualification = read_json(runtime / "runtime_qualification.json")
-    if qualification.get("status") != "runtime_qualified":
-        raise MolecularError("OrthoFinder/TransDecoder runtime has not passed its actual example qualification")
+    directory = primary_directory(config, root)
+    runtime = runtime_directory(config, root)
+    qualification = validate_tool_runtime(runtime)
+    preparation = _completed_stage(directory / "reference_preparation.json", config, root, "native_ant_fly_proteomes_prepared")
     proteomes = read_json(directory / "proteomes.json")
     for item in proteomes.values():
         if file_hash(item["path"]) != item["sha256"]:
             raise MolecularError("Prepared native proteome changed before orthology")
     env = os.environ.copy(); env["PATH"] = str(runtime / "bin") + os.pathsep + env.get("PATH", "")
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
     threads = int(config["resources"].get("molecular_cores", 8))
     input_directory = directory / "of_inputs"
+    run = directory / "of_run"
+    if run.exists() or (directory / "orthology_receipt.json").exists():
+        report = _completed_stage(directory / "orthology_receipt.json", config, root, "native_primary_ant_fly_orthology_computed")
+        if report.get("runtime_qualification_hash") != qualification["qualification_hash"]:
+            raise MolecularError("Completed orthology used a different qualified runtime")
+        if report.get("source_sha256") != source_identity(Path(__file__).resolve().parents[2])["sha256"]:
+            raise MolecularError("Completed orthology belongs to an earlier immutable source release")
+        return report
+    if set(proteomes) != {"ant", "fly"}:
+        raise MolecularError("Primary benchmark must use exactly the complete prepared ant and fly proteomes")
+    lease_hours = os.environ.get("HHW_MAX_HOURS", config.get("resources", {}).get("molecular_max_hours"))
+    if lease_hours is None or not np.isfinite(float(lease_hours)) or float(lease_hours) <= 0:
+        raise MolecularError("Native orthology requires an explicit bounded lease in HHW_MAX_HOURS or resources.molecular_max_hours")
+    deadline = time.monotonic()+float(lease_hours)*3600-30
     input_directory.mkdir(exist_ok=True)
     for species, item in proteomes.items():
         shutil.copyfile(item["path"], input_directory / (species+".fa"))
-    run = directory / "of_run"
-    if run.exists():
-        raise MolecularError("Existing OrthoFinder run requires its completed receipt or a new prospective namespace; never replay an ambiguous stage")
     started = time.monotonic()
-    subprocess.run([str(runtime / "bin" / "orthofinder"), "-f", str(input_directory), "-t", str(threads), "-a", str(min(threads, 8)), "-S", "diamond", "-o", str(run)], env=env, check=True)
+    commands = [run_bounded_tool([str(runtime / "bin" / "orthofinder"), "-f", str(input_directory), "-t", str(threads), "-a", str(min(threads, 8)), "-S", "diamond", "-o", str(run)], directory / "orthofinder-primary.log", env=env, timeout_seconds=max(1, deadline-time.monotonic()))]
     candidates = list(run.rglob("Phylogenetic_Hierarchical_Orthogroups/N0.tsv"))
     if len(candidates) != 1:
         raise MolecularError("Actual OrthoFinder run did not yield one unambiguous root HOG table")
@@ -261,16 +318,28 @@ def run_native_orthology(config, root):
     # a one-to-one flag is not turned into fabricated continuous confidence.
     diamond = runtime / "OrthoFinder_source" / "scripts_of" / "bin" / "diamond"
     db = directory / "ant_diamond"
-    subprocess.run([str(diamond), "makedb", "--in", proteomes["ant"]["path"], "--db", str(db)], check=True)
+    commands.append(run_bounded_tool([str(diamond), "makedb", "--in", proteomes["ant"]["path"], "--db", str(db)], directory / "diamond-makedb.log", env=env, timeout_seconds=max(1, deadline-time.monotonic())))
     alignment = directory / "fly_ant_identity.tsv"
-    subprocess.run([str(diamond), "blastp", "--query", proteomes["fly"]["path"], "--db", str(db), "--out", str(alignment), "--outfmt", "6", "qseqid", "sseqid", "pident", "bitscore", "--threads", str(threads), "--max-target-seqs", "0", "--max-hsps", "1", "--sensitive", "--evalue", "1e-5"], check=True)
+    commands.append(run_bounded_tool([str(diamond), "blastp", "--query", proteomes["fly"]["path"], "--db", str(db), "--out", str(alignment), "--outfmt", "6", "qseqid", "sseqid", "pident", "bitscore", "--threads", str(threads), "--max-target-seqs", "0", "--max-hsps", "1", "--sensitive", "--evalue", "1e-5"], directory / "diamond-identity.log", env=env, timeout_seconds=max(1, deadline-time.monotonic())))
     if not alignment.is_file() or not alignment.stat().st_size:
         raise MolecularError("No actual ant–fly protein alignments for orthology descriptors")
-    return {"status": "native_primary_ant_fly_orthology_computed", "elapsed_seconds": time.monotonic()-started, "coverage": coverage, "target_family_map": family, "source_result_paths": [str(candidates[0]), str(directory / "gene_orthology.tsv"), str(alignment)]}
+    paths = [runtime / "runtime_qualification.json", directory / "reference_preparation.json",
+        directory / "proteomes.json", directory / "protein_gene_map.tsv", candidates[0],
+        directory / "gene_orthology.tsv", alignment, directory / "fly_target_families.tsv",
+        directory / "orthology_coverage.json", *(item["path"] for item in proteomes.values()),
+        *(command["log_path"] for command in commands)]
+    report = {"status": "native_primary_ant_fly_orthology_computed", "elapsed_seconds": time.monotonic()-started,
+        "coverage": coverage, "target_family_map": family, "commands": commands,
+        "source_manifest_hash": preparation["source_manifest_hash"], "config_sha256": canonical_hash(config),
+        "runtime_qualification_hash": qualification["qualification_hash"], "complete_primary_proteomes": True,
+        "protein_counts": {species: len(read_fasta(item["path"])) for species, item in proteomes.items()},
+        "bounded_lease_hours": float(lease_hours), "slurm_job_id": native_job_id(),
+        "source_sha256": source_identity(Path(__file__).resolve().parents[2])["sha256"], **_result_proof(paths)}
+    return _write_completed_stage(directory / "orthology_receipt.json", report)
 
 
 def build_native_descriptors(config, root):
-    root = Path(root); directory = root / "data" / "molecular" / "orthology"
+    root = Path(root); directory = primary_directory(config, root)
     orthology = pd.read_csv(directory / "gene_orthology.tsv", sep="\t")
     one = orthology[orthology.one_to_one.astype(str).str.lower().isin(["true", "1"])]
     ant = one[one.species == "ant"][["gene_id", "orthogroup"]].rename(columns={"gene_id": "ant_gene_id"})
@@ -312,7 +381,7 @@ def freeze_native_scores(config, root):
     root = Path(root)
     if (root / "results" / "interventions" / "gene_effects.tsv").exists() or (root / "results" / "interventions" / "target_provenance.json").exists():
         raise MolecularError("External gene outcomes already exist; a new outcome-independent primary freeze cannot be claimed retrospectively")
-    directory = root / "data" / "molecular" / "orthology"
+    directory = primary_directory(config, root)
     build_native_descriptors(config, root)
     contrast_path = root / "data" / "molecular" / "ant" / "deseq2" / "phase_contrasts.tsv"
     audit_path = contrast_path.parent / "rna_analysis_audit.json"
@@ -348,7 +417,9 @@ def run_mantis_orfs(config, root):
     mapping = pd.DataFrame({"transcript_id": names, "gene_id": names})
     write_table(mapping, directory / "transcript_gene_map.tsv")
     plan = orf_plan(fasta, directory / "transcript_gene_map.tsv", directory / "transdecoder")
-    env = os.environ.copy(); env["PATH"] = str(root / "data" / "tool_runtime" / "bin") + os.pathsep + env.get("PATH", "")
+    runtime = runtime_directory(config, root)
+    validate_tool_runtime(runtime)
+    env = os.environ.copy(); env["PATH"] = str(runtime / "bin") + os.pathsep + env.get("PATH", "")
     subprocess.run(["bash", plan["script"]], env=env, check=True)
     peptides = directory / "transdecoder" / "mantis_supertranscripts.fasta.transdecoder.pep"
     protein_map, coverage = transdecoder_gene_map(peptides, mapping)
@@ -376,14 +447,120 @@ def benchmark_primary(config, root):
     reusable results if they finish. They do not claim H3 or invent a forecast.
     """
     root = Path(root); started = time.monotonic()
+    directory = primary_directory(config, root)
+    benchmark_path = root / "state" / "molecular-primary-benchmark.json"
+    if benchmark_path.exists():
+        report = _completed_stage(benchmark_path, config, root, "native_primary_molecular_benchmark_completed")
+        if report.get("source_sha256") != source_identity(Path(__file__).resolve().parents[2])["sha256"]:
+            raise MolecularError("Completed native molecular benchmark belongs to an earlier source release")
+        return {**report, "reused_completed_benchmark": True}
+    if (directory / "orthology_receipt.json").exists():
+        raise MolecularError("Existing orthology cannot supply a new native benchmark runtime; preserve its receipt and choose a prospective namespace")
     result = prepare_primary(config, root)
-    directory = root / "data" / "molecular" / "orthology"
-    inputs = [root / "manifests" / "source_manifest.json", root / "data" / "tool_runtime" / "runtime_qualification.json", directory / "proteomes.json", directory / "protein_gene_map.tsv", directory / "gene_orthology.tsv", directory / "fly_ant_identity.tsv", directory / "fly_gene_catalog.tsv", directory / "fly_target_families.tsv"]
+    completed = _completed_stage(directory / "orthology_receipt.json", config, root, "native_primary_ant_fly_orthology_computed")
+    if completed.get("complete_primary_proteomes") is not True:
+        raise MolecularError("An abbreviated qualification cannot become a full native orthology benchmark")
+    inputs = [root / "manifests" / "source_manifest.json", runtime_directory(config, root) / "runtime_qualification.json", directory / "reference_preparation.json", directory / "orthology_receipt.json", directory / "proteomes.json", directory / "protein_gene_map.tsv", directory / "gene_orthology.tsv", directory / "fly_ant_identity.tsv", directory / "fly_gene_catalog.tsv", directory / "fly_target_families.tsv"]
     proteomes = read_json(directory / "proteomes.json")
     protein_counts = {species: len(read_fasta(item["path"])) for species, item in proteomes.items()}
-    result.update(status="native_primary_molecular_benchmark_completed", config_sha256=canonical_hash(config), source_sha256=source_identity(Path(__file__).resolve().parents[2])["sha256"], slurm_job_id=os.environ.get("SLURM_JOB_ID"), allocated_cpus=int(os.environ["SLURM_CPUS_PER_TASK"]) if os.environ.get("SLURM_CPUS_PER_TASK") else None, elapsed_seconds=time.monotonic()-started, working_bytes=sum(path.stat().st_size for path in directory.rglob("*") if path.is_file()), working_files=sum(path.is_file() for path in directory.rglob("*")), protein_counts=protein_counts, measured_work_units=1, work_unit_definition="Complete fixed-release ant/fly representative proteomes, source GO/catalog validation, full OrthoFinder and descriptive DIAMOND pair identities", benchmark_uses_full_primary_numerics=True, full_native_workload_completed=True, confirmatory_claim=False, score_frozen=False, external_outcomes_evaluated=False, source_result_paths=[str(path.resolve()) for path in inputs], source_result_hashes={str(path.resolve()): file_hash(path) for path in inputs})
-    atomic_json(root / "state" / "molecular-primary-benchmark.json", result)
-    return result
+    if protein_counts != completed["protein_counts"]:
+        raise MolecularError("Full proteome counts changed after the native orthology computation")
+    result.update(status="native_primary_molecular_benchmark_completed", config_sha256=canonical_hash(config), full_config_sha256=canonical_hash(config), source_sha256=source_identity(Path(__file__).resolve().parents[2])["sha256"], source_manifest_hash=_manifest(root)["manifest_hash"], slurm_job_id=native_job_id(), allocated_cpus=int(os.environ["SLURM_CPUS_PER_TASK"]) if os.environ.get("SLURM_CPUS_PER_TASK") else None, native_execution=native_job_id() is not None, elapsed_seconds=time.monotonic()-started, working_bytes=sum(path.stat().st_size for path in directory.rglob("*") if path.is_file()), working_files=sum(path.is_file() for path in directory.rglob("*")), protein_counts=protein_counts, measured_work_units=1, work_unit_definition="Complete fixed-release ant/fly representative proteomes, source GO/catalog validation, full OrthoFinder and descriptive DIAMOND pair identities", benchmark_uses_full_primary_numerics=True, full_native_workload_completed=True, completed_workload_scope="Primary ant/fly source preparation and full proteome orthology only", complete_declared_workload=False, pending_workload_measurements=["discovery-count-derived descriptor and score freeze", "external association including full configured grouped permutation and covariance bootstrap"], confirmatory_claim=False, score_frozen=False, external_outcomes_evaluated=False, **_result_proof(inputs))
+    return _write_completed_stage(benchmark_path, result)
+
+
+def _transfer_method(config):
+    return {"algorithm": "frozen-score incremental rank association; whole-family permutation within fixed nuisance bins; orthogroup bootstrap with joint shared-control Gaussian measurement error",
+        "gene_permutations": int(config["molecular"].get("gene_permutations", 10_000)),
+        "bootstrap_replicates": int(config["inference"].get("bootstrap_replicates", 10_000)),
+        "learned_predictors": bool(config["molecular"].get("secondary_learned_predictors", True)),
+        "learned_predictor_eligibility": {"minimum_genes": 40, "minimum_orthogroups": 20},
+        "molecular_module_sha256": file_hash(Path(__file__).with_name("molecular.py")),
+        "pipeline_module_sha256": file_hash(__file__)}
+
+
+def predict_native(config, root):
+    """Compute once in a fresh namespace or verify a complete matching result."""
+    root = Path(root); directory = primary_directory(config, root)
+    output = prediction_directory(config, root)
+    result_path = output / "external_prediction.json"
+    method = _transfer_method(config)
+    receipt_path = output / "transfer_receipt.json"
+    if output.exists() and any(output.iterdir()):
+        receipt = _completed_stage(receipt_path, config, root, "native_frozen_transfer_computed")
+        if receipt.get("method") != method:
+            raise MolecularError("Completed frozen transfer used another full numerical method")
+        return write_h3(config, root, result_path), receipt
+    started = time.monotonic()
+    run_external_prediction(config, root, genes=root / "results" / "interventions" / "gene_effects.tsv",
+        target_provenance=root / "results" / "interventions" / "target_provenance.json",
+        orthology=directory / "gene_orthology.tsv", descriptors=directory / "fly_gene_descriptors.tsv",
+        freeze_path=root / "data" / "molecular" / "freeze" / "freeze.json", output=output, learned=method["learned_predictors"])
+    claim = write_h3(config, root, result_path)
+    prediction = read_json(result_path)
+    if prediction.get("permutations") != method["gene_permutations"] or prediction.get("bootstrap_replicates") != method["bootstrap_replicates"] or prediction.get("shared_control_covariance_propagated") is not True:
+        raise MolecularError("Frozen transfer did not execute its complete configured numerical method")
+    paths = [result_path, root / "results" / "inference" / "H3.json", root / "results" / "figure_inputs" / "04.json", *map(Path, prediction["input_sha256"])]
+    receipt = {"status": "native_frozen_transfer_computed", "method": method,
+        "method_sha256": canonical_hash(method), "config_sha256": canonical_hash(config),
+        "full_config_sha256": canonical_hash(config), "source_sha256": source_identity(Path(__file__).resolve().parents[2])["sha256"],
+        "source_manifest_hash": _manifest(root)["manifest_hash"], "slurm_job_id": native_job_id(),
+        "native_execution": native_job_id() is not None, "elapsed_seconds": time.monotonic()-started,
+        "working_bytes": sum(path.stat().st_size for path in output.rglob("*") if path.is_file()),
+        "working_files": sum(path.is_file() for path in output.rglob("*")),
+        "genes": prediction["genes"], "orthogroups": prediction["orthogroups"],
+        "benchmark_uses_full_primary_numerics": True, "complete_configured_transfer": True,
+        "claim_status": "pending_joint_Holm", **_result_proof(paths)}
+    return claim, _write_completed_stage(receipt_path, receipt)
+
+
+def benchmark_transfer(config, root):
+    """Measure the complete remaining molecular inference on real frozen data."""
+    root = Path(root)
+    method = _transfer_method(config)
+    if min(method["gene_permutations"], method["bootstrap_replicates"]) < 10_000:
+        raise MolecularError("Full molecular workload benchmark requires the configured 10,000-or-more permutations and covariance bootstrap")
+    required = [root / "data" / "molecular" / "freeze" / "freeze.json",
+        root / "results" / "interventions" / "target_provenance.json"]
+    if not all(path.is_file() for path in required):
+        raise MolecularError("Full molecular workload inputs are pending: prior score freeze and validated external target provenance")
+    prospective = {"method": method, "full_config_sha256": canonical_hash(config),
+        "freeze_sha256": file_hash(root / "data" / "molecular" / "freeze" / "freeze.json"),
+        "target_provenance_sha256": file_hash(root / "results" / "interventions" / "target_provenance.json"),
+        "tasks": [{"name": "molecular-transfer", "planned_work_units": 1, "maximum_job_work_units": 1, "concurrency": 1}]}
+    benchmark_path = root / "state" / "molecular-workload-benchmark.json"
+    if benchmark_path.is_file():
+        report = _completed_stage(benchmark_path, config, root, "native_molecular_transfer_workload_completed")
+        if report.get("method") != method or report.get("source_sha256") != source_identity(Path(__file__).resolve().parents[2])["sha256"] or report.get("prospective_workload_sha256") != canonical_hash(prospective):
+            raise MolecularError("Completed molecular workload benchmark uses another method/source release")
+        return {**report, "reused_completed_benchmark": True}
+    lease = os.environ.get("HHW_MAX_HOURS", config.get("resources", {}).get("molecular_max_hours"))
+    if lease is None or not np.isfinite(float(lease)) or float(lease) <= 0:
+        raise MolecularError("Full molecular benchmark requires an explicit bounded Slurm lease")
+    claim, transfer = predict_native(config, root)
+    if transfer.get("source_sha256") != source_identity(Path(__file__).resolve().parents[2])["sha256"] or transfer.get("method") != method:
+        raise MolecularError("Native transfer measurement belongs to another method/source release")
+    paths = [prediction_directory(config, root) / "transfer_receipt.json", *map(Path, transfer["source_result_paths"])]
+    task = {"name": "molecular-transfer", "elapsed_seconds": transfer["elapsed_seconds"],
+        "measured_work_units": 1, "planned_work_units": 1, "maximum_job_work_units": 1, "concurrency": 1,
+        "benchmark_uses_full_primary_numerics": True, "slurm_job_id": transfer["slurm_job_id"],
+        "full_config_sha256": canonical_hash(config), "config_sha256": canonical_hash(config),
+        "source_sha256": transfer["source_sha256"], "method_sha256": transfer["method_sha256"],
+        "work_unit_definition": "One complete frozen ant-to-fly transfer: all configured grouped permutations and joint-covariance orthogroup bootstrap",
+        "numerical_result_already_completed": True}
+    report = {"status": "native_molecular_transfer_workload_completed", "complete_declared_workload": True,
+        "declared_workload_scope": "Remaining primary molecular transfer inference; source preparation, full orthology, ant count models and score freeze are completed prerequisites",
+        "method": method, "method_sha256": canonical_hash(method), "tasks": [task],
+        "prospective_workload": prospective, "prospective_workload_sha256": canonical_hash(prospective),
+        "additional_working_bytes": transfer["working_bytes"], "additional_working_files": transfer["working_files"]+1,
+        "storage_forecast_scope": "Conservative allowance for one copy of the measured complete transfer output; existing final numerical result can be reused",
+        "remaining_numerical_work_units": 0, "config_sha256": canonical_hash(config), "full_config_sha256": canonical_hash(config),
+        "source_sha256": transfer["source_sha256"], "source_manifest_hash": _manifest(root)["manifest_hash"],
+        "slurm_job_id": transfer["slurm_job_id"], "native_execution": transfer["native_execution"],
+        "bounded_lease_hours": float(lease), "claim_status": claim["claim_status"],
+        "primary_family_pending": True, "evidence_class": "Actual complete molecular inference and native workload measurement; joint primary-family decision pending",
+        **_result_proof(paths)}
+    return _write_completed_stage(benchmark_path, report)
 
 
 def run_mantis_orthology(config, root):
@@ -392,12 +569,14 @@ def run_mantis_orthology(config, root):
     root = Path(root)
     directory = root / "data" / "molecular" / "orthology_mantis"
     directory.mkdir(parents=True, exist_ok=True)
-    primary = root / "data" / "molecular" / "orthology"
+    primary = primary_directory(config, root)
     mantis = root / "data" / "molecular" / "mantis_orfs"
     proteomes = read_json(primary / "proteomes.json")
     proteomes["mantis"] = {"path": str((mantis / "mantis.fa").resolve()), "sha256": file_hash(mantis / "mantis.fa"), "version": "GSE237182:TransDecoder-5.7.1:m100:longest-source-gene"}
     plan = orthology_plan(proteomes, directory, threads=int(config["resources"].get("molecular_cores", 8)))
-    env = os.environ.copy(); env["PATH"] = str(root / "data" / "tool_runtime" / "bin") + os.pathsep + env.get("PATH", "")
+    runtime = runtime_directory(config, root)
+    validate_tool_runtime(runtime)
+    env = os.environ.copy(); env["PATH"] = str(runtime / "bin") + os.pathsep + env.get("PATH", "")
     subprocess.run(["bash", str(directory / "orthofinder.sh")], env=env, check=True)
     candidates = list((directory / "proteomes").rglob("Phylogenetic_Hierarchical_Orthogroups/N0.tsv"))
     if len(candidates) != 1:
@@ -423,14 +602,17 @@ def run(config, root, stage):
         result = run_mantis_orthology(config, root)
     elif stage == "benchmark-primary":
         result = benchmark_primary(config, root)
+    elif stage == "benchmark-transfer":
+        result = benchmark_transfer(config, root)
     elif stage == "predict":
-        directory = root / "data" / "molecular" / "orthology"
-        output = root / "results" / "molecular" / "prediction"
-        run_external_prediction(config, root, genes=root / "results" / "interventions" / "gene_effects.tsv", target_provenance=root / "results" / "interventions" / "target_provenance.json", orthology=directory / "gene_orthology.tsv", descriptors=directory / "fly_gene_descriptors.tsv", freeze_path=root / "data" / "molecular" / "freeze" / "freeze.json", output=output)
-        result = write_h3(config, root, output / "external_prediction.json")
+        result, _ = predict_native(config, root)
     else:
         raise MolecularError("Unknown finite molecular stage")
-    result.update(config_sha256=canonical_hash(config), source_sha256=source_identity(Path(__file__).resolve().parents[2])["sha256"], stage=stage, stage_elapsed_seconds=time.monotonic()-started, slurm_job_id=os.environ.get("SLURM_JOB_ID"), scientific_stage_executed=True)
+    result.update(config_sha256=canonical_hash(config), source_sha256=source_identity(Path(__file__).resolve().parents[2])["sha256"], stage=stage, stage_elapsed_seconds=time.monotonic()-started, scientific_stage_executed=not result.get("reused_completed_benchmark", False))
+    if stage not in {"benchmark-primary", "benchmark-transfer"} and not result.get("reused_completed_benchmark", False):
+        result["slurm_job_id"] = native_job_id()
+    if "completion_hash" in result:
+        result["completion_hash"] = canonical_hash({key: value for key, value in result.items() if key != "completion_hash"})
     atomic_json(root / "state" / f"molecular-{stage}.json", result)
     return result
 
@@ -438,7 +620,7 @@ def run(config, root, stage):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", required=True); parser.add_argument("--root", required=True)
-    parser.add_argument("--stage", required=True, choices=["prepare", "orthology", "freeze", "predict", "mantis-orfs", "mantis-orthology", "benchmark-primary"])
+    parser.add_argument("--stage", required=True, choices=["prepare", "orthology", "freeze", "predict", "mantis-orfs", "mantis-orthology", "benchmark-primary", "benchmark-transfer"])
     args = parser.parse_args(argv)
     result = run(read_json(args.config), args.root, args.stage)
     print(json.dumps({"stage": args.stage, "status": result["status"]}))

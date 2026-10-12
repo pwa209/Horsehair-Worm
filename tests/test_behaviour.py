@@ -64,6 +64,109 @@ def test_native_classifier_discovery_uses_intervals_and_roi_bounds(tmp_path):
     assert first.coordinate_units == "mm"
 
 
+def test_native_processed_three_hz_requires_deposited_validator_and_trims_only_blank_roi(tmp_path):
+    from horsehair.behaviour import audit_exposure_source
+    name = "03-22-2019-18-21-01__Circadian_CsWF-BoardC9_MF_Emuscae_1-128_Day3"
+    directory = tmp_path / "Fig 4 + Supp" / "experiment"
+    directory.mkdir(parents=True)
+    positions = np.full((31, 2, 2), .5)
+    io.savemat(directory / f"{name}_margoConvert.mat", {"expmt": {
+        "Centroid": {"data": positions}, "ROI": {"bounds": np.array([[0., 0., 2., 4.], [0., 0., 2., 4.]])},
+        "parameters": {"target_rate": 3, "mm_per_pix": 1}}})
+    sheet = directory / "03-22-2019-survival_data.xlsx"
+    pd.DataFrame({"ROI": [1, 2, None], "Geno": ["Cs", "Cs", None], "Sex": ["M", "F", None],
+        "Rx": [None, None, None], "Outcome": ["Cadaver", "Survivor", None], "Notes": [None, None, "Explanatory trailing note"]}).to_excel(sheet, index=False)
+    missing = discover_fly_sources(tmp_path, tmp_path)
+    assert not missing["fly_sources"]
+    assert "timestamp" in missing["unresolved"][0]["reason"]
+    (tmp_path / "triggerOnDeath2019Fun.m").write_text("data.params.fr = 3;\nif expmt.parameters.target_rate ~= 3\nerror('rate');\nend\n")
+    found = discover_fly_sources(tmp_path, tmp_path)
+    assert found["all_candidates_resolved"]
+    source = found["fly_sources"][0]
+    assert source["excluded_blank_roi_excel_rows"] == [4]
+    frame = read_fly_source(source, tmp_path)
+    assert frame.exposure_status.eq(1).all()  # survival never becomes unexposed
+    np.testing.assert_allclose(np.diff(frame[frame.roi_id.eq(1)].record_time_s), 1 / 3)
+    assert frame.coordinate_units.eq("native_ROI_height").all()
+    assert frame.y.iloc[0] == pytest.approx(.875)
+    audit = audit_exposure_source(source, tmp_path)
+    assert not audit["ready"] and any("offset" in reason for reason in audit["pending"])
+    (tmp_path / "triggerOnDeath2019Fun.m").write_text("data.params.fr = 30;\n")
+    assert not discover_fly_sources(tmp_path, tmp_path)["fly_sources"]
+
+
+@pytest.mark.parametrize("ids", [[1, 1], [1, 2.5], [1, 3], [1, "note"]])
+def test_roi_labels_are_not_rounded_or_guessed(ids):
+    from horsehair.behaviour import _validated_roi_metadata
+    with pytest.raises(ValueError):
+        _validated_roi_metadata(pd.DataFrame({"ROI": ids}), 2, {})
+
+
+def test_author_summit_one_based_window_and_baseline_integral():
+    from horsehair.behaviour import source_summit_metric
+    speed = np.array([0, 0, 2, 4, 4, 1, 0, 2, 0, 0, 0, 0], float)[:, None]
+    height = np.arange(12, dtype=float)[:, None]
+    result = source_summit_metric(speed, height,
+        {"smoothWin": 1, "summitStart": 3, "endPad": 0, "minSumDur": 0, "moveThresh": .1},
+        {"lastFrames": 9, "fr": 3})
+    assert result["sumStart"] == 3 and result["sumEnd"] == 8
+    assert result["sumInt"][0] == pytest.approx(.2)
+    assert result["sumHt"][0] == 5
+    assert result["sumDur"] == pytest.approx(5 / 10800)
+
+
+def test_full_group_curvature_matches_dense_posterior_hessian():
+    import torch
+    from torch.func import functional_call
+    from horsehair.behaviour import full_parameter_laplace
+    from horsehair.semimarkov import MovementModel, Sequence, TrainingScaler, Fit
+    seqs = [Sequence(str(i), str(i), np.full((6, 2), .02), np.zeros((6, 1)),
+        np.linspace(-1, 1, 6)[:, None], np.zeros((6, 2)), np.zeros((6, 2)), np.tile([0., 1.], (6, 1)),
+        np.ones(6, bool), np.arange(6) * 10.) for i in range(2)]
+    scaler = TrainingScaler.fit(seqs)
+    model = MovementModel("MT", 1, 1, animal_ids=["0", "1"], experiment_ids=["0", "1"])
+    fit = Fit(model, scaler, {})
+    named = list(model.named_parameters())
+    initial = torch.cat([parameter.detach().flatten() for _, parameter in named]).requires_grad_()
+    transformed = [scaler.transform(sequence) for sequence in seqs]
+    def density(theta):
+        params, offset = {}, 0
+        for name, parameter in named:
+            params[name] = theta[offset:offset + parameter.numel()].reshape(parameter.shape)
+            offset += parameter.numel()
+        outputs = [functional_call(model, params, (sequence,)) for sequence in transformed]
+        return -sum(out["log_likelihood"].sum() for out in outputs) - outputs[0]["log_prior"]
+    expected = torch.autograd.functional.hessian(density, initial).detach().numpy()
+    expected_gradient = torch.autograd.grad(density(initial), initial)[0].detach().numpy()
+    actual = full_parameter_laplace(fit, seqs, include_curvature=True)
+    np.testing.assert_allclose(actual["hessian"], expected, atol=1e-9, rtol=1e-9)
+    np.testing.assert_allclose(actual["gradient"], expected_gradient, atol=1e-9, rtol=1e-9)
+    assert not actual["parameter_uncertainty_validated"]
+    assert "interval_low" not in actual
+
+
+def test_mantis_heldout_design_uses_only_training_scaling():
+    from horsehair.behaviour import _mantis_design_contract
+    train = pd.DataFrame({"infection": [0, 1, 0, 1], "dop": [2., 4., 6., 8.],
+        "log_illuminance": [1., 2., 3., 4.], "stimulus_side": "R", "year": "2024", "box": "A"})
+    test = train.iloc[:1].copy()
+    test.dop = 100
+    design, names, contract = _mantis_design_contract(train, test)
+    assert contract["continuous"]["dop"]["mean"] == 5
+    assert design[0, names.index("dop")] == pytest.approx(95 / np.std([2, 4, 6, 8]))
+    test.box = "unknown"
+    with pytest.raises(ValueError, match="outside training"):
+        _mantis_design_contract(train, test)
+
+
+def test_absent_workload_inputs_stay_pending(tmp_path):
+    from horsehair.behaviour import run
+    result = run({"behaviour": {}}, tmp_path, "benchmark-workload")
+    assert result["complete_declared_workload"] is False
+    assert result["pending"]
+    assert (tmp_path / "state/behaviour-workload-benchmark.json").exists()
+
+
 def test_duplicate_representations_do_not_increase_animals(tmp_path):
     frame, _ = source_fixture(tmp_path)
     duplicate = pd.concat([frame, frame], ignore_index=True)
@@ -310,6 +413,11 @@ def test_h2_bootstrap_resamples_shared_controls_and_checks_saved_split_identitie
     assert result["estimate"] > .8
     assert np.array(result["shared_control_error_covariance"])[0, 1] > 0
     assert result["calibration_response_validated"] is True
-    predictions.loc[0, "evaluation_controls"] = predictions.loc[0, "calibration_controls"]
+    mismatch = predictions.copy()
+    mismatch.loc[0, "evaluation_controls"] = mismatch.loc[0, "calibration_controls"]
+    with pytest.raises(ValueError, match="different biological contrasts"):
+        h2_shared_control_bootstrap(mismatch, animals, "MT", "MG", {"occupancy": 1.}, repetitions=20)
+    selected = predictions.contrast_id.eq("contrast0") & predictions.calibration_half.eq(0)
+    predictions.loc[selected, "evaluation_controls"] = predictions.loc[selected, "calibration_controls"]
     with pytest.raises(ValueError, match="overlap"):
         h2_shared_control_bootstrap(predictions, animals, "MT", "MG", {"occupancy": 1.}, repetitions=20)

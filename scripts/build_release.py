@@ -20,7 +20,9 @@ p=argparse.ArgumentParser()
 p.add_argument('--git',required=True)
 p.add_argument('--request-id',required=True)
 p.add_argument('--output',required=True,type=Path)
-p.add_argument('--queue',action='store_true')
+queue=p.add_mutually_exclusive_group()
+queue.add_argument('--queue',action='store_true')
+queue.add_argument('--managed',action='store_true')
 p.add_argument('--transfers',action='store_true')
 a=p.parse_args()
 repo=Path(__file__).resolve().parents[1]
@@ -55,6 +57,7 @@ python - <<'PY'
 import base64,hashlib,io,json,pathlib,tarfile,subprocess,os,time
 payload=PAYLOAD
 record=RECORD
+c=CONFIG
 root=pathlib.Path('/scratch/pwa209/horsehair-worm')
 project=pathlib.Path('/project/def-ptewarie/pwa209/horsehair-worm')
 release=project/'releases'/record['release_id']
@@ -71,6 +74,10 @@ with tarfile.open(fileobj=io.BytesIO(data),mode='r:gz') as archive:
 os.environ['PYTHONPATH']=str(release/'src')+os.pathsep+os.environ.get('PYTHONPATH','')
 prefix=['python','-m','horsehair.cli','--config','configs/study.json','--root',str(root)]
 subprocess.run(prefix+['verify-source','--identity','release.json'],cwd=release,check=True)
+if MANAGED:
+ active=subprocess.run(['squeue','-u','pwa209','--noheader','--format=%i|%j|%T'],text=True,capture_output=True,check=True)
+ study_active=[line for line in active.stdout.splitlines() if len(line.split('|'))==3 and line.split('|')[1].startswith('hhw-')]
+ if study_active:raise RuntimeError('Existing study jobs must finish or be explicitly superseded before switching ledger lock protocols: '+repr(study_active))
 budget=root/'state/resource-budget.json'
 known=list(json.loads(budget.read_text()).get('leases',{})) if budget.exists() else []
 for old_ledger in (root/'state').glob('*submission*.json'):
@@ -78,12 +85,31 @@ for old_ledger in (root/'state').glob('*submission*.json'):
  if old.get('job_id'):known.append(str(old['job_id']))
  known.extend(str(task['job_id']) for task in old.get('tasks',{}).values() if task.get('state')=='submitted')
 subprocess.run(prefix+['accounting','--job-ids','5380869','5381567',*known],cwd=release,check=True)
+if MANAGED and budget.with_suffix('.lock').exists():
+ legacy=budget.with_suffix('.lock')
+ observed=json.loads(budget.read_text())
+ remaining=[ident for ident,lease in observed.get('leases',{}).items() if lease.get('state')=='running' and ident not in observed.get('native_jobs',{})]
+ if remaining:raise RuntimeError('Legacy running lease lacks native terminal proof: '+repr(remaining))
+ archive=root/'state'/('legacy-resource-lock-'+record['release_id']+'.json')
+ archive.write_text(json.dumps({'legacy_lock_sha256':hashlib.sha256(legacy.read_bytes()).hexdigest(),'legacy_lock_mtime':legacy.stat().st_mtime,'native_terminal_lease_ids':list(observed.get('native_jobs',{})),'no_active_study_jobs':True,'new_guard':'resource-budget.mutex','recovery_class':'One-time transition after positive native terminal reconciliation'},indent=2)+'\n')
+ legacy.rename(root/'state'/('legacy-resource-lock-'+record['release_id']+'.preserved'))
 deployment={'status':'deployed','release':str(release),'release_id':record['release_id'],'git_commit':record['git_commit'],'source_sha256':record['source_identity']['sha256'],'config_sha256':record['config_sha256'],'created_unix':time.time()}
-if QUEUE:
+if QUEUE or MANAGED:
  assert json.loads((root/'state/environment.json').read_text())['status']=='complete','Environment bootstrap is not complete'
- plan=root/'plans'/(record['release_id']+'-initial')
- subprocess.run(prefix+['slurm-plan','--release',str(release),'--output',str(plan),'--phase','initial'],cwd=release,check=True)
- ledger=root/'state'/(record['release_id']+'-initial-submission.json')
+ phase='managed-initial' if MANAGED else 'initial'
+ plan=root/'plans'/(record['release_id']+'-'+phase)
+ subprocess.run(prefix+['slurm-plan','--release',str(release),'--output',str(plan),'--phase',phase],cwd=release,check=True)
+ if MANAGED:
+  from horsehair.pipeline import prospective_capacity,prospective_registered_budget
+  initial={'initial':json.loads((plan/'plan.json').read_text())}
+  capacity=prospective_capacity(initial,{},{})
+  assert capacity['cpus']<=c['resources']['cpu_ceiling'] and capacity['gpus']<=c['resources']['gpu_concurrency'],'Initial managed graph exceeds concurrent study bounds'
+  deployment['prospective_initial_capacity']=capacity
+  allocations=prospective_registered_budget(initial,{},{},json.loads(budget.read_text()))
+  assert allocations['cpu_core_hours']<=c['resources']['cpu_core_hours_cap'] and allocations['gpu_hours']<=c['resources']['gpu_hours_cap'],'Initial registered allocation bounds exceed the study budget'
+  deployment['prospective_initial_budget']=allocations
+  deployment['managed_phase_graph']=[name for name,_,_ in __import__('horsehair.pipeline',fromlist=['NODES']).NODES]
+ ledger=root/'state'/(record['release_id']+'-'+phase+'-submission.json')
  subprocess.run(prefix+['submit','--plan',str(plan/'plan.json'),'--ledger',str(ledger)],cwd=release,check=True)
  deployment['submission_ledger']=str(ledger);deployment['tasks']=json.loads(ledger.read_text())['tasks']
 if TRANSFERS:
@@ -100,7 +126,7 @@ if TRANSFERS:
 print('DEPLOYMENT_RECEIPT',json.dumps(deployment))
 PY
 '''
-body=body.replace('PAYLOAD',repr(payload)).replace('RECORD',repr(record)).replace('QUEUE',str(a.queue)).replace('TRANSFERS',str(a.transfers))
+body=body.replace('PAYLOAD',repr(payload)).replace('RECORD',repr(record)).replace('CONFIG',repr(c)).replace('QUEUE',str(a.queue)).replace('MANAGED',str(a.managed)).replace('TRANSFERS',str(a.transfers))
 a.output.parent.mkdir(parents=True,exist_ok=True)
 target=a.output/(a.request_id+'.sh')
 with target.open('x',encoding='utf8',newline='\n') as output:output.write(body)

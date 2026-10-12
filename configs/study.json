@@ -57,6 +57,7 @@
     "fly_sources": []
   },
   "molecular": {
+    "tool_runtime_directory": "data/tool_runtime_v2",
     "primary_score": "ant_reversible",
     "gene_permutations": 10000,
     "gene_fdr": 0.05,
