@@ -10,12 +10,14 @@ Production numerical work, environment installation and sustained source process
 module load StdEnv/2023 python/3.11.5 cuda/12.6 arrow/19.0.1
 source /home/pwa209/hhw-environment/bin/activate
 cd /project/def-ptewarie/pwa209/horsehair-worm/releases/RELEASE_ID
-export PYTHONPATH="$PWD/src"
+export PYTHONPATH="$PWD/src:${PYTHONPATH:-}"
 python -m horsehair.cli --config configs/study.json validate-config
 python -m horsehair.cli --config configs/study.json verify-source --identity release.json
 ```
 
 Finite plans retain script and source hashes. Submission writes a ledger before invoking `sbatch`. Ambiguous outcomes are inspected in native records and never automatically retransmitted. A registered pending job is not a successful analysis. Verify `sacct` state, exit code, logs and the stage's own completion artifact.
+
+Molecular runtime qualification uses an isolated site Perl 5.30.2 interpreter, because Perl 5.36.1 lacks DB_File on Narval. Its environment adapter preserves StdEnv/2023 for Python/R, removes incompatible Perl-local library overrides in each TransDecoder wrapper, and records interpreter/wrapper hashes in the runtime qualification receipt. The original submission snapshot and terminal native records are preserved before replacement stages are registered; the current initial ledger includes explicit references to that environment amendment. Detailed execution receipts and adapter scripts are retained locally and in the user's Narval project storage.
 
 Biological downloads run directly on Narval through its documented transfer endpoint, with two finite transfer workers and a 64 MiB/s limit per worker. Independent `fly`, `rna`, `mantis` and `tools` receipts retain provider failures. Raw data, downloads and checkpoints never enter the GitHub source release. The first release freezes provider metadata before transfers; a later source change requires an explicit versioned manifest amendment.
 
