@@ -73,6 +73,10 @@ prefix=['python','-m','horsehair.cli','--config','configs/study.json','--root',s
 subprocess.run(prefix+['verify-source','--identity','release.json'],cwd=release,check=True)
 budget=root/'state/resource-budget.json'
 known=list(json.loads(budget.read_text()).get('leases',{})) if budget.exists() else []
+for old_ledger in (root/'state').glob('*submission*.json'):
+ old=json.loads(old_ledger.read_text())
+ if old.get('job_id'):known.append(str(old['job_id']))
+ known.extend(str(task['job_id']) for task in old.get('tasks',{}).values() if task.get('state')=='submitted')
 subprocess.run(prefix+['accounting','--job-ids','5380869','5381567',*known],cwd=release,check=True)
 deployment={'status':'deployed','release':str(release),'release_id':record['release_id'],'git_commit':record['git_commit'],'source_sha256':record['source_identity']['sha256'],'config_sha256':record['config_sha256'],'created_unix':time.time()}
 if QUEUE:

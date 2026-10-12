@@ -94,6 +94,14 @@ if (sum(keep) < 20) stop("Too few adequately measured genes for DESeq2")
 dds <- DESeqDataSetFromMatrix(countData=round(train_counts[keep,,drop=FALSE]), colData=train_samples, design=design)
 dds <- DESeq(dds, betaPrior=FALSE, quiet=TRUE)
 rn <- resultsNames(dds)
+# DESeq2's normal prior needs an intercept and an expanded categorical matrix.
+# Keep the original no-intercept MLE fit for every primary Wald contrast, and
+# compute secondary shrinkage on an equivalent intercept-coded mean model.
+shrink_dds <- dds
+design(shrink_dds) <- as.formula(paste("~", paste(design_terms, collapse=" + ")))
+shrink_dds <- nbinomWaldTest(shrink_dds, betaPrior=TRUE,
+                           modelMatrixType="expanded", quiet=TRUE)
+shrink_names <- resultsNames(shrink_dds)
 normalized <- counts(dds, normalized=TRUE)
 write_tsv(data.frame(gene_id=rownames(normalized), normalized, check.names=FALSE), "normalized_discovery_counts.tsv")
 descriptors <- data.frame(gene_id=rownames(dds), average_expression=rowMeans(normalized), detection_rate=rowMeans(counts(dds)>0))
@@ -110,7 +118,13 @@ contrast_vector <- function(weights) {
 estimate <- function(weights, name) {
   contrast <- contrast_vector(weights)
   res <- results(dds, contrast=contrast, alpha=0.05, independentFiltering=FALSE)
-  shrunk <- lfcShrink(dds, contrast=contrast, res=res, type="normal", quiet=TRUE)
+  shrink_contrast <- rep(0, length(shrink_names))
+  for (group_name in names(weights)) {
+    ix <- which(shrink_names == paste0("group", group_name))
+    if (length(ix) != 1) stop(paste("Unmatched expanded shrinkage coefficient", group_name))
+    shrink_contrast[ix] <- weights[[group_name]]
+  }
+  shrunk <- results(shrink_dds, contrast=shrink_contrast, independentFiltering=FALSE)
   frame <- data.frame(gene_id=rownames(res), as.data.frame(res), shrink_log2fc=shrunk$log2FoldChange, shrink_se=shrunk$lfcSE)
   write_tsv(frame, paste0(name, ".tsv"))
   frame
@@ -152,6 +166,7 @@ if (args$mode == "ant") {
 }
 write_tsv(descriptors, "expression_descriptors.tsv")
 saveRDS(dds, file.path(args$output, "deseq2_fit.rds"))
+saveRDS(shrink_dds, file.path(args$output, "deseq2_shrunk_fit.rds"))
 writeLines(capture.output(sessionInfo()), file.path(args$output, "sessionInfo.txt"))
-audit <- list(mode=args$mode, source_counts=args$counts, source_samples=args$samples, independent_brains=ncol(collapsed), discovery_brains=sum(training), heldout_brains=sum(!training), retained_genes=sum(keep), filter=list(count_threshold=10, minimum_biological_samples=minimum_samples), design=deparse(design), coefficients=rn, design_rank=qr(dm)$rank, constant_batch_ignored=ignored_constant_batch, status="count_model_fitted_not_external_validation", evidence_class="observational_cross_sectional")
+audit <- list(mode=args$mode, source_counts=args$counts, source_samples=args$samples, independent_brains=ncol(collapsed), discovery_brains=sum(training), heldout_brains=sum(!training), retained_genes=sum(keep), filter=list(count_threshold=10, minimum_biological_samples=minimum_samples), design=deparse(design), coefficients=rn, design_rank=qr(dm)$rank, constant_batch_ignored=ignored_constant_batch, shrinkage=list(method="DESeq2 empirical normal prior", design=deparse(design(shrink_dds)), model_matrix="expanded", columns="shrink_log2fc and shrink_se contain posterior mode and posterior SD; primary log2FoldChange/lfcSE remain unshrunk Wald estimates"), status="count_model_fitted_not_external_validation", evidence_class="observational_cross_sectional")
 write_json(audit, file.path(args$output, "rna_analysis_audit.json"), pretty=TRUE, auto_unbox=TRUE)
