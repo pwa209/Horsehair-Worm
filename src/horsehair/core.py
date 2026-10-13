@@ -24,7 +24,7 @@ def canonical_hash(value: Any) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
 
 
-def atomic_json(path: Path, value: Any) -> None:
+def atomic_json(path: Path, value: Any, *, durable: bool = True) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_name(path.name + '.partial')
@@ -32,7 +32,7 @@ def atomic_json(path: Path, value: Any) -> None:
         json.dump(value, f, indent=2, sort_keys=True, allow_nan=False)
         f.write('\n')
         f.flush()
-        os.fsync(f.fileno())
+        if durable:os.fsync(f.fileno())
     deadline = time.monotonic() + 2
     while True:
         try:
@@ -89,7 +89,10 @@ def exclusive_file_lock(path: Path, timeout: float = 30):
         # Diagnostic filesystem trouble must not change the locking contract or
         # turn an acquired scientific transaction into an unrecorded failure.
         try:
-            atomic_json(owner_path, owner)
+            # Informational metadata never authorizes a scientific transaction.
+            # Atomic replacement suffices; a Lustre fsync here needlessly holds
+            # the scientific kernel guard after work has already finished.
+            atomic_json(owner_path, owner, durable=False)
         except (OSError, ValueError):
             pass
     with path.open('a+b') as handle:

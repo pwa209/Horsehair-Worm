@@ -186,14 +186,16 @@ def test_finish_wait_cannot_extend_native_allocation_deadline(tmp_path,monkeypat
     with resource_lease(tmp_path,config,cpus=4,gpus=0,max_hours=1,job_id='200_3') as lease:
         assert lease['deadline_unix']==1045
         clock[0]+=10
-    assert calls==[30,30.,5.] and clock[0]==1045
+    assert calls==[0.,30.,5.] and clock[0]==1045
     journal=read_json(tmp_path/'state/resource-lease-finalizations/200_3.json')
     assert journal['status']=='pending_native_reconciliation' and journal['finalization_elapsed_seconds']==35
 
 
 def test_reservation_contention_fails_before_command_and_never_creates_finish_intent(tmp_path,monkeypatch):
+    attempts=[]
     @contextmanager
     def blocked(path,timeout=30):
+        attempts.append(timeout)
         raise ReceiptLockTimeout(path,timeout,None)
         yield
     monkeypatch.setattr(budget,'exclusive_file_lock',blocked)
@@ -203,6 +205,86 @@ def test_reservation_contention_fails_before_command_and_never_creates_finish_in
         with resource_lease(tmp_path,config,cpus=4,gpus=0,max_hours=1,job_id='200_3'):
             entered=True
     assert not entered and not (tmp_path/'state/resource-lease-finalizations/200_3.json').exists()
+    assert attempts==[30.]*10
+
+
+def reservation_contention_fixture(monkeypatch,*,failures,native_remaining=None):
+    clock=[1000.];calls=[];original=budget.exclusive_file_lock
+    monkeypatch.setattr(budget.time,'time',lambda:clock[0])
+    monkeypatch.setattr(budget.time,'monotonic',lambda:clock[0])
+    monkeypatch.delenv('SLURM_JOB_END_TIME',raising=False)
+    if native_remaining is not None:monkeypatch.setenv('SLURM_JOB_END_TIME',str(clock[0]+native_remaining))
+    @contextmanager
+    def guard(path,timeout=30):
+        calls.append(timeout)
+        if len(calls)<=failures:
+            clock[0]+=timeout
+            raise ReceiptLockTimeout(path,timeout,{'pid':42,'state':'released','authority':'informational only'})
+        with original(path,timeout=timeout):yield
+    monkeypatch.setattr(budget,'exclusive_file_lock',guard)
+    config={'resources':{'cpu_ceiling':8,'cpu_core_hours_cap':100,'gpu_hours_cap':10}}
+    return clock,calls,config
+
+
+def test_reservation_recovers_after_simultaneous_startup_wait_and_charges_wait_walltime(tmp_path,monkeypatch):
+    clock,calls,config=reservation_contention_fixture(monkeypatch,failures=2)
+    with resource_lease(tmp_path,config,cpus=4,gpus=0,max_hours=1,job_id='201') as lease:
+        assert clock[0]==1060 and lease['reservation_attempts']==3 and lease['reservation_wait_seconds']==60
+        record=read_json(tmp_path/'state/resource-budget.json')
+        assert record['leases']['201']['state']=='running' and record['leases']['201']['reservation_attempts']==3
+        assert record['leases']['201']['reservation_acquisition_wait_seconds']==60
+        clock[0]+=10
+    final=read_json(tmp_path/'state/resource-budget.json')
+    assert calls==[30.]*4 and final['leases']['201']['state']=='finished'
+    assert final['spent_cpu_core_hours']==pytest.approx(4*70/3600)
+    assert read_json(tmp_path/'state/resource-lease-finalizations/201.json')['reservation_wait_seconds']==60
+
+
+@pytest.mark.parametrize('native_remaining,expected',[(None,[30.]*10),(165,[30.,15.]),(110,[0.])])
+def test_reservation_wait_is_bounded_before_command_and_preserves_completion_margin(tmp_path,monkeypatch,native_remaining,expected):
+    clock,calls,config=reservation_contention_fixture(monkeypatch,failures=100,native_remaining=native_remaining)
+    entered=False
+    with pytest.raises(ReceiptLockTimeout):
+        with resource_lease(tmp_path,config,cpus=4,gpus=0,max_hours=1,job_id='201'):entered=True
+    assert not entered and calls==expected
+    assert clock[0]==1000+sum(expected)
+    assert not (tmp_path/'state/resource-budget.json').exists()
+    assert not (tmp_path/'state/resource-lease-finalizations/201.json').exists()
+
+
+def test_cap_refusal_after_recovered_guard_is_not_retried_or_bypassed(tmp_path,monkeypatch):
+    clock,calls,config=reservation_contention_fixture(monkeypatch,failures=1)
+    path=tmp_path/'state/resource-budget.json'
+    record={'spent_cpu_core_hours':0.,'spent_gpu_hours':0.,'leases':{'200':{'state':'running','cpus':8,'gpus':0,'max_hours':1}}}
+    atomic_json(path,record);entered=False
+    with pytest.raises(ValueError,match='concurrency ceiling'):
+        with resource_lease(tmp_path,config,cpus=4,gpus=0,max_hours=1,job_id='201'):entered=True
+    assert not entered and calls==[30.,30.] and read_json(path)==record
+
+
+def test_reservation_io_failure_is_not_treated_as_safe_lock_contention(tmp_path,monkeypatch):
+    calls=[]
+    @contextmanager
+    def failure(path,timeout=30):
+        calls.append(timeout);raise OSError('Unknown receipt I/O state');yield
+    monkeypatch.setattr(budget,'exclusive_file_lock',failure)
+    config={'resources':{'cpu_ceiling':8,'cpu_core_hours_cap':100,'gpu_hours_cap':10}}
+    with pytest.raises(OSError,match='Unknown receipt'):
+        with resource_lease(tmp_path,config,cpus=4,gpus=0,max_hours=1,job_id='201'):pytest.fail('No reservation was committed')
+    assert calls==[30.]
+
+
+def test_identical_native_accounting_does_not_rewrite_durable_ledger_or_tsv(tmp_path,monkeypatch):
+    from pathlib import Path
+    writes=[];replacements=[];original_json=budget.atomic_json;original_replace=Path.replace
+    def writer(path,record):writes.append(path);return original_json(path,record)
+    def replace(path,target):replacements.append((path,target));return original_replace(path,target)
+    monkeypatch.setattr(budget,'atomic_json',writer);monkeypatch.setattr(Path,'replace',replace)
+    runner=lambda *a,**k:SimpleNamespace(returncode=0,stdout='201|201|COMPLETED|90|4|cpu=4|0:0|2G\n')
+    first=native_accounting(tmp_path,['201'],runner)
+    assert len(writes)==len(replacements)==1
+    second=native_accounting(tmp_path,['201'],runner)
+    assert first==second and len(writes)==len(replacements)==1
 
 
 def test_unexpected_finish_write_error_cannot_replace_primary_scientific_exception(tmp_path,monkeypatch):

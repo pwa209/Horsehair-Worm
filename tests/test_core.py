@@ -105,3 +105,19 @@ def test_receipt_owner_diagnostic_failure_cannot_break_kernel_release(tmp_path, 
             raise ValueError('transaction failed')
     with core.exclusive_file_lock(guard, timeout=0):
         assert guard.is_file()
+
+
+def test_only_informational_owner_metadata_omits_fsync(tmp_path,monkeypatch):
+    from horsehair import core
+    calls=[];original=core.os.fsync
+    def synchronize(descriptor):calls.append(descriptor);return original(descriptor)
+    monkeypatch.setattr(core.os,'fsync',synchronize)
+    guard=tmp_path/'permanent-budget.mutex'
+    with core.exclusive_file_lock(guard):
+        assert calls==[] and read_json(guard.with_name(guard.name+'.owner.json'))['state']=='held'
+        core.atomic_json(tmp_path/'scientific-receipt.json',{'state':'durably reserved'})
+        assert len(calls)==1
+    assert len(calls)==1 and guard.is_file()
+    assert read_json(guard.with_name(guard.name+'.owner.json'))['state']=='released'
+    with core.exclusive_file_lock(guard,timeout=0):assert guard.is_file()
+    assert len(calls)==1

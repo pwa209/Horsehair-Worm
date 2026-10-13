@@ -95,6 +95,7 @@ def native_accounting(root, job_ids, runner=subprocess.run):
     path=Path(root)/'state/resource-budget.json';path.parent.mkdir(parents=True,exist_ok=True)
     with exclusive_file_lock(path.with_suffix('.mutex')):
         record=read_json(path) if path.exists() else {'spent_cpu_core_hours':0.,'spent_gpu_hours':0.,'leases':{}}
+        before=canonical_hash(record)
         native=record.setdefault('native_jobs',{})
         known=record.setdefault('native_raw_aliases',{})
         if any(raw in known and known[raw]!=ident for raw,ident in aliases.items()):
@@ -130,11 +131,13 @@ def native_accounting(root, job_ids, runner=subprocess.run):
         record['spent_gpu_hours']=sum(v['gpu_hours'] for v in native.values())+sum(v['gpus']*v.get('elapsed_hours',0) for v in unreconciled)
         record['accounting_basis']='final sacct allocations where available; provisional command wall time otherwise'
         record['accounting_identity_schema']=2
-        atomic_json(path,record)
+        if canonical_hash(record)!=before or not path.exists():atomic_json(path,record)
         accounting=Path(root)/'state/native-accounting.tsv'
         old_rows={}
+        previous_text=None
         if accounting.exists():
-            lines=accounting.read_text().splitlines()
+            previous_text=accounting.read_text()
+            lines=previous_text.splitlines()
             old_header=lines[0].split('|')
             for line in lines[1:]:
                 if not line.strip():continue
@@ -143,7 +146,8 @@ def native_accounting(root, job_ids, runner=subprocess.run):
                 old_rows[ident]='|'.join([ident,raw,old['State'],old['ElapsedRaw'],old['AllocCPUS'],old.get('MaxRSS',''),old['AllocTRES'],old.get('ExitCode','')])
         for line in rows:old_rows[line.split('|')[0]]=line
         atomic_text='JobID|JobIDRaw|State|ElapsedRaw|AllocCPUS|MaxRSS|AllocTRES|ExitCode\n'+'\n'.join(old_rows[key] for key in sorted(old_rows))+'\n'
-        temporary=accounting.with_suffix('.tmp');temporary.write_text(atomic_text,encoding='utf8');temporary.replace(accounting)
+        if atomic_text!=previous_text:
+            temporary=accounting.with_suffix('.tmp');temporary.write_text(atomic_text,encoding='utf8');temporary.replace(accounting)
         pending=[]
         for ident in ids:
             if ident in observed:continue
@@ -166,8 +170,9 @@ def resource_lease(root, config, *, cpus, gpus, max_hours, job_id):
     def update(callback,timeout=30):
         with exclusive_file_lock(path.with_suffix('.mutex'),timeout=timeout):
             record=read_json(path) if path.exists() else {'spent_cpu_core_hours':0.,'spent_gpu_hours':0.,'leases':{}}
+            before=canonical_hash(record)
             callback(record)
-            atomic_json(path,record)
+            if canonical_hash(record)!=before or not path.exists():atomic_json(path,record)
     start=time.time();started_monotonic=time.monotonic()
     deadline=start+max_hours*3600
     native_end=os.environ.get('SLURM_JOB_END_TIME')
@@ -176,7 +181,13 @@ def resource_lease(root, config, *, cpus, gpus, max_hours, job_id):
         if not math.isfinite(native_end):raise ValueError('Invalid native allocation end time')
         deadline=min(deadline,native_end)
     if deadline<=start:raise ValueError('Native resource allocation has no remaining time')
+    # Ten ordinary acquisition windows tolerate simultaneous native starts.
+    # Short allocations permit only an immediate attempt when less than the
+    # completion margin remains. No command may run without its durable lease.
+    reservation_deadline=min(started_monotonic+300.,started_monotonic+max(0.,deadline-start-120.))
+    reservation_attempts=0
     def reserve(r):
+        if time.time()>=deadline:raise ValueError('Native allocation ended before the resource reservation')
         if job_id in r['leases']:raise ValueError('Existing resource lease; reconcile native accounting without replaying')
         active=[v for v in r['leases'].values() if v['state']=='running']
         if sum(v['cpus'] for v in active)+cpus>config['resources']['cpu_ceiling'] or sum(v['gpus'] for v in active)+gpus>1:
@@ -185,11 +196,26 @@ def resource_lease(root, config, *, cpus, gpus, max_hours, job_id):
             raise ValueError('Insufficient remaining CPU-hour budget')
         if r['spent_gpu_hours']+sum(v['gpus']*v['max_hours'] for v in active)+gpus*max_hours>config['resources']['gpu_hours_cap']:
             raise ValueError('Insufficient remaining GPU-hour budget')
-        r['leases'][job_id]={'state':'running','started_unix':start,'cpus':cpus,'gpus':gpus,'max_hours':max_hours}
-    update(reserve)
+        r['leases'][job_id]={'state':'running','started_unix':start,'cpus':cpus,'gpus':gpus,'max_hours':max_hours,
+            'reservation_attempts':reservation_attempts,'reservation_acquisition_wait_seconds':max(0.,time.monotonic()-started_monotonic)}
+    for attempt in range(10):
+        remaining=max(0.,reservation_deadline-time.monotonic())
+        reservation_attempts+=1
+        try:
+            update(reserve,timeout=min(30.,remaining))
+            break
+        except ReceiptLockTimeout as error:
+            print(json.dumps({'resource_lease_reservation':'waiting_for_live_guard','job_id':job_id,
+                'attempt':reservation_attempts,'reservation_wait_seconds':max(0.,time.monotonic()-started_monotonic),
+                'retry_limit_seconds':300.,'remaining_retry_seconds':max(0.,reservation_deadline-time.monotonic()),
+                'allocation_deadline_unix':deadline,'cleanup_margin_seconds':120.,'guard':error.diagnostics}),file=sys.stderr,flush=True)
+            if attempt==9 or time.monotonic()>=reservation_deadline:raise
+    reservation_wait=max(0.,time.monotonic()-started_monotonic)
     command_exception=None
     try:
-        yield {'deadline_unix':deadline,'job_id':job_id}
+        if time.time()>=deadline:raise ValueError('Native allocation ended before the reserved command could begin')
+        yield {'deadline_unix':deadline,'job_id':job_id,'reservation_attempts':reservation_attempts,
+               'reservation_wait_seconds':reservation_wait}
     except BaseException as exc:
         command_exception=exc
         raise
@@ -200,6 +226,7 @@ def resource_lease(root, config, *, cpus, gpus, max_hours, job_id):
         journal={'schema_version':1,'status':'finalization_intent','local_finalization':'pending',
                  'job_id':job_id,'root':str(root.resolve()),'config_sha256':canonical_hash(config),
                  'cpus':cpus,'gpus':gpus,'max_hours':max_hours,'started_unix':start,
+                 'reservation_attempts':reservation_attempts,'reservation_wait_seconds':reservation_wait,
                  'command_ended_unix':command_end,'command_elapsed_seconds':max(0.,command_end-start),
                  'deadline_unix':deadline,'finish_retry_limit_seconds':120.,'finish_attempts':0,
                  'command_outcome':'raised' if command_exception is not None else 'returned',
@@ -232,8 +259,8 @@ def resource_lease(root, config, *, cpus, gpus, max_hours, job_id):
             r['spent_cpu_core_hours']+=cpus*elapsed
             r['spent_gpu_hours']+=gpus*elapsed
         # At most four full30-second waits, or a final shorter attempt before the
-        # allocation deadline. A reservation failure before yield still fails
-        # immediately; only the completion bookkeeping receives this tolerance.
+        # allocation deadline. Entry contention has its own bounded wait above;
+        # neither path bypasses the durable resource reservation.
         for attempt in range(5):
             remaining=max(0.,finish_deadline-time.monotonic())
             if attempt and remaining<=0:break
