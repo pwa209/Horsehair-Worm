@@ -1,0 +1,297 @@
+"""Explicit, forensic-preserving DAG repair; never changes an execution receipt.
+
+The primary immutable release remains the numerical execution origin. A named
+preprocessing task may have a separately verified execution release. Registration
+replaces only confirmed terminal attempts, after controllers have stopped.
+"""
+from __future__ import annotations
+
+import ast
+import copy
+import json
+import os
+import re
+import shlex
+import subprocess
+from pathlib import Path
+
+from .core import atomic_json, canonical_hash, digest, exclusive_file_lock, read_json, source_identity
+from .pipeline import TERMINAL_FAILURE, _array_indices, _native_states, _task_status, _task_terminal
+
+INITIAL_TARGETS = {"source-audit", "source-replication", *[f"pipeline-controller-{i}" for i in range(4)]}
+ADDED_FILES = {"src/horsehair/repair.py", "scripts/amend_pipeline.py", "tests/test_repair.py"}
+INGEST_HELPERS = {"_trajectory_parquet_schemas", "_trajectory_arrow_table"}
+
+
+def _inside(path, directory):
+    path, directory = Path(path).resolve(), Path(directory).resolve()
+    if not path.is_relative_to(directory):
+        raise ValueError("Repair descriptor path escapes its declared study namespace")
+    return path
+
+
+def _release(path, config):
+    path = Path(path).resolve()
+    record = read_json(path / "release.json")
+    identity = source_identity(path)
+    if record.get("source_identity") != identity or record.get("config_sha256") != canonical_hash(config):
+        raise ValueError("Repair execution release/configuration is not immutable and matching")
+    if read_json(path / "configs/study.json") != config:
+        raise ValueError("Repair requires the unchanged complete primary configuration")
+    return path, record, identity
+
+
+def _ingestion_projection(path):
+    tree = ast.parse(path.read_text(encoding="utf8"))
+    projected = []
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if node.name in INGEST_HELPERS:
+                continue
+            if node.name == "run":
+                node.body = [statement for statement in node.body if not (
+                    isinstance(statement, ast.If) and isinstance(statement.test, ast.Compare)
+                    and isinstance(statement.test.left, ast.Name) and statement.test.left.id == "stage"
+                    and len(statement.test.ops) == 1 and isinstance(statement.test.ops[0], ast.In)
+                    and isinstance(statement.test.comparators[0], (ast.Tuple, ast.List))
+                    and [item.value for item in statement.test.comparators[0].elts if isinstance(item, ast.Constant)] == ["ingest", "validate"])]
+        projected.append(node)
+    tree.body = projected
+    return ast.dump(tree, include_attributes=False)
+
+
+def _preprocessing_release(primary, other, old_identity, new_identity):
+    changed = {name for name in set(old_identity["files"]) | set(new_identity["files"])
+               if old_identity["files"].get(name) != new_identity["files"].get(name)}
+    allowed = ADDED_FILES | {"src/horsehair/behaviour.py", "tests/test_behaviour.py"}
+    if changed - allowed:
+        raise ValueError("Preprocessing repair changed an undeclared numerical dependency: " + ", ".join(sorted(changed - allowed)))
+    if _ingestion_projection(primary / "src/horsehair/behaviour.py") != _ingestion_projection(other / "src/horsehair/behaviour.py"):
+        raise ValueError("Behaviour repair changed methods outside chronological ingestion")
+
+
+def _normalized_script(text):
+    return "\n".join(line for line in text.splitlines() if not (
+        line.startswith("cd ") or line.startswith("export PYTHONPATH=")
+        or line == "#SBATCH --hold"
+        or line.startswith("#SBATCH --job-name=") or line.startswith("#SBATCH --output=")
+        or line.startswith("#SBATCH --error=")))
+
+
+def _check_script(task, original, execution, root):
+    path = _inside(task["script"], root / "plans")
+    text = path.read_text(encoding="utf8")
+    if canonical_hash(text) != task.get("script_sha256"):
+        raise ValueError("Replacement script bytes differ from their frozen plan")
+    old_text = Path(original["script"]).read_text(encoding="utf8")
+    if canonical_hash(old_text) != original.get("script_sha256"):
+        raise ValueError("Original script bytes changed after their plan freeze")
+    working = [shlex.split(line)[1] for line in text.splitlines() if line.startswith("cd ")]
+    if len(working) != 1 or Path(working[0]).resolve() != execution:
+        raise ValueError("Replacement script does not execute its declared immutable release")
+    exports = [shlex.split(line)[1].split("=", 1)[1] for line in text.splitlines() if line.startswith("export PYTHONPATH=")]
+    suffix = ':${PYTHONPATH:-}'
+    if (len(exports) != 1 or not exports[0].endswith(suffix)
+            or Path(exports[0][:-len(suffix)]).resolve() != execution / "src"):
+        raise ValueError("Replacement Python import path differs from its execution release")
+    if _normalized_script(text) != _normalized_script(old_text):
+        raise ValueError("Replacement script changes the original command/environment contract")
+
+
+def _archive_bytes(path, body):
+    with path.open("xb") as handle:
+        handle.write(body)
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def _expanded_accounting_runner(command, **kwargs):
+    # Repair alone expands cancelled/pending arrays. The immutable primary
+    # numerical release and its ordinary accounting implementation are unchanged.
+    command = list(command)
+    if command and command[0] == "sacct" and "--array" not in command:
+        command.insert(1, "--array")
+    return subprocess.run(command, **kwargs)
+
+
+def register_amendment(descriptor_path, *, native=None, accountant=None):
+    """Register already-confirmed replacement jobs, with recoverable pair writes.
+
+    Production queries native state and reconciles old allocation costs. Test
+    injection supplies explicit synthetic evidence. This function never submits,
+    cancels, copies numerical results, changes source pins or edits a release.
+    """
+    descriptor_path = Path(descriptor_path).resolve()
+    descriptor = read_json(descriptor_path)
+    root = Path(descriptor["root"]).resolve()
+    _inside(descriptor_path, root / "plans")
+    ident, phase = descriptor["amendment_id"], descriptor["phase"]
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", ident) or phase not in {"managed-initial", "rna-full"}:
+        raise ValueError("Unsupported scoped DAG amendment identity/phase")
+    if not descriptor.get("reason"):
+        raise ValueError("An explicit repair reason is required")
+    config = read_json(Path(descriptor["primary_release"]) / "configs/study.json")
+    if Path(config["paths"]["root"]).resolve() != root:
+        raise ValueError("Repair descriptor changes the frozen study root")
+    primary, release, identity = _release(descriptor["primary_release"], config)
+    rid = release["release_id"]
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", rid):
+        raise ValueError("Unsafe primary release identity")
+    base = root / "state/pipeline" / rid
+    archive = base / "dag-amendments" / ident
+    plan_path = root / "plans" / (rid + "-" + phase) / "plan.json"
+    ledger_path = root / "state" / (rid + "-" + phase + "-submission.json")
+    new_plan_path = _inside(descriptor["replacement_plan"], root / "plans")
+    new_ledger_path = _inside(descriptor["replacement_ledger"], root / "state")
+    descriptor_hash = canonical_hash(descriptor)
+    with exclusive_file_lock(root / "state/pipeline/dag-amendment-registration.mutex"):
+        journal_path = archive / "registration.json"
+        journal = read_json(journal_path) if journal_path.exists() else None
+        if journal:
+            if journal.get("descriptor_sha256") != descriptor_hash:
+                raise ValueError("Existing amendment differs; never replay another registration")
+            old_plan = read_json(archive / "original-plan.json")
+            old_ledger = read_json(archive / "original-ledger.json")
+            for name, expected in journal["archived_file_sha256"].items():
+                if digest(archive / name) != expected:
+                    raise ValueError("Archived amendment evidence changed")
+            if journal["status"] == "complete":
+                if canonical_hash(read_json(plan_path)) != journal["amended_plan_sha256"] or canonical_hash(read_json(ledger_path)) != journal["amended_ledger_sha256"]:
+                    raise ValueError("Completed amendment's canonical registration changed")
+                return journal
+        else:
+            old_plan, old_ledger = read_json(plan_path), read_json(ledger_path)
+        if old_plan.get("release_identity") != identity or old_plan.get("config_sha256") != canonical_hash(config):
+            raise ValueError("Original primary plan belongs to another release/configuration")
+        if old_plan.get("phase") != phase or Path(old_plan["root"]).resolve() != root:
+            raise ValueError("Original plan phase/study namespace mismatch")
+        if old_ledger.get("plan_sha256") != canonical_hash(old_plan) or old_ledger.get("source_sha256") != identity["sha256"]:
+            raise ValueError("Original ledger is not bound to its immutable primary plan")
+        replacement, submitted = read_json(new_plan_path), read_json(new_ledger_path)
+        default_path, _, default_identity = _release(descriptor.get("replacement_plan_release", str(primary)), config)
+        if replacement.get("release_identity") != default_identity or replacement.get("config_sha256") != canonical_hash(config):
+            raise ValueError("Replacement plan release/configuration mismatch")
+        if Path(replacement["root"]).resolve() != root:
+            raise ValueError("Replacement plan changes the frozen study namespace")
+        if submitted.get("plan_sha256") != canonical_hash(replacement) or submitted.get("config_sha256") != canonical_hash(config) or submitted.get("source_sha256") != default_identity["sha256"]:
+            raise ValueError("Replacement submission ledger differs from its frozen plan")
+        targets = set(descriptor["execution_releases"])
+        original = {task["name"]: task for task in old_plan["tasks"]}
+        candidates = {task["name"]: task for task in replacement["tasks"]}
+        if len(original) != len(old_plan["tasks"]) or len(candidates) != len(replacement["tasks"]) or set(submitted.get("tasks", {})) != set(candidates):
+            raise ValueError("Duplicate or unregistered replacement task/ledger roster")
+        if not targets or not targets <= set(original) or not targets <= set(candidates):
+            raise ValueError("Replacement tasks do not match original named nodes")
+        if phase == "managed-initial" and not targets <= INITIAL_TARGETS:
+            raise ValueError("Initial repair may replace only failed preprocessing and controller nodes")
+        for name in set(candidates) - targets:
+            if candidates[name] != original.get(name) or submitted.get("tasks", {}).get(name) != old_ledger.get("tasks", {}).get(name):
+                raise ValueError("An unaffected planned task or job was altered")
+        controllers_plan = read_json(root / "plans" / (rid + "-managed-initial") / "plan.json")
+        controllers_ledger = read_json(root / "state" / (rid + "-managed-initial-submission.json"))
+        if phase == "managed-initial":
+            controllers_plan, controllers_ledger = old_plan, old_ledger
+        controllers = {task["name"]: task for task in controllers_plan["tasks"] if task["name"].startswith("pipeline-controller-")}
+        if len(controllers) != 4:
+            raise ValueError("The complete four-segment primary controller roster is required")
+        checks = [(name, original[name], old_ledger["tasks"][name]) for name in targets]
+        checks += [(name, task, old_ledger["tasks"][name]) for name, task in original.items()] if phase == "rna-full" else []
+        checks += [(name, task, controllers_ledger["tasks"][name]) for name, task in controllers.items()]
+        jobs = [str(record.get("job_id", "")) for _, _, record in checks]
+        new_ids = []
+        releases = {}
+        for name in targets:
+            candidate = candidates[name]
+            if candidate.get("resources") != original[name].get("resources"):
+                raise ValueError("Replacement changed a node's frozen resource/array contract")
+            execution, execution_record, execution_identity = _release(descriptor["execution_releases"][name], config)
+            if execution_identity != identity:
+                if name != "source-audit":
+                    raise ValueError("Only source-audit may use the preprocessing repair release")
+                _preprocessing_release(primary, execution, identity, execution_identity)
+            _check_script(candidate, original[name], execution, root)
+            record = submitted.get("tasks", {}).get(name, {})
+            if (record.get("state") != "submitted" or not re.fullmatch(r"[0-9]+", str(record.get("job_id", "")))
+                    or record.get("script_sha256") != candidate["script_sha256"]):
+                raise ValueError("Replacement submission is absent, ambiguous or script-mismatched")
+            required = {str(value) for value in descriptor.get("required_external_dependencies", {}).get(name, [])}
+            if name == "source-audit" and execution_identity != identity and len(required) < 2:
+                raise ValueError("Preprocessing repair requires qualification and preservation dependencies")
+            if (candidate.get("dependency_kind", "afterok") != original[name].get("dependency_kind", "afterok")
+                    or record.get("dependency_kind", "afterok") != candidate.get("dependency_kind", "afterok")):
+                raise ValueError("Replacement changed the original native dependency policy")
+            confirmed = set(map(str, record.get("issued_native_dependencies", []))) | {str(proof["job_id"]) for proof in record.get("completed_native_dependencies", [])}
+            if not required <= confirmed:
+                raise ValueError("Replacement omitted a required qualification/preservation dependency")
+            new_ids.append(str(record["job_id"]))
+            releases[name] = {"path": str(execution), "release_id": execution_record["release_id"],
+                              "source_identity": execution_identity, "config_sha256": canonical_hash(config)}
+        if len(new_ids) != len(set(new_ids)) or set(new_ids) & set(jobs):
+            raise ValueError("Replacement aliases an old or another replacement allocation")
+        observed = _native_states(list(dict.fromkeys(jobs + new_ids)), runner=_expanded_accounting_runner) if native is None else native
+        for name, task, record in checks:
+            if not _task_terminal(record, observed, task):
+                raise ValueError("A replaced allocation or primary controller is not positively terminal: " + name)
+        for name in targets:
+            if not name.startswith("pipeline-controller-") and _task_status(old_ledger["tasks"][name], observed, original[name]) != "failed":
+                raise ValueError("Completed valid work must be retained rather than replaced: " + name)
+            candidate, record = candidates[name], submitted["tasks"][name]
+            expected = ({record["job_id"] + "_" + str(i) for i in _array_indices(candidate["resources"]["array"])}
+                        if candidate["resources"].get("array") else {record["job_id"]})
+            if not expected <= set(observed):
+                raise ValueError("Replacement native acknowledgement/roster is incomplete")
+            if name.startswith("pipeline-controller-"):
+                if "#SBATCH --hold" not in Path(candidate["script"]).read_text(encoding="utf8").splitlines() or observed[record["job_id"]]["state"] != "PENDING":
+                    raise ValueError("Replacement controllers must remain explicitly held until registration completes")
+        amended_plan, amended_ledger = copy.deepcopy(old_plan), copy.deepcopy(old_ledger)
+        for task in amended_plan["tasks"]:
+            name = task["name"]
+            if name in targets:
+                task.update(copy.deepcopy(candidates[name]))
+                task["depends"] = copy.deepcopy(original[name].get("depends", []))
+                task["execution_release"] = releases[name]
+                amended_ledger["tasks"][name] = copy.deepcopy(submitted["tasks"][name])
+                amended_ledger["tasks"][name]["execution_release"] = releases[name]
+        amendment = {"amendment_id": ident, "reason": descriptor["reason"], "descriptor_sha256": descriptor_hash,
+            "original_plan_sha256": canonical_hash(old_plan), "original_ledger_sha256": canonical_hash(old_ledger),
+            "replacement_plan_sha256": canonical_hash(replacement), "replacement_ledger_sha256": canonical_hash(submitted),
+            "replaced_tasks": sorted(targets), "execution_releases": releases, "archive": str(archive)}
+        amended_plan.setdefault("dag_amendments", []).append(amendment)
+        amended_ledger.setdefault("dag_amendments", []).append(amendment)
+        amended_ledger["plan_sha256"] = canonical_hash(amended_plan)
+        prepared = {"amended_plan_sha256": canonical_hash(amended_plan), "amended_ledger_sha256": canonical_hash(amended_ledger)}
+        if journal is None:
+            archive.mkdir(parents=True, exist_ok=False)
+            originals = {"original-plan.json": plan_path.read_bytes(), "original-ledger.json": ledger_path.read_bytes(),
+                "descriptor.json": descriptor_path.read_bytes(), "replacement-plan.json": new_plan_path.read_bytes(),
+                "replacement-ledger.json": new_ledger_path.read_bytes()}
+            phase_journal = base / (phase + "-plan-journal.json")
+            if phase_journal.exists():originals["original-phase-journal.json"] = phase_journal.read_bytes()
+            for name, body in originals.items():_archive_bytes(archive / name, body)
+            journal = dict(amendment, **prepared, status="prepared", archived_file_sha256={name:digest(archive/name) for name in originals},
+                           terminal_native_proofs={key: observed[key] for key in observed if key in set(jobs) or any(key.startswith(job+"_") for job in jobs)})
+            atomic_json(journal_path, journal)
+        elif any(journal.get(key) != value for key, value in prepared.items()):
+            raise ValueError("Prepared amendment changed during recovery")
+        for current, original_document, amended_document in [(plan_path, old_plan, amended_plan), (ledger_path, old_ledger, amended_ledger)]:
+            if canonical_hash(read_json(current)) not in {canonical_hash(original_document), canonical_hash(amended_document)}:
+                raise ValueError("Canonical registration changed during repair; preserve ambiguity")
+        if accountant is None:
+            from .budget import native_accounting
+            accountant = lambda study, ids: native_accounting(study, ids, runner=_expanded_accounting_runner)
+        accounted = accountant(root, list(dict.fromkeys(jobs)))
+        if accounted.get("pending_native_records"):
+            raise ValueError("Old allocation cost proof remains pending; no registration committed")
+        journal.update(status="committing", old_allocation_accounting=accounted)
+        atomic_json(journal_path, journal)
+        atomic_json(plan_path, amended_plan)
+        atomic_json(ledger_path, amended_ledger)
+        phase_journal = base / (phase + "-plan-journal.json")
+        if phase_journal.exists():
+            previous = read_json(phase_journal)
+            if not (archive / "original-phase-journal.json").exists():_archive_bytes(archive / "original-phase-journal.json", phase_journal.read_bytes())
+            atomic_json(phase_journal, {**previous, "state":"submitted", "source_sha256":identity["sha256"],
+                "plan_sha256":canonical_hash(amended_plan), "ledger":str(ledger_path), "dag_amendment":str(journal_path)})
+        journal["status"] = "complete"
+        atomic_json(journal_path, journal)
+        return journal
