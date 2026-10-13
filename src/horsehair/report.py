@@ -215,11 +215,39 @@ def _validate_h4(result, config, root):
     expected = {(*pair, *condition) for pair in architecture_tasks for condition in agent_analysis._conditions(settings, protocol)}
     observed = [tuple(row.get(key) for key in agent_analysis.KEYS) for row in curves]
     if len(observed) != len(set(observed)) or set(observed) != expected:raise ValueError("H4 response curves omit or duplicate a frozen condition")
+    seed_path=result.get("seed_summaries_path")
+    if seed_path not in result["source_result_hashes"]:raise ValueError("H4 actual seed summaries require a recorded input hash")
+    import pandas as pd
+    seeds=pd.read_parquet(seed_path)
+    seed_keys=["training_seed",*agent_analysis.KEYS]
+    scores=["baseline_main_success",*[f"baseline_{p}" for p in agents.PROBES]]
+    if not set(seed_keys+scores)<=set(seeds):raise ValueError("H4 actual main-task/probe baseline scores are missing")
+    expected_seed_keys={(seed,*point) for seed in settings.get("final_seeds",range(1000,1020)) for point in expected}
+    if seeds[seed_keys].isna().any().any() or seeds.duplicated(seed_keys).any() or set(seeds[seed_keys].itertuples(index=False,name=None))!=expected_seed_keys:
+        raise ValueError("H4 actual seed-summary roster omits or duplicates a frozen policy/condition")
+    observed_scores=seeds[scores].apply(pd.to_numeric,errors="coerce").to_numpy(dtype=float)
+    if not np.isfinite(observed_scores).all() or (observed_scores<0).any() or (observed_scores>1).any():
+        raise ValueError("H4 baseline qualification cannot use unavailable or invalid main-task/probe scores")
+    main_min=float(settings.get("baseline_main_success_min",.8));probe_min=float(settings.get("baseline_probe_accuracy_min",.8))
+    if result.get("baseline_main_success_min")!=main_min or result.get("baseline_probe_accuracy_min")!=probe_min:
+        raise ValueError("H4 baseline thresholds differ from the frozen configuration")
+    by_point={key:group for key,group in seeds.groupby(agent_analysis.KEYS,sort=False)}
     n = len(settings.get("final_seeds", range(1000, 1020)))
     primary = []
     for row in curves:
         if row.get("independent_seeds") != n or not isinstance(row.get("available_for_H4"), bool):raise ValueError("H4 curve has invalid independent-unit/qualification metadata")
         if not isinstance(row.get("baseline_qualified"),bool) or not isinstance(row.get("strength_matched"),bool):raise ValueError("H4 calibration/competence qualification flags are missing")
+        actual=by_point[tuple(row[key] for key in agent_analysis.KEYS)]
+        qualification=[agents.baseline_qualification(item["baseline_main_success"],
+            {p:item[f"baseline_{p}"] for p in agents.PROBES},settings) for _,item in actual.iterrows()]
+        main_qualified=all(q["baseline_main_qualified"] for q in qualification)
+        probes_qualified=all(q["baseline_probes_qualified"] for q in qualification)
+        if (row.get("baseline_main_qualified") is not main_qualified or row.get("baseline_probes_qualified") is not probes_qualified
+                or row["baseline_qualified"] is not (main_qualified and probes_qualified)):
+            raise ValueError("H4 baseline qualification contradicts actual per-seed main-task/probe scores")
+        for score in scores:
+            if not _finite(row.get(score)) or abs(row[score]-float(actual[score].mean()))>1e-10:
+                raise ValueError("H4 displayed baseline scores contradict actual held-out seed summaries")
         for outcome in agent_analysis.OUTCOMES:
             item = row.get("outcomes", {}).get(outcome, {})
             interval = item.get("ci95", [])
@@ -255,6 +283,9 @@ def _validate_h4(result, config, root):
     qualified = result.get("all_baseline_competence_qualified")
     if not isinstance(qualified, bool) or result.get("biological_constraints_available") is not biological:raise ValueError("H4 biological/competence qualification metadata mismatch")
     if qualified is not all(row["baseline_qualified"] for row in curves):raise ValueError("H4 overall qualification flag contradicts its policy grid")
+    if (result.get("all_baseline_main_qualified") is not all(row["baseline_main_qualified"] for row in curves)
+            or result.get("all_baseline_probes_qualified") is not all(row["baseline_probes_qualified"] for row in curves)):
+        raise ValueError("H4 overall main-task/probe qualification flags contradict actual policy scores")
     supported = [r for r in primary if r["operating_region_supported"]]
     bio_supported = [r for r in supported if r["rule_type"] == "biological"]
     if result.get("supported_grid_points") != len(supported) or result.get("biologically_constrained_supported_grid_points") != len(bio_supported):raise ValueError("H4 supported-point count mismatch")

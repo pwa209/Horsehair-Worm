@@ -192,6 +192,152 @@ def test_constant_training_illuminance_cannot_be_extrapolated_silently():
         _mantis_design_contract(train, test)
 
 
+def _mantis_gradient_fixture():
+    from horsehair.behaviour import _resolve_behavioural_design
+    rng = np.random.default_rng(9017)
+    year = np.tile([2021, 2022, 2023], 24)
+    infection, dop = rng.integers(0, 2, len(year)), rng.normal(size=len(year))
+    original = np.column_stack([np.ones(len(year)), infection, dop, infection * dop,
+                                year == 2022, year == 2023, year == 2021])
+    names = ["Intercept", "infection", "dop", "infection:dop", "year_2022", "year_2023", "box_D"]
+    x, names, audit = _resolve_behavioural_design(original, names, ["infection", "dop", "infection:dop"])
+    precision = np.asarray(audit["prior_precision"])
+    assert np.max(np.abs(precision - np.diag(np.diag(precision)))) > .01
+    # Every individual has repeated records; group membership is independent
+    # of infection and assay context in this synthetic derivative fixture.
+    groups = np.tile(np.arange(8), 9)
+    return rng, x, names, precision, groups
+
+
+def _central_gradient(function, theta, step=1e-6):
+    result = np.empty(len(theta))
+    for index in range(len(theta)):
+        offset = np.zeros_like(theta)
+        offset[index] = step
+        result[index] = (function(theta + offset) - function(theta - offset)) / (2 * step)
+    return result
+
+
+@pytest.mark.parametrize("repeated_groups", [False, True])
+def test_binary_map_analytic_gradient_matches_central_differences_with_induced_prior(repeated_groups):
+    from horsehair.behaviour import _binary_map_value_gradient
+    rng, x, names, precision, groups = _mantis_gradient_fixture()
+    group_index = groups if repeated_groups else None
+    theta = rng.normal(0, .3, x.shape[1] + (len(np.unique(groups)) + 1 if repeated_groups else 0))
+    if repeated_groups:
+        theta[-1] = -.7
+    y = rng.integers(0, 2, len(x)).astype(float)
+    value, actual = _binary_map_value_gradient(theta, x, y, precision, group_index)
+    expected = _central_gradient(lambda point: _binary_map_value_gradient(point, x, y, precision, group_index)[0], theta)
+    assert np.isfinite(value)
+    np.testing.assert_allclose(actual, expected, rtol=2e-7, atol=2e-8)
+
+
+def test_multinomial_map_analytic_gradient_matches_central_differences_with_induced_prior():
+    from horsehair.behaviour import _multinomial_map_value_gradient
+    rng, x, names, precision, groups = _mantis_gradient_fixture()
+    theta, y = rng.normal(0, .3, x.shape[1] * 2), rng.integers(0, 3, len(x))
+    value, actual = _multinomial_map_value_gradient(theta, x, y, precision)
+    expected = _central_gradient(lambda point: _multinomial_map_value_gradient(point, x, y, precision)[0], theta)
+    assert np.isfinite(value)
+    np.testing.assert_allclose(actual, expected, rtol=2e-7, atol=2e-8)
+
+
+def test_analytic_binary_and_multinomial_fits_match_legacy_objectives_and_predictions():
+    from scipy import optimize, special
+    from horsehair.behaviour import _binary_map_value_gradient, _multinomial_map_value_gradient, _map_binary
+    rng, x, names, precision, groups = _mantis_gradient_fixture()
+    p, g = x.shape[1], len(np.unique(groups))
+    y = rng.integers(0, 2, len(x)).astype(float)
+    def legacy_binary(theta):
+        sd = np.exp(theta[-1])
+        eta = x @ theta[:p] + theta[p:p + g][groups] * sd
+        return float(np.sum(np.logaddexp(0, eta) - y * eta) + .5 * theta[:p] @ precision @ theta[:p]
+                     + .5 * np.sum(theta[p:p + g] ** 2) + .5 * (sd / .5) ** 2 - theta[-1])
+    initial = np.zeros(p + g + 1)
+    initial[-1] = -1.5
+    options = {"maxiter": 2000, "gtol": 1e-6}
+    legacy = optimize.minimize(legacy_binary, initial, method="BFGS", options=options)
+    analytic = optimize.minimize(_binary_map_value_gradient, initial, args=(x, y, precision, groups),
+        jac=True, method="BFGS", options=options)
+    assert np.linalg.norm(legacy.jac) < .02 and np.linalg.norm(analytic.jac) < .02
+    assert analytic.fun == pytest.approx(legacy.fun, abs=1e-8)
+    predict = lambda theta: special.expit(x @ theta[:p] + theta[p:p + g][groups] * np.exp(theta[-1]))
+    np.testing.assert_allclose(predict(analytic.x), predict(legacy.x), atol=2e-6, rtol=2e-6)
+    production = _map_binary(x, y, names, groups.astype(str), precision)
+    assert production["objective"] == pytest.approx(legacy.fun, abs=1e-8)
+    assert production["gradient_method"] == "exact_analytic"
+    y = rng.integers(0, 3, len(x))
+    def legacy_multinomial(theta):
+        logits = np.column_stack([x @ theta[:p], x @ theta[p:], np.zeros(len(x))])
+        return float(np.sum(special.logsumexp(logits, axis=1) - logits[np.arange(len(x)), y])
+                     + .5 * theta[:p] @ precision @ theta[:p] + .5 * theta[p:] @ precision @ theta[p:])
+    legacy = optimize.minimize(legacy_multinomial, np.zeros(p * 2), method="BFGS")
+    analytic = optimize.minimize(_multinomial_map_value_gradient, np.zeros(p * 2),
+        args=(x, y, precision), jac=True, method="BFGS")
+    assert np.linalg.norm(legacy.jac) < .02 and np.linalg.norm(analytic.jac) < .02
+    assert analytic.fun == pytest.approx(legacy.fun, abs=1e-8)
+    predict = lambda theta: special.softmax(np.column_stack([x @ theta[:p], x @ theta[p:], np.zeros(len(x))]), axis=1)
+    np.testing.assert_allclose(predict(analytic.x), predict(legacy.x), atol=2e-6, rtol=2e-6)
+
+
+def test_mantis_validation_checks_cheap_heldout_support_before_fitting(monkeypatch):
+    import horsehair.behaviour as behaviour
+    frame = pd.DataFrame({"individual_id": ["a", "b", "c"], "date": ["d1", "d2", "d3"],
+        "infection": [0, 1, 0], "dop": [.2, .4, .8], "illuminance": 10.,
+        "stimulus_side": "R", "year": "2021", "box": ["A", "B", "C"],
+        "response": ["middle", "polarized", "unpolarized"]})
+    def unavailable_fit(*args, **kwargs):
+        pytest.fail("An unsupported held-out categorical level should be rejected before fitting")
+    monkeypatch.setattr(behaviour, "fit_mantis_choice", unavailable_fit)
+    result = behaviour.validate_mantis_choice(frame, {"dop_units": "source"})
+    assert result["status"] == "pending" and not result["scores"]
+    assert len(result["pending"]) == 6
+    assert all("outside training context support" in reason for reason in result["pending"])
+    # A constant omitted training covariate also rejects its changed held-out
+    # value before optimization; other supported folds may reach the fitter.
+    frame.box = "A"
+    frame.illuminance = [10., 10., 100.]
+    attempted = []
+    def observe_training(train, *args, **kwargs):
+        attempted.append(set(train.individual_id))
+        raise RuntimeError("Synthetic fitter sentinel for supported context")
+    monkeypatch.setattr(behaviour, "fit_mantis_choice", observe_training)
+    result = behaviour.validate_mantis_choice(frame, {"dop_units": "source"})
+    assert {"a", "b"} not in attempted
+    assert sum("omitted training covariate was constant" in reason for reason in result["pending"]) == 2
+
+
+@pytest.mark.parametrize("invalid_field", ["x", "jac"])
+def test_nonfinite_binary_map_parameters_or_gradient_cannot_pass_convergence(monkeypatch, invalid_field):
+    from types import SimpleNamespace
+    import horsehair.behaviour as behaviour
+    fit = SimpleNamespace(fun=1., x=np.zeros(2), jac=np.zeros(2), hess_inv=np.eye(2), message="Synthetic numerical failure")
+    getattr(fit, invalid_field)[0] = np.nan
+    monkeypatch.setattr(behaviour.optimize, "minimize", lambda *args, **kwargs: fit)
+    with pytest.raises(RuntimeError, match="did not converge"):
+        behaviour._map_binary(np.column_stack([np.ones(4), [0, 1, 0, 1]]), np.array([0, 1, 1, 0]), ["Intercept", "infection"])
+
+
+@pytest.mark.parametrize("invalid_field", ["x", "jac"])
+def test_nonfinite_multinomial_map_parameters_or_gradient_cannot_pass_convergence(monkeypatch, invalid_field):
+    from types import SimpleNamespace
+    import horsehair.behaviour as behaviour
+    rng = np.random.default_rng(23)
+    n = 90
+    frame = pd.DataFrame({"infection": np.tile([0, 1], n // 2), "dop": rng.uniform(.1, .9, n),
+        "illuminance": 10., "stimulus_side": "R", "year": "2021", "box": "A",
+        "response": np.tile(["middle", "polarized", "unpolarized"], n // 3)})
+    monkeypatch.setattr(behaviour, "_map_binary", lambda *args, **kwargs: {})
+    def numerically_unavailable(function, initial, *args, **kwargs):
+        fit = SimpleNamespace(fun=1., x=np.zeros_like(initial), jac=np.zeros_like(initial), hess_inv=np.eye(len(initial)))
+        getattr(fit, invalid_field)[0] = np.nan
+        return fit
+    monkeypatch.setattr(behaviour.optimize, "minimize", numerically_unavailable)
+    with pytest.raises(RuntimeError, match="did not converge"):
+        behaviour.fit_mantis_choice(frame, {"dop_units": "source"})
+
+
 def test_nuisance_alias_reduction_preserves_predictors_and_original_gaussian_prior():
     from horsehair.behaviour import _resolve_behavioural_design
     rng = np.random.default_rng(307)

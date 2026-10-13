@@ -1695,6 +1695,49 @@ def design_matrix(frame: pd.DataFrame, continuous: list[str], categorical: list[
     return result if return_diagnostics else result[:2]
 
 
+def _binary_map_value_gradient(theta: np.ndarray, x: np.ndarray, y: np.ndarray,
+                               precision: np.ndarray, group_index: np.ndarray | None = None
+                               ) -> tuple[float, np.ndarray]:
+    """Current binary MAP objective and its exact noncentered gradient."""
+    p = x.shape[1]
+    beta = theta[:p]
+    eta = x @ beta
+    prior = .5 * beta @ precision @ beta
+    if group_index is not None:
+        z, sd = theta[p:-1], np.exp(theta[-1])
+        random_predictor = z[group_index] * sd
+        eta = eta + random_predictor
+        prior += .5 * np.sum(z ** 2) + .5 * (sd / .5) ** 2 - theta[-1]
+    residual = special.expit(eta) - y
+    # Symmetrization gives the exact derivative of the scalar quadratic even
+    # when inverse-covariance arithmetic leaves tiny antisymmetric roundoff.
+    beta_gradient = x.T @ residual + .5 * (precision + precision.T) @ beta
+    if group_index is None:
+        gradient = beta_gradient
+    else:
+        group_gradient = sd * np.bincount(group_index, weights=residual, minlength=len(z)) + z
+        log_sd_gradient = residual @ random_predictor + (sd / .5) ** 2 - 1
+        gradient = np.concatenate([beta_gradient, group_gradient, [log_sd_gradient]])
+    return float(np.sum(np.logaddexp(0, eta) - y * eta) + prior), gradient
+
+
+def _multinomial_map_value_gradient(theta: np.ndarray, x: np.ndarray, y: np.ndarray,
+                                    precision: np.ndarray) -> tuple[float, np.ndarray]:
+    """Three-category sensitivity objective; unpolarized is the reference."""
+    p = x.shape[1]
+    logits = np.column_stack([x @ theta[:p], x @ theta[p:], np.zeros(len(x))])
+    normalizer = special.logsumexp(logits, axis=1)
+    probabilities = np.exp(logits - normalizer[:, None])
+    symmetric_precision = .5 * (precision + precision.T)
+    gradient = np.concatenate([
+        x.T @ (probabilities[:, 0] - (y == 0)) + symmetric_precision @ theta[:p],
+        x.T @ (probabilities[:, 1] - (y == 1)) + symmetric_precision @ theta[p:]])
+    value = (np.sum(normalizer - logits[np.arange(len(x)), y])
+             + .5 * theta[:p] @ precision @ theta[:p]
+             + .5 * theta[p:] @ precision @ theta[p:])
+    return float(value), gradient
+
+
 def _map_binary(x: np.ndarray, y: np.ndarray, names: list[str], groups: np.ndarray | None = None,
                 prior_precision: np.ndarray | None = None
                 ) -> dict[str, Any]:
@@ -1704,19 +1747,13 @@ def _map_binary(x: np.ndarray, y: np.ndarray, names: list[str], groups: np.ndarr
     index = np.searchsorted(group_names, groups) if groups is not None else None
     p, g = x.shape[1], len(group_names)
     precision = np.eye(p) / 2.25 if prior_precision is None else np.asarray(prior_precision, float)
-    def objective(theta: np.ndarray) -> float:
-        eta = x @ theta[:p]
-        prior = .5 * theta[:p] @ precision @ theta[:p]
-        if g:
-            sd = np.exp(theta[-1])
-            eta = eta + theta[p:p + g][index] * sd
-            prior += .5 * np.sum(theta[p:p + g] ** 2) + .5 * (sd / .5) ** 2 - theta[-1]
-        return float(np.sum(np.logaddexp(0, eta) - y * eta) + prior)
     initial = np.zeros(p + g + bool(g))
     if g:
         initial[-1] = -1.5
-    result = optimize.minimize(objective, initial, method="BFGS", options={"maxiter": 2000, "gtol": 1e-6})
-    if not np.isfinite(result.fun) or np.linalg.norm(result.jac) > .02:
+    result = optimize.minimize(_binary_map_value_gradient, initial, args=(x, y, precision, index),
+        jac=True, method="BFGS", options={"maxiter": 2000, "gtol": 1e-6})
+    if (not np.isfinite(result.fun) or not np.isfinite(result.x).all()
+            or not np.isfinite(result.jac).all() or np.linalg.norm(result.jac) > .02):
         raise RuntimeError(f"Binary MAP did not converge: {result.message}")
     covariance = np.asarray(result.hess_inv)[:p, :p]
     estimates = result.x[:p]
@@ -1725,6 +1762,7 @@ def _map_binary(x: np.ndarray, y: np.ndarray, names: list[str], groups: np.ndarr
             "covariance_laplace": covariance.tolist(), "n": len(y),
             "group_sd": float(np.exp(result.x[-1])) if g else None,
             "objective": float(result.fun), "converged": True,
+            "gradient_method": "exact_analytic", "gradient_norm": float(np.linalg.norm(result.jac)),
             "uncertainty_method": "penalized MAP / Laplace approximation"}
 
 
@@ -1761,19 +1799,17 @@ def fit_mantis_choice(frame: pd.DataFrame, config: dict[str, Any] | None = None)
     # Multinomial sensitivity uses unpolarized as its reference category.
     y = response.to_numpy(int)
     p = x.shape[1]
-    def multinomial_loss(theta: np.ndarray) -> float:
-        logits = np.column_stack([x @ theta[:p], x @ theta[p:], np.zeros(len(x))])
-        return float(np.sum(special.logsumexp(logits, axis=1) - logits[np.arange(len(x)), y])
-                     + .5 * theta[:p] @ np.asarray(design["prior_precision"]) @ theta[:p]
-                     + .5 * theta[p:] @ np.asarray(design["prior_precision"]) @ theta[p:])
-    mn = optimize.minimize(multinomial_loss, np.zeros(p * 2), method="BFGS")
-    if not np.isfinite(mn.fun) or np.linalg.norm(mn.jac) > .02:
+    mn = optimize.minimize(_multinomial_map_value_gradient, np.zeros(p * 2),
+        args=(x, y, np.asarray(design["prior_precision"])), jac=True, method="BFGS")
+    if (not np.isfinite(mn.fun) or not np.isfinite(mn.x).all()
+            or not np.isfinite(mn.jac).all() or np.linalg.norm(mn.jac) > .02):
         raise RuntimeError("Multinomial sensitivity fit did not converge")
     return {"engagement": engagement, "conditional_preference": preference,
             "design_audit": {"engagement": design, "conditional_preference": preference_design},
             "multinomial_sensitivity": {"terms": names, "reference": "unpolarized",
                 "middle_coefficients": mn.x[:p].tolist(), "polarized_coefficients": mn.x[p:].tolist(),
-                "covariance_laplace": np.asarray(mn.hess_inv).tolist()},
+                "covariance_laplace": np.asarray(mn.hess_inv).tolist(), "objective": float(mn.fun),
+                "gradient_method": "exact_analytic", "gradient_norm": float(np.linalg.norm(mn.jac))},
             "denominators": {"trials": len(table), "choosers": int(chooser.sum()),
                               "nonchoices": int((~chooser).sum()),
                               "animals": int(table.individual_id.nunique()) if "individual_id" in table else None},
@@ -1869,6 +1905,10 @@ def validate_mantis_choice(frame: pd.DataFrame, config: dict[str, Any] | None = 
         try:
             if train.empty or test.empty or set(train.individual_id) & test_ids:
                 raise ValueError("No independent training individuals after complete date/individual holdout")
+            # Reject absent categorical levels or extrapolation of a constant
+            # nuisance covariate before costly MAP fits. Full training-alias
+            # and chooser-specific basis checks still follow the fit below.
+            _mantis_design_contract(train, test)
             fitting_config = dict(config, dop_units="source", columns={})
             fitted = fit_mantis_choice(train, fitting_config)
             x, names, contract = _mantis_design_contract(train, test, fitted["design_audit"]["engagement"])

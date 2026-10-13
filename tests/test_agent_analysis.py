@@ -27,7 +27,7 @@ def seed_fixture(episodes=8):
 
 
 def settings():
-    return {"final_seeds":list(range(1000,1020)), "baseline_probe_accuracy_min":.8}
+    return {"final_seeds":list(range(1000,1020)), "baseline_main_success_min":.8, "baseline_probe_accuracy_min":.8}
 
 
 def test_episode_replication_does_not_increase_independent_sample_size_or_significance():
@@ -50,9 +50,31 @@ def test_unqualified_policy_is_preserved_and_cannot_support_H4():
     point = next(r for r in records if r["perturbation"] == "recurrent_gate")
     assert point["independent_seeds"] == 20
     assert not point["baseline_qualified"]
+    assert point["baseline_main_qualified"] and not point["baseline_probes_qualified"]
     assert point["outcomes"]["redirection_difference"]["estimate"] == .5
     assert not point["available_for_H4"] and point["holm_pvalue"] == 1
     assert not point["operating_region_supported"]
+
+
+def test_poor_main_task_with_perfect_probes_is_retained_but_cannot_support_H4():
+    frame=seed_fixture()
+    frame.loc[frame.training_seed.eq(1000)&frame.probe.eq("main"),"baseline_success"]=0.
+    data=analysis.summarize_trials(frame)
+    records=analysis.analyze_seed_summaries(data,settings(),{"bootstrap_replicates":100})
+    for point in records:
+        assert point["independent_seeds"]==20 and point["baseline_main_success"]==pytest.approx(.95)
+        assert point["baseline_probes_qualified"] and not point["baseline_main_qualified"]
+        assert not point["baseline_qualified"] and not point["available_for_H4"]
+        assert not point["operating_region_supported"]
+        if point["primary_grid_point"]:assert point["holm_pvalue"]==1.
+        assert any("main-task" in reason for reason in point["unavailable_reasons"])
+
+
+def test_missing_clean_main_episode_is_not_removed_from_baseline_denominator():
+    frame=seed_fixture();frame.loc[0,"baseline_success"]=np.nan
+    data=analysis.summarize_trials(frame)
+    selected=data[data.training_seed.eq(1000)&data.perturbation.eq("input_gain")]
+    assert selected.baseline_main_success.isna().all()
 
 
 def test_calibration_mismatch_is_unavailable_and_never_dropped_from_family():
@@ -198,6 +220,8 @@ def test_full_analysis_never_accepts_headline_without_biology_and_baseline_compe
     assert result["claim_status"] == expected and result["headline_claim_accepted"] is (expected=="supported")
     assert result["primary_evidence_class"]=="computational_experiment" and result["biological_transfer_status"]=="pending"
     assert result["computational_analysis_complete"]
+    assert result["all_baseline_main_qualified"] and result["all_baseline_probes_qualified"] is qualified
+    assert result["baseline_main_success_min"]==result["baseline_probe_accuracy_min"]==.8
     assert (tmp_path/"results/inference/H4.json").exists()
     assert (tmp_path/"results/figure_inputs/05.json").exists()
 

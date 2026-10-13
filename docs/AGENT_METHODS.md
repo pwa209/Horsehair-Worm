@@ -102,9 +102,22 @@ competent merely because it emits actions in an unfamiliar task.
 
 All three probes run with the perturbation enabled. Probe performance is reported
 separately; no average can conceal failure of one component. The implemented
-default qualification flag requires at least 0.8 clean held-out accuracy on each
-probe. It is a prospective computational assay criterion, not a biological fact.
-Failed baseline qualifications remain in outputs. The proposal's primary operating
+qualification requires at least 0.8 clean held-out success in the policy's own
+trained main task **and** at least 0.8 clean held-out accuracy on each probe.
+The explicit configuration fields are `baseline_main_success_min` and
+`baseline_probe_accuracy_min`; both are frozen in the H4 inference specification.
+The existing training benchmark already used the joint 0.8 rule on validation
+episodes. H4 eligibility applies that rule to actual, separately seeded held-out
+episodes; training summaries or clean calibration trajectories cannot substitute
+for these observations. The supplied proposal does not prescribe this numerical
+cutoff, so it is declared prospectively before final fitting and evaluation.
+All planned clean episodes enter the score. A numerical failure leaves
+qualification pending, without dropping the failed episode or imputing its
+endpoint. Each of the 20 seeds must qualify; a pooled mean cannot conceal a
+failed policy. Main-task, probe and joint qualification flags remain separate.
+Failed baseline qualifications remain in outputs. This is baseline eligibility,
+not an additional main-task loss test under a redirection perturbation.
+The proposal's primary operating
 region is a ≥0.20 redirection increase and ≤0.05 accuracy loss on every probe.
 Episodes are nested within independently trained seeds for inference.
 
@@ -147,7 +160,8 @@ no redirection optimization. Their clean calibration observations may determine
 functional strength normalization only.
 
 The freeze also binds the SHA-256 of the **full study configuration** and an
-explicit H4 inference specification: redirection and competence thresholds,
+explicit H4 inference specification: main-task and probe baseline qualification,
+redirection and competence-loss thresholds,
 alpha, bootstrap count, fixed reference point, matched comparator estimand,
 multiplicity family and treatment of unavailable points. Final training,
 evaluation and H4 analysis reject changes to these choices after the freeze.
@@ -239,7 +253,10 @@ of one in this family; no favorable seed or strength is selected.
 
 `results/inference/H4.json` distinguishes a complete computational analysis from
 an accepted computational claim. The computational claim requires qualified
-baseline competence and the joint operating-region/comparator tests. Missing
+clean held-out main-task and separate-probe baseline competence for every planned
+seed and the joint operating-region/comparator tests. The report checks these
+scores against the complete hash-bound seed-summary roster, rather than trusting
+an asserted qualification flag. Missing
 biological constraints do not invalidate this explicitly computational primary;
 the separate biological bridge remains pending and cannot be inferred from a
 synthetic success. Computational and biological transfer have separate statuses.

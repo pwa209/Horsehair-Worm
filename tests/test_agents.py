@@ -250,6 +250,17 @@ def test_final_refuses_changed_H4_analysis_after_freeze(tmp_path,changed):
         agents.run(amended,tmp_path,mode="final",task_index=0)
 
 
+def test_main_task_qualification_threshold_is_frozen_before_final_fit(tmp_path):
+    original={"agents":{"baseline_main_success_min":.8,"baseline_probe_accuracy_min":.8}}
+    protocol={"config_sha256":agents._digest(original["agents"]),"implementation_sha256":agents._implementation_sha256(),
+              "full_config_sha256":canonical_hash(original),"H4_inference_specification":agents.h4_specification(original)}
+    agents._json(tmp_path/"results/agents/frozen_protocol.json",protocol)
+    assert protocol["H4_inference_specification"]["baseline_main_success_min"]==.8
+    changed=copy.deepcopy(original);changed["agents"]["baseline_main_success_min"]=.6
+    with pytest.raises(RuntimeError,match="Configuration changed after"):
+        agents.run(changed,tmp_path,mode="final",task_index=0)
+
+
 def test_cpu_evaluation_pilot_measures_actual_cpu_without_training(tmp_path):
     torch = pytest.importorskip("torch")
     config = {"agents":{"capacity":25000,"n_envs":4,"rollout_steps":4,"ppo_epochs":1,"total_steps":16,
@@ -265,6 +276,15 @@ def test_cpu_evaluation_pilot_measures_actual_cpu_without_training(tmp_path):
     assert checkpoint.read_bytes() == original_bytes
     assert result["working_bytes"]>0 and len(result["source_sha256"]) == 64
     assert not result["baseline_competence_qualified"]
+
+
+@pytest.mark.parametrize("main,status",[(.2,"unqualified"),(None,"pending_numerical_baseline"),(float("nan"),"pending_numerical_baseline")])
+def test_baseline_qualification_requires_observed_main_task_even_when_probes_pass(main,status):
+    qualification=agents.baseline_qualification(main,{probe:1. for probe in agents.PROBES},
+        {"baseline_main_success_min":.8,"baseline_probe_accuracy_min":.8})
+    assert qualification["baseline_probes_qualified"] and not qualification["baseline_main_qualified"]
+    assert not qualification["baseline_competence_qualified"] and qualification["baseline_qualification_status"]==status
+    assert agents.baseline_qualification(.8,{probe:.8 for probe in agents.PROBES},{})["baseline_competence_qualified"]
 
 
 def test_required_biological_export_prevents_freeze_without_writing_a_protocol(tmp_path):
@@ -317,6 +337,13 @@ def test_actual_benchmark_aggregation_full_grid_separate_competence_and_hashes(t
         assert record["complete_mechanism_grid"] and record["grid_points"]==14 and record["condition_groups"]==112
         assert record["trial_rows"]==112 and record["calibration_episodes"]==8 and record["kl_bisections"]==3
         assert record["restoration_qualified"] and record["base_weights_unchanged"]
+        import pandas as pd
+        trial_path=next(path for path in record["source_result_hashes"] if path.endswith("agent_trials.parquet"))
+        trials=pd.read_parquet(trial_path)
+        clean=trials[trials.probe.eq("main") & trials.restoration_control.eq("none")]
+        assert record["baseline_main_success"]==pytest.approx(clean.baseline_success.mean())
+        qualification=agents.baseline_qualification(record["baseline_main_success"],record["baseline_competence"],config["agents"])
+        assert all(record[key]==value for key,value in qualification.items())
     assert aggregate["measured_policies"]==2 and aggregate["architecture_task_cells"]==1
     assert not aggregate["scientific_result"] and aggregate["complete_architecture_task_coverage"]
     for path,value in aggregate["source_result_hashes"].items():

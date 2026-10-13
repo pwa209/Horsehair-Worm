@@ -3,6 +3,7 @@ import copy
 from pathlib import Path
 
 import pytest
+import pandas as pd
 
 from horsehair import agents, agent_analysis, report
 from horsehair.core import atomic_json, canonical_hash, digest,read_json
@@ -21,7 +22,8 @@ def immutable_test_release(monkeypatch):
 def config_fixture():
     return {"protocol_id":"unit-test-contract-fixture","inference":{"primary_family":["H1","H2","H3"],"alpha":.05},
             "molecular":{"incremental_rank_effect_threshold":.2},
-            "agents":{"ranks":[1],"strengths":[.2],"feedforward_baseline":True}}
+            "agents":{"ranks":[1],"strengths":[.2],"feedforward_baseline":True,
+                      "baseline_main_success_min":.8,"baseline_probe_accuracy_min":.8}}
 
 
 def biological_result(root,config,claim,estimate=.3,pvalue=.001):
@@ -62,7 +64,8 @@ def computational_result(root,config,positive=False):
             raw = .000001 if positive and mechanism=="recurrent_gate" else 1.
             curves.append({"architecture":architecture,"task":task,"rule_type":rule,"perturbation":mechanism,"rank":rank,
                            "matching_arm":arm,"strength":strength,"independent_seeds":20,"available_for_H4":True,
-                           "baseline_qualified":True,"strength_matched":True,
+                           "baseline_qualified":True,"baseline_main_qualified":True,"baseline_probes_qualified":True,
+                           "baseline_main_success":1.,**{f"baseline_{p}":1. for p in agents.PROBES},"strength_matched":True,
                            "primary_grid_point":primary,"raw_joint_pvalue":raw,
                            "component_pvalues":{o:raw for o in agent_analysis.OUTCOMES},
                            "comparators":{k:{"independent_seed_pairs":20,"strength_matched":True,"pvalue":raw} for k in ("random_subspace","output_gain")},
@@ -75,17 +78,23 @@ def computational_result(root,config,positive=False):
         if not row["primary_grid_point"]:row.update(holm_pvalue=None,operating_region_supported=False)
     curve_path = root/"results/agents/analysis/response_curves.json"
     atomic_json(curve_path,curves)
+    seed_path=root/"results/agents/analysis/seed_summaries.parquet"
+    pd.DataFrame([{**{key:row[key] for key in agent_analysis.KEYS},"training_seed":seed,
+                  "baseline_main_success":1.,**{f"baseline_{p}":1. for p in agents.PROBES}}
+                 for row in curves for seed in settings.get("final_seeds",range(1000,1020))]).to_parquet(seed_path,index=False)
     supported = sum(r["operating_region_supported"] for r in primary)
     result = {"claim_id":"H4","independent_unit":agent_analysis.UNIT,"evidence_class":"computational_experiment",
               "primary_evidence_class":"computational_experiment","biological_transfer_status":"pending",
               "config_sha256":canonical_hash(config),"source_sha256":report._source_sha(),"frozen_protocol_sha256":agents._digest(protocol),
               "status":"complete","computational_analysis_complete":True,"planned_policy_cells":len(cells),"independent_seed_count_per_cell":20,
               "estimate":.3,"ci95":[.25,.35],"pvalue":min(adjusted),"all_baseline_competence_qualified":True,
+              "all_baseline_main_qualified":True,"all_baseline_probes_qualified":True,
+              "baseline_main_success_min":settings.get("baseline_main_success_min",.8),"baseline_probe_accuracy_min":settings.get("baseline_probe_accuracy_min",.8),
               "biological_constraints_available":False,"claim_status":"supported" if positive else "not_supported",
               "headline_claim_accepted":positive,"computational_claim_accepted":positive,"supported_grid_points":supported,
-              "biologically_constrained_supported_grid_points":0,"response_curves":str(curve_path),
+              "biologically_constrained_supported_grid_points":0,"response_curves":str(curve_path),"seed_summaries_path":str(seed_path),
               "correction":{"method":"Holm","family":"H4 prespecified computational grid","tests":len(primary),"alpha":.05},
-              "source_result_hashes":{str(protocol_path):digest(protocol_path),str(curve_path):digest(curve_path)}}
+              "source_result_hashes":{str(protocol_path):digest(protocol_path),str(curve_path):digest(curve_path),str(seed_path):digest(seed_path)}}
     atomic_json(root/"results/inference/H4.json",result)
     return result
 
@@ -243,6 +252,47 @@ def test_supported_H4_is_computational_with_a_separate_pending_bridge(tmp_path):
     result["biological_constraints_available"] = True
     with pytest.raises(ValueError,match="qualification"):
         report.validate_result(result,"H4",agent_analysis.UNIT,config,tmp_path)
+
+
+def test_H4_report_derives_main_qualification_from_actual_seed_scores_not_high_mean_or_flags(tmp_path):
+    config=config_fixture();result=computational_result(tmp_path,config,positive=True)
+    path=Path(result["seed_summaries_path"]);seeds=pd.read_parquet(path)
+    seeds.loc[seeds.training_seed.eq(1000),"baseline_main_success"]=.1
+    seeds.to_parquet(path,index=False)
+    result["source_result_hashes"][str(path)]=digest(path)
+    assert seeds.baseline_main_success.mean()>.8 and (seeds.baseline_delayed_cue==1).all()
+    with pytest.raises(ValueError,match="actual per-seed main-task/probe"):
+        report.validate_result(result,"H4",agent_analysis.UNIT,config,tmp_path)
+
+
+def test_H4_report_requires_hash_bound_main_task_seed_roster(tmp_path):
+    config=config_fixture();result=computational_result(tmp_path,config)
+    path=Path(result["seed_summaries_path"]);seeds=pd.read_parquet(path)
+    seeds.iloc[1:].to_parquet(path,index=False)
+    result["source_result_hashes"][str(path)]=digest(path)
+    with pytest.raises(ValueError,match="actual seed-summary roster"):
+        report.validate_result(result,"H4",agent_analysis.UNIT,config,tmp_path)
+
+
+def test_consistent_unqualified_main_task_remains_valid_pending_computational_evidence(tmp_path):
+    config=config_fixture();result=computational_result(tmp_path,config,positive=True)
+    seed_path=Path(result["seed_summaries_path"]);seeds=pd.read_parquet(seed_path)
+    seeds.loc[seeds.training_seed.eq(1000),"baseline_main_success"]=.1
+    seeds.to_parquet(seed_path,index=False)
+    curve_path=Path(result["response_curves"]);curves=read_json(curve_path)
+    for row in curves:
+        row.update(baseline_main_success=.955,baseline_main_qualified=False,baseline_qualified=False,
+                   available_for_H4=False,operating_region_supported=False)
+        if row["primary_grid_point"]:row["holm_pvalue"]=1.
+    atomic_json(curve_path,curves)
+    result.update(all_baseline_main_qualified=False,all_baseline_competence_qualified=False,claim_status="pending",
+                  headline_claim_accepted=False,computational_claim_accepted=False,supported_grid_points=0,pvalue=1.)
+    result["source_result_hashes"].update({str(seed_path):digest(seed_path),str(curve_path):digest(curve_path)})
+    report.validate_result(result,"H4",agent_analysis.UNIT,config,tmp_path)
+    atomic_json(tmp_path/"results/inference/H4.json",result)
+    for claim in ("H1","H2","H3"):biological_result(tmp_path,config,claim)
+    overview=report.build_report(config,tmp_path)
+    assert not overview["primary_analyses_complete"] and not overview["analysis_complete"]
 
 
 def test_tampered_source_or_unhashed_path_is_rejected(tmp_path):

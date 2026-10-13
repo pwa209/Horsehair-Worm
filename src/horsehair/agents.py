@@ -65,7 +65,32 @@ def h4_specification(config):
             "comparator_estimand":"paired seed difference in worst operating margin",
             "family":"all frozen primary mechanism/rank/strength/matching-arm/rule/architecture/task grid points",
             "correction":"Holm", "unavailable_points":"retain with conservative pvalue one",
-            "baseline_probe_accuracy_min":float(config.get("agents",config).get("baseline_probe_accuracy_min",.8))}
+            "baseline_main_success_min":float(config.get("agents",config).get("baseline_main_success_min",.8)),
+            "baseline_probe_accuracy_min":float(config.get("agents",config).get("baseline_probe_accuracy_min",.8)),
+            "baseline_main_endpoint":"clean heldout success in the policy's own trained main task; all planned episodes required"}
+
+
+def baseline_qualification(main_success, probes, settings):
+    """Eligibility, not a new loss endpoint: both clean main task and probes."""
+    main_min=float(settings.get('baseline_main_success_min',.8));probe_min=float(settings.get('baseline_probe_accuracy_min',.8))
+    if not all(math.isfinite(value) and 0<=value<=1 for value in (main_min,probe_min)):
+        raise ValueError('Baseline competence thresholds must be finite probabilities')
+    def observed(value):
+        return isinstance(value,(int,float,np.integer,np.floating)) and not isinstance(value,(bool,np.bool_)) and math.isfinite(float(value)) and 0<=float(value)<=1
+    main_available=observed(main_success)
+    probes_available=all(observed(probes.get(probe)) for probe in PROBES)
+    main=bool(main_available and main_success>=main_min)
+    separate=bool(probes_available and all(probes[probe]>=probe_min for probe in PROBES))
+    return {'baseline_main_qualified':main,'baseline_probes_qualified':separate,'baseline_competence_qualified':main and separate,
+            'baseline_main_success_min':main_min,'baseline_probe_accuracy_min':probe_min,
+            'baseline_qualification_status':'pending_numerical_baseline' if not main_available or not probes_available else 'qualified' if main and separate else 'unqualified'}
+
+
+def _observed_baseline_mean(rows, endpoint):
+    values=[row.get(endpoint) for row in rows]
+    if not values or any(value is None for value in values):return None
+    values=np.asarray(values,dtype=float)
+    return float(values.mean()) if np.isfinite(values).all() else None
 
 
 def _benchmark_provenance(config, destination, evaluation_device):
@@ -838,11 +863,12 @@ def perturbation_experiment(policy, task, seed, config, protocol, destination):
     baseline = {}
     all_rows, evaluation_steps = [], clean_meta["environment_steps"]
     for probe in (None, *PROBES):
-        rows, meta = evaluate(policy, task, evaluation_seeds, probe=probe)
+        rows, meta = evaluate(policy, task, evaluation_seeds, probe=probe,on_numerical_failure='record')
         evaluation_steps += meta["environment_steps"]
         baseline[probe] = rows
-    baseline_competence = {probe: float(np.mean([r["motor_accuracy"] if probe == "motor_execution" else r["success"] for r in baseline[probe]])) for probe in PROBES}
-    competence_qualified = all(value >= float(config.get("baseline_probe_accuracy_min", .8)) for value in baseline_competence.values())
+    baseline_competence = {probe:_observed_baseline_mean(baseline[probe],'motor_accuracy' if probe=='motor_execution' else 'success') for probe in PROBES}
+    baseline_main=_observed_baseline_mean(baseline[None],'success')
+    qualification=baseline_qualification(baseline_main,baseline_competence,config)
     biological = protocol.get("biological_directions")
     rule_types = ("synthetic", "biological") if biological else ("synthetic",)
     strengths = config.get("strengths", [0, .05, .1, .2, .4, .8])
@@ -932,8 +958,7 @@ def perturbation_experiment(policy, task, seed, config, protocol, destination):
     summary = {"training_seed": seed, "task": task, "architecture": policy.architecture, "trial_rows": len(all_rows),
                "evaluation_environment_steps": evaluation_steps, "evaluation_seconds": time.perf_counter()-started,
                "base_weight_sha256": before, "base_weights_unchanged": True, "protocol_sha256": protocol_hash,
-               "baseline_competence": baseline_competence, "baseline_competence_qualified": competence_qualified,
-               "baseline_probe_accuracy_min": float(config.get("baseline_probe_accuracy_min", .8)),
+                "baseline_competence": baseline_competence,'baseline_main_success':baseline_main,**qualification,
                 "numerically_available":all(row["numerical_status"]=="available" and row["calibration_numerical_status"]=="available" for row in all_rows),
                 "unavailable_episode_rows":sum(row["numerical_status"]=="unavailable" for row in all_rows),
                 "numerical_failures":numerical_failures,
@@ -1165,6 +1190,8 @@ def benchmark_specification(config):
             "mechanisms":list(MECHANISMS), "matching_arms":["parameter_norm","policy_kl"],
             "restoration_controls":["exact","random_subspace","cue_removal","lower_action_noise"],
             "primary_rule_type":"synthetic", "max_episode_steps":200,
+            "baseline_main_success_min":float(settings.get("baseline_main_success_min",.8)),
+            "baseline_probe_accuracy_min":float(settings.get("baseline_probe_accuracy_min",.8)),
             "scope":"actual primary algorithms; finite technical timing, never confirmatory H4 evidence"}
 
 
@@ -1228,7 +1255,7 @@ def benchmark_training(config, root, task_index=None):
             if state_hash(policy) != before or not directions:
                 raise AssertionError("Technical direction-selection benchmark changed the base policy or omitted its grid")
             _json(measurement/"calibrated_directions.json",directions)
-            threshold = float(settings.get("baseline_probe_accuracy_min",.8))
+            qualification = baseline_qualification(summary["baseline_success"],summary["competence"],settings)
             summary.update(full_config_sha256=canonical_hash(config),source_sha256=source_identity(Path(__file__).resolve().parents[2])["sha256"])
             _json(measurement/"summary.json",summary)
             record = {**summary, **_benchmark_provenance(config,destination,str(next(policy.parameters()).device)),
@@ -1236,7 +1263,7 @@ def benchmark_training(config, root, task_index=None):
                       "checkpoint_path":str((measurement/"checkpoint.pt").resolve()),
                       "full_primary_algorithm":True,"software_qualified":True,
                       "direction_selection_seconds":selection_seconds,
-                      "policy_competence_qualified":summary["baseline_success"]>=threshold and all(value>=threshold for value in summary["competence"].values()),
+                      **qualification,"policy_competence_qualified":qualification["baseline_competence_qualified"],
                       "competence_interpretation":"measured shortened-budget validation; no seed exclusion or full-budget competence claim",
                       "evidence_class":"technical native throughput benchmark; not scientific inference",
                       **_benchmark_inputs([measurement/"checkpoint.pt",measurement/"summary.json",measurement/"training_metrics.json",measurement/"calibrated_directions.json"])}

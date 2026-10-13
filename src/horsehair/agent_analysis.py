@@ -120,6 +120,7 @@ def summarize_trials(frame):
         main = group[group.probe.eq("main")]
         record["redirection_difference"] = float((main.redirection-main.baseline_redirection).mean())
         record["main_accuracy_difference"] = float((main.success-main.baseline_success).mean())
+        record["baseline_main_success"] = agents._observed_baseline_mean(main.to_dict("records"), "baseline_success")
         for probe in agents.PROBES:
             rows = group[group.probe.eq(probe)]
             if rows.empty:
@@ -127,7 +128,8 @@ def summarize_trials(frame):
             altered = rows.motor_accuracy if probe == "motor_execution" else rows.success
             clean = rows.baseline_motor_accuracy if probe == "motor_execution" else rows.baseline_success
             record[f"loss_{probe}"] = float((clean-altered).mean())
-            record[f"baseline_{probe}"] = float(clean.mean())
+            record[f"baseline_{probe}"] = agents._observed_baseline_mean(rows.to_dict("records"),
+                "baseline_motor_accuracy" if probe == "motor_execution" else "baseline_success")
         if main.empty:
             raise ValueError("Missing main redirection endpoint")
         record["nested_main_episodes"] = len(main)
@@ -192,7 +194,12 @@ def analyze_seed_summaries(summaries, settings, inference=None):
         record = dict(zip(KEYS, key))
         record["independent_seeds"] = len(group)
         record["nested_episodes_per_seed"] = sorted(set(group.nested_main_episodes.astype(int)))
-        record["baseline_qualified"] = bool(all(group[f"baseline_{p}"].ge(float(settings.get("baseline_probe_accuracy_min", .8))).all() for p in agents.PROBES))
+        qualifications = [agents.baseline_qualification(row["baseline_main_success"],
+            {p:row[f"baseline_{p}"] for p in agents.PROBES}, settings) for _,row in group.iterrows()]
+        record["baseline_main_qualified"] = all(q["baseline_main_qualified"] for q in qualifications)
+        record["baseline_probes_qualified"] = all(q["baseline_probes_qualified"] for q in qualifications)
+        record["baseline_qualified"] = record["baseline_main_qualified"] and record["baseline_probes_qualified"]
+        record["baseline_main_success"] = agents._observed_baseline_mean(group.to_dict("records"), "baseline_main_success")
         record["strength_matched"] = bool(group.strength_matched.all())
         record["outcomes"] = {column: {"estimate": float(group[column].mean()), "ci95": bootstrap_ci(group[column], repetitions=repetitions)} for column in OUTCOMES}
         for probe in agents.PROBES:
@@ -221,7 +228,9 @@ def analyze_seed_summaries(summaries, settings, inference=None):
             probabilities.append(record["comparators"][control]["pvalue"])
             if not matched:
                 unavailable.append(f"unmatched {control} calibration")
-        if not record["baseline_qualified"]:
+        if not record["baseline_main_qualified"]:
+            unavailable.append("one or more clean held-out main-task baselines are unqualified")
+        if not record["baseline_probes_qualified"]:
             unavailable.append("one or more baseline competence probes are unqualified")
         if not record["strength_matched"]:
             unavailable.append("intervention strength target was not achieved")
@@ -290,9 +299,13 @@ def _validate_cell(directory, settings, protocol, task, architecture, seed):
     baseline = {probe: float(summaries[f"baseline_{probe}"].iloc[0]) for probe in agents.PROBES}
     if any(abs(baseline[p]-float(receipt["baseline_competence"][p]))>1e-10 for p in agents.PROBES):
         raise ValueError("Baseline competence receipt disagrees with actual paired episodes")
-    qualified = all(v>=float(settings.get("baseline_probe_accuracy_min", .8)) for v in baseline.values())
-    if bool(receipt.get("baseline_competence_qualified")) != qualified:
-        raise ValueError("Baseline qualification flag disagrees with actual probe scores")
+    main = float(summaries.baseline_main_success.iloc[0])
+    if not isinstance(receipt.get("baseline_main_success"), (int,float)) or not math.isfinite(receipt["baseline_main_success"]) or abs(main-receipt["baseline_main_success"])>1e-10:
+        raise ValueError("Main-task baseline receipt disagrees with actual paired held-out episodes")
+    qualification = agents.baseline_qualification(main, baseline, settings)
+    if any(receipt.get(key) != value for key,value in qualification.items()):
+        raise ValueError("Baseline qualification metadata disagrees with actual main-task/probe scores")
+    qualified = qualification["baseline_competence_qualified"]
     controls = frame[~frame.restoration_control.eq("none")].groupby([*KEYS, "restoration_control"]).agg(
         success=("success", "mean"), redirection=("redirection", "mean"), nested_episodes=("episode_seed", "size")).reset_index()
     controls["training_seed"] = seed
@@ -402,6 +415,10 @@ def run(config, root):
     if failures:
         raise ValueError(f"H4 inference is incomplete: {len(failures)} missing, failed or integrity-mismatched policy cells; inspect analysis_audit.json")
     seeds = pd.concat(summaries, ignore_index=True)
+    observed_qualifications = [agents.baseline_qualification(row["baseline_main_success"],
+        {p:row[f"baseline_{p}"] for p in agents.PROBES},settings) for _,row in seeds.iterrows()]
+    all_main_qualified = all(q["baseline_main_qualified"] for q in observed_qualifications)
+    all_probes_qualified = all(q["baseline_probes_qualified"] for q in observed_qualifications)
     controls = pd.concat(restoration, ignore_index=True)
     inference = protocol["H4_inference_specification"]
     curves = analyze_seed_summaries(seeds, settings, inference)
@@ -428,7 +445,7 @@ def run(config, root):
         raise ValueError("Declared H4 reference point is absent from the frozen grid")
     blocked = recurrent.groupby("training_seed")[OUTCOMES].mean()
     biological_ready = False
-    all_qualified = all(qualifications)
+    all_qualified = all_main_qualified and all_probes_qualified
     supported = [r for r in primary if r["operating_region_supported"]]
     synthetic_supported = [r for r in supported if r["rule_type"] == "synthetic"]
     heldout_supported = [r for r in synthetic_supported if r["architecture"] == protocol.get("heldout_architecture") and r["task"] == protocol.get("heldout_task")]
@@ -451,6 +468,9 @@ def run(config, root):
         "seed_inference":"one-sided Student-t mean contrasts across independent seeds; pointwise percentile bootstrap intervals resample seed clusters",
         "planned_policy_cells":len(cells), "independent_seed_count_per_cell":len(settings.get("final_seeds",range(1000,1020))),
         "supported_grid_points":len(supported), "all_baseline_competence_qualified":all_qualified,
+        "all_baseline_main_qualified":all_main_qualified, "all_baseline_probes_qualified":all_probes_qualified,
+        "baseline_main_success_min":inference["baseline_main_success_min"],
+        "baseline_probe_accuracy_min":inference["baseline_probe_accuracy_min"],
         "biologically_constrained_supported_grid_points":0,
         "computational_dual_heldout_supported_grid_points":len(heldout_supported),
         "computational_dual_heldout_transfer_status":"supported" if heldout_supported else "not_supported" if all_qualified else "pending",
@@ -459,7 +479,7 @@ def run(config, root):
         "limitations":["Computational causality does not validate an insect mechanism.",
             *([] if biological_ready else ["Biologically constrained transfer remains pending; computed curves are explicitly synthetic."]),
             *([] if all_qualified else ["At least one baseline policy lacks qualified competence; no headline H4 claim is accepted."])],
-        "source_result_hashes":provenance, "response_curves":str(curve_path)}
+        "source_result_hashes":provenance, "response_curves":str(curve_path), "seed_summaries_path":str(seed_path)}
     atomic_json(root/"results/inference/H4.json", result)
     _figure_inputs(curves, [seed_path,control_path,curve_path], root/"results/figure_inputs/05.json",controls,
                    repetitions=int(inference.get("bootstrap_replicates",10000)),config=config)
