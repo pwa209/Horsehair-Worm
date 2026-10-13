@@ -164,3 +164,42 @@ def test_native_array_expansion_is_repair_specific(monkeypatch):
     repair._expanded_accounting_runner(["sacct","-j","123"])
     repair._expanded_accounting_runner(["scontrol","show","job","123"])
     assert calls==[["sacct","--array","-j","123"],["scontrol","show","job","123"]]
+
+
+@pytest.mark.parametrize("changed", [False, True])
+def test_original_completed_precondition_is_revalidated_without_rewriting_actual_acknowledgement(tmp_path,changed):
+    from horsehair.slurm import completed_native_dependency
+    f=fixture(tmp_path,"rna-full")
+    budget_path=f["root"] / "state/resource-budget.json"
+    native_record={"state":"COMPLETED","exit_code":"0:0","elapsed_seconds":60,"cpus":8,"gpus":0,
+        "basis":"sacct final allocated wall time"}
+    atomic_json(budget_path,{"native_jobs":{"900":native_record}})
+    proof=completed_native_dependency(f["root"],"900")
+    old=copy.deepcopy(f["old"])
+    next(task for task in old["tasks"] if task["name"]=="ant-phase")["completed_external_dependencies"]=[proof]
+    old_ledger=copy.deepcopy(f["ledger"])
+    old_ledger["plan_sha256"]=canonical_hash(old)
+    atomic_json(f["plan_path"],old)
+    ledger_path=f["root"] / "state/v7-rna-full-submission.json"
+    atomic_json(ledger_path,old_ledger)
+    replacement=copy.deepcopy(f["replacement"])
+    submitted=copy.deepcopy(f["submitted"])
+    submitted["tasks"]["ant-phase"].update(command=["sbatch","--parsable","unchanged-script"],
+        completed_native_dependencies=[],dependency_resolution_sha256="actual-acknowledgement-fixture")
+    atomic_json(f["replacement_ledger"],submitted)
+    actual_ack=copy.deepcopy(submitted["tasks"]["ant-phase"])
+    if changed:
+        atomic_json(budget_path,{"native_jobs":{"900":{**native_record,"elapsed_seconds":61}}})
+        before=f["plan_path"].read_bytes(),ledger_path.read_bytes()
+        with pytest.raises(ValueError,match="missing or changed"):register(f)
+        assert (f["plan_path"].read_bytes(),ledger_path.read_bytes())==before and not f["calls"]
+    else:
+        result=register(f)
+        plan,ledger=read_json(f["plan_path"]),read_json(ledger_path)
+        task=next(task for task in plan["tasks"] if task["name"]=="ant-phase")
+        assert task["completed_external_dependencies"]==[proof]
+        current=ledger["tasks"]["ant-phase"]
+        assert current["preserved_original_completed_dependencies"]==[proof]
+        for key in ("command","issued_native_dependencies","completed_native_dependencies","dependency_resolution_sha256"):
+            assert current[key]==actual_ack[key]
+        assert result["preserved_original_completed_dependencies"]=={"ant-phase":[proof]}

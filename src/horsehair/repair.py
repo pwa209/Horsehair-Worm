@@ -244,18 +244,35 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
                 if "#SBATCH --hold" not in Path(candidate["script"]).read_text(encoding="utf8").splitlines() or observed[record["job_id"]]["state"] != "PENDING":
                     raise ValueError("Replacement controllers must remain explicitly held until registration completes")
         amended_plan, amended_ledger = copy.deepcopy(old_plan), copy.deepcopy(old_ledger)
+        preserved_dependencies = {}
+        from .slurm import _verify_completed_dependency
         for task in amended_plan["tasks"]:
             name = task["name"]
             if name in targets:
+                original_completed = copy.deepcopy(original[name].get("completed_external_dependencies", []))
+                for proof in original_completed:
+                    # Original logical preconditions remain requirements even
+                    # when the replacement submitter omitted their already-final
+                    # proof. Revalidate facts; never pretend it issued a native
+                    # dependency or checked this proof at acknowledgement time.
+                    _verify_completed_dependency(root, proof)
                 task.update(copy.deepcopy(candidates[name]))
                 task["depends"] = copy.deepcopy(original[name].get("depends", []))
                 task["execution_release"] = releases[name]
                 amended_ledger["tasks"][name] = copy.deepcopy(submitted["tasks"][name])
                 amended_ledger["tasks"][name]["execution_release"] = releases[name]
+                if original_completed:
+                    union = {canonical_hash(proof):proof for proof in [
+                        *task.get("completed_external_dependencies", []), *original_completed]}
+                    task["completed_external_dependencies"] = list(union.values())
+                    amended_ledger["tasks"][name]["preserved_original_completed_dependencies"] = original_completed
+                    preserved_dependencies[name] = original_completed
         amendment = {"amendment_id": ident, "reason": descriptor["reason"], "descriptor_sha256": descriptor_hash,
             "original_plan_sha256": canonical_hash(old_plan), "original_ledger_sha256": canonical_hash(old_ledger),
             "replacement_plan_sha256": canonical_hash(replacement), "replacement_ledger_sha256": canonical_hash(submitted),
-            "replaced_tasks": sorted(targets), "execution_releases": releases, "archive": str(archive)}
+            "replaced_tasks": sorted(targets), "execution_releases": releases, "archive": str(archive),
+            "preserved_original_completed_dependencies": preserved_dependencies,
+            "dependency_preservation_rule": "Original positive completed preconditions revalidated at registration; actual replacement acknowledgement/command/dependency-resolution records remain unchanged"}
         amended_plan.setdefault("dag_amendments", []).append(amendment)
         amended_ledger.setdefault("dag_amendments", []).append(amendment)
         amended_ledger["plan_sha256"] = canonical_hash(amended_plan)
