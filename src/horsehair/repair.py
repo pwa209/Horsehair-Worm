@@ -13,6 +13,7 @@ import os
 import re
 import shlex
 import subprocess
+from types import SimpleNamespace
 from pathlib import Path
 
 from .core import atomic_json, canonical_hash, digest, exclusive_file_lock, read_json, source_identity
@@ -112,6 +113,112 @@ def _expanded_accounting_runner(command, **kwargs):
     if command and command[0] == "sacct" and "--array" not in command:
         command.insert(1, "--array")
     return subprocess.run(command, **kwargs)
+
+
+REPAIR_NATIVE_FORMAT = "JobID%64,JobIDRaw%64,State,ExitCode,ElapsedRaw,AllocCPUS,AllocTRES,NodeList%128,Start,End,User,Account,MaxRSS"
+
+
+def _parse_repair_native(stdout, array_rosters, *, owner=None, account=None):
+    """Keep queue/template metadata separate from actual physical allocations."""
+    records, physical, step_rss = {}, {}, {}
+    for line in stdout.splitlines():
+        fields = line.strip().split("|")
+        if len(fields) != 13:
+            raise ValueError("Repair accounting lacks the complete native allocation metadata")
+        ident, raw, state, exit_code, seconds, cpus, tres, nodes, start, end, user, charge_account, rss = fields
+        if "." in ident:
+            if re.fullmatch(r"[0-9]+(?:\.[0-9]+)?K?", rss):
+                parent = ident.split(".",1)[0]
+                if parent not in step_rss or float(rss.rstrip("K")) > float(step_rss[parent].rstrip("K")):
+                    step_rss[parent] = rss
+            continue  # Allocation identity/cost belongs to its parent, not a step.
+        if not re.fullmatch(r"[0-9]+(?:_[0-9]+)?", ident) or not raw.isdigit() or not seconds.isdigit() or not cpus.isdigit():
+            raise ValueError("Unexpected repair native identity or resource measurement")
+        state = state.split()[0].split("+")[0]
+        if owner and user != owner or account and charge_account != account:
+            raise ValueError("Repair native metadata belongs to another owner/account")
+        match = re.fullmatch(r"([0-9]+)_([0-9]+)", ident)
+        base = match.group(1) if match else ident
+        if match and (base not in array_rosters or int(match.group(2)) not in array_rosters[base]):
+            raise ValueError("Native array metadata lies outside the frozen task roster")
+        never_started = (state in {"PENDING", "CANCELLED"} and exit_code == "0:0" and seconds == "0" and cpus == "0"
+            and tres == "" and nodes == "None assigned" and start in {"None", "Unknown"}
+            and rss in {"", "0", "0K"}
+            and bool(user) and bool(charge_account)
+            and (end in {"None", "Unknown"} if state == "PENDING" else bool(re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]+", end))))
+        metadata = bool(match) and never_started and raw == base
+        if match and raw == base and not metadata:
+            # A real member may share the parent's numeric ID with its pending
+            # siblings. It must have actual allocation markers, rather than one
+            # changed field in an otherwise unallocated template.
+            if state == "PENDING" or int(cpus) <= 0 or not tres or nodes in {"", "None assigned"} or start in {"", "None", "Unknown"}:
+                raise ValueError("Array template has neither proven unused metadata nor an actual allocation")
+        if not metadata:
+            if raw in physical and physical[raw] != ident:
+                raise ValueError("Actual physical native allocation has conflicting logical identities")
+            physical[raw] = ident
+        record = {"state":state,"exit_code":exit_code,"job_id_raw":raw,
+            "elapsed_seconds":int(seconds),"cpus":int(cpus),"alloc_tres":tres,"node_list":nodes,
+            "start":start,"end":end,"user":user,"account":charge_account,"max_rss":rss,
+            "unallocated_metadata":metadata,
+            "identity_basis":("Explicit never-started queue/template metadata, not a physical allocation" if metadata else
+                "Unique scalar native job; zero-allocation queue record" if never_started and not match else "Actual native allocation identity")}
+        if ident in records and records[ident] != record:
+            raise ValueError("Conflicting repair native records")
+        records[ident] = record
+    for ident,rss in step_rss.items():
+        if ident in records and records[ident]["unallocated_metadata"] and float(rss.rstrip("K")) > 0:
+            raise ValueError("Unallocated array metadata contradicts positive native step memory")
+        if ident in records and not records[ident]["unallocated_metadata"]:
+            current = records[ident]["max_rss"]
+            if not current or float(rss.rstrip("K")) > float(current.rstrip("K")):
+                records[ident]["max_rss"] = rss
+    return records
+
+
+def _repair_native_states(ids, array_rosters, *, runner=subprocess.run, owner=None, account=None):
+    ids = list(dict.fromkeys(map(str, ids)))
+    if any(not re.fullmatch(r"[0-9]+(?:_[0-9]+)?", ident) for ident in ids):
+        raise ValueError("Invalid repair native query identity")
+    response = runner(["sacct","--array","-j",",".join(ids),"--format="+REPAIR_NATIVE_FORMAT,
+                       "--units=K","--noheader","--parsable2"],text=True,capture_output=True)
+    if response.returncode:
+        raise RuntimeError("Repair native proof query failed")
+    return _parse_repair_native(response.stdout,array_rosters,owner=owner,account=account)
+
+
+def _repair_allocation_accounting_runner(array_rosters, *, owner=None, account=None):
+    def run(command, **kwargs):
+        if not command or command[0] != "sacct":
+            return subprocess.run(command, **kwargs)
+        ids = command[command.index("-j")+1].split(",")
+        records = _repair_native_states(ids,array_rosters,owner=owner,account=account)
+        rows = ["|".join([ident,record["job_id_raw"],record["state"],str(record["elapsed_seconds"]),
+            str(record["cpus"]),record["alloc_tres"],record["exit_code"],record["max_rss"]])
+            for ident,record in records.items() if not record["unallocated_metadata"]]
+        return SimpleNamespace(returncode=0,stdout="\n".join(rows),stderr="")
+    return run
+
+
+def _unused_terminal_arrays(root, checks, observed):
+    budget_path = root / "state/resource-budget.json"
+    budget = read_json(budget_path) if budget_path.exists() else {}
+    unused = {}
+    for _,task,record in checks:
+        if not task.get("resources",{}).get("array"):
+            continue
+        base = str(record["job_id"])
+        indices = _array_indices(task["resources"]["array"])
+        identities = {base+"_"+str(index) for index in indices}
+        if identities <= set(observed) and all(observed[key].get("unallocated_metadata") and observed[key]["state"] in TERMINAL_FAILURE for key in identities):
+            keys = {base,*identities}
+            if keys & set(budget.get("leases",{})) or keys & set(budget.get("native_jobs",{})):
+                raise ValueError("Unused array metadata conflicts with an existing lease/allocation receipt")
+            facts = {key:observed[key] for key in sorted(identities)}
+            unused[base] = {"status":"terminal_never_allocated_array_template", "expected_indices":sorted(indices),
+                "native_records":facts,"native_records_sha256":canonical_hash(facts),"cpu_core_hours":0.,"gpu_hours":0.,
+                "cost_basis":"Explicit complete zero-elapsed/zero-CPU/no-node/no-start native metadata; excluded from physical allocation accounting"}
+    return unused
 
 
 def register_amendment(descriptor_path, *, native=None, accountant=None):
@@ -228,7 +335,13 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
                               "source_identity": execution_identity, "config_sha256": canonical_hash(config)}
         if len(new_ids) != len(set(new_ids)) or set(new_ids) & set(jobs):
             raise ValueError("Replacement aliases an old or another replacement allocation")
-        observed = _native_states(list(dict.fromkeys(jobs + new_ids)), runner=_expanded_accounting_runner) if native is None else native
+        rosters = {}
+        for _,task,record in checks:
+            if task.get("resources",{}).get("array"):rosters[str(record["job_id"])] = _array_indices(task["resources"]["array"])
+        for name in targets:
+            if candidates[name]["resources"].get("array"):rosters[submitted["tasks"][name]["job_id"]] = _array_indices(candidates[name]["resources"]["array"])
+        owner, account = os.environ.get("USER"), config.get("paths",{}).get("cpu_account")
+        observed = _repair_native_states(list(dict.fromkeys(jobs + new_ids)), rosters, owner=owner, account=account) if native is None else native
         for name, task, record in checks:
             if not _task_terminal(record, observed, task):
                 raise ValueError("A replaced allocation or primary controller is not positively terminal: " + name)
@@ -243,6 +356,7 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
             if name.startswith("pipeline-controller-"):
                 if "#SBATCH --hold" not in Path(candidate["script"]).read_text(encoding="utf8").splitlines() or observed[record["job_id"]]["state"] != "PENDING":
                     raise ValueError("Replacement controllers must remain explicitly held until registration completes")
+        unused_arrays = _unused_terminal_arrays(root,checks,observed)
         amended_plan, amended_ledger = copy.deepcopy(old_plan), copy.deepcopy(old_ledger)
         preserved_dependencies = {}
         from .slurm import _verify_completed_dependency
@@ -286,7 +400,8 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
             if phase_journal.exists():originals["original-phase-journal.json"] = phase_journal.read_bytes()
             for name, body in originals.items():_archive_bytes(archive / name, body)
             journal = dict(amendment, **prepared, status="prepared", archived_file_sha256={name:digest(archive/name) for name in originals},
-                           terminal_native_proofs={key: observed[key] for key in observed if key in set(jobs) or any(key.startswith(job+"_") for job in jobs)})
+                           terminal_native_proofs={key: observed[key] for key in observed if key in set(jobs) or any(key.startswith(job+"_") for job in jobs)},
+                           unused_old_array_templates=unused_arrays)
             atomic_json(journal_path, journal)
         elif any(journal.get(key) != value for key, value in prepared.items()):
             raise ValueError("Prepared amendment changed during recovery")
@@ -295,8 +410,10 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
                 raise ValueError("Canonical registration changed during repair; preserve ambiguity")
         if accountant is None:
             from .budget import native_accounting
-            accountant = lambda study, ids: native_accounting(study, ids, runner=_expanded_accounting_runner)
-        accounted = accountant(root, list(dict.fromkeys(jobs)))
+            accountant = lambda study, ids: native_accounting(study, ids,
+                runner=_repair_allocation_accounting_runner(rosters,owner=owner,account=account))
+        accounting_ids = [ident for ident in dict.fromkeys(jobs) if ident not in unused_arrays]
+        accounted = accountant(root, accounting_ids)
         if accounted.get("pending_native_records"):
             raise ValueError("Old allocation cost proof remains pending; no registration committed")
         journal.update(status="committing", old_allocation_accounting=accounted)

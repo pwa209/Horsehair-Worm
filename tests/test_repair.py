@@ -203,3 +203,102 @@ def test_original_completed_precondition_is_revalidated_without_rewriting_actual
         for key in ("command","issued_native_dependencies","completed_native_dependencies","dependency_resolution_sha256"):
             assert current[key]==actual_ack[key]
         assert result["preserved_original_completed_dependencies"]=={"ant-phase":[proof]}
+
+
+def template_rows(base="5469496",state="CANCELLED",n=3):
+    end="2026-10-13T11:38:17" if state=="CANCELLED" else "Unknown"
+    return [[base+"_"+str(index),base,state,"0:0","0","0","","None assigned",
+             "None" if state=="CANCELLED" else "Unknown",end,"pwa209","def-ptewarie_cpu",""] for index in range(n)]
+
+
+def parse_rows(rows,rosters=None):
+    return repair._parse_repair_native("\n".join("|".join(row) for row in rows),
+        rosters or {"5469496":set(range(3))},owner="pwa209",account="def-ptewarie_cpu")
+
+
+@pytest.mark.parametrize("state", ["CANCELLED","PENDING"])
+def test_actual_never_started_array_template_rows_retain_shared_raw_as_metadata_only(state):
+    records=parse_rows(template_rows(state=state))
+    assert set(records)=={"5469496_0","5469496_1","5469496_2"}
+    assert all(row["job_id_raw"]=="5469496" and row["unallocated_metadata"] for row in records.values())
+
+
+@pytest.mark.parametrize("field,value",[(4,"1"),(5,"1"),(6,"cpu=1"),(7,"nc1000"),(8,"2026-10-13T10:00:00"),(12,"8K")])
+def test_one_changed_template_marker_cannot_claim_zero_or_physical_allocation(field,value):
+    rows=template_rows()
+    rows[0][field]=value
+    with pytest.raises(ValueError,match="neither proven unused"):parse_rows(rows)
+
+
+def test_real_allocated_member_can_share_parent_raw_with_pending_metadata_without_cost_aliasing():
+    rows=template_rows(state="PENDING")
+    rows[0]=["5469496_0","5469496","COMPLETED","0:0","60","8","cpu=8","nc1000",
+             "2026-10-13T10:00:00","2026-10-13T10:01:00","pwa209","def-ptewarie_cpu",""]
+    records=parse_rows(rows)
+    assert not records["5469496_0"]["unallocated_metadata"]
+    assert records["5469496_1"]["unallocated_metadata"]
+    rows[1]=["5469496_1","5469496","COMPLETED","0:0","60","8","cpu=8","nc1000",
+             "2026-10-13T10:00:00","2026-10-13T10:01:00","pwa209","def-ptewarie_cpu",""]
+    with pytest.raises(ValueError,match="physical native allocation"):parse_rows(rows)
+
+
+@pytest.mark.parametrize("conflict",[None,"lease","allocation"])
+def test_terminal_unused_cost_receipt_requires_complete_roster_and_no_lease_or_allocation(tmp_path,conflict):
+    root=tmp_path
+    task={"resources":{"array":"0-2%2"}}
+    checks=[("counts",task,{"job_id":"5469496"})]
+    if conflict:
+        key="leases" if conflict=="lease" else "native_jobs"
+        atomic_json(root/"state/resource-budget.json",{key:{"5469496_1":{"state":"running"}}})
+        with pytest.raises(ValueError,match="existing lease/allocation"):repair._unused_terminal_arrays(root,checks,parse_rows(template_rows()))
+    else:
+        result=repair._unused_terminal_arrays(root,checks,parse_rows(template_rows()))["5469496"]
+        assert result["cpu_core_hours"]==result["gpu_hours"]==0
+        assert result["status"]=="terminal_never_allocated_array_template"
+        partial=parse_rows(template_rows()[:2])
+        assert repair._unused_terminal_arrays(root,checks,partial)=={}
+
+
+def test_accounting_adapter_filters_template_rows_and_preserves_actual_physical_facts(monkeypatch):
+    rows=template_rows(state="PENDING")
+    rows[0]=["5469496_0","5469496","COMPLETED","0:0","60","8","cpu=8","nc1000",
+             "2026-10-13T10:00:00","2026-10-13T10:01:00","pwa209","def-ptewarie_cpu",""]
+    facts=parse_rows(rows)
+    monkeypatch.setattr(repair,"_repair_native_states",lambda *args,**kwargs:facts)
+    response=repair._repair_allocation_accounting_runner({"5469496":{0,1,2}})(["sacct","-j","5469496"])
+    assert response.stdout=="5469496_0|5469496|COMPLETED|60|8|cpu=8|0:0|"
+
+
+def test_registration_excludes_only_whole_proven_unused_old_array_from_cost_accounting(tmp_path):
+    f=fixture(tmp_path,"rna-full")
+    f["native"].update(parse_rows([*template_rows(base="31")],{"31":{0,1,2}}))
+    result=register(f)
+    assert "31" in result["unused_old_array_templates"]
+    assert "31" not in f["calls"][0]
+    assert result["unused_old_array_templates"]["31"]["cpu_core_hours"]==0
+
+
+def test_unique_scalar_never_started_record_keeps_existing_zero_cost_accounting_semantics(tmp_path,monkeypatch):
+    from horsehair.budget import native_accounting
+    row=["200","200","CANCELLED","0:0","0","0","","None assigned","None",
+         "2026-10-13T11:38:17","pwa209","def-ptewarie_cpu",""]
+    facts=parse_rows([row])
+    assert facts["200"]["unallocated_metadata"] is False
+    assert facts["200"]["identity_basis"]=="Unique scalar native job; zero-allocation queue record"
+    monkeypatch.setattr(repair,"_repair_native_states",lambda *args,**kwargs:facts)
+    runner=repair._repair_allocation_accounting_runner({})
+    assert runner(["sacct","-j","200"]).stdout=="200|200|CANCELLED|0|0||0:0|"
+    result=native_accounting(tmp_path,["200"],runner=runner)
+    assert not result["pending_native_records"] and result["spent_cpu_core_hours"]==result["spent_gpu_hours"]==0
+    assert read_json(tmp_path/"state/resource-budget.json")["native_jobs"]["200"]["cpus"]==0
+
+
+@pytest.mark.parametrize("rss",["0K","8K"])
+def test_template_positive_step_memory_is_rejected_but_zero_step_measurement_is_not_allocation(rss):
+    rows=template_rows()
+    step=rows[0].copy()
+    step[0]+=".batch";step[1]+=".batch";step[12]=rss
+    if rss=="8K":
+        with pytest.raises(ValueError,match="positive native step memory"):parse_rows([*rows,step])
+    else:
+        assert parse_rows([*rows,step])["5469496_0"]["unallocated_metadata"]
