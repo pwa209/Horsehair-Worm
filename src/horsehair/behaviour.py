@@ -824,6 +824,70 @@ def bin_trajectories(frame: pd.DataFrame, bin_seconds: float = 10,
     return pd.DataFrame(outputs)
 
 
+def _trajectory_parquet_schemas(sources: list[dict[str, Any]], root: Path) -> tuple[Any, Any]:
+    """Fix nullable storage types before streaming any large trajectory arrays.
+
+    Binning rebuilds scalar metadata records, so an all-missing first ROI loses
+    its pandas string dtype. Its inferred Arrow null type cannot define the
+    dataset schema. Canonical types and the small, complete metadata roster do.
+    """
+    import pyarrow as pa
+    text = {"source_file", "experiment_id", "animal_id", "genotype", "intervention", "control_id", "sex",
+            "outcome_status", "coordinate_units", "timestamp_provenance", "analysis_role"}
+    integer = {"roi_id"}
+    boolean = {"tracking_valid"}
+    numeric = {"exposure_status", "exposure_elapsed_at_start_hours", "record_time_s", "x", "y", "geometry", "food_end"}
+    types = {name: pa.large_string() for name in text}
+    types.update({name: pa.int64() for name in integer})
+    types.update({name: pa.bool_() for name in boolean})
+    types.update({name: pa.float64() for name in numeric})
+    optional: dict[str, Any] = {}
+    for source in sources:
+        metadata = read_table(root / source["metadata"], source.get("sheet"))
+        metadata = metadata.rename(columns={value: key for key, value in source.get("metadata_columns", {}).items()})
+        if source.get("native_roi_count"):
+            metadata, _, _ = _validated_roi_metadata(metadata, int(source["native_roi_count"]), source)
+        elif source.get("roi_column", "ROI") in metadata:
+            # Explicit blank ROI rows are outside the native adapter's roster;
+            # their footer labels cannot determine measured covariate types.
+            identities = metadata[source.get("roi_column", "ROI")]
+            metadata = metadata.loc[identities.notna() & ~identities.astype(str).str.strip().eq("")]
+        for field in ("Status", "Last_mvmt", "Best_tau"):
+            if field in metadata:types[f"annotation_{field.lower()}"] = pa.large_string()
+        for name in source.get("observed_covariates", []):
+            if name.lower() in FORBIDDEN_PREDICTORS:raise ValueError(f"Forbidden future-derived covariate {name}")
+            if name not in metadata:raise ValueError(f"Missing declared source covariate {name}")
+            if name in types:continue
+            observed = metadata[name].dropna()
+            # An all-missing Excel column often has a float dtype even if a
+            # later source measures text. Missing data imply no observed type.
+            inferred = (pa.Table.from_pandas(observed.to_frame(), preserve_index=False).schema.field(name).type
+                        if len(observed) else pa.null())
+            previous = optional.get(name, pa.null())
+            optional[name] = pa.unify_schemas([pa.schema([(name, previous)]), pa.schema([(name, inferred)])],
+                promote_options="permissive").field(name).type
+    types.update(optional)
+    order = [*CANONICAL, *sorted(set(types)-set(CANONICAL))]
+    native = pa.schema([pa.field(name, types[name], nullable=True) for name in order])
+    binned = pa.schema([*native, *[pa.field(name, kind, nullable=True) for name, kind in [
+        ("state_bin_seconds", pa.float64()), ("missing_fraction", pa.float64()), ("observed", pa.bool_()),
+        ("dx", pa.float64()), ("dy", pa.float64()), ("path_length", pa.float64()), ("n_one_second_bins", pa.int64())]]])
+    return native, binned
+
+
+def _trajectory_arrow_table(frame: pd.DataFrame, schema: Any) -> Any:
+    import pyarrow as pa
+    extra = set(frame)-set(schema.names)
+    if extra:raise ValueError(f"Undeclared chronological storage columns: {sorted(extra)}")
+    table = frame.reindex(columns=schema.names).copy()
+    for field in schema:
+        if pa.types.is_string(field.type) or pa.types.is_large_string(field.type):
+            table[field.name] = table[field.name].astype("string")
+    # Explicit typed nulls preserve missing observations. Safe casting refuses
+    # incompatible measured values rather than substituting them or dropping rows.
+    return pa.Table.from_pandas(table, schema=schema, preserve_index=False, safe=True)
+
+
 def to_sequences(bins: pd.DataFrame, config: dict[str, Any] | None = None,
                   exclusions: list[dict[str, Any]] | None = None) -> list[Any]:
     from .semimarkov import Sequence
@@ -2217,21 +2281,25 @@ def run(config: dict[str, Any], root: Path, stage: str, **kwargs: Any) -> dict[s
         sources = operational_sources
         if not sources:
             raise ValueError("No audited fly_sources: complete clock/ROI/geometry source audit first")
-        import pyarrow as pa
         import pyarrow.parquet as pq
-        from .core import atomic_json, digest
+        from .core import atomic_json, canonical_hash, digest, source_identity
         inventories, counts, seen, duplicate_sources = {}, {}, {}, []
-        for source in sources:
-            inventories[source["mat"]] = mat_inventory(root / source["mat"])
         directory = root / "data"
         directory.mkdir(parents=True, exist_ok=True)
         destination = directory / "fly_observations.parquet"
         temporary = directory / "fly_observations.partial.parquet"
         writers: dict[float, Any] = {}
         native_writer = None
-        schema = None
         bin_values = sorted(set([float(settings.get("primary_bin_seconds", 10)),
             *map(float, settings.get("sensitivity_bins_seconds", [5, 20]))]))
+        protected = [destination, temporary, output / "streaming_bin_provenance.json",
+            *[output / f"fly_bins_{value:g}s{suffix}.parquet" for value in bin_values for suffix in ("", ".partial")]]
+        existing = [str(path) for path in protected if path.exists()]
+        if existing:
+            raise FileExistsError("Existing complete or partial chronological ingestion outputs must be preserved before retry: " + ", ".join(existing))
+        schema, bin_schema = _trajectory_parquet_schemas(sources, root)
+        for source in sources:
+            inventories[source["mat"]] = mat_inventory(root / source["mat"])
         try:
             for source in sources:
                 for frame in iter_fly_source(source, root):
@@ -2246,28 +2314,18 @@ def run(config: dict[str, Any], root: Path, stage: str, **kwargs: Any) -> dict[s
                         continue
                     seen[animal] = fingerprint
                     counts[experiment] = counts.get(experiment, 0) + 1
-                    for column in ("source_file", "experiment_id", "animal_id", "genotype", "intervention",
-                                   "control_id", "sex", "outcome_status", "coordinate_units", "timestamp_provenance", "analysis_role"):
-                        frame[column] = frame[column].astype("string")
-                    for column in frame:
-                        if column.startswith("annotation_"):
-                            frame[column] = frame[column].astype("string")
-                    # Arrow fixes categorical context as strings and stores NaN
-                    # numerics consistently even when one ROI lacks annotations.
-                    table = pa.Table.from_pandas(frame, preserve_index=False)
+                    table = _trajectory_arrow_table(frame, schema)
                     if native_writer is None:
-                        schema = table.schema
                         native_writer = pq.ParquetWriter(temporary, schema, compression="zstd")
-                    table = table.cast(schema)
                     native_writer.write_table(table)
                     for value in bin_values:
                         binned = bin_trajectories(frame, value,
                             missing_threshold=float(settings.get("missing_threshold", .2)),
                             maximum_speed=settings.get("maximum_speed"))
-                        table = pa.Table.from_pandas(binned, preserve_index=False)
+                        table = _trajectory_arrow_table(binned, bin_schema)
                         if value not in writers:
-                            writers[value] = pq.ParquetWriter(output / f"fly_bins_{value:g}s.partial.parquet", table.schema, compression="zstd")
-                        writers[value].write_table(table.cast(writers[value].schema))
+                            writers[value] = pq.ParquetWriter(output / f"fly_bins_{value:g}s.partial.parquet", bin_schema, compression="zstd")
+                        writers[value].write_table(table)
         finally:
             if native_writer is not None:
                 native_writer.close()
@@ -2282,6 +2340,12 @@ def run(config: dict[str, Any], root: Path, stage: str, **kwargs: Any) -> dict[s
             (output / f"fly_bins_{value:g}s.partial.parquet").replace(target)
             bin_paths.append(target)
         atomic_json(output / "streaming_bin_provenance.json", {
+            "status": "complete", "effective_ingestion_config_sha256": canonical_hash(config),
+            "source_sha256": source_identity(Path(__file__).resolve().parents[2])["sha256"],
+            "adapter_roster_sha256": canonical_hash(sources),
+            "storage_schemas": {"native": {field.name: str(field.type) for field in schema},
+                                "binned": {field.name: str(field.type) for field in bin_schema}},
+            "schema_policy": "Nullable canonical types and observed source-metadata type union; missing values remain null, no endpoint or covariate imputation",
             "native_input_sha256": digest(destination), "native_path": str(destination.resolve()),
             "bin_files": {str(path.resolve()): digest(path) for path in bin_paths},
             "method": "One independently identified native ROI per Parquet row group; identical repeated representations collapsed by complete content hash"})

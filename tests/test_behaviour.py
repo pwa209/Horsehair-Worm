@@ -755,6 +755,119 @@ def test_streaming_native_ingestion_and_cached_bins(tmp_path):
     assert (tmp_path / "results" / "behaviour" / "streaming_bin_provenance.json").is_file()
 
 
+def test_streaming_schema_preserves_missing_first_roi_and_later_text_and_numeric_metadata(tmp_path):
+    import json
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    from horsehair.behaviour import run
+    _,source=source_fixture(tmp_path)
+    metadata=pd.read_excel(tmp_path/'survival.xlsx')
+    metadata['Sex']=[None,'F'];metadata['Outcome']=[None,1]
+    metadata['intervention']=[None,'observed intervention']
+    metadata['control_id']=[None,'observed control']
+    metadata['exposure_elapsed_at_start_hours']=[None,48.]
+    metadata['observed_label']=[None,'recorded label'];metadata['observed_value']=[None,7.25]
+    metadata=pd.concat([metadata,pd.DataFrame([{'ROI':None,'observed_value':'excluded spreadsheet footer'}])],ignore_index=True)
+    metadata.to_excel(tmp_path/'survival.xlsx',index=False)
+    source['native_roi_count']=2
+    source['observed_covariates']=['observed_label','observed_value']
+    original=read_fly_source(source,tmp_path)
+    result=run({'behaviour':{'fly_sources':[source],'sensitivity_bins_seconds':[5,20]}},tmp_path,'ingest')
+    assert result['animals_by_experiment']=={'source1':2}
+    path=tmp_path/'data/fly_observations.parquet';native=pd.read_parquet(path)
+    assert len(native)==len(original)==722 and pq.ParquetFile(path).metadata.num_row_groups==2
+    first=native[native.roi_id.eq(1)];second=native[native.roi_id.eq(2)]
+    for column in ['sex','outcome_status','intervention','control_id','exposure_elapsed_at_start_hours','observed_label','observed_value']:
+        assert first[column].isna().all()
+    assert second.sex.eq('F').all() and second.intervention.eq('observed intervention').all()
+    assert second.control_id.eq('observed control').all() and second.observed_label.eq('recorded label').all()
+    assert second.exposure_elapsed_at_start_hours.eq(48.).all() and second.observed_value.eq(7.25).all()
+    for width in (5,10,20):
+        binned=pd.read_parquet(tmp_path/f'results/behaviour/fly_bins_{width}s.parquet')
+        expected=bin_trajectories(original,width)
+        assert len(binned)==len(expected) and binned.animal_id.nunique()==2
+        for column in ['observed_label','observed_value','intervention','control_id']:
+            assert binned[binned.roi_id.eq(1)][column].isna().all()
+        assert binned[binned.roi_id.eq(2)].observed_label.eq('recorded label').all()
+        assert binned[binned.roi_id.eq(2)].observed_value.eq(7.25).all()
+        for column in ['record_time_s','dx','dy','path_length','missing_fraction']:
+            np.testing.assert_allclose(binned[column],expected[column],equal_nan=True)
+        assert pa.types.is_large_string(pq.read_schema(tmp_path/f'results/behaviour/fly_bins_{width}s.parquet').field('intervention').type)
+    proof=json.loads((tmp_path/'results/behaviour/streaming_bin_provenance.json').read_text())
+    assert proof['status']=='complete' and proof['storage_schemas']['binned']['observed_value']=='double'
+    assert 'missing values remain null' in proof['schema_policy']
+
+
+def test_streaming_schema_unions_optional_fields_across_heterogeneous_sources(tmp_path):
+    import shutil
+    from horsehair.behaviour import run
+    _,first=source_fixture(tmp_path)
+    first_metadata=pd.read_excel(tmp_path/'survival.xlsx')
+    first_metadata['Sex']=None;first_metadata['observed_label']=None;first_metadata['observed_value']=None
+    first_metadata.to_excel(tmp_path/'survival.xlsx',index=False)
+    first['observed_covariates']=['observed_label','observed_value']
+    shutil.copyfile(tmp_path/'tracking.mat',tmp_path/'tracking-second.mat')
+    second={**first,'mat':'tracking-second.mat','metadata':'survival-second.xlsx','experiment_id':'source2'}
+    second_metadata=first_metadata.copy()
+    second_metadata['Sex']=['M','F'];second_metadata['observed_label']=['late text','other text']
+    second_metadata['observed_value']=[2.5,9.75];second_metadata['Best_tau']=[4.,5.]
+    second_metadata.to_excel(tmp_path/'survival-second.xlsx',index=False)
+    run({'behaviour':{'fly_sources':[first,second]}},tmp_path,'ingest')
+    native=pd.read_parquet(tmp_path/'data/fly_observations.parquet')
+    assert len(native)==1444 and native.animal_id.nunique()==4
+    assert native[native.experiment_id.eq('source1')][['sex','observed_label','observed_value','annotation_best_tau']].isna().all().all()
+    for width in (5,10,20):
+        bins=pd.read_parquet(tmp_path/f'results/behaviour/fly_bins_{width}s.parquet')
+        assert bins.animal_id.nunique()==4
+        assert bins[bins.experiment_id.eq('source1')].observed_label.isna().all()
+        assert bins[bins.experiment_id.eq('source1')].observed_value.isna().all()
+        assert bins[bins.animal_id.eq('source2:roi:1')].observed_label.eq('late text').all()
+        assert bins[bins.animal_id.eq('source2:roi:2')].observed_value.eq(9.75).all()
+
+
+def test_ingestion_retry_preserves_existing_partial_and_completed_outputs(tmp_path,monkeypatch):
+    import horsehair.behaviour as module
+    _,source=source_fixture(tmp_path)
+    partial=tmp_path/'data/fly_observations.partial.parquet';partial.parent.mkdir()
+    partial.write_bytes(b'existing failed-ingestion bytes')
+    bins=tmp_path/'results/behaviour/fly_bins_5s.partial.parquet';bins.parent.mkdir(parents=True)
+    bins.write_bytes(b'existing failed-bin bytes')
+    original=module.mat_inventory
+    monkeypatch.setattr(module,'mat_inventory',lambda *a:pytest.fail('Do not reread large sources before refusing an existing output'))
+    config={'behaviour':{'fly_sources':[source]}}
+    with pytest.raises(FileExistsError,match='must be preserved before retry'):module.run(config,tmp_path,'ingest')
+    assert partial.read_bytes()==b'existing failed-ingestion bytes' and bins.read_bytes()==b'existing failed-bin bytes'
+    assert not (tmp_path/'results/behaviour/streaming_bin_provenance.json').exists()
+    history=tmp_path/'preserved-failed-ingestion';history.mkdir()
+    partial.rename(history/partial.name);bins.rename(history/bins.name)
+    monkeypatch.setattr(module,'mat_inventory',original)
+    module.run(config,tmp_path,'ingest')
+    complete=tmp_path/'data/fly_observations.parquet';before=complete.read_bytes()
+    with pytest.raises(FileExistsError,match='must be preserved before retry'):module.run(config,tmp_path,'ingest')
+    assert complete.read_bytes()==before and (history/partial.name).read_bytes()==b'existing failed-ingestion bytes'
+
+
+def test_incompatible_late_measured_value_remains_explicit_failure_with_closed_partial(tmp_path,monkeypatch):
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    import horsehair.behaviour as module
+    _,source=source_fixture(tmp_path)
+    metadata=pd.read_excel(tmp_path/'survival.xlsx');metadata['observed_value']=[1.5,2.5]
+    metadata.to_excel(tmp_path/'survival.xlsx',index=False);source['observed_covariates']=['observed_value']
+    original=module.iter_fly_source
+    def incompatible(*args):
+        for frame in original(*args):
+            if frame.roi_id.iloc[0]==2:frame['observed_value']='invalid numeric source value'
+            yield frame
+    monkeypatch.setattr(module,'iter_fly_source',incompatible)
+    with pytest.raises((pa.ArrowInvalid,pa.ArrowTypeError)):
+        module.run({'behaviour':{'fly_sources':[source]}},tmp_path,'ingest')
+    partial=tmp_path/'data/fly_observations.partial.parquet'
+    assert pq.read_table(partial).num_rows==361
+    assert not (tmp_path/'data/fly_observations.parquet').exists()
+    assert not (tmp_path/'results/behaviour/streaming_bin_provenance.json').exists()
+
+
 def test_h2_bootstrap_resamples_shared_controls_and_checks_saved_split_identities():
     import json
     from horsehair.interventions import h2_shared_control_bootstrap
