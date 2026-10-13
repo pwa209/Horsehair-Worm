@@ -129,7 +129,7 @@ print('DEPLOYMENT_RECEIPT',json.dumps(deployment))
 PY
 '''
 body=body.replace('PAYLOAD',repr(payload)).replace('RECORD',repr(record)).replace('CONFIG',repr(c)).replace('QUEUE',str(a.queue)).replace('MANAGED',str(a.managed)).replace('TRANSFERS',str(a.transfers))
-a.output.parent.mkdir(parents=True,exist_ok=True)
+a.output.mkdir(parents=True,exist_ok=True)
 target=a.output/(a.request_id+'.sh')
 with target.open('x',encoding='utf8',newline='\n') as output:output.write(body)
 (a.output/(a.request_id+'.release.json')).write_text(json.dumps(record,indent=2)+'\n')
