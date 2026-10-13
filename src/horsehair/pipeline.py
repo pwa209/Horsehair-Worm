@@ -235,6 +235,8 @@ def _phase_outputs(phase, config, root, identity, release_id=None):
             unit = next(unit for ident, _, unit in CLAIMS if ident == claim)
             try:
                 validate_result(result, claim, unit, config, root)
+                if claim=='H4' and result.get('claim_status') not in {'supported','not_supported'}:
+                    return False,'H4 competence/operating-region qualification remains pending'
                 if claim != 'H4' and _operational_gates(result, claim, config)['missing']:
                     return False, 'Required scientific diagnostics remain pending'
             except (ValueError, FileNotFoundError, KeyError) as error:
@@ -283,6 +285,10 @@ def _phase_outputs(phase, config, root, identity, release_id=None):
         valid, reason=_check_result(path,config,identity)
         if not valid:
             return valid, reason
+        from .report import auxiliary_readiness
+        auxiliary=auxiliary_readiness(config,root,source_sha=identity)
+        if not auxiliary['ready']:
+            return False,'Declared auxiliary assay science remains pending: '+ '; '.join(auxiliary['pending'])
         if read_json(path).get('analysis_complete') is not True:
             return False,'Actual completed claim decisions and multiplicity correction are pending'
         if not release_id:
@@ -304,6 +310,10 @@ def _phase_outputs(phase, config, root, identity, release_id=None):
 
 
 def _readiness(phase, config, root):
+    if phase=='synthesis':
+        from .report import auxiliary_readiness
+        result=auxiliary_readiness(config,root)
+        if not result['ready']:return False,result['pending']
     if phase in {'behaviour-benchmark', 'behaviour'}:
         from .behaviour import formal_behavior_readiness
         record = formal_behavior_readiness(config, root)
@@ -425,11 +435,21 @@ def tick(config, root, release, *, native=None, planner=None, submitter=None, as
         status[name] = 'queued'
     now = time.time()
     failed = [key for key, value in status.items() if value in {'failed', 'ambiguous_submission'}]
-    complete = all(phases[name]['status'] == 'complete' for name, _, _ in NODES)
+    phase_graph_complete = all(phases[name]['status'] == 'complete' for name, _, _ in NODES)
+    primary_phases=('behaviour','interventions','molecular-transfer','agents-final')
+    primary_complete=all(name in phases and phases[name]['status']=='complete' for name in primary_phases)
+    from .report import auxiliary_readiness
+    auxiliary=auxiliary_readiness(config,root,source_sha=sha)
+    complete=phase_graph_complete and primary_complete and auxiliary['ready']
+    overall_status=('complete' if complete else 'needs_repair' if failed else
+                    'waiting_for_auxiliary_scientific_inputs' if primary_complete and not auxiliary['ready'] else
+                    'waiting_for_primary_scientific_evidence' if phase_graph_complete else 'active')
     record = {'schema_version': 1, 'release_id': release_id, 'source_sha256': sha, 'config_sha256': canonical_hash(config),
-              'checked_unix': now, 'controller_job_id': native_job_id(), 'status': 'complete' if complete else 'needs_repair' if failed else 'active',
+              'checked_unix': now, 'controller_job_id': native_job_id(), 'status': overall_status,
               'initial_tasks': {key.split(':', 1)[1]: value for key, value in status.items() if key.startswith('initial:')},
               'phases': phases, 'failed_native_stages': failed, 'previous_checked_unix': previous.get('checked_unix'),
+              'primary_analyses_complete':primary_complete,'phase_graph_complete':phase_graph_complete,
+              'auxiliary_analyses_complete':auxiliary['ready'],'auxiliary_readiness':auxiliary,
               'scientific_results_complete': complete, 'publication_ready': False,
               'scope': 'All declared phase controllers are deployed; scientific jobs launch only after native dependency, source-readiness and measured resource admission checks'}
     atomic_json(base/'status.json', record)

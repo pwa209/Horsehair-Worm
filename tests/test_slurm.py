@@ -79,6 +79,9 @@ def test_managed_initial_has_full_coverage_arrays_and_finite_afterany_controller
         assert task['depends']==(['pipeline-controller-'+str(index-1)] if index else ['qualification'])
     rna=Path(tasks['rna-pilot-0']['script']).read_text()
     assert all(module in rna for module in ['star/2.7.11b','subread/2.0.6','samtools/1.20'])
+    # Dependency jobs do not transfer their loaded R environment. TransDecoder
+    # needs Rscript in its own runtime-qualification and ORF allocations.
+    assert 'module load r/4.4.0' in Path(tasks['molecular-runtime']['script']).read_text()
 
 
 def test_afterany_is_preserved_in_native_command_and_hashed_ledger(tmp_path):
@@ -162,6 +165,9 @@ def test_all_managed_pipeline_phases_have_executable_finite_plans(tmp_path,monke
             assert len(record['tasks'])==1 # Screen targets must not be regenerated after their benchmark.
         if phase=='agents-final':
             assert record['tasks'][0]['resources']['array']=='0-239%1'
+        if phase=='molecular-corroboration':
+            by_name={task['name']:task for task in record['tasks']}
+            assert 'module load r/4.4.0' in Path(by_name['mantis-orfs']['script']).read_text()
 
 
 def test_failed_preflight_does_not_create_an_ambiguous_plan_directory(tmp_path,monkeypatch):

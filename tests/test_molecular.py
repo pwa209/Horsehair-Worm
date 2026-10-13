@@ -151,16 +151,18 @@ def test_representative_orf_and_orthology_coverage_require_source_ids(tmp_path):
     assert representatives.loc[representatives.gene_id == "gene1", "protein_id"].item() == "tx1.p2"
     assert coverage["mapping_fraction"] == 1
     orth = tmp_path / "N0.tsv"
-    orth.write_text("Orthogroup\tant\tmantis\tfly\nOG1\tA\ttx1.p2\tF\n")
+    orth.write_text("HOG\tOG\tant\tmantis\tfly\nHOG1\tOG1\tA\ttx1.p2\tF\n")
+    original = tmp_path / "Orthogroups.tsv"
+    original.write_text("Orthogroup\tant\tmantis\tfly\nOG1\tA\ttx1.p2\tF\n")
     extra = pd.DataFrame({"species": ["ant", "fly"], "protein_id": ["A", "F"], "gene_id": ["antgene", "flygene"]})
-    frame, report = parse_orthogroups(orth, pd.concat([representatives, extra], ignore_index=True))
+    frame, report = parse_orthogroups(orth, pd.concat([representatives, extra], ignore_index=True), orthogroups_path=original)
     assert frame.one_to_one.all()
     assert report["coverage"]["mantis"]["mapped_genes"] == 1
 
 
 def gene_frame(groups=24):
     rng = np.random.default_rng(11)
-    frame = pd.DataFrame({"gene_id": [f"g{i}" for i in range(2*groups)], "orthogroup": np.repeat([f"OG{i}" for i in range(groups)], 2), "effect": rng.normal(size=2*groups), "effect_se": np.ones(2*groups), "reversible_score": rng.normal(size=2*groups), "average_expression": np.ones(2*groups), "detection_rate": np.ones(2*groups), "protein_length": rng.integers(100,500,size=2*groups), "orthology_confidence": np.ones(2*groups), "generic_infection_effect": rng.normal(size=2*groups), "neuronal_circadian": np.zeros(2*groups)})
+    frame = pd.DataFrame({"gene_id": [f"g{i}" for i in range(2*groups)], "orthogroup": [f"HOG{i}" for i in range(2*groups)], "family_id": np.repeat([f"OG{i}" for i in range(groups)], 2), "effect": rng.normal(size=2*groups), "effect_se": np.ones(2*groups), "reversible_score": rng.normal(size=2*groups), "average_expression": np.ones(2*groups), "detection_rate": np.ones(2*groups), "protein_length": rng.integers(100,500,size=2*groups), "orthology_confidence": np.ones(2*groups), "generic_infection_effect": rng.normal(size=2*groups), "neuronal_circadian": np.zeros(2*groups)})
     return frame
 
 
@@ -169,9 +171,12 @@ def test_permutation_moves_whole_related_gene_blocks():
     indices, movable = grouped_permutation_indices(frame, np.random.default_rng(5))
     assert movable == len(frame)
     assert sorted(indices) == list(range(len(frame)))
-    for group in frame.orthogroup.unique():
-        recipient = frame.index[frame.orthogroup == group]
-        assert frame.iloc[indices[recipient]].orthogroup.nunique() == 1
+    for group in frame.family_id.unique():
+        recipient = frame.index[frame.family_id == group]
+        assert frame.iloc[indices[recipient]].family_id.nunique() == 1
+        assert frame.iloc[indices[recipient]].orthogroup.nunique() == 2
+    with pytest.raises(MolecularError, match="family_id"):
+        grouped_permutation_indices(frame.drop(columns="family_id"), np.random.default_rng(5))
 
 
 def test_external_prediction_includes_true_baseline_and_rejects_duplicate_gene():
@@ -179,6 +184,8 @@ def test_external_prediction_includes_true_baseline_and_rejects_duplicate_gene()
     frozen = {"status": "frozen_before_external_outcomes", "freeze_hash": "frozen"}
     report = external_prediction(frame, frozen, permutations=20, bootstrap_replicates=20)
     assert report["permutations"] == 20
+    assert report["families"] == 24 and report["orthogroups"] == 48
+    assert report["bootstrap_unit"] == "original_mcl_family"
     assert report["baseline_columns"] == BASELINE_COLUMNS
     assert 0 < report["permutation_p"] <= 1
     with pytest.raises(MolecularError, match="unique gene"):
@@ -187,9 +194,11 @@ def test_external_prediction_includes_true_baseline_and_rejects_duplicate_gene()
 
 def test_primary_ant_fly_transfer_does_not_require_mantis_orf(tmp_path):
     source = tmp_path / "N0.tsv"
-    source.write_text("Orthogroup\tant\tmantis\tfly\nOG1\tA\t\tF\n")
+    source.write_text("HOG\tOG\tant\tmantis\tfly\nHOG1\tOG1\tA\t\tF\n")
+    original = tmp_path / "Orthogroups.tsv"
+    original.write_text("Orthogroup\tant\tmantis\tfly\nOG1\tA\t\tF\n")
     protein_map = pd.DataFrame({"species": ["ant", "fly"], "protein_id": ["A", "F"], "gene_id": ["ant_gene", "fly_gene"]})
-    frame, coverage = parse_orthogroups(source, protein_map)
+    frame, coverage = parse_orthogroups(source, protein_map, orthogroups_path=original)
     assert frame.ant_fly_one_to_one.all()
     assert not frame.three_species_one_to_one.any()
     assert coverage["coverage"]["mantis"]["mapped_genes"] == 0
@@ -197,6 +206,31 @@ def test_primary_ant_fly_transfer_does_not_require_mantis_orf(tmp_path):
     assert report["fly_genes"] == 1 and report["fly_outcomes_inspected"] is False
     with pytest.raises(MolecularError, match="already exists"):
         write_target_family_map(frame, tmp_path / "families.tsv")
+
+
+def test_split_transfer_hogs_keep_verified_original_family_and_reject_legacy_inputs(tmp_path):
+    source = tmp_path / "N0.tsv"
+    source.write_text("HOG\tOG\tant\tfly\nH1\tOG1\tA1\tF1\nH2\tOG1\tA2\tF2\n")
+    original = tmp_path / "Orthogroups.tsv"
+    original.write_text("Orthogroup\tant\tfly\nOG1\tA1, A2\tF1, F2\n")
+    protein_map = pd.DataFrame({"species": ["ant", "ant", "fly", "fly"], "protein_id": ["A1", "A2", "F1", "F2"], "gene_id": ["a1", "a2", "f1", "f2"]})
+    with pytest.raises(MolecularError, match="older HOG-only"):
+        parse_orthogroups(source, protein_map)
+    frame, report = parse_orthogroups(source, protein_map, orthogroups_path=original)
+    assert frame.orthogroup.nunique() == 2 and frame.family_id.nunique() == 1
+    assert frame.one_to_one.all()
+    assert report["family_provenance"]["source_result_hashes"][str(original.resolve())] == file_hash(original)
+    family_report = write_target_family_map(frame, tmp_path / "families.tsv")
+    family = pd.read_csv(tmp_path / "families.tsv", sep="\t")
+    assert set(family) == {"gene_id", "orthogroup", "family_id"}
+    assert family_report["fly_families"] == 1 and family_report["fly_transfer_hogs"] == 2
+    with pytest.raises(MolecularError, match="family provenance is absent"):
+        write_target_family_map(pd.DataFrame(frame.to_dict("records")), tmp_path / "unproven.tsv")
+    original.write_text("Orthogroup\tant\tfly\nOG2\tA1, A2\tF1, F2\n")
+    with pytest.raises(MolecularError, match="source proof is missing or changed"):
+        write_target_family_map(frame, tmp_path / "changed.tsv")
+    with pytest.raises(MolecularError, match="disagrees with the original"):
+        parse_orthogroups(source, protein_map, orthogroups_path=original)
 
 
 def test_pinned_software_manifest_is_a_valid_bounded_transfer_plan():
@@ -224,17 +258,57 @@ def test_bounded_official_fixture_checks_actual_shared_groups(tmp_path):
     assert proof["validated_paralog_group_genes"] == 4
     from horsehair.molecular import validate_qualification_hogs
     hogs = tmp_path / "N0.tsv"
-    pd.DataFrame(rows).rename(columns={"Orthogroup": "HOG"}).to_csv(hogs, sep="\t", index=False)
-    assert validate_qualification_hogs(hogs, fixture)["validated_hog_proteins"] == 18
+    root_hogs = pd.DataFrame(rows).rename(columns={"Orthogroup": "HOG"})
+    root_hogs["OG"] = [row["Orthogroup"] for row in rows]
+    root_hogs.to_csv(hogs, sep="\t", index=False)
+    assert validate_qualification_hogs(hogs, fixture, groups)["validated_hog_proteins"] == 18
     incomplete = pd.DataFrame(rows).rename(columns={"Orthogroup": "HOG"})
+    incomplete["OG"] = [row["Orthogroup"] for row in rows]
     incomplete.loc[0, "qualification_b"] = "qualification_b_p000"
     incomplete.to_csv(hogs, sep="\t", index=False)
     with pytest.raises(MolecularError, match="retain every known"):
-        validate_qualification_hogs(hogs, fixture)
+        validate_qualification_hogs(hogs, fixture, groups)
     rows[0]["qualification_b"], rows[1]["qualification_b"] = rows[1]["qualification_b"], rows[0]["qualification_b"]
     pd.DataFrame(rows).to_csv(groups, sep="\t", index=False)
     with pytest.raises(MolecularError, match="identical qualification protein pair"):
         validate_qualification_orthogroups(groups, fixture)
+
+
+def test_root_hog_fixture_allows_only_within_family_tied_paralog_partitions(tmp_path):
+    from horsehair.molecular import qualification_proteomes, validate_qualification_hogs
+    example = tmp_path / "official-example"
+    example.mkdir()
+    (example / "a.faa").write_text("".join(f">source_{i:02d}\n{letter*(100+i)}\n" for i, letter in enumerate("ACDEFGHIK")))
+    fixture = qualification_proteomes(example, tmp_path / "proteomes")
+    groups = []
+    for i, pair in enumerate(fixture["expected_identical_pairs"]):
+        row = {"Orthogroup": f"OG{i}", "qualification_a": pair["pair"][0], "qualification_b": pair["pair"][1]}
+        if i == 0:
+            for species in ["qualification_a", "qualification_b"]:
+                row[species] += ", " + species + "_p000_duplicate"
+        groups.append(row)
+    group_path = tmp_path / "Orthogroups.tsv"
+    pd.DataFrame(groups).to_csv(group_path, sep="\t", index=False)
+    rows = [{"HOG": "HOG0a", "OG": "OG0", "qualification_a": "qualification_a_p000", "qualification_b": "qualification_b_p000_duplicate"},
+        {"HOG": "HOG0b", "OG": "OG0", "qualification_a": "qualification_a_p000_duplicate", "qualification_b": "qualification_b_p000"}]
+    rows.extend({"HOG": "HOG"+str(i), "OG": group["Orthogroup"], **{species: group[species] for species in ["qualification_a", "qualification_b"]}} for i, group in enumerate(groups[1:], 1))
+    path = tmp_path / "N0.tsv"
+    pd.DataFrame(rows).to_csv(path, sep="\t", index=False)
+    report = validate_qualification_hogs(path, fixture, group_path)
+    assert report["validated_hog_proteins"] == 18
+    assert report["validated_unambiguous_hog_identity_pairs"] == 7
+    assert len(report["identical_paralog_hog_partitions"]) == 2
+    assert report["identical_paralog_genealogy_inferred"] is False
+    rows[0]["OG"] = "OG1"
+    pd.DataFrame(rows).to_csv(path, sep="\t", index=False)
+    with pytest.raises(MolecularError, match="verified original orthogroup"):
+        validate_qualification_hogs(path, fixture, group_path)
+    rows[0]["OG"] = "OG0"
+    rows[2]["qualification_b"] = ""
+    rows.append({"HOG": "HOG1b", "OG": "OG1", "qualification_a": "", "qualification_b": "qualification_b_p001"})
+    pd.DataFrame(rows).to_csv(path, sep="\t", index=False)
+    with pytest.raises(MolecularError, match="seven unambiguous"):
+        validate_qualification_hogs(path, fixture, group_path)
 
 
 def test_external_utility_deadline_preserves_streamed_output_and_failure_proof(tmp_path):
@@ -369,7 +443,7 @@ def test_qualified_runtime_reuse_requires_every_hash_and_pinned_archive(tmp_path
     monkeypatch.setattr(module, "TOOL_RUNTIME", tools)
     report = {"status": "runtime_qualified", "recipe": module.RUNTIME_QUALIFICATION_RECIPE, "tools": tools,
         "archives": archives, "bin": str(runtime / "bin"),
-        "checks": {"orthofinder_example": {"validated_identical_pairs": 8, "validated_paralog_group_genes": 4, "validated_hog_proteins": 18}, "transdecoder_example": {"peptides": 2}, "fastme_numerical": {"expected_split_recovered": True}},
+        "checks": {"orthofinder_example": {"validated_identical_pairs": 8, "validated_paralog_group_genes": 4, "validated_hog_proteins": 18, "validated_unambiguous_hog_identity_pairs": 7, "validated_root_paralog_family_genes": 4, "identical_paralog_genealogy_inferred": False}, "transdecoder_example": {"peptides": 2}, "fastme_numerical": {"expected_split_recovered": True}},
         "interpreters": {name: {"path": str(path), "sha256": file_hash(path)} for name, path in [("python", python), ("perl", perl)]},
         "runtime_file_hashes": {str(path.resolve()): file_hash(path) for path in (runtime / "bin").iterdir()}}
     report["numerical_runtime"] = module.numerical_runtime_proof()
@@ -413,14 +487,21 @@ def test_h3_actual_computation_proof_and_changed_inputs_gate(tmp_path):
     manifest = {"schema_version": 1, "assets": [asset(source="fixture", name="fixture.tsv", url="https://example.org/fixture.tsv", version="test", rights="synthetic fixture")], "sources": {"fixture": "synthetic test only"}}
     manifest["manifest_hash"] = canonical_hash(manifest)
     atomic_json(root / "manifests" / "source_manifest.json", manifest)
-    orthology = pd.DataFrame([{"species": species, "gene_id": ("a" if species == "ant" else "g")+str(i), "orthogroup": "transfer"+str(i), "one_to_one": True} for i in range(len(frame)) for species in ["ant", "fly"]])
+    hog_rows = [{"HOG": frame.iloc[i].orthogroup, "OG": frame.iloc[i].family_id, "ant": "A"+str(i), "fly": "F"+str(i)} for i in range(len(frame))]
+    pd.DataFrame(hog_rows).to_csv(inputs / "N0.tsv", sep="\t", index=False)
+    group_rows = [{"Orthogroup": family, "ant": ", ".join("A"+str(i) for i in frame.index[frame.family_id == family]), "fly": ", ".join("F"+str(i) for i in frame.index[frame.family_id == family])} for family in frame.family_id.unique()]
+    pd.DataFrame(group_rows).to_csv(inputs / "Orthogroups.tsv", sep="\t", index=False)
+    protein_map = pd.DataFrame([{"species": species, "gene_id": ("a" if species == "ant" else "g")+str(i), "protein_id": ("A" if species == "ant" else "F")+str(i)} for i in range(len(frame)) for species in ["ant", "fly"]])
+    orthology, _ = parse_orthogroups(inputs / "N0.tsv", protein_map, orthogroups_path=inputs / "Orthogroups.tsv")
+    family_report = write_target_family_map(orthology, inputs / "families.tsv")
     descriptors = frame[["gene_id", *BASELINE_COLUMNS]].copy()
     contrasts = pd.DataFrame({"gene_id": ["a"+str(i) for i in range(len(frame))], "on_log2fc": np.abs(frame.reversible_score)+.1, "on_se": np.ones(len(frame)), "off_log2fc": -np.abs(frame.reversible_score)-.1, "off_se": np.ones(len(frame))})
-    for name, table in [("genes", frame[["gene_id", "effect", "effect_se", "orthogroup"]]), ("orthology", orthology), ("descriptors", descriptors), ("contrasts", contrasts), ("families", frame[["gene_id", "orthogroup"]])]:
+    for name, table in [("genes", frame[["gene_id", "effect", "effect_se", "orthogroup", "family_id"]]), ("orthology", orthology), ("descriptors", descriptors), ("contrasts", contrasts)]:
         table.to_csv(inputs / (name+".tsv"), sep="\t", index=False)
     source = inputs / "screen_source.tsv"
     source.write_text("synthetic shared-control test fixture\n")
     proof = {"validated_gene_ids": True, "shared_control_covariance_preserved": True, "reagents_clustered_by_gene": True, "target_table_sha256": file_hash(inputs / "genes.tsv"), "target_family_map_path": str(inputs / "families.tsv"), "target_family_map_sha256": file_hash(inputs / "families.tsv"), "source_result_paths": [str(source)]}
+    proof["target_family_source_provenance_sha256"] = family_report["target_family_source_provenance_sha256"]
     atomic_json(inputs / "target_provenance.json", proof)
     covariance_path = inputs / "gene_covariance.npy"
     np.save(covariance_path, np.eye(len(frame))*.9 + np.ones((len(frame), len(frame)))*.1)
@@ -429,6 +510,7 @@ def test_h3_actual_computation_proof_and_changed_inputs_gate(tmp_path):
     proof.update(gene_covariance_path=str(covariance_path), gene_covariance_sha256=file_hash(covariance_path), gene_covariance_order_path=str(order_path), gene_covariance_order_sha256=file_hash(order_path))
     frame[["gene_id"]].to_csv(inputs / "catalog.tsv", sep="\t", index=False)
     provenance = {"fly_outcomes_inspected": False, "source_manifest_hash": manifest["manifest_hash"], "contrast_design_hash": "synthetic-design", "orthology_hash": canonical_hash(pd.read_csv(inputs / "orthology.tsv", sep="\t").fillna("").to_dict("records")), "nuisance_descriptor_hash": canonical_hash(pd.read_csv(inputs / "descriptors.tsv", sep="\t").fillna("").to_dict("records")), "phase_contrast_path": str(inputs / "contrasts.tsv"), "phase_contrast_sha256": file_hash(inputs / "contrasts.tsv"), "fly_gene_catalog_path": str(inputs / "catalog.tsv"), "fly_gene_catalog_sha256": file_hash(inputs / "catalog.tsv"), "target_family_map_sha256": file_hash(inputs / "families.tsv")}
+    provenance.update(target_family_source_provenance_path=family_report["target_family_source_provenance_path"], target_family_source_provenance_sha256=family_report["target_family_source_provenance_sha256"])
     frozen = freeze_scores(reversible_scores(contrasts), provenance, inputs / "freeze")
     proof["molecular_freeze_hash"] = frozen["freeze_hash"]
     atomic_json(inputs / "target_provenance.json", proof)

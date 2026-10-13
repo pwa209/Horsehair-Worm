@@ -1,14 +1,16 @@
 """Atomic resource leases within one study; stopped jobs require native reconciliation."""
 from __future__ import annotations
 import json
+import math
 import os
+import sys
 import time
 import re
 import subprocess
 from datetime import datetime,timezone
 from contextlib import contextmanager
 from pathlib import Path
-from .core import atomic_json, read_json,digest,exclusive_file_lock
+from .core import atomic_json, read_json,digest,exclusive_file_lock,canonical_hash,ReceiptLockTimeout
 
 
 def storage_snapshot(root,runner=subprocess.run):
@@ -157,12 +159,23 @@ def resource_lease(root, config, *, cpus, gpus, max_hours, job_id):
     root=Path(root)
     path=root/'state/resource-budget.json'
     path.parent.mkdir(parents=True,exist_ok=True)
-    def update(callback):
-        with exclusive_file_lock(path.with_suffix('.mutex')):
+    job_id=str(job_id)
+    if not re.fullmatch(r'\d+(?:_\d+)?',job_id):raise ValueError('Invalid native resource lease identity')
+    if cpus<1 or gpus not in (0,1) or not math.isfinite(max_hours) or max_hours<=0:
+        raise ValueError('Invalid bounded resource allocation')
+    def update(callback,timeout=30):
+        with exclusive_file_lock(path.with_suffix('.mutex'),timeout=timeout):
             record=read_json(path) if path.exists() else {'spent_cpu_core_hours':0.,'spent_gpu_hours':0.,'leases':{}}
             callback(record)
             atomic_json(path,record)
-    start=time.time()
+    start=time.time();started_monotonic=time.monotonic()
+    deadline=start+max_hours*3600
+    native_end=os.environ.get('SLURM_JOB_END_TIME')
+    if native_end:
+        native_end=float(native_end)
+        if not math.isfinite(native_end):raise ValueError('Invalid native allocation end time')
+        deadline=min(deadline,native_end)
+    if deadline<=start:raise ValueError('Native resource allocation has no remaining time')
     def reserve(r):
         if job_id in r['leases']:raise ValueError('Existing resource lease; reconcile native accounting without replaying')
         active=[v for v in r['leases'].values() if v['state']=='running']
@@ -174,13 +187,88 @@ def resource_lease(root, config, *, cpus, gpus, max_hours, job_id):
             raise ValueError('Insufficient remaining GPU-hour budget')
         r['leases'][job_id]={'state':'running','started_unix':start,'cpus':cpus,'gpus':gpus,'max_hours':max_hours}
     update(reserve)
+    command_exception=None
     try:
-        yield {'deadline_unix':start+max_hours*3600,'job_id':job_id}
+        yield {'deadline_unix':deadline,'job_id':job_id}
+    except BaseException as exc:
+        command_exception=exc
+        raise
     finally:
-        elapsed=(time.time()-start)/3600
+        command_end=time.time();cleanup_start=time.monotonic()
+        finish_deadline=min(cleanup_start+120.,started_monotonic+max(0.,deadline-start))
+        journal_path=root/'state/resource-lease-finalizations'/(job_id+'.json')
+        journal={'schema_version':1,'status':'finalization_intent','local_finalization':'pending',
+                 'job_id':job_id,'root':str(root.resolve()),'config_sha256':canonical_hash(config),
+                 'cpus':cpus,'gpus':gpus,'max_hours':max_hours,'started_unix':start,
+                 'command_ended_unix':command_end,'command_elapsed_seconds':max(0.,command_end-start),
+                 'deadline_unix':deadline,'finish_retry_limit_seconds':120.,'finish_attempts':0,
+                 'command_outcome':'raised' if command_exception is not None else 'returned',
+                 'command_exception':({'type':type(command_exception).__name__,'module':type(command_exception).__module__,
+                                       'message':str(command_exception)} if command_exception is not None else None),
+                 'reservation_release_rule':'positive terminal sacct proof in resource-budget.json; this journal never releases a lease or charges hours'}
+        journal_error=None;cleanup_error=None;last_timeout=None
+        def persist_journal():
+            nonlocal journal_error
+            try:
+                payload=dict(journal);payload['self_sha256']=canonical_hash(payload)
+                atomic_json(journal_path,payload)
+                journal_error=None
+            except Exception as exc:
+                journal_error=exc
+        # Persist before waiting: a native termination during lock acquisition
+        # must not erase the original command's scientific error or completion.
+        # This separate file requires no shared receipt guard.
+        persist_journal()
         def finish(r):
-            r['leases'][job_id].update(state='finished',elapsed_hours=elapsed)
+            key=job_id if job_id in r['leases'] else r.get('native_raw_aliases',{}).get(job_id)
+            entry=r['leases'].get(key)
+            if not entry or entry.get('started_unix')!=start:
+                raise ValueError('Resource lease owner changed; preserve its reservation')
+            if entry['state'] in ('finished','native_reconciled'):
+                return  # An already recorded/native allocation is never charged twice.
+            if entry['state']!='running':raise ValueError('Unexpected resource lease state')
+            elapsed=max(0.,time.time()-start)/3600
+            entry.update(state='finished',elapsed_hours=elapsed)
             r['spent_cpu_core_hours']+=cpus*elapsed
             r['spent_gpu_hours']+=gpus*elapsed
-        update(finish)
+        # At most four full30-second waits, or a final shorter attempt before the
+        # allocation deadline. A reservation failure before yield still fails
+        # immediately; only the completion bookkeeping receives this tolerance.
+        for attempt in range(5):
+            remaining=max(0.,finish_deadline-time.monotonic())
+            if attempt and remaining<=0:break
+            journal['finish_attempts']+=1
+            try:
+                update(finish,timeout=min(30.,remaining))
+                journal['local_finalization']='recorded'
+                break
+            except ReceiptLockTimeout as exc:
+                last_timeout=exc
+                journal['last_guard_timeout']=exc.diagnostics
+            except BaseException as exc:
+                cleanup_error=exc
+                journal['local_finalization']='failed'
+                journal['finalization_error']={'type':type(exc).__name__,'message':str(exc)}
+                break
+        journal['finalization_elapsed_seconds']=max(0.,time.monotonic()-cleanup_start)
+        journal['finished_unix']=time.time()
+        if journal['local_finalization']=='pending':
+            journal['status']='pending_native_reconciliation'
+        else:
+            journal['status']='local_finalization_recorded' if journal['local_finalization']=='recorded' else 'local_finalization_failed'
+        persist_journal()
+        if journal['local_finalization']!='recorded' or journal_error is not None:
+            print(json.dumps({'resource_lease_finalization':journal['status'],'job_id':job_id,
+                              'journal_path':str(journal_path),'journal_persisted':journal_error is None,
+                              'original_command_exception':journal['command_exception'],
+                              'last_guard_timeout':last_timeout.diagnostics if last_timeout else None,
+                              'cleanup_error':str(cleanup_error) if cleanup_error else None,
+                              'journal_error':str(journal_error) if journal_error else None}),file=sys.stderr,flush=True)
+        # A bookkeeping error never replaces the exception raised by the study.
+        # Exhausted contention with a durable intent keeps the reservation until
+        # the already implemented native terminal reconciliation runs.
+        if command_exception is None:
+            if cleanup_error is not None:raise cleanup_error
+            if journal_error is not None and journal['local_finalization']!='recorded':
+                raise RuntimeError('Pending resource finalization could not persist its durable evidence') from journal_error
 

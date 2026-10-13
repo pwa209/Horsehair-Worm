@@ -180,6 +180,128 @@ def test_mantis_heldout_design_uses_only_training_scaling():
         _mantis_design_contract(train, test)
 
 
+def test_constant_training_illuminance_cannot_be_extrapolated_silently():
+    from horsehair.behaviour import _mantis_design_contract
+    train = pd.DataFrame({"infection": [0, 1, 0, 1], "dop": [.2, .5, .7, .9],
+        "log_illuminance": np.log(10.), "stimulus_side": "R", "year": "2021", "box": "A"})
+    test = train.iloc[:1].copy()
+    _, _, contract = _mantis_design_contract(train, test)
+    assert contract["continuous"]["log_illuminance"]["constant_training_value"] == pytest.approx(np.log(10.))
+    test.log_illuminance = np.log(100.)
+    with pytest.raises(ValueError, match="omitted training covariate was constant"):
+        _mantis_design_contract(train, test)
+
+
+def test_nuisance_alias_reduction_preserves_predictors_and_original_gaussian_prior():
+    from horsehair.behaviour import _resolve_behavioural_design
+    rng = np.random.default_rng(307)
+    infection = np.tile([0., 1.], 30)
+    dop = rng.normal(size=len(infection))
+    context = np.repeat([0., 1.], 30)
+    x = np.column_stack([np.ones(len(dop)), infection, dop, infection * dop, context, context])
+    names = ["Intercept", "infection", "dop", "infection:dop", "year_2022", "box_B"]
+    reduced, kept, audit = _resolve_behavioural_design(x, names, ["infection", "dop", "infection:dop"])
+    assert audit["protected_primary_estimable"] and audit["full_column_space_preserved"]
+    assert audit["dropped_nuisance_terms"] == ["box_B"]
+    assert audit["nuisance_aliases"]["box_B"] == pytest.approx({"year_2022": 1.})
+    transform = np.asarray(audit["original_column_transform"])
+    np.testing.assert_allclose(reduced @ transform, x, atol=1e-12)
+    gamma = rng.normal(size=len(kept))
+    original_minimum_norm_beta = transform.T @ np.linalg.solve(transform @ transform.T, gamma)
+    np.testing.assert_allclose(x @ original_minimum_norm_beta, reduced @ gamma, atol=1e-12)
+    actual_penalty = .5 * gamma @ np.asarray(audit["prior_precision"]) @ gamma
+    assert actual_penalty == pytest.approx(.5 * np.sum(original_minimum_norm_beta ** 2) / 2.25)
+    year = kept.index("year_2022")
+    assert audit["prior_covariance_unit"][year][year] == pytest.approx(2.)
+
+
+def test_protected_primary_alias_cannot_be_identified_by_dropping_context():
+    from horsehair.behaviour import _resolve_behavioural_design, NonestimableDesignError
+    infection = np.repeat([0., 1.], 20)
+    dop = np.tile(np.linspace(.1, .9, 20), 2)
+    x = np.column_stack([np.ones(40), infection, dop, infection * dop, infection])
+    with pytest.raises(NonestimableDesignError) as raised:
+        _resolve_behavioural_design(x, ["Intercept", "infection", "dop", "infection:dop", "year_2022"],
+                                   ["infection", "dop", "infection:dop"])
+    assert raised.value.diagnostics["protected_primary_estimable"] is False
+    assert raised.value.diagnostics["protected_nullspace_norms"]["infection"] > .5
+
+
+def test_three_year_context_alias_pushes_original_box_prior_into_context_covariance():
+    from horsehair.behaviour import _resolve_behavioural_design
+    rng = np.random.default_rng(418)
+    year = np.tile([2021, 2022, 2023], 40)
+    infection, dop = rng.integers(0, 2, len(year)), rng.normal(size=len(year))
+    x = np.column_stack([np.ones(len(year)), infection, dop, infection * dop,
+                         year == 2022, year == 2023, year == 2021])
+    names = ["Intercept", "infection", "dop", "infection:dop", "year_2022", "year_2023", "box_D"]
+    reduced, kept, audit = _resolve_behavioural_design(x, names, ["infection", "dop", "infection:dop"])
+    assert audit["dropped_nuisance_terms"] == ["box_D"]
+    assert audit["nuisance_aliases"]["box_D"] == pytest.approx({"Intercept": 1., "year_2022": -1., "year_2023": -1.})
+    covariance = np.asarray(audit["prior_covariance_unit"])
+    assert covariance[kept.index("Intercept"), kept.index("year_2022")] == pytest.approx(-1.)
+    assert covariance[kept.index("year_2022"), kept.index("year_2023")] == pytest.approx(1.)
+    assert reduced.shape[1] == 6
+
+
+def test_nested_year_box_nuisance_fit_and_heldout_design_keep_primary_terms():
+    from horsehair.behaviour import _mantis_design_contract
+    rng = np.random.default_rng(177)
+    n = 180
+    frame = pd.DataFrame({"infection": rng.integers(0, 2, n), "dop": rng.uniform(.1, .9, n),
+        "illuminance": 10., "stimulus_side": rng.choice(["R", "L"], n), "box": rng.choice(["A", "B"], n),
+        "response": rng.choice(["middle", "polarized", "unpolarized"], n), "individual_id": np.arange(n).astype(str)})
+    frame["year"] = np.where(frame.box.eq("B"), "2022", "2021")
+    fitted = fit_mantis_choice(frame, {"dop_units": "source"})
+    audit = fitted["design_audit"]["engagement"]
+    assert audit["dropped_nuisance_terms"] == ["box_B"]
+    assert all(name in fitted["engagement"]["terms"] for name in ["infection", "dop", "infection:dop"])
+    training = frame.copy()
+    training["log_illuminance"] = np.log(training.illuminance)
+    matrix, terms, contract = _mantis_design_contract(training, training.iloc[:3], audit)
+    assert terms == fitted["engagement"]["terms"] and matrix.shape[1] == len(terms)
+    assert contract["training_nuisance_basis"]["full_column_space_preserved"]
+    changed_context = training.iloc[:1].copy()
+    changed_context["year"] = np.where(changed_context.box.eq("A"), "2022", "2021")
+    with pytest.raises(ValueError, match="outside identifiable training contexts"):
+        _mantis_design_contract(training, changed_context, audit)
+
+
+def test_preference_nuisance_aliases_cannot_be_assumed_at_new_heldout_contexts():
+    from horsehair.behaviour import _resolve_behavioural_design, _apply_training_design
+    rng = np.random.default_rng(1229)
+    infection = np.tile([0., 1.], 20)
+    dop = rng.normal(size=40)
+    chooser_matrix = np.column_stack([np.ones(40), infection, dop, infection * dop, np.zeros(40)])
+    names = ["Intercept", "infection", "dop", "infection:dop", "year_2022"]
+    _, _, audit = _resolve_behavioural_design(chooser_matrix, names, ["infection", "dop", "infection:dop"])
+    assert audit["dropped_nuisance_terms"] == ["year_2022"]
+    _apply_training_design(chooser_matrix[:2], names, audit)
+    test = chooser_matrix[:1].copy()
+    test[0, -1] = 1
+    with pytest.raises(ValueError, match="outside identifiable training contexts"):
+        _apply_training_design(test, names, audit)
+
+
+def test_primary_or_chooser_only_nonidentifiability_completes_explicit_pending_descriptives():
+    from horsehair.behaviour import analyze_mantis_choice
+    rng = np.random.default_rng(889)
+    n = 90
+    frame = pd.DataFrame({"infection": np.tile([0, 1], n // 2), "dop": rng.uniform(.1, .9, n),
+        "illuminance": 10., "stimulus_side": "R", "year": "2021", "box": "A", "date": "2021-01-01",
+        "response": rng.choice(["middle", "polarized", "unpolarized"], n), "individual_id": np.arange(n).astype(str)})
+    frame.loc[frame.infection.eq(0), "response"] = "middle"
+    result = analyze_mantis_choice(frame, {"dop_units": "source"})
+    assert result["choice"]["status"] == "pending_nonestimable_design"
+    assert result["choice"]["numeric_claim_available"] is False
+    assert result["choice"]["confirmatory_ready"] is False
+    assert sum(row["trials"] for row in result["choice"]["source_descriptive_counts"]) == n
+    assert "coefficient" not in result["choice"] and "engagement" not in result["choice"]
+    assert result["choice"]["design_audit"]["protected_nullspace_norms"]["infection"] > .5
+    frame["infection"] = 0
+    assert analyze_mantis_choice(frame, {"dop_units": "source"})["choice"]["status"] == "pending_nonestimable_design"
+
+
 def test_absent_workload_inputs_stay_pending(tmp_path):
     from horsehair.behaviour import run
     result = run({"behaviour": {}}, tmp_path, "benchmark-workload")
@@ -455,6 +577,22 @@ def test_gene_aggregation_retains_cross_gene_shared_control_covariance():
     projected = genes.attrs["shared_control_covariance"]
     assert projected.shape == (2, 2) and projected[0, 1] > 0
     np.testing.assert_allclose(np.diag(projected), genes.effect_se.to_numpy() ** 2)
+
+
+def test_target_export_preserves_distinct_transfer_hogs_and_original_families():
+    from horsehair.interventions import attach_frozen_gene_families
+    genes = pd.DataFrame({"gene_id": ["g2", "g1"], "effect": [.5, 1.], "effect_se": [.1, .2]})
+    source = pd.DataFrame({"gene_id": ["g1", "g2"], "orthogroup": ["HOG001a", "HOG001b"],
+                           "family_id": ["OG001", "OG001"]})
+    attached = attach_frozen_gene_families(genes, source)
+    assert attached.gene_id.tolist() == ["g2", "g1"]  # covariance order remains fixed
+    assert attached.orthogroup.tolist() == ["HOG001b", "HOG001a"]
+    assert attached.family_id.tolist() == ["OG001", "OG001"]
+    with pytest.raises(ValueError, match="older HOG-only"):
+        attach_frozen_gene_families(genes, source.drop(columns="family_id"))
+    wrong = genes.assign(family_id="HOG001a")
+    with pytest.raises(ValueError, match="disagrees"):
+        attach_frozen_gene_families(wrong, source)
 
 
 def test_streaming_native_ingestion_and_cached_bins(tmp_path):

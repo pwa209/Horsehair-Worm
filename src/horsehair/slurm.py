@@ -175,7 +175,7 @@ def plan(config, release: Path, output: Path, phase='initial', *, prior_dependen
             runtime_deps = ['transfer-wait-tools','r-qualification']
             add('transfer-wait-fly',prefix+' wait-transfer --group fly',cpus=1,memory='4G',hours=144)
             add('source-verification-fly',prefix+' verify-sources --group fly',depends=['transfer-wait-fly','qualification'],cpus=4,memory='16G',hours=8)
-        add('molecular-runtime',prefix+' molecular --stage runtime',depends=runtime_deps,cpus=2,memory='8G',hours=1)
+        add('molecular-runtime',prefix+' molecular --stage runtime',depends=runtime_deps,cpus=2,memory='8G',hours=1,modules=['r/4.4.0'])
         add('transfer-wait-rna',prefix+' wait-transfer --group rna-pilot',cpus=1,memory='4G',hours=144)
         add('source-verification-rna',prefix+' verify-sources --group rna-pilot',depends=['transfer-wait-rna','qualification'],cpus=4,memory='16G',hours=8)
         add('source-audit',prefix+' source-audit',depends=['source-verification-fly'],cpus=8,memory='64G',hours=8)
@@ -248,7 +248,7 @@ def plan(config, release: Path, output: Path, phase='initial', *, prior_dependen
         validate_freeze(Path(root)/'data/molecular/freeze/freeze.json')
         add('molecular-transfer',prefix+' molecular-pipeline --stage predict',external_deps=[phase_job('molecular-benchmark','molecular-benchmark')],cpus=8,memory='64G',hours=24)
     elif phase == 'molecular-corroboration':
-        add('mantis-orfs',prefix+' molecular-pipeline --stage mantis-orfs',cpus=8,memory='64G',hours=24)
+        add('mantis-orfs',prefix+' molecular-pipeline --stage mantis-orfs',cpus=8,memory='64G',hours=24,modules=['r/4.4.0'])
         add('mantis-orthology',prefix+' molecular-pipeline --stage mantis-orthology',depends=['mantis-orfs'],cpus=8,memory='64G',hours=24)
     elif phase == 'synthesis':
         add('evidence-report',prefix+' report',cpus=4,memory='32G',hours=4)

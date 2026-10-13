@@ -564,6 +564,30 @@ def family_holdout_folds(mapping: pd.DataFrame) -> list[tuple[str, list[str], li
             for family in sorted(mapping.family.unique())]
 
 
+def attach_frozen_gene_families(genes: pd.DataFrame, families: pd.DataFrame) -> pd.DataFrame:
+    """Keep transfer HOGs and verified original MCL families distinct."""
+    columns = ["gene_id", "orthogroup", "family_id"]
+    if not set(columns).issubset(families):
+        raise ValueError("Verified gene_id/orthogroup/family_id map required; older HOG-only family maps remain pending")
+    mapped = families[columns].copy()
+    if mapped.isna().any().any() or mapped.gene_id.duplicated().any() or genes.gene_id.duplicated().any():
+        raise ValueError("Each gene requires a unique nonmissing verified HOG and original MCL family")
+    if any(mapped[column].astype(str).str.strip().eq("").any() for column in columns):
+        raise ValueError("Empty source gene/HOG/MCL family identity")
+    if not set(genes.gene_id).issubset(mapped.gene_id):
+        raise ValueError("Target genes are absent from the independently frozen HOG/family map")
+    result = genes.merge(mapped, on="gene_id", how="left", validate="one_to_one", suffixes=("_target", ""), sort=False)
+    for name in ["orthogroup", "family_id"]:
+        existing = name + "_target"
+        if existing in result:
+            if not result[existing].eq(result[name]).all():
+                raise ValueError("Target HOG or original MCL family disagrees with its frozen source map")
+            result = result.drop(columns=existing)
+    if result.gene_id.tolist() != genes.gene_id.tolist():
+        raise ValueError("Source family attachment changed the shared-covariance gene order")
+    return result
+
+
 def run(config: dict[str, Any], root: Path, stage: str = "challenge", **kwargs: Any) -> dict[str, Any]:
     from .semimarkov import Fit
     root = Path(root)
@@ -600,8 +624,8 @@ def run(config: dict[str, Any], root: Path, stage: str = "challenge", **kwargs: 
             family_map = root / settings.get("target_family_map", "data/molecular/orthology/fly_target_families.tsv")
             catalog_path = root / settings.get("gene_catalog", "data/molecular/orthology/fly_gene_catalog.tsv")
             families, catalog = read_table(family_map), read_table(catalog_path)
-            if "gene_id" not in catalog or "gene_id" not in families or "orthogroup" not in families:
-                raise ValueError("An independent gene catalog and gene_id/orthogroup family map are required")
+            if "gene_id" not in catalog or not {"gene_id", "orthogroup", "family_id"}.issubset(families):
+                raise ValueError("An independent catalog and verified HOG/original-MCL family map are required; older HOG-only maps remain pending")
             if catalog.gene_id.duplicated().any() or families.gene_id.duplicated().any():
                 raise ValueError("Gene catalog and orthogroup map must uniquely identify each source gene")
             missing_ids = set(genes.gene_id) - set(catalog.gene_id)
@@ -616,19 +640,27 @@ def run(config: dict[str, Any], root: Path, stage: str = "challenge", **kwargs: 
                 or provenance.get("fly_gene_catalog_sha256") != digest(catalog_path)
                 or provenance.get("target_family_map_sha256") != digest(family_map)):
                 raise ValueError("The outcome-blind molecular/catalog/family freeze is absent or changed")
-            genes = genes.merge(families[["gene_id", "orthogroup"]], on="gene_id", how="left", validate="one_to_one")
+            from .molecular import validate_family_provenance
+            family_source = Path(provenance.get("target_family_source_provenance_path", ""))
+            if (not family_source.is_file() or provenance.get("target_family_source_provenance_sha256") != digest(family_source)):
+                raise ValueError("The prior freeze lacks unchanged verified original-MCL family source provenance")
+            validate_family_provenance(json.loads(family_source.read_text(encoding="utf-8")))
+            genes = attach_frozen_gene_families(genes, families)
             genes.to_csv(table_path, sep="\t", index=False)
             gene_covariance_path = output / "gene_shared_control_covariance.npy"
             np.save(gene_covariance_path, gene_covariance)
             gene_order_path = output / "gene_covariance_order.json"
             atomic_json(gene_order_path, {"gene_id": genes.gene_id.tolist()})
             input_paths = [root / settings["screen_animals"], root / settings["screen_mapping"],
-                catalog_path, family_map, freeze_path, output / "reagent_effects.tsv", output / "shared_control_covariance.npy",
+                catalog_path, family_map, family_source, freeze_path, output / "reagent_effects.tsv", output / "shared_control_covariance.npy",
                 gene_covariance_path, gene_order_path]
             atomic_json(output / "target_provenance.json", {
                 "validated_gene_ids": True, "shared_control_covariance_preserved": True,
                 "reagents_clustered_by_gene": True, "target_family_map_path": str(family_map.resolve()),
                 "target_family_map_sha256": digest(family_map), "target_table_sha256": digest(table_path),
+                "target_family_source_provenance_path": str(family_source.resolve()),
+                "target_family_source_provenance_sha256": digest(family_source),
+                "family_definition": "Verified original MCL OG for family dependence; HOG orthogroup retained separately for transfer",
                 "gene_catalog_path": str(catalog_path.resolve()), "gene_catalog_sha256": digest(catalog_path),
                 "molecular_freeze_path": str(freeze_path.resolve()), "molecular_freeze_hash": freeze["freeze_hash"],
                 "gene_covariance_path": str(gene_covariance_path.resolve()),
@@ -691,6 +723,18 @@ def intervention_readiness(config: dict[str, Any], root: Path) -> dict[str, Any]
             screen_pending.append(f"{key}: independent frozen reference absent ({path})")
         else:
             paths.append(path)
+            if key == "target_family_map":
+                family = read_table(path)
+                if not {"gene_id", "orthogroup", "family_id"}.issubset(family):
+                    screen_pending.append("target_family_map: older HOG-only map lacks verified original MCL family_id")
+            if key == "molecular_freeze":
+                freeze = json.loads(path.read_text(encoding="utf-8"))
+                frozen_proof = freeze.get("provenance", {})
+                source = Path(frozen_proof.get("target_family_source_provenance_path", ""))
+                if not source.is_file() or frozen_proof.get("target_family_source_provenance_sha256") != digest(source):
+                    screen_pending.append("molecular_freeze: verified original-MCL family source proof absent or changed")
+                else:
+                    paths.append(source)
     for key in ("mapping", "animal_crosswalk"):
         path = root / settings[key] if settings.get(key) else None
         if path is None or not path.is_file():

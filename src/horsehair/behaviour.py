@@ -1602,9 +1602,74 @@ def write_h1(root: Path, config: dict[str, Any], model_directory: Path) -> dict[
     return result
 
 
+class NonestimableDesignError(ValueError):
+    def __init__(self, diagnostics: dict[str, Any]):
+        self.diagnostics = diagnostics
+        super().__init__("Nonestimable behavioural design: protected primary coefficients are confounded; priors do not identify them")
+
+
+def _resolve_behavioural_design(x: np.ndarray, names: list[str], protected: list[str],
+                               prior_covariance_unit: np.ndarray | None = None) -> tuple[np.ndarray, list[str], dict[str, Any]]:
+    """Remove nuisance aliases only, carrying the original Gaussian prior.
+
+    A protected coefficient is estimable iff every likelihood nullspace vector
+    has zero at that coefficient. This tests the full original model before
+    selecting any basis; selecting a convenient column cannot identify it.
+    """
+    x = np.asarray(x, float)
+    if x.ndim != 2 or x.shape[1] != len(names) or not np.isfinite(x).all():
+        raise ValueError("Invalid finite behavioural design matrix")
+    _, singular, vh = np.linalg.svd(x, full_matrices=True)
+    tolerance = max(x.shape) * np.finfo(float).eps * (singular[0] if len(singular) else 0.)
+    rank = int(np.sum(singular > tolerance))
+    nullspace = vh[rank:]
+    protected_indices = [names.index(name) for name in protected if name in names]
+    norms = {names[index]: float(np.linalg.norm(nullspace[:, index])) for index in protected_indices}
+    estimable = all(value <= 1e-8 for value in norms.values())
+    diagnostics = {"rows": len(x), "original_terms": names, "rank": rank, "columns": len(names),
+        "rank_tolerance": float(tolerance), "singular_values": singular.tolist(),
+        "protected_terms": [names[index] for index in protected_indices], "protected_nullspace_norms": norms,
+        "protected_primary_estimable": estimable,
+        "nullspace_relations": [{name: float(value) for name, value in zip(names, vector) if abs(value) > 1e-8} for vector in nullspace],
+        "criterion": "Every original-model likelihood nullspace vector has zero protected-primary components; prior curvature is not used for identification"}
+    if not estimable:
+        raise NonestimableDesignError(diagnostics)
+    covariance = np.eye(len(names)) if prior_covariance_unit is None else np.asarray(prior_covariance_unit, float)
+    if covariance.shape != (len(names), len(names)) or not np.isfinite(covariance).all():
+        raise ValueError("Invalid original coefficient prior covariance")
+    if rank == len(names):
+        selected, transform = list(range(len(names))), np.eye(len(names))
+    else:
+        selected = protected_indices.copy()
+        for index in range(len(names)):
+            if index not in selected and np.linalg.matrix_rank(x[:, selected + [index]]) > len(selected):
+                selected.append(index)
+        selected.sort()
+        if len(selected) != rank:
+            raise ValueError("Could not preserve the original behavioural model column space")
+        transform = np.linalg.lstsq(x[:, selected], x, rcond=None)[0]
+    reduced = x[:, selected]
+    residual = float(np.max(np.abs(reduced @ transform - x))) if x.size else 0.
+    if residual > 1e-9 * max(1., float(np.max(np.abs(x)))):
+        raise ValueError("Nuisance-basis reduction changed the predictor column space")
+    unit_covariance = transform @ covariance @ transform.T
+    precision = np.linalg.inv(unit_covariance) / 2.25
+    dropped = [index for index in range(len(names)) if index not in selected]
+    diagnostics.update(kept_terms=[names[index] for index in selected],
+        dropped_nuisance_terms=[names[index] for index in dropped],
+        nuisance_aliases={names[index]: {names[chosen]: float(transform[row, index]) for row, chosen in enumerate(selected)
+            if abs(transform[row, index]) > 1e-9} for index in dropped},
+        original_column_transform=transform.tolist(), full_column_space_preserved=True,
+        maximum_column_reconstruction_error=residual, prior_covariance_unit=unit_covariance.tolist(), prior_precision=precision.tolist(),
+        prior_rule="Original Normal(0,1.5) prior pushed through the exact identifiable nuisance basis; no fresh independent prior replaces a duplicated context column")
+    return reduced, diagnostics["kept_terms"], diagnostics
+
+
 def design_matrix(frame: pd.DataFrame, continuous: list[str], categorical: list[str],
-                  interaction: tuple[str, str] | None = None) -> tuple[np.ndarray, list[str]]:
+                  interaction: tuple[str, str] | None = None, *, protected_terms: list[str] | None = None,
+                  return_diagnostics: bool = False) -> Any:
     parts = pd.DataFrame({"Intercept": np.ones(len(frame))}, index=frame.index)
+    constant_covariates = {}
     for column in continuous:
         values = pd.to_numeric(frame[column], errors="raise").astype(float)
         if not np.isfinite(values).all():
@@ -1612,6 +1677,7 @@ def design_matrix(frame: pd.DataFrame, continuous: list[str], categorical: list[
         # Covariates are standardized; binary infection remains 0/1 for the
         # interpretable infection-by-polarization coefficient.
         if values.nunique() == 1 and column in ("log_illuminance", "male_size", "female_size"):
+            constant_covariates[column] = float(values.iloc[0])
             continue
         parts[column] = values if set(values.unique()).issubset({0, 1}) else (values - values.mean()) / max(values.std(ddof=0), 1e-10)
     for column in categorical:
@@ -1623,21 +1689,24 @@ def design_matrix(frame: pd.DataFrame, continuous: list[str], categorical: list[
         a, b = interaction
         parts[f"{a}:{b}"] = parts[a] * parts[b]
     x = parts.to_numpy(float)
-    if np.linalg.matrix_rank(x) < x.shape[1]:
-        raise ValueError("Nonestimable behavioural design; confounded effects cannot be repaired by priors")
-    return x, parts.columns.tolist()
+    protected = protected_terms if protected_terms is not None else continuous + ([f"{interaction[0]}:{interaction[1]}"] if interaction else [])
+    result = _resolve_behavioural_design(x, parts.columns.tolist(), protected)
+    result[2]["constant_training_covariates"] = constant_covariates
+    return result if return_diagnostics else result[:2]
 
 
-def _map_binary(x: np.ndarray, y: np.ndarray, names: list[str], groups: np.ndarray | None = None
+def _map_binary(x: np.ndarray, y: np.ndarray, names: list[str], groups: np.ndarray | None = None,
+                prior_precision: np.ndarray | None = None
                 ) -> dict[str, Any]:
     if len(np.unique(y)) != 2:
         raise ValueError("Binary endpoint needs both observed categories")
     group_names = np.unique(groups) if groups is not None else np.array([])
     index = np.searchsorted(group_names, groups) if groups is not None else None
     p, g = x.shape[1], len(group_names)
+    precision = np.eye(p) / 2.25 if prior_precision is None else np.asarray(prior_precision, float)
     def objective(theta: np.ndarray) -> float:
         eta = x @ theta[:p]
-        prior = .5 * np.sum((theta[:p] / 1.5) ** 2)
+        prior = .5 * theta[:p] @ precision @ theta[:p]
         if g:
             sd = np.exp(theta[-1])
             eta = eta + theta[p:p + g][index] * sd
@@ -1678,25 +1747,30 @@ def fit_mantis_choice(frame: pd.DataFrame, config: dict[str, Any] | None = None)
         table.dop = table.dop / 100
     elif config.get("dop_units") not in ("proportion", "source"):
         raise ValueError("Inspect and declare source degree-of-polarization units")
-    x, names = design_matrix(table, ["infection", "dop", "log_illuminance"],
-                             ["stimulus_side", "year", "box"], ("infection", "dop"))
+    primary = ["infection", "dop", "infection:dop"]
+    x, names, design = design_matrix(table, ["infection", "dop", "log_illuminance"],
+        ["stimulus_side", "year", "box"], ("infection", "dop"), protected_terms=primary, return_diagnostics=True)
     groups = (table.individual_id.astype(str).to_numpy()
               if "individual_id" in table and table.individual_id.duplicated().any() else None)
     chooser = response.to_numpy() != 0
-    engagement = _map_binary(x, chooser.astype(float), names, groups)
-    preference = _map_binary(x[chooser], (response.to_numpy()[chooser] == 1).astype(float),
-                             names, groups[chooser] if groups is not None else None)
+    engagement = _map_binary(x, chooser.astype(float), names, groups, np.asarray(design["prior_precision"]))
+    preference_x, preference_names, preference_design = _resolve_behavioural_design(
+        x[chooser], names, primary, np.asarray(design["prior_covariance_unit"]))
+    preference = _map_binary(preference_x, (response.to_numpy()[chooser] == 1).astype(float),
+        preference_names, groups[chooser] if groups is not None else None, np.asarray(preference_design["prior_precision"]))
     # Multinomial sensitivity uses unpolarized as its reference category.
     y = response.to_numpy(int)
     p = x.shape[1]
     def multinomial_loss(theta: np.ndarray) -> float:
         logits = np.column_stack([x @ theta[:p], x @ theta[p:], np.zeros(len(x))])
         return float(np.sum(special.logsumexp(logits, axis=1) - logits[np.arange(len(x)), y])
-                     + .5 * np.sum((theta / 1.5) ** 2))
+                     + .5 * theta[:p] @ np.asarray(design["prior_precision"]) @ theta[:p]
+                     + .5 * theta[p:] @ np.asarray(design["prior_precision"]) @ theta[p:])
     mn = optimize.minimize(multinomial_loss, np.zeros(p * 2), method="BFGS")
     if not np.isfinite(mn.fun) or np.linalg.norm(mn.jac) > .02:
         raise RuntimeError("Multinomial sensitivity fit did not converge")
     return {"engagement": engagement, "conditional_preference": preference,
+            "design_audit": {"engagement": design, "conditional_preference": preference_design},
             "multinomial_sensitivity": {"terms": names, "reference": "unpolarized",
                 "middle_coefficients": mn.x[:p].tolist(), "polarized_coefficients": mn.x[p:].tolist(),
                 "covariance_laplace": np.asarray(mn.hess_inv).tolist()},
@@ -1707,7 +1781,20 @@ def fit_mantis_choice(frame: pd.DataFrame, config: dict[str, Any] | None = None)
             "independence_verified": "individual_id" in table}
 
 
-def _mantis_design_contract(train: pd.DataFrame, test: pd.DataFrame) -> tuple[np.ndarray, list[str], dict[str, Any]]:
+def _apply_training_design(matrix: np.ndarray, names: list[str], diagnostics: dict[str, Any]) -> tuple[np.ndarray, list[str]]:
+    if names != diagnostics["original_terms"]:
+        raise ValueError("Held-out terms differ from the original training context basis")
+    retained = diagnostics["kept_terms"]
+    reduced = matrix[:, [names.index(name) for name in retained]]
+    reconstructed = reduced @ np.asarray(diagnostics["original_column_transform"])
+    error = float(np.max(np.abs(reconstructed - matrix))) if matrix.size else 0.
+    if error > 1e-9 * max(1., float(np.max(np.abs(matrix)))):
+        raise ValueError("Held-out covariates are outside identifiable training contexts: original nuisance alias relations do not hold")
+    return reduced, retained
+
+
+def _mantis_design_contract(train: pd.DataFrame, test: pd.DataFrame,
+                            design_diagnostics: dict[str, Any] | None = None) -> tuple[np.ndarray, list[str], dict[str, Any]]:
     continuous = ["infection", "dop", "log_illuminance"]
     categorical = ["stimulus_side", "year", "box"]
     parts = {"Intercept": np.ones(len(test))}
@@ -1715,6 +1802,11 @@ def _mantis_design_contract(train: pd.DataFrame, test: pd.DataFrame) -> tuple[np
     for column in continuous:
         values = train[column].to_numpy(float)
         if np.unique(values).size == 1 and column == "log_illuminance":
+            constant = float(values[0])
+            if not np.allclose(test[column].to_numpy(float), constant, rtol=1e-9, atol=1e-10):
+                raise ValueError(f"Held-out {column} is outside identifiable training contexts: the omitted training covariate was constant")
+            contract["continuous"][column] = {"constant_training_value": constant, "omitted_nuisance": True,
+                                              "identified_only_at_training_value": True}
             continue
         raw = set(np.unique(values)).issubset({0, 1})
         mean, scale = (0., 1.) if raw else (float(values.mean()), max(float(values.std()), 1e-10))
@@ -1733,6 +1825,9 @@ def _mantis_design_contract(train: pd.DataFrame, test: pd.DataFrame) -> tuple[np
     matrix = np.column_stack(list(parts.values()))
     if not np.isfinite(matrix).all():
         raise ValueError("Nonfinite held-out mantis design")
+    if design_diagnostics:
+        matrix, names = _apply_training_design(matrix, names, design_diagnostics)
+        contract["training_nuisance_basis"] = design_diagnostics
     return matrix, names, contract
 
 
@@ -1776,12 +1871,18 @@ def validate_mantis_choice(frame: pd.DataFrame, config: dict[str, Any] | None = 
                 raise ValueError("No independent training individuals after complete date/individual holdout")
             fitting_config = dict(config, dop_units="source", columns={})
             fitted = fit_mantis_choice(train, fitting_config)
-            x, names, contract = _mantis_design_contract(train, test)
+            x, names, contract = _mantis_design_contract(train, test, fitted["design_audit"]["engagement"])
             if names != fitted["engagement"]["terms"]:
                 raise ValueError("Training and held-out design terms disagree")
             engagement, preference = fitted["engagement"], fitted["conditional_preference"]
             eta_engagement = x @ np.asarray(engagement["coefficient"])
-            eta_preference = x @ np.asarray(preference["coefficient"])
+            # Three-category predictions require an identified preference at
+            # every test context. Checking only observed choosers would use the
+            # test outcome to hide unsupported conditional predictions.
+            preference_x, preference_names = _apply_training_design(x, names, fitted["design_audit"]["conditional_preference"])
+            if preference_names != preference["terms"]:
+                raise ValueError("Held-out conditional-preference terms disagree")
+            eta_preference = preference_x @ np.asarray(preference["coefficient"])
             e = special.expit(eta_engagement[:, None] + np.sqrt(2) * float(engagement["group_sd"] or 0) * nodes)
             p = special.expit(eta_preference[:, None] + np.sqrt(2) * float(preference["group_sd"] or 0) * nodes)
             response = test.response.map(rules).to_numpy(int)
@@ -1829,13 +1930,25 @@ def analyze_mantis_choice(frame: pd.DataFrame, config: dict[str, Any] | None = N
     ambiguous = int(len(frame) - len(consistent))
     if consistent.empty:
         raise ValueError("No mutually consistent source endpoint annotations for a conditional choice fit")
-    fitted = fit_mantis_choice(consistent, config)
-    validation = validate_mantis_choice(consistent, config)
+    try:
+        fitted = fit_mantis_choice(consistent, config)
+        fitted["status"] = "complete"
+        validation = validate_mantis_choice(consistent, config)
+    except (ValueError, RuntimeError) as error:
+        fitted = {"status": "pending_nonestimable_design" if isinstance(error, NonestimableDesignError) else "pending_statistical_fit",
+                  "pending": [str(error)], "design_audit": getattr(error, "diagnostics", None),
+                  "numeric_claim_available": False}
+        validation = {"status": "pending", "pending": [str(error)], "scores": [], "training_contracts": [],
+                      "independent_unit": "individual with nested trials; separate whole-assay-date generalization",
+                      "future_outcomes_used_for_preprocessing": False}
+    descriptive_columns = [column for column in ["infection", "dop", "response", "year", "box", "stimulus_side", "analysis_included"] if column in frame]
+    descriptive = frame.groupby(descriptive_columns, dropna=False).size().reset_index(name="trials")
+    fitted["source_descriptive_counts"] = descriptive.astype(object).where(pd.notna(descriptive), None).to_dict(orient="records")
     fitted.update(source_coding_reconciled=ambiguous == 0, ambiguous_source_trials=ambiguous,
         included_source_trials=len(consistent), deposited_source_trials=len(frame),
         inference_scope=("Conditional diagnostic fit of mutually consistent deposited annotations; source coding remains unresolved"
                          if ambiguous else "Recorded source endpoint with individual/trial hierarchy"),
-        confirmatory_ready=bool(ambiguous == 0 and validation.get("status") == "complete"))
+        confirmatory_ready=bool(ambiguous == 0 and fitted["status"] == "complete" and validation.get("status") == "complete"))
     validation["source_coding_reconciled"] = ambiguous == 0
     validation["confirmatory_ready"] = fitted["confirmatory_ready"]
     if ambiguous:
@@ -1846,6 +1959,9 @@ def analyze_mantis_choice(frame: pd.DataFrame, config: dict[str, Any] | None = N
         "confirmatory_ready": False if ambiguous else fitted["confirmatory_ready"],
         "ambiguous_source_trials": ambiguous, "variants": {}, "pending": [],
         "interpretation": "Alternatives use recorded source result or observed location/window separately; they are diagnostic analyses of unresolved annotations, never corrections or independent replications"}
+    if fitted["status"] != "complete":
+        sensitivity["status"] = "pending"
+        sensitivity["pending"].extend(fitted["pending"])
     if ambiguous:
         alternatives = {"recorded_result_all_rows": frame.copy()}
         if "response_location_window" in frame:
@@ -1861,12 +1977,13 @@ def analyze_mantis_choice(frame: pd.DataFrame, config: dict[str, Any] | None = N
                     "independent_source_rows": alternative.source_row_index.astype(int).tolist() if "source_row_index" in alternative else None,
                     "fit": alternative_fit}
             except (ValueError, RuntimeError) as error:
-                sensitivity["variants"][label] = {"status": "pending", "reason": str(error)}
+                sensitivity["variants"][label] = {"status": "pending", "reason": str(error),
+                    "design_audit": getattr(error, "diagnostics", None), "numeric_claim_available": False}
                 sensitivity["pending"].append(f"{label}: {error}")
         # Report the source-unit interaction slope, undoing each variant's own
         # training DOP standardization before comparing point estimates.
         summaries = {}
-        for label, alternative, fit in [("mutually_consistent_rows", consistent, fitted),
+        for label, alternative, fit in [(label, alternative, fit) for label, alternative, fit in [("mutually_consistent_rows", consistent, fitted)] if fit["status"] == "complete"] + [
             *[(label, alternatives[label], record["fit"]) for label, record in sensitivity["variants"].items() if record["status"] == "complete"]]:
             raw = alternative.dop.to_numpy(float)
             divisor = 100. if config.get("dop_units") == "percent" else 1.
@@ -1889,14 +2006,15 @@ def analyze_mantis_choice(frame: pd.DataFrame, config: dict[str, Any] | None = N
 
 
 def aft_objective(theta: np.ndarray, x: np.ndarray, times: np.ndarray,
-                  censored: np.ndarray) -> float:
+                  censored: np.ndarray, prior_precision: np.ndarray | None = None) -> float:
     sigma = np.exp(theta[-1])
     z = (np.log(times) - x @ theta[:-1]) / sigma
     # Source convention: 1 denotes right censoring, not event occurrence.
     log_event = stats.norm.logpdf(z) - np.log(sigma) - np.log(times)
     log_survival = special.log_ndtr(-z)
+    precision = np.eye(x.shape[1]) / 2.25 if prior_precision is None else np.asarray(prior_precision, float)
     return float(-np.where(censored, log_survival, log_event).sum()
-                 + .5 * np.sum((theta[:-1] / 1.5) ** 2) + .5 * theta[-1] ** 2)
+                 + .5 * theta[:-1] @ precision @ theta[:-1] + .5 * theta[-1] ** 2)
 
 
 def fit_censored_latency(frame: pd.DataFrame, outcome: str,
@@ -1919,14 +2037,16 @@ def fit_censored_latency(frame: pd.DataFrame, outcome: str,
     times = np.where(censored, duration, times)
     if not np.isfinite(times).all() or (times <= 0).any() or (times > duration).any():
         raise ValueError("Event latency must be positive and inside its observation window")
-    x, names = design_matrix(table, ["male_infection", "female_infection", "male_size", "female_size"], ["year"])
+    x, names, design = design_matrix(table, ["male_infection", "female_infection", "male_size", "female_size"], ["year"],
+        protected_terms=["male_infection", "female_infection"], return_diagnostics=True)
     initial = np.zeros(x.shape[1] + 1)
     initial[0] = float(np.mean(np.log(times)))
-    result = optimize.minimize(aft_objective, initial, args=(x, times, censored), method="BFGS",
+    result = optimize.minimize(aft_objective, initial, args=(x, times, censored, np.asarray(design["prior_precision"])), method="BFGS",
                                options={"maxiter": 2000, "gtol": 1e-6})
     if not np.isfinite(result.fun) or np.linalg.norm(result.jac) > .02:
         raise RuntimeError(f"AFT fit did not converge: {result.message}")
     return {"outcome": outcome, "terms": names, "coefficient": result.x[:-1].tolist(),
+            "design_audit": design,
             "log_sigma": float(result.x[-1]), "covariance_laplace": np.asarray(result.hess_inv).tolist(),
             "n_pairs": int(table.pair_id.nunique()), "n_events": int((~censored).sum()),
             "n_censored": int(censored.sum()), "censor_convention": "1=right-censored",
@@ -1944,13 +2064,15 @@ def fit_mating_specificity(frame: pd.DataFrame, config: dict[str, Any] | None = 
     if table.pair_id.isna().any() or not set(table.male_escape).issubset({0, 1}) or not set(table.male_mounting).issubset({0, 1}):
         raise ValueError("Mating event coding and pair identifiers require source validation")
     def fit_pair(data: pd.DataFrame) -> tuple[dict[str, Any], dict[str, Any], float]:
-        x, names = design_matrix(data, ["male_infection", "female_infection", "male_size", "female_size"], ["year"])
+        x, names, design = design_matrix(data, ["male_infection", "female_infection", "male_size", "female_size"], ["year"],
+            protected_terms=["male_infection", "female_infection"], return_diagnostics=True)
         if "male_id" in data and data.male_id.duplicated().any():
             groups = data.male_id.astype(str).to_numpy()
         else:
             groups = None
-        escape = _map_binary(x, data.male_escape.to_numpy(float), names, groups)
-        mounting = _map_binary(x, data.male_mounting.to_numpy(float), names, groups)
+        escape = _map_binary(x, data.male_escape.to_numpy(float), names, groups, np.asarray(design["prior_precision"]))
+        mounting = _map_binary(x, data.male_mounting.to_numpy(float), names, groups, np.asarray(design["prior_precision"]))
+        escape["design_audit"] = mounting["design_audit"] = design
         index = names.index("male_infection")
         contrast = escape["coefficient"][index] - mounting["coefficient"][index]
         return escape, mounting, float(contrast)
@@ -1986,10 +2108,34 @@ def fit_mating_specificity(frame: pd.DataFrame, config: dict[str, Any] | None = 
     if len(draws) < .8 * repetitions:
         raise ValueError("Mating bootstrap lacks estimable independent clusters")
     return {"escape": escape, "mounting": mounting, "male_infection_coefficient_difference": contrast,
+            "design_audit": escape["design_audit"],
             "cluster_bootstrap_interval": np.quantile(draws, [.025, .975]).tolist(),
             "n_resampling_clusters": len(cluster_names), "failed_bootstrap_samples": failures,
             "individual_reuse_verified": {key: key in table for key in ("male_id", "female_id")},
             "contrast_definition": "male-infection log-odds coefficient for escape minus mounting"}
+
+
+def analyze_mating_behaviour(frame: pd.DataFrame, config: dict[str, Any] | None = None) -> dict[str, Any]:
+    config = config or {}
+    result = {}
+    for outcome in config.get("latency_outcomes", ["male_escape", "male_mounting"]):
+        try:
+            result[outcome] = dict(fit_censored_latency(frame, outcome, config), status="complete")
+        except (ValueError, RuntimeError) as error:
+            result[outcome] = {"status": "pending_nonestimable_design" if isinstance(error, NonestimableDesignError) else "pending_statistical_fit",
+                "pending": [str(error)], "design_audit": getattr(error, "diagnostics", None), "numeric_claim_available": False}
+    try:
+        result["specificity"] = dict(fit_mating_specificity(frame, config), status="complete")
+    except (ValueError, RuntimeError) as error:
+        result["specificity"] = {"status": "pending_nonestimable_design" if isinstance(error, NonestimableDesignError) else "pending_statistical_fit",
+            "pending": [str(error)], "design_audit": getattr(error, "diagnostics", None), "numeric_claim_available": False}
+    result["statistical_models_complete"] = all(record["status"] == "complete" for record in result.values())
+    canonical = frame.rename(columns={value: key for key, value in config.get("columns", {}).items()})
+    columns = [column for column in ["male_infection", "female_infection", "year", "male_escape", "male_mounting"] if column in canonical]
+    counts = (canonical.groupby(columns, dropna=False).size().reset_index(name="pair_records") if columns else
+              pd.DataFrame({"pair_records": [len(canonical)]}))
+    result["source_descriptive_counts"] = counts.astype(object).where(pd.notna(counts), None).to_dict(orient="records")
+    return result
 
 
 def run(config: dict[str, Any], root: Path, stage: str, **kwargs: Any) -> dict[str, Any]:
@@ -2121,9 +2267,7 @@ def run(config: dict[str, Any], root: Path, stage: str, **kwargs: Any) -> dict[s
             results.update(analyze_mantis_choice(choice_table, choice_settings))
             results["choice"]["source_audit"] = choice_audit
             choice_table.loc[choice_table.coding_ambiguous].to_parquet(output / "mantis_ambiguous_observations.parquet", index=False)
-            results["mating"] = {outcome: fit_censored_latency(mating_table, outcome, mating_settings)
-                                  for outcome in ("male_escape", "male_mounting")}
-            results["mating"]["specificity"] = fit_mating_specificity(mating_table, mating_settings)
+            results["mating"] = analyze_mating_behaviour(mating_table, mating_settings)
             results["mating"]["source_audit"] = mating_audit
             results["mating"]["inference_scope"] = ("Recorded pairs with verified individual identifiers"
                 if mating_audit["independence_verified"] else
@@ -2133,9 +2277,7 @@ def run(config: dict[str, Any], root: Path, stage: str, **kwargs: Any) -> dict[s
             if name == "choice":
                 results.update(analyze_mantis_choice(frame, source))
             elif name == "mating":
-                results[name] = {outcome: fit_censored_latency(frame, outcome, source)
-                                 for outcome in source.get("latency_outcomes", ["male_escape", "male_mounting"])}
-                results[name]["specificity"] = fit_mating_specificity(frame, source)
+                results[name] = analyze_mating_behaviour(frame, source)
         if not results:
             raise ValueError("No audited mantis source schemas")
         (output / "mantis_models.json").write_text(json.dumps(results, indent=2), encoding="utf-8")
@@ -2149,6 +2291,28 @@ def run(config: dict[str, Any], root: Path, stage: str, **kwargs: Any) -> dict[s
         sensitivity.update(config_sha256=canonical_hash(config), source_sha256=validation["source_sha256"],
             source_result_paths=validation["source_result_paths"], source_result_hashes=validation["source_result_hashes"])
         atomic_json(output / "mantis_choice_sensitivity.json", sensitivity)
+        audit_inputs = [candidate for candidate in [output / "mantis_models.json", output / "mantis_choice_canonical.parquet",
+            output / "mantis_mating_canonical.parquet", output / "mantis_source_audit.json",
+            output / "mantis_choice_validation.json", output / "mantis_choice_sensitivity.json"] if candidate.exists()]
+        choice_source = results.get("choice", {}).get("source_audit", {})
+        atomic_json(output / "mantis_statistical_design_audit.json", {
+            "config_sha256": canonical_hash(config), "source_sha256": validation["source_sha256"],
+            "choice_status": results.get("choice", {}).get("status"), "choice_design": results.get("choice", {}).get("design_audit"),
+            "choice_pending": results.get("choice", {}).get("pending", []),
+            "choice_source_coding_reconciled": choice_source.get("source_coding_reconciled", False),
+            "choice_source_trials": choice_source.get("trials"),
+            "choice_mutually_consistent_trials": choice_source.get("mutually_consistent_trials"),
+            "choice_ambiguous_trials": choice_source.get("ambiguous_trials"),
+            "choice_validation_status": validation.get("status"),
+            "choice_sensitivity_status": sensitivity.get("status"),
+            "choice_confirmatory_ready": results.get("choice", {}).get("confirmatory_ready", False),
+            "mating_models_complete": results.get("mating", {}).get("statistical_models_complete", False),
+            "mating_independence_verified": results.get("mating", {}).get("source_audit", {}).get("independence_verified", False),
+            "mating_models": {name: {key: record.get(key) for key in ["status", "pending", "design_audit"]}
+                for name, record in results.get("mating", {}).items() if isinstance(record, dict) and "status" in record},
+            "repair_rule": "Only likelihood nuisance aliases may be reparameterized, preserving the exact predictor span and the induced original Gaussian prior; protected primary confounding remains pending without coefficients or P values",
+            "source_result_paths": [str(candidate.resolve()) for candidate in audit_inputs],
+            "source_result_hashes": {str(candidate.resolve()): digest(candidate) for candidate in audit_inputs}})
         audit = results.get("choice", {}).get("source_audit", {})
         amendment = audit.get("parser_repair_amendment")
         if amendment:

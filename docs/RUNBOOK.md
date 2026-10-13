@@ -68,6 +68,8 @@ Preserve the previous immutable release, its native receipts, logs and checkpoin
 
 Code repairs require fresh source/configuration-bound benchmarks. Set `agents.output_dir` to a new relative result namespace to preserve earlier policy measurements. RNA processing and molecular-runtime namespaces likewise preserve earlier outputs; reuse of the unchanged reference index requires its pinned reference proof.
 
+Lease completion bookkeeping writes a separate durable finalization intent before waiting for the shared budget guard. Lock acquisition retries are bounded by 120 seconds and the native allocation deadline. Exhausted contention preserves the study command's original outcome and retains the reservation until positive terminal Slurm accounting reconciles it. The intent records elapsed time and any original exception; it never releases a reservation or substitutes estimated costs for native allocation evidence.
+
 The explicit `scripts/repair_transfer.py` maintenance interface hashes and quarantines in Slurm. It accepts one checksum-failed eligible ant asset and a new recovery identity. A complete-length partial is independently hashed, compared with its unchanged provider checksum, and preserved with its sidecar and forensic receipt. Resume `scripts/transfer_sources.py --group rna` as a finite file transfer on the separately qualified Narval transfer endpoint; compute-proxy access to ENA is not assumed. Verified final sources are never quarantined or overwritten. A partial with different provenance, an active transfer guard, a valid partial, or an ambiguous recovery journal requires inspection rather than automatic replay.
 
 Agent evaluation samples only active episodes, uses paired episode-specific action streams, and validates logits, recurrent states and clean-policy divergence. Genuine numerical failures retain planned episode/grid membership with null endpoints and explicit diagnostics. They cannot supply complete timing coverage, inferred effects or H4 support. Failed episodes and seeds are never imputed or discarded.
@@ -79,6 +81,8 @@ The author-defined processed fly frame clock permits recording-relative chronolo
 Independent mantis behavioural and RNA subjects remain separate. The computational agent primary protocol uses synthetic perturbations; behavioural model parameters do not identify signs of neural weight changes. Biological transfer requires a separately validated prospective bridge.
 
 Deposited mantis endpoint disagreements remain in the canonical table and source audit. The declared parser amendment permits a conditional fit of mutually consistent annotations and separately labelled all-row recorded-result and location/window sensitivity fits. These diagnostics do not correct the source or establish an unqualified author replication; source reconciliation remains pending even if numerical fitting completes.
+
+Primary H1–H4 completion and required auxiliary-assay readiness are recorded separately. Whole-study analysis and publication readiness require both, including source-matched mantis model, predictive-validation, coding and independence evidence. A completed mantis Slurm job alone establishes neither numerical model completion nor scientific readiness.
 
 ## Review and retention
 

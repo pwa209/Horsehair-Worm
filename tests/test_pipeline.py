@@ -177,8 +177,41 @@ def test_controller_submits_each_phase_once_and_waits_for_native_dependencies(co
     third = fixture.tick({"100":state(),"200":state()})
     assert len(fixture.submitted)==2 and third["phases"]["phase-b"]["status"]=="queued"
     final = fixture.tick({"100":state(),"200":state(),"201":state()})
-    assert final["status"]=="complete" and final["scientific_results_complete"]
+    assert final["status"]=="waiting_for_primary_scientific_evidence" and final['phase_graph_complete']
+    assert not final['primary_analyses_complete'] and not final["scientific_results_complete"]
     assert not final["publication_ready"] and len(fixture.submitted)==2
+
+
+def test_native_graph_completion_cannot_complete_pending_auxiliary_science(controller_fixture,monkeypatch):
+    from horsehair import report
+    fixture=controller_fixture
+    names=('behaviour','interventions','molecular-transfer','agents-final')
+    monkeypatch.setattr(pipeline,'NODES',tuple((name,('initial:ready',),None) for name in names))
+    # Claim-validation and auxiliary statistical contracts have their own actual
+    # file/hash tests. This fixture isolates the scheduler completion boundary.
+    monkeypatch.setattr(pipeline,'_phase_outputs',lambda *a,**k:(True,None))
+    auxiliary={'ready':False,'status':'pending','required_assays':['mantis_choice'],'assays':{},
+               'pending':['mantis_choice: original source ambiguity remains'],'source_result_hashes':{}}
+    monkeypatch.setattr(report,'auxiliary_readiness',lambda *a,**k:auxiliary)
+    fixture.tick({'100':state()})
+    assert len(fixture.submitted)==4
+    native={'100':state(),**{str(200+i):state() for i in range(4)}}
+    final=fixture.tick(native)
+    assert final['phase_graph_complete'] and final['primary_analyses_complete']
+    assert not final['auxiliary_analyses_complete'] and not final['scientific_results_complete']
+    assert final['status']=='waiting_for_auxiliary_scientific_inputs' and not final['failed_native_stages']
+    assert not final['publication_ready']
+
+
+def test_completed_numeric_H4_receipt_with_pending_claim_cannot_complete_scientific_phase(controller_fixture,monkeypatch):
+    from horsehair import report
+    fixture=controller_fixture
+    path=fixture.root/'results/inference/H4.json'
+    atomic_json(path,{'claim_id':'H4','status':'complete','claim_status':'pending',
+                     'config_sha256':canonical_hash(fixture.config),'source_sha256':fixture.identity['sha256']})
+    monkeypatch.setattr(report,'validate_result',lambda *a:None)
+    valid,reason=pipeline._phase_outputs('agents-final',fixture.config,fixture.root,fixture.identity['sha256'])
+    assert not valid and 'qualification remains pending' in reason
 
 
 def add_capacity_guard(fixture):

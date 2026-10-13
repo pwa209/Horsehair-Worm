@@ -24,7 +24,7 @@ from .core import atomic_json, canonical_hash, read_json, source_identity, nativ
 from .molecular import (MolecularError, freeze_scores, parse_orthogroups,
     prepare_reference, read_fasta, reversible_scores, run_external_prediction,
     select_representative_proteins, transdecoder_gene_map, write_h3,
-    write_table, write_target_family_map, validate_tool_runtime, run_bounded_tool)
+    write_table, write_target_family_map, validate_tool_runtime, run_bounded_tool, validate_family_provenance)
 
 GO_ROOTS = {"neuronal": "GO:0050877", "circadian": "GO:0007623"}
 
@@ -309,8 +309,11 @@ def run_native_orthology(config, root):
     candidates = list(run.rglob("Phylogenetic_Hierarchical_Orthogroups/N0.tsv"))
     if len(candidates) != 1:
         raise MolecularError("Actual OrthoFinder run did not yield one unambiguous root HOG table")
+    original_groups = list(run.rglob("Orthogroups/Orthogroups.tsv"))
+    if len(original_groups) != 1:
+        raise MolecularError("Actual OrthoFinder run lacks one original MCL family table")
     protein_map = pd.read_csv(directory / "protein_gene_map.tsv", sep="\t")
-    orthology, coverage = parse_orthogroups(candidates[0], protein_map)
+    orthology, coverage = parse_orthogroups(candidates[0], protein_map, orthogroups_path=original_groups[0])
     write_table(orthology, directory / "gene_orthology.tsv")
     atomic_json(directory / "orthology_coverage.json", coverage)
     family = write_target_family_map(orthology, directory / "fly_target_families.tsv")
@@ -324,8 +327,9 @@ def run_native_orthology(config, root):
     if not alignment.is_file() or not alignment.stat().st_size:
         raise MolecularError("No actual ant–fly protein alignments for orthology descriptors")
     paths = [runtime / "runtime_qualification.json", directory / "reference_preparation.json",
-        directory / "proteomes.json", directory / "protein_gene_map.tsv", candidates[0],
+        directory / "proteomes.json", directory / "protein_gene_map.tsv", candidates[0], original_groups[0],
         directory / "gene_orthology.tsv", alignment, directory / "fly_target_families.tsv",
+        directory / "fly_target_families.source_provenance.json",
         directory / "orthology_coverage.json", *(item["path"] for item in proteomes.values()),
         *(command["log_path"] for command in commands)]
     report = {"status": "native_primary_ant_fly_orthology_computed", "elapsed_seconds": time.monotonic()-started,
@@ -390,9 +394,12 @@ def freeze_native_scores(config, root):
         raise MolecularError("Molecular freeze requires actual 48-discovery/12-challenge ant count-model audit")
     orthology = pd.read_csv(directory / "gene_orthology.tsv", sep="\t")
     descriptors = pd.read_csv(directory / "fly_gene_descriptors.tsv", sep="\t")
+    family_source_path = directory / "fly_target_families.source_provenance.json"
+    validate_family_provenance(read_json(family_source_path), orthology)
     provenance = {"source_manifest_hash": _manifest(root)["manifest_hash"], "contrast_design_hash": canonical_hash(audit), "orthology_hash": canonical_hash(orthology.fillna("").to_dict("records")), "nuisance_descriptor_hash": canonical_hash(descriptors.fillna("").to_dict("records")), "fly_outcomes_inspected": False, "phase_contrast_path": str(contrast_path.resolve()), "phase_contrast_sha256": file_hash(contrast_path), "target_outcome_artifacts_absent_at_freeze": True}
     provenance.update(fly_gene_catalog_path=str((directory / "fly_gene_catalog.tsv").resolve()), fly_gene_catalog_sha256=file_hash(directory / "fly_gene_catalog.tsv"), target_family_map_path=str((directory / "fly_target_families.tsv").resolve()), target_family_map_sha256=file_hash(directory / "fly_target_families.tsv"))
-    inputs = [contrast_path, audit_path, audit_path.parent.parent / "ant_counts.tsv", audit_path.parent.parent / "ant_samples.tsv", directory / "gene_orthology.tsv", directory / "fly_gene_descriptors.tsv", directory / "descriptor_provenance.json", directory / "reference_preparation.json", directory / "fly_target_families.tsv"]
+    provenance.update(target_family_source_provenance_path=str(family_source_path.resolve()), target_family_source_provenance_sha256=file_hash(family_source_path))
+    inputs = [contrast_path, audit_path, audit_path.parent.parent / "ant_counts.tsv", audit_path.parent.parent / "ant_samples.tsv", directory / "gene_orthology.tsv", directory / "fly_gene_descriptors.tsv", directory / "descriptor_provenance.json", directory / "reference_preparation.json", directory / "fly_target_families.tsv", family_source_path]
     if not all(path.is_file() for path in inputs):
         raise MolecularError("Native molecular freeze source results are incomplete")
     provenance.update(source_result_paths=[str(path.resolve()) for path in inputs], source_result_hashes={str(path.resolve()): file_hash(path) for path in inputs})
@@ -470,11 +477,11 @@ def benchmark_primary(config, root):
 
 
 def _transfer_method(config):
-    return {"algorithm": "frozen-score incremental rank association; whole-family permutation within fixed nuisance bins; orthogroup bootstrap with joint shared-control Gaussian measurement error",
+    return {"algorithm": "frozen-score incremental rank association; whole-original-MCL-family permutation within fixed nuisance bins; original-MCL-family bootstrap with joint shared-control Gaussian measurement error",
         "gene_permutations": int(config["molecular"].get("gene_permutations", 10_000)),
         "bootstrap_replicates": int(config["inference"].get("bootstrap_replicates", 10_000)),
         "learned_predictors": bool(config["molecular"].get("secondary_learned_predictors", True)),
-        "learned_predictor_eligibility": {"minimum_genes": 40, "minimum_orthogroups": 20},
+        "learned_predictor_eligibility": {"minimum_genes": 40, "minimum_original_mcl_families": 20},
         "molecular_module_sha256": file_hash(Path(__file__).with_name("molecular.py")),
         "pipeline_module_sha256": file_hash(__file__)}
 
@@ -508,7 +515,7 @@ def predict_native(config, root):
         "native_execution": native_job_id() is not None, "elapsed_seconds": time.monotonic()-started,
         "working_bytes": sum(path.stat().st_size for path in output.rglob("*") if path.is_file()),
         "working_files": sum(path.is_file() for path in output.rglob("*")),
-        "genes": prediction["genes"], "orthogroups": prediction["orthogroups"],
+        "genes": prediction["genes"], "orthogroups": prediction["orthogroups"], "families": prediction["families"],
         "benchmark_uses_full_primary_numerics": True, "complete_configured_transfer": True,
         "claim_status": "pending_joint_Holm", **_result_proof(paths)}
     return claim, _write_completed_stage(receipt_path, receipt)
@@ -546,7 +553,7 @@ def benchmark_transfer(config, root):
         "benchmark_uses_full_primary_numerics": True, "slurm_job_id": transfer["slurm_job_id"],
         "full_config_sha256": canonical_hash(config), "config_sha256": canonical_hash(config),
         "source_sha256": transfer["source_sha256"], "method_sha256": transfer["method_sha256"],
-        "work_unit_definition": "One complete frozen ant-to-fly transfer: all configured grouped permutations and joint-covariance orthogroup bootstrap",
+        "work_unit_definition": "One complete frozen ant-to-fly transfer: all configured grouped permutations and joint-covariance original-MCL-family bootstrap",
         "numerical_result_already_completed": True}
     report = {"status": "native_molecular_transfer_workload_completed", "complete_declared_workload": True,
         "declared_workload_scope": "Remaining primary molecular transfer inference; source preparation, full orthology, ant count models and score freeze are completed prerequisites",
@@ -582,7 +589,10 @@ def run_mantis_orthology(config, root):
     if len(candidates) != 1:
         raise MolecularError("Three-species corroboration did not yield one actual HOG table")
     mapping = pd.concat([pd.read_csv(primary / "protein_gene_map.tsv", sep="\t"), pd.read_csv(mantis / "protein_gene_map.tsv", sep="\t")], ignore_index=True)
-    orthology, coverage = parse_orthogroups(candidates[0], mapping)
+    original_groups = list((directory / "proteomes").rglob("Orthogroups/Orthogroups.tsv"))
+    if len(original_groups) != 1:
+        raise MolecularError("Three-species corroboration lacks one original MCL family table")
+    orthology, coverage = parse_orthogroups(candidates[0], mapping, orthogroups_path=original_groups[0])
     write_table(orthology, directory / "gene_orthology.tsv")
     atomic_json(directory / "orthology_coverage.json", coverage)
     return {"status": "native_three_species_corroboration_computed", "coverage": coverage, "plan": plan, "scope": "Exploratory three-species mappings; frozen primary ant–fly analysis unchanged"}

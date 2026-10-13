@@ -106,15 +106,17 @@ supports the procedure.
 
 Versioned checksummed ant, mantis and fly proteomes run through
 `orthofinder -f proteomes -t THREADS -a ANALYSIS_THREADS -S diamond`. The adapter
-accepts the current root hierarchical orthogroup `N0.tsv` and explicitly labeled
-legacy Orthogroups tables. [OrthoFinder documentation](https://github.com/davidemms/OrthoFinder)
+accepts the root hierarchical orthogroup `N0.tsv` with its original `OG` field
+and verifies it against the actual MCL `Orthogroups.tsv`. HOG-only legacy tables
+remain pending until that family proof exists. [OrthoFinder documentation](https://github.com/davidemms/OrthoFinder)
 describes root HOGs and species/gene-tree inference. Primary transfer uses strict
 one-ant/one-fly-gene mappings, with measured/proteome denominators and unmapped
 target lists. Missing mantis ORFs do not exclude an otherwise valid ant–fly
 primary pair. Three-species one-to-one mappings are separately labeled for mantis
 corroboration. Broader orthogroup aggregation is a declared sensitivity analysis.
-An outcome-independent fly target-family table retains all source HOG members,
-including related genes, for uncertainty and permutation clustering. A fly
+An outcome-independent fly target-family table retains each transfer HOG and
+its verified original MCL family, keeping related genes together for uncertainty
+and permutation clustering. A fly
 reference and neuronal/circadian annotation must still be version-frozen from
 actual public source IDs before a prediction can execute.
 
@@ -142,8 +144,13 @@ Qualification verifies a known log-linear `curve_fit` serially and in a forked
 worker. Its bounded OrthoFinder fixture contains identical copies of eight
 distinct proteins from the pinned official example and one additional identical
 paralog per species. The full run must retain all 18 known proteins in both the
-orthogroup and root-HOG tables, recover the eight identity pairs, and recover the
-four-gene paralog group. An independent FastME distance fixture and the actual
+orthogroup and root-HOG tables and preserve the verified original orthogroup
+family of each protein. All eight identity pairs and the four-gene paralog group
+must be recovered in the MCL/orthogroup table. The root-HOG table must recover
+the seven unambiguous identity pairs; the four identical paralogs may occupy
+multiple HOGs within their original family because their gene-tree partition is
+not identifiable from identical sequences. No genealogy is inferred from that
+tie. An independent FastME distance fixture and the actual
 official TransDecoder transcript example must also pass. The additional paralogs
 exercise the upstream gene-distance branch, which selects groups of at least
 four genes; an all-two-gene fixture triggers an upstream undefined cleanup
@@ -156,6 +163,21 @@ are preserved; reuse requires the complete qualification receipt, pinned archive
 hashes, wrapper/output hashes, interpreter and native numerical-library proof.
 Missing dependencies or failed checks stop qualification. No instruction from
 a biological dataset README is executed.
+
+The molecular tables retain two different identifiers. `orthogroup` is the root
+HOG used for ant–fly transfer; `family_id` is its original MCL orthogroup, checked
+against the actual `Orthogroups.tsv` for every protein. Related genes remain
+together by `family_id` in permutation blocks, cluster bootstraps and supervised
+training/validation folds even when their HOGs differ. No family is inferred from
+a HOG name. Older HOG-only tables remain pending until the original MCL source
+mapping is verified.
+
+The outcome-blind fly family map preserves `gene_id`, `orthogroup` and `family_id`.
+Its `.source_provenance.json` records the N0/MCL source paths and hashes,
+protein-to-gene mapping hash and complete orthology hash. The molecular freeze
+binds that file using `target_family_source_provenance_path` and
+`target_family_source_provenance_sha256`; external gene export must carry the
+same source digest. Both transfer-HOG and related-family counts are reported.
 
 Score freezing refuses fly outcome columns or a provenance flag indicating that
 target outcomes were inspected. It requires source, contrast, orthology and
@@ -289,9 +311,10 @@ benchmark supplies real reusable orthology, not a confirmatory H3 result. A late
 freeze refuses existing screen gene-effect/provenance exports and records the
 exact prior gene catalog and family map. Those independent inputs must precede
 gene aggregation. Mantis ORFs and a separate three-species orthology run never
-modify the frozen primary namespace. Biological agent mechanism directions are
-provided by the validated training-only behavioural model; gene association
-alone cannot manufacture their signed mechanism coefficients.
+modify the frozen primary namespace. Validated training-only behavioural models
+provide behavioural parameter evidence. Signed neural mechanism directions
+require a separate prospective bridge; gene association and behavioural
+parameters alone cannot identify them.
 
 ## Measured prospective resource admission
 

@@ -43,7 +43,7 @@ TOOL_RUNTIME = {
 SITE_PERL = "/cvmfs/soft.computecanada.ca/easybuild/software/2020/Core/perl/5.30.2/bin/perl"
 ORTHOFINDER_PYTHON_PACKAGES = {"numpy": "1.26.4", "scipy": "1.11.2"}
 RUNTIME_QUALIFICATION_RECIPE = {
-    "version": 3, "orthofinder_fixture_proteins": 8,
+    "version": 4, "orthofinder_fixture_proteins": 8,
     "orthofinder_fixture_species": ["qualification_a", "qualification_b"],
     "orthofinder_fixture_definition": "Identical copies of eight distinct 80-400-aa proteins of different lengths from the first pinned official ExampleData FASTA, plus a known duplicate of the first protein in each species to exercise a four-gene orthogroup; software identity check, not a species experiment",
     "orthofinder_fixture_paralogs_per_species": 1,
@@ -56,6 +56,7 @@ RUNTIME_QUALIFICATION_RECIPE = {
     "worker_diagnostics": "Per-PID C-level faulthandler traces for the verified OrthoFinder launcher; process-group state snapshots at 15/45/120/240 seconds before the unchanged 300-second ceiling",
     "upstream_fixture_constraint": "Unmodified OrthoFinder 2.5.5 OGs() selects groups with at least four genes for dendroblast distances; an all-two-gene fixture leaves cleanup variable m undefined. The known four-gene utility group exercises this branch. This qualification does not replace the mandatory full ant/fly proteome benchmark.",
     "orthofinder_python_packages": ORTHOFINDER_PYTHON_PACKAGES,
+    "root_hog_fixture_assertion": "Bijective coverage of all 18 known utility proteins; seven unambiguous identity pairs share a root HOG; all four identical paralogs retain the same verified MCL/OG family while any within-family HOG partition is allowed. Identical-paralog genealogy is not identifiable and is never inferred from this fixture.",
 }
 
 
@@ -741,20 +742,22 @@ def transdecoder_gene_map(peptides: str | Path, transcript_gene_map: pd.DataFram
 
 
 def join_frozen_gene_features(scores: pd.DataFrame, orthology: pd.DataFrame, targets: pd.DataFrame, descriptors: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
-    targets = targets.rename(columns={"orthogroup": "source_target_orthogroup"})
+    targets = targets.rename(columns={"orthogroup": "source_target_orthogroup", "family_id": "source_target_family_id"})
     if scores.gene_id.duplicated().any() or targets.gene_id.duplicated().any() or descriptors.gene_id.duplicated().any():
         raise MolecularError("Molecular score, gene target and nuisance descriptor rows must be unique")
-    required = {"species", "gene_id", "orthogroup", "one_to_one"}
+    required = {"species", "gene_id", "orthogroup", "family_id", "one_to_one"}
     if not required.issubset(orthology):
         raise MolecularError("Validated orthology table required")
     one = orthology[orthology.one_to_one.astype(str).str.lower().isin(["true", "1"])]
-    ant = one[one.species == "ant"][["gene_id", "orthogroup"]]
-    fly = one[one.species == "fly"][["gene_id", "orthogroup"]]
+    ant = one[one.species == "ant"][["gene_id", "orthogroup", "family_id"]]
+    fly = one[one.species == "fly"][["gene_id", "orthogroup", "family_id"]].rename(columns={"family_id": "fly_family_id"})
     if ant.orthogroup.duplicated().any() or fly.orthogroup.duplicated().any():
         raise MolecularError("One-to-one orthogroup flags disagree with mapping multiplicity")
     mapped = scores.merge(ant, on="gene_id", validate="one_to_one").rename(columns={"gene_id": "ant_gene_id"})
     mapped = mapped.merge(fly, on="orthogroup", validate="one_to_one")
-    frame = targets.merge(mapped[["gene_id", "ant_gene_id", "orthogroup", "reversible_score"]], on="gene_id", validate="one_to_one")
+    if not mapped.family_id.eq(mapped.fly_family_id).all():
+        raise MolecularError("Ant/fly transfer HOG members disagree on their verified original MCL family")
+    frame = targets.merge(mapped[["gene_id", "ant_gene_id", "orthogroup", "family_id", "reversible_score"]], on="gene_id", validate="one_to_one")
     frame = frame.merge(descriptors, on="gene_id", validate="one_to_one")
     required_columns = ["effect", "effect_se", "reversible_score", *BASELINE_COLUMNS]
     absent = set(required_columns) - set(frame)
@@ -897,11 +900,24 @@ def orthology_plan(proteomes: dict[str, dict], output: str | Path, *, threads: i
     return report
 
 
-def parse_orthogroups(path: str | Path, protein_map: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
+def parse_orthogroups(path: str | Path, protein_map: pd.DataFrame, *, orthogroups_path: str | Path | None = None) -> tuple[pd.DataFrame, dict]:
     required = {"species", "protein_id", "gene_id"}
     if not required.issubset(protein_map) or protein_map.duplicated(["species", "protein_id"]).any():
         raise MolecularError("Protein-to-gene map must be explicit and unique")
     source = pd.read_csv(path, sep="\t", dtype=str).fillna("")
+    if orthogroups_path is None or "OG" not in source:
+        raise MolecularError("Verified original MCL family_id requires N0 OG identifiers and the actual Orthogroups.tsv; older HOG-only tables remain pending")
+    original = pd.read_csv(orthogroups_path, sep="\t", dtype=str).fillna("")
+    if "Orthogroup" not in original:
+        raise MolecularError("Original MCL table lacks its source Orthogroup identifiers")
+    protein_families = {}
+    for row in original.to_dict("records"):
+        for species in ["ant", "mantis", "fly"]:
+            for protein in filter(None, (p.strip() for p in row.get(species, "").split(","))):
+                key = (species, protein)
+                if key in protein_families or not row["Orthogroup"]:
+                    raise MolecularError("Original MCL protein family is missing or ambiguous")
+                protein_families[key] = row["Orthogroup"]
     if "HOG" in source and "Orthogroup" not in source:
         source = source.rename(columns={"HOG": "Orthogroup"})
     if not {"Orthogroup", "ant", "fly"}.issubset(source):
@@ -914,6 +930,8 @@ def parse_orthogroups(path: str | Path, protein_map: pd.DataFrame) -> tuple[pd.D
         genes = {}
         for species in ["ant", "mantis", "fly"]:
             proteins = [p.strip() for p in record[species].split(",") if p.strip()]
+            if not record.OG or any(protein_families.get((species, p)) != record.OG for p in proteins):
+                raise MolecularError("Root HOG family disagrees with the original verified MCL protein family")
             try:
                 genes[species] = sorted({mapping[(species, p)] for p in proteins})
             except KeyError as error:
@@ -921,7 +939,7 @@ def parse_orthogroups(path: str | Path, protein_map: pd.DataFrame) -> tuple[pd.D
         one_to_one = len(genes["ant"]) == 1 and len(genes["fly"]) == 1
         three_species = one_to_one and len(genes["mantis"]) == 1
         for species, items in genes.items():
-            rows.extend({"orthogroup": record.Orthogroup, "species": species, "gene_id": gene, "one_to_one": one_to_one, "ant_fly_one_to_one": one_to_one, "three_species_one_to_one": three_species} for gene in items)
+            rows.extend({"orthogroup": record.Orthogroup, "family_id": record.OG, "species": species, "gene_id": gene, "one_to_one": one_to_one, "ant_fly_one_to_one": one_to_one, "three_species_one_to_one": three_species} for gene in items)
     frame = pd.DataFrame(rows)
     if frame.empty or frame.duplicated(["species", "gene_id"]).any():
         raise MolecularError("Empty orthology or source gene assigned to multiple orthogroups")
@@ -932,7 +950,14 @@ def parse_orthogroups(path: str | Path, protein_map: pd.DataFrame) -> tuple[pd.D
         confidence = frame.three_species_one_to_one if species == "mantis" else frame.one_to_one
         one = frame.loc[(frame.species == species) & confidence, "gene_id"].nunique()
         coverage[species] = {"available_genes": denominator, "mapped_genes": mapped, "one_to_one_genes": one, "mapping_fraction": mapped / denominator if denominator else 0}
-    return frame, {"coverage": coverage, "orthology_hash": canonical_hash(frame.to_dict("records")), "input_sha256": file_hash(path), "status": "validated"}
+    provenance = {"schema_version": 1, "status": "verified_original_mcl_families",
+        "family_definition": "family_id is the verified original MCL Orthogroup; orthogroup is the root HOG used for transfer",
+        "orthology_hash": canonical_hash(frame.fillna("").to_dict("records")),
+        "protein_gene_map_hash": canonical_hash(protein_map.fillna("").to_dict("records")),
+        "source_result_paths": [str(Path(p).resolve()) for p in [path, orthogroups_path]],
+        "source_result_hashes": {str(Path(p).resolve()): file_hash(p) for p in [path, orthogroups_path]}}
+    frame.attrs["family_provenance"] = provenance
+    return frame, {"coverage": coverage, "orthology_hash": provenance["orthology_hash"], "input_sha256": file_hash(path), "family_provenance": provenance, "status": "validated"}
 
 
 def _residual(values: np.ndarray, baseline: np.ndarray) -> np.ndarray:
@@ -951,17 +976,20 @@ def incremental_rank_association(frame: pd.DataFrame) -> float:
 
 
 def _permutation_blocks(frame: pd.DataFrame) -> list[list[np.ndarray]]:
-    meta = frame.groupby("orthogroup", sort=True).agg(size=("gene_id", "size"), expression=("average_expression", "mean"), confidence=("orthology_confidence", "mean"), precision=("effect_se", "mean"))
+    if "family_id" not in frame or frame.family_id.isna().any() or frame.family_id.astype(str).str.strip().eq("").any():
+        raise MolecularError("Related-gene blocks require verified original MCL family_id; HOG-only tables remain pending")
+    meta = frame.groupby("family_id", sort=True).agg(size=("gene_id", "size"), expression=("average_expression", "mean"), confidence=("orthology_confidence", "mean"), precision=("effect_se", "mean"))
     for col in ["expression", "confidence", "precision"]:
         meta[col + "_bin"] = np.minimum(1, (meta[col].rank(method="average", pct=True) * 2).astype(int))
-    grouped = {key: frame.index[frame.orthogroup == key].to_numpy() for key in meta.index}
+    grouped = {key: frame.index[frame.family_id == key].to_numpy() for key in meta.index}
     return [[grouped[key] for key in stratum.index] for _, stratum in meta.groupby(["size", "expression_bin", "confidence_bin", "precision_bin"]) if len(stratum) >= 2]
 
 
 def grouped_permutation_indices(frame: pd.DataFrame, rng: np.random.Generator) -> tuple[np.ndarray, int]:
     """Exchange whole gene-family blocks within matched nuisance bins.
 
-    Equal block sizes keep all orthogroup genes together and permit an actual
+    Equal block sizes keep all original MCL family genes together, including
+    members of different root HOGs, and permit an actual
     permutation rather than averaging/replicating target values. Singleton strata
     remain fixed, and an uninformative permutation scheme is rejected upstream.
     """
@@ -975,7 +1003,7 @@ def grouped_permutation_indices(frame: pd.DataFrame, rng: np.random.Generator) -
 
 
 def external_prediction(frame: pd.DataFrame, freeze: dict, *, permutations: int = 10_000, bootstrap_replicates: int = 10_000, seed: int = 271828, outcome_covariance: np.ndarray | None = None) -> dict:
-    required = {"gene_id", "orthogroup", "effect", "effect_se", "reversible_score", *BASELINE_COLUMNS}
+    required = {"gene_id", "orthogroup", "family_id", "effect", "effect_se", "reversible_score", *BASELINE_COLUMNS}
     if not required.issubset(frame):
         raise MolecularError(f"External prediction lacks baseline/outcome columns: {sorted(required - set(frame))}")
     if freeze.get("status") != "frozen_before_external_outcomes":
@@ -1020,7 +1048,7 @@ def external_prediction(frame: pd.DataFrame, freeze: dict, *, permutations: int 
         residual_target = y - baseline_ranked @ (projector @ y)
         null[index] = np.corrcoef(residual_score, residual_target)[0,1]
     p = float((1 + (np.abs(null) >= abs(observed)).sum()) / (permutations + 1))
-    cluster_rows = [group.index.to_numpy() for _, group in frame.groupby("orthogroup", sort=True)]
+    cluster_rows = [group.index.to_numpy() for _, group in frame.groupby("family_id", sort=True)]
     bootstrap = []
     for _ in range(max(bootstrap_replicates + 10, math.ceil(1.2 * bootstrap_replicates))):
         sample_indices = np.concatenate([cluster_rows[i] for i in rng.integers(0, len(cluster_rows), size=len(cluster_rows))])
@@ -1040,11 +1068,11 @@ def external_prediction(frame: pd.DataFrame, freeze: dict, *, permutations: int 
     baseline = np.column_stack([np.ones(len(frame)), frame[BASELINE_COLUMNS].to_numpy(), frame.reversible_score.to_numpy()])
     weights = 1 / np.square(frame.effect_se.to_numpy())
     weighted = np.linalg.lstsq(baseline * np.sqrt(weights)[:, None], np.abs(original) * np.sqrt(weights), rcond=None)[0]
-    return {"genes": len(frame), "orthogroups": frame.orthogroup.nunique(), "primary_incremental_rank_correlation": observed, "incremental_rank_ci95": np.quantile(bootstrap, [.025, .975]).tolist(), "bootstrap_unit": "orthogroup", "bootstrap_replicates": len(bootstrap), "shared_control_covariance_propagated": noise_factor is not None, "interval_method": "orthogroup bootstrap plus joint Gaussian estimation-error propagation from actual shared-control gene covariance" if noise_factor is not None else "orthogroup bootstrap conditional on observed gene estimates", "permutation_interpretation": "Conditional on observed gene estimates; assumes whole-family exchangeability within fixed nuisance bins; does not integrate estimation uncertainty into the permutation P value", "unadjusted_spearman": float(spearmanr(frame.reversible_score, np.abs(frame.effect)).statistic), "permutation_p": p, "permutations": permutations, "movable_genes": movable, "permutation_seed": seed, "null_quantiles": np.quantile(null, [0.025, 0.5, 0.975]).tolist(), "weighted_molecular_coefficient": float(weighted[-1]), "freeze_hash": freeze.get("freeze_hash"), "secondary_learned_predictor_eligible": len(frame) >= 40 and frame.orthogroup.nunique() >= 20, "baseline_columns": BASELINE_COLUMNS}
+    return {"genes": len(frame), "orthogroups": frame.orthogroup.nunique(), "families": frame.family_id.nunique(), "primary_incremental_rank_correlation": observed, "incremental_rank_ci95": np.quantile(bootstrap, [.025, .975]).tolist(), "bootstrap_unit": "original_mcl_family", "bootstrap_replicates": len(bootstrap), "shared_control_covariance_propagated": noise_factor is not None, "interval_method": "original-MCL-family bootstrap plus joint Gaussian estimation-error propagation from actual shared-control gene covariance" if noise_factor is not None else "original-MCL-family bootstrap conditional on observed gene estimates", "permutation_interpretation": "Conditional on observed gene estimates; assumes whole-original-MCL-family exchangeability within fixed nuisance bins; does not integrate estimation uncertainty into the permutation P value", "unadjusted_spearman": float(spearmanr(frame.reversible_score, np.abs(frame.effect)).statistic), "permutation_p": p, "permutations": permutations, "movable_genes": movable, "permutation_seed": seed, "null_quantiles": np.quantile(null, [0.025, 0.5, 0.975]).tolist(), "weighted_molecular_coefficient": float(weighted[-1]), "freeze_hash": freeze.get("freeze_hash"), "secondary_learned_predictor_eligible": len(frame) >= 40 and frame.family_id.nunique() >= 20, "baseline_columns": BASELINE_COLUMNS}
 
 
 def nested_gene_prediction(frame: pd.DataFrame, *, embedding_columns: list[str] | None = None, seed: int = 271828) -> pd.DataFrame:
-    """Nested orthogroup-held-out tuning with train-only transformations."""
+    """Nested original-MCL-family-held-out tuning with train-only transformations."""
     from sklearn.decomposition import PCA
     from sklearn.ensemble import GradientBoostingRegressor
     from sklearn.linear_model import ElasticNet, Ridge
@@ -1052,14 +1080,14 @@ def nested_gene_prediction(frame: pd.DataFrame, *, embedding_columns: list[str] 
     from sklearn.pipeline import Pipeline
     from sklearn.preprocessing import StandardScaler
     from sklearn.compose import ColumnTransformer
-    if len(frame) < 40 or frame.orthogroup.nunique() < 20 or frame.gene_id.duplicated().any():
-        raise MolecularError("Supervised augmentation requires forty unique genes across twenty orthogroups")
+    if "family_id" not in frame or len(frame) < 40 or frame.family_id.nunique() < 20 or frame.gene_id.duplicated().any():
+        raise MolecularError("Supervised augmentation requires forty unique genes across twenty verified original MCL families")
     embedding_columns = embedding_columns or []
     baseline_columns = BASELINE_COLUMNS + (["sequence_identity"] if embedding_columns else [])
     columns = baseline_columns + ["reversible_score"] + embedding_columns
     if not set(columns).issubset(frame) or not np.isfinite(frame[columns + ["effect"]].to_numpy(dtype=float)).all():
         raise MolecularError("Predictor features must be complete and finite")
-    groups, target = frame.orthogroup.to_numpy(), np.abs(frame.effect.to_numpy())
+    groups, target = frame.family_id.to_numpy(), np.abs(frame.effect.to_numpy())
     outer = GroupKFold(n_splits=5)
     models = {
         "ridge": (Ridge(), {"model__alpha": np.logspace(-4, 4, 11)}),
@@ -1083,7 +1111,7 @@ def nested_gene_prediction(frame: pd.DataFrame, *, embedding_columns: list[str] 
                 search = GridSearchCV(pipeline, grid, scoring="neg_mean_squared_error", cv=GroupKFold(n_splits=3), n_jobs=1, error_score="raise")
                 search.fit(frame.iloc[train][selected], target[train], groups=groups[train])
                 prediction = search.predict(frame.iloc[test][selected])
-                rows.extend({"gene_id": frame.iloc[index].gene_id, "orthogroup": frame.iloc[index].orthogroup, "outer_fold": fold, "model": name, "feature_set": feature_set, "observed_magnitude": target[index], "predicted_magnitude": float(value), "training_genes": len(train), "best_parameters": json.dumps(search.best_params_, sort_keys=True)} for index, value in zip(test, prediction))
+                rows.extend({"gene_id": frame.iloc[index].gene_id, "orthogroup": frame.iloc[index].orthogroup, "family_id": frame.iloc[index].family_id, "outer_fold": fold, "model": name, "feature_set": feature_set, "observed_magnitude": target[index], "predicted_magnitude": float(value), "training_genes": len(train), "best_parameters": json.dumps(search.best_params_, sort_keys=True)} for index, value in zip(test, prediction))
     return pd.DataFrame(rows)
 
 
@@ -1281,27 +1309,44 @@ def validate_qualification_orthogroups(path, fixture) -> dict:
         "orthogroups_sha256": file_hash(path), "biological_accuracy_claim": False}
 
 
-def validate_qualification_hogs(path, fixture) -> dict:
+def validate_qualification_hogs(path, fixture, orthogroups_path) -> dict:
     """Require the actual full two-species root-HOG output, not only clustering."""
     frame = pd.read_csv(path, sep="\t", dtype=str).fillna("")
     species = RUNTIME_QUALIFICATION_RECIPE["orthofinder_fixture_species"]
-    if "HOG" not in frame or not set(species).issubset(frame):
+    if not {"HOG", "OG", *species}.issubset(frame):
         raise MolecularError("Qualification lacks an actual full root-HOG table")
-    membership = {}
+    if frame[["HOG", "OG"]].eq("").any().any() or frame.HOG.duplicated().any():
+        raise MolecularError("Qualification root HOG identifiers are empty or repeated")
+    validate_qualification_orthogroups(orthogroups_path, fixture)
+    groups = pd.read_csv(orthogroups_path, sep="\t", dtype=str).fillna("")
+    original_family = {protein.strip(): row["Orthogroup"] for row in groups.to_dict("records")
+        for name in species for protein in row[name].split(",") if protein.strip()}
+    membership, family = {}, {}
     for row in frame.to_dict("records"):
         for name in species:
             for protein in filter(None, (value.strip() for value in row[name].split(","))):
                 if protein in membership:
                     raise MolecularError("Qualification root HOG repeats a protein")
                 membership[protein] = row["HOG"]
+                family[protein] = row["OG"]
     pairs, paralogs = fixture["expected_identical_pairs"], fixture["expected_paralog_group"]
     expected = {protein for item in pairs for protein in item["pair"]} | set(paralogs)
     if set(membership) != expected:
         raise MolecularError("Full root HOGs must retain every known qualification protein")
-    if any(len({membership[protein] for protein in item["pair"]}) != 1 for item in pairs) or len({membership[protein] for protein in paralogs}) != 1:
-        raise MolecularError("Full root HOGs did not recover the known identity pairs and paralogs")
+    if family != original_family:
+        raise MolecularError("Full root HOGs changed the verified original orthogroup family")
+    unambiguous_pairs = [item for item in pairs if not set(item["pair"]) & set(paralogs)]
+    if len(unambiguous_pairs) != 7 or any(len({membership[protein] for protein in item["pair"]}) != 1 for item in unambiguous_pairs):
+        raise MolecularError("Full root HOGs did not recover the seven unambiguous identity pairs")
+    if len({family[protein] for protein in paralogs}) != 1:
+        raise MolecularError("Full root HOGs changed the known identical-paralog family")
+    partitions = {hog: sorted(protein for protein in paralogs if membership[protein] == hog)
+        for hog in sorted({membership[protein] for protein in paralogs})}
     return {"root_hog_path": str(Path(path).resolve()), "root_hog_sha256": file_hash(path),
-        "validated_hog_proteins": len(expected), "validated_root_paralog_group_genes": len(paralogs)}
+        "root_hog_source_orthogroups_path": str(Path(orthogroups_path).resolve()), "root_hog_source_orthogroups_sha256": file_hash(orthogroups_path),
+        "validated_hog_proteins": len(expected), "validated_unambiguous_hog_identity_pairs": len(unambiguous_pairs),
+        "validated_root_paralog_family_genes": len(paralogs), "identical_paralog_hog_partitions": partitions,
+        "identical_paralog_genealogy_inferred": False}
 
 
 def validate_fastme_fixture(path) -> dict:
@@ -1426,7 +1471,7 @@ def validate_tool_runtime(destination: str | Path) -> dict:
     if {name: version.split("+", 1)[0] for name, version in numerical.get("versions", {}).items()} != ORTHOFINDER_PYTHON_PACKAGES or not numerical.get("module_hashes") or any(not Path(path).is_file() or file_hash(path) != digest for path, digest in numerical.get("module_hashes", {}).items()):
         raise MolecularError("Qualified isolated Python numerical packages or native MINPACK implementation changed")
     orthofinder_check = report.get("checks", {}).get("orthofinder_example", {})
-    if orthofinder_check.get("validated_identical_pairs") != 8 or orthofinder_check.get("validated_paralog_group_genes") != 4 or orthofinder_check.get("validated_hog_proteins") != 18 or report.get("checks", {}).get("transdecoder_example", {}).get("peptides", 0) <= 0 or report.get("checks", {}).get("fastme_numerical", {}).get("expected_split_recovered") is not True:
+    if orthofinder_check.get("validated_identical_pairs") != 8 or orthofinder_check.get("validated_paralog_group_genes") != 4 or orthofinder_check.get("validated_hog_proteins") != 18 or orthofinder_check.get("validated_unambiguous_hog_identity_pairs") != 7 or orthofinder_check.get("validated_root_paralog_family_genes") != 4 or orthofinder_check.get("identical_paralog_genealogy_inferred") is not False or report.get("checks", {}).get("transdecoder_example", {}).get("peptides", 0) <= 0 or report.get("checks", {}).get("fastme_numerical", {}).get("expected_split_recovered") is not True:
         raise MolecularError("Runtime receipt lacks actual orthogroup and peptide checks")
     return report
 
@@ -1539,7 +1584,7 @@ def install_tool_runtime(root: str | Path, destination: str | Path, *, qualify: 
         root_hogs = list((qualification / "orthofinder").rglob("Phylogenetic_Hierarchical_Orthogroups/N0.tsv"))
         if len(root_hogs) != 1:
             raise MolecularError("Qualification lacks one unambiguous actual full root HOG output")
-        checks["orthofinder_example"].update(validate_qualification_hogs(root_hogs[0], fixture))
+        checks["orthofinder_example"].update(validate_qualification_hogs(root_hogs[0], fixture, candidates[0]))
         input_fasta = td / RUNTIME_QUALIFICATION_RECIPE["transdecoder_fixture"]
         if not input_fasta.exists():
             raise MolecularError("Pinned TransDecoder archive lacks its official example FASTA")
@@ -1586,20 +1631,39 @@ def validate_freeze(path: str | Path) -> tuple[dict, Path]:
     return freeze, score
 
 
-def write_target_family_map(orthology: pd.DataFrame, output: str | Path) -> dict:
+def validate_family_provenance(proof: dict, orthology: pd.DataFrame | None = None) -> dict:
+    if proof.get("status") != "verified_original_mcl_families" or not proof.get("protein_gene_map_hash"):
+        raise MolecularError("Original MCL family provenance is absent; older HOG-only tables remain pending")
+    paths, hashes = proof.get("source_result_paths", []), proof.get("source_result_hashes", {})
+    if len(paths) != 2 or any(not Path(path).is_file() or hashes.get(path) != file_hash(path) for path in paths):
+        raise MolecularError("Original MCL family source proof is missing or changed")
+    if orthology is not None and proof.get("orthology_hash") != canonical_hash(orthology.fillna("").to_dict("records")):
+        raise MolecularError("Verified original MCL family mapping changed")
+    return proof
+
+
+def write_target_family_map(orthology: pd.DataFrame, output: str | Path, *, family_provenance: dict | None = None) -> dict:
     """Freeze fly family assignments from source orthology, before screen values."""
-    if not {"species", "gene_id", "orthogroup"}.issubset(orthology):
-        raise MolecularError("Target-family map requires validated source orthology")
+    if not {"species", "gene_id", "orthogroup", "family_id"}.issubset(orthology):
+        raise MolecularError("Target-family map requires verified original MCL family_id; older HOG-only tables remain pending")
+    family_provenance = validate_family_provenance(family_provenance or orthology.attrs.get("family_provenance", {}), orthology)
     if {"effect", "effect_se", "target", "fly_effect"} & set(orthology):
         raise MolecularError("Target-family source cannot include external outcomes")
-    family = orthology.loc[orthology.species == "fly", ["gene_id", "orthogroup"]].drop_duplicates().sort_values("gene_id")
+    family = orthology.loc[orthology.species == "fly", ["gene_id", "orthogroup", "family_id"]].drop_duplicates().sort_values("gene_id")
     if family.empty or family.isna().any().any() or family.gene_id.duplicated().any():
         raise MolecularError("Every fly gene requires exactly one source orthogroup")
     output = Path(output)
     if output.exists():
         raise MolecularError("Target-family map already exists; use a prospective amendment")
     write_table(family, output)
-    report = {"status": "outcome_independent_family_map", "target_family_map_path": str(output.resolve()), "target_family_map_sha256": file_hash(output), "orthology_hash": canonical_hash(orthology.fillna("").to_dict("records")), "fly_genes": len(family), "fly_families": family.orthogroup.nunique(), "fly_outcomes_inspected": False}
+    source_proof = output.with_suffix(".source_provenance.json")
+    atomic_json(source_proof, family_provenance)
+    report = {"status": "outcome_independent_family_map", "schema_version": 2,
+        "target_family_map_path": str(output.resolve()), "target_family_map_sha256": file_hash(output),
+        "target_family_source_provenance_path": str(source_proof.resolve()), "target_family_source_provenance_sha256": file_hash(source_proof),
+        "orthology_hash": canonical_hash(orthology.fillna("").to_dict("records")), "fly_genes": len(family),
+        "fly_families": family.family_id.nunique(), "fly_transfer_hogs": family.orthogroup.nunique(), "fly_outcomes_inspected": False,
+        "family_definition": family_provenance["family_definition"], "source_result_paths": family_provenance["source_result_paths"], "source_result_hashes": family_provenance["source_result_hashes"]}
     atomic_json(output.with_suffix(".provenance.json"), report)
     return report
 
@@ -1651,17 +1715,24 @@ def run_external_prediction(config: dict, root: str | Path, *, genes: str | Path
     for name, table in [("orthology_hash", orthology_table), ("nuisance_descriptor_hash", descriptor_table)]:
         if canonical_hash(table.fillna("").to_dict("records")) != freeze["provenance"][name]:
             raise MolecularError(f"Frozen {name} changed before external prediction")
+    family_source_path = Path(freeze["provenance"].get("target_family_source_provenance_path", ""))
+    family_source_sha = freeze["provenance"].get("target_family_source_provenance_sha256")
+    if not family_source_path.is_file() or family_source_sha != file_hash(family_source_path) or proof.get("target_family_source_provenance_sha256") != family_source_sha:
+        raise MolecularError("External targets require the unchanged verified original MCL family source proof")
+    validate_family_provenance(json.loads(family_source_path.read_text()), orthology_table)
     frame, mapping_report = join_frozen_gene_features(pd.read_csv(score_path, sep="\t"), orthology_table, target_table, descriptor_table)
     family = pd.read_csv(family_path, sep="\t", dtype=str)
-    family_column = "family_id" if "family_id" in family else "orthogroup"
-    if not {"gene_id", family_column}.issubset(family):
-        raise MolecularError("Target-family map requires explicit gene_id and family_id/orthogroup columns")
-    family = family[["gene_id", family_column]].drop_duplicates()
+    if not {"gene_id", "orthogroup", "family_id"}.issubset(family):
+        raise MolecularError("Target-family map needs separate verified HOG orthogroup and original MCL family_id; older maps remain pending")
+    family = family[["gene_id", "orthogroup", "family_id"]].drop_duplicates()
     if family.gene_id.duplicated().any() or family.isna().any().any() or not set(frame.gene_id).issubset(family.gene_id):
         raise MolecularError("Each mapped target gene must have exactly one explicit source family")
-    frame = frame.rename(columns={"orthogroup": "mapped_orthogroup"}).merge(family.rename(columns={family_column: "orthogroup"}), on="gene_id", validate="one_to_one")
-    if "source_target_orthogroup" in frame and not frame.source_target_orthogroup.eq(frame.orthogroup).all():
-        raise MolecularError("Gene target family columns disagree with the independently frozen source family map")
+    compared = frame[["gene_id", "orthogroup", "family_id"]].merge(family, on="gene_id", suffixes=("_mapped", "_frozen"), validate="one_to_one")
+    if any(not compared[name+"_mapped"].eq(compared[name+"_frozen"]).all() for name in ["orthogroup", "family_id"]):
+        raise MolecularError("Transfer HOG or original MCL family disagrees with the independently frozen source map")
+    for source_name, actual in [("source_target_orthogroup", "orthogroup"), ("source_target_family_id", "family_id")]:
+        if source_name in frame and not frame[source_name].eq(frame[actual]).all():
+            raise MolecularError("Gene target HOG/family columns disagree with the independently frozen source map")
     covariance_path = Path(proof.get("gene_covariance_path", ""))
     order_path = Path(proof.get("gene_covariance_order_path", ""))
     if not covariance_path.is_file() or not order_path.is_file() or proof.get("gene_covariance_sha256") != file_hash(covariance_path) or proof.get("gene_covariance_order_sha256") != file_hash(order_path):
@@ -1680,18 +1751,18 @@ def run_external_prediction(config: dict, root: str | Path, *, genes: str | Path
     report = external_prediction(frame, freeze, permutations=int(config["molecular"].get("gene_permutations", 10_000)), bootstrap_replicates=int(config["inference"].get("bootstrap_replicates", 10_000)), outcome_covariance=covariance)
     write_table(frame, output / "mapped_gene_features.tsv")
     atomic_json(output / "gene_mapping_coverage.json", mapping_report)
-    inputs = [manifest_path, Path(freeze_path), score_path, genes, Path(orthology), Path(descriptors), target_provenance, catalog_path, family_path, covariance_path, order_path, contrast_path, output / "mapped_gene_features.tsv", output / "gene_mapping_coverage.json", *map(Path, source_paths), *map(Path, frozen_source_paths)]
+    inputs = [manifest_path, Path(freeze_path), score_path, genes, Path(orthology), Path(descriptors), target_provenance, catalog_path, family_path, family_source_path, covariance_path, order_path, contrast_path, output / "mapped_gene_features.tsv", output / "gene_mapping_coverage.json", *map(Path, source_paths), *map(Path, frozen_source_paths)]
     input_hashes = {str(path.resolve()): file_hash(path) for path in inputs}
     report.update(status="external_gene_prediction_computed", input_sha256=input_hashes,
-        provenance={"config_sha256": config_hash(config), "source_identity_sha256": source_identity(Path(__file__).resolve().parents[2])["sha256"], "source_manifest_hash": manifest["manifest_hash"], "freeze_hash": freeze["freeze_hash"], "orthology_hash": freeze["provenance"]["orthology_hash"], "nuisance_descriptor_hash": freeze["provenance"]["nuisance_descriptor_hash"], "target_table_sha256": file_hash(genes), "target_family_map_sha256": file_hash(family_path), "phase_contrast_path": str(contrast_path.resolve()), "freeze_path": str(Path(freeze_path).resolve()), "target_provenance_path": str(target_provenance.resolve())})
+        provenance={"config_sha256": config_hash(config), "source_identity_sha256": source_identity(Path(__file__).resolve().parents[2])["sha256"], "source_manifest_hash": manifest["manifest_hash"], "freeze_hash": freeze["freeze_hash"], "orthology_hash": freeze["provenance"]["orthology_hash"], "nuisance_descriptor_hash": freeze["provenance"]["nuisance_descriptor_hash"], "target_table_sha256": file_hash(genes), "target_family_map_sha256": file_hash(family_path), "target_family_source_provenance_sha256": family_source_sha, "phase_contrast_path": str(contrast_path.resolve()), "freeze_path": str(Path(freeze_path).resolve()), "target_provenance_path": str(target_provenance.resolve())})
     if learned and report["secondary_learned_predictor_eligible"]:
         secondary = nested_gene_prediction(frame)
         secondary_path = output / "nested_gene_predictions.tsv"
         write_table(secondary, secondary_path)
         report["input_sha256"][str(secondary_path.resolve())] = file_hash(secondary_path)
-        report.update(secondary_learned_predictor_status="nested_orthogroup_validation_computed", secondary_models=sorted(secondary.model.unique().tolist()))
+        report.update(secondary_learned_predictor_status="nested_original_mcl_family_validation_computed", secondary_models=sorted(secondary.model.unique().tolist()))
     else:
-        report["secondary_learned_predictor_status"] = "ineligible_fewer_than_40_genes_or_20_orthogroups" if learned else "not_requested"
+        report["secondary_learned_predictor_status"] = "ineligible_fewer_than_40_genes_or_20_original_mcl_families" if learned else "not_requested"
     atomic_json(output / "external_prediction.json", report)
     return report
 
@@ -1706,7 +1777,7 @@ def write_h3(config: dict, root: str | Path, external_prediction_json_path: str 
     if result.get("shared_control_covariance_propagated") is not True:
         raise MolecularError("H3 uncertainty must propagate the actual shared-control gene covariance")
     provenance = result.get("provenance", {})
-    required = {"config_sha256", "source_identity_sha256", "source_manifest_hash", "freeze_hash", "orthology_hash", "nuisance_descriptor_hash", "target_table_sha256", "target_family_map_sha256", "freeze_path", "target_provenance_path"}
+    required = {"config_sha256", "source_identity_sha256", "source_manifest_hash", "freeze_hash", "orthology_hash", "nuisance_descriptor_hash", "target_table_sha256", "target_family_map_sha256", "target_family_source_provenance_sha256", "freeze_path", "target_provenance_path"}
     if not required.issubset(provenance) or not all(provenance[key] for key in required):
         raise MolecularError("H3 external source/freeze/target-family proof is incomplete")
     if provenance["config_sha256"] != config_hash(config):
@@ -1729,7 +1800,7 @@ def write_h3(config: dict, root: str | Path, external_prediction_json_path: str 
     target_proof = json.loads(Path(provenance["target_provenance_path"]).read_text())
     if any(target_proof.get(flag) is not True for flag in ["validated_gene_ids", "shared_control_covariance_preserved", "reagents_clustered_by_gene"]):
         raise MolecularError("H3 external targets lack actual ID/covariance/reagent proof")
-    if any(target_proof.get(key) != provenance[key] for key in ["target_table_sha256", "target_family_map_sha256"]):
+    if any(target_proof.get(key) != provenance[key] for key in ["target_table_sha256", "target_family_map_sha256", "target_family_source_provenance_sha256"]):
         raise MolecularError("H3 target-family provenance and prediction differ")
     if target_proof.get("molecular_freeze_hash") != freeze["freeze_hash"]:
         raise MolecularError("H3 targets were not aggregated after verifying this prior freeze")
@@ -1743,7 +1814,7 @@ def write_h3(config: dict, root: str | Path, external_prediction_json_path: str 
     if len(ci) != 2 or not np.isfinite([estimate, *ci, pvalue]).all() or ci[0] > ci[1] or not -1 <= estimate <= 1 or not 0 <= pvalue <= 1:
         raise MolecularError("H3 estimate, uncertainty or permutation P value is invalid")
     minimum = float(config["molecular"].get("incremental_rank_effect_threshold", .2))
-    record = {"claim_id": "H3", "hypothesis": "H3", "status": "computed_primary_family_pending", "claim_status": "pending_joint_Holm", "estimate": estimate, "ci95": ci, "pvalue": pvalue, "pvalue_method": "whole-orthogroup label permutation within fixed expression/orthology/precision bins", "independent_unit": "gene/orthogroup with clustered reagents", "evidence_class": "biological_reanalysis", "genes": result["genes"], "orthogroups": result["orthogroups"], "config_sha256": provenance["config_sha256"], "source_identity": provenance["source_identity_sha256"], "source_sha256": provenance["source_identity_sha256"], "source_manifest_hash": provenance["source_manifest_hash"], "data_manifest_sha256": file_hash(root / "manifests" / "source_manifest.json"), "source_result_paths": [str(path.resolve()), *inputs.keys()], "source_result_sha256": file_hash(path), "provenance": provenance, "primary_family_pending": True, "multiplicity_status": "H1/H2/H3 joint Holm adjustment pending", "multiplicity": "Joint Holm adjustment must use actual H1, H2 and H3 results; no stand-alone confirmatory decision", "operational_threshold": {"rank_effect": minimum, "point_threshold_met": estimate >= minimum, "interval_excludes_zero": ci[0] > 0 or ci[1] < 0, "unadjusted_p_below_alpha": pvalue < float(config["inference"].get("alpha", .05))}}
+    record = {"claim_id": "H3", "hypothesis": "H3", "status": "computed_primary_family_pending", "claim_status": "pending_joint_Holm", "estimate": estimate, "ci95": ci, "pvalue": pvalue, "pvalue_method": "whole-original-MCL-family label permutation within fixed expression/orthology/precision bins", "independent_unit": "gene/orthogroup with clustered reagents", "evidence_class": "biological_reanalysis", "genes": result["genes"], "orthogroups": result["orthogroups"], "families": result["families"], "family_definition": "verified original MCL OG; HOG retained separately for transfer", "config_sha256": provenance["config_sha256"], "source_identity": provenance["source_identity_sha256"], "source_sha256": provenance["source_identity_sha256"], "source_manifest_hash": provenance["source_manifest_hash"], "data_manifest_sha256": file_hash(root / "manifests" / "source_manifest.json"), "source_result_paths": [str(path.resolve()), *inputs.keys()], "source_result_sha256": file_hash(path), "provenance": provenance, "primary_family_pending": True, "multiplicity_status": "H1/H2/H3 joint Holm adjustment pending", "multiplicity": "Joint Holm adjustment must use actual H1, H2 and H3 results; no stand-alone confirmatory decision", "operational_threshold": {"rank_effect": minimum, "point_threshold_met": estimate >= minimum, "interval_excludes_zero": ci[0] > 0 or ci[1] < 0, "unadjusted_p_below_alpha": pvalue < float(config["inference"].get("alpha", .05))}}
     record["source_result_hashes"] = {str(path.resolve()): file_hash(path), **inputs}
     record.update(interval_method=result["interval_method"], permutation_interpretation=result["permutation_interpretation"], shared_control_covariance_propagated=True)
     atomic_json(root / "results" / "inference" / "H3.json", record)
@@ -1752,7 +1823,7 @@ def write_h3(config: dict, root: str | Path, external_prediction_json_path: str 
     if coverage_path.is_file() and str(coverage_path.resolve()) in inputs:
         coverage = json.loads(coverage_path.read_text())
         panels.insert(0, {"kind": "scatter", "x": ["Source targets", "Mapped, measured"], "y": [coverage["target_genes"], coverage["mapped_measured_genes"]], "title": "Observed mapping coverage", "xlabel": "Gene cohort", "ylabel": "Unique genes"})
-    panels = {"status": "actual_molecular_results_available", "evidence_class": "biological_reanalysis", "config_sha256": record["config_sha256"], "source_sha256": record["source_sha256"], "source_result_paths": record["source_result_paths"], "source_result_hashes": record["source_result_hashes"], "panels": panels, "caption": "Actual unique-gene mapping and frozen-score incremental rank association, with an orthogroup/family cluster bootstrap 95% interval. The molecular score is fixed before external outcomes; nuisance ranks are residualized. Primary H1/H2/H3 Holm adjustment remains pending.", "phase_contrast_path": provenance.get("phase_contrast_path")}
+    panels = {"status": "actual_molecular_results_available", "evidence_class": "biological_reanalysis", "config_sha256": record["config_sha256"], "source_sha256": record["source_sha256"], "source_result_paths": record["source_result_paths"], "source_result_hashes": record["source_result_hashes"], "panels": panels, "caption": "Actual unique-gene mapping and frozen-score incremental rank association, with an original-MCL-family cluster bootstrap 95% interval. The molecular score is fixed before external outcomes; nuisance ranks are residualized. Primary H1/H2/H3 Holm adjustment remains pending.", "phase_contrast_path": provenance.get("phase_contrast_path")}
     atomic_json(root / "results" / "figure_inputs" / "figure4.json", panels)
     atomic_json(root / "results" / "figure_inputs" / "04.json", panels)
     return record
@@ -1841,6 +1912,7 @@ def main(argv: list[str] | None = None) -> int:
     target_family = sub.add_parser("target-family-map")
     target_family.add_argument("--orthology", required=True)
     target_family.add_argument("--output", required=True)
+    target_family.add_argument("--family-provenance", required=True)
     runtime_manifest = sub.add_parser("runtime-manifest")
     runtime_manifest.add_argument("--output", required=True)
     install_runtime = sub.add_parser("install-runtime")
@@ -1916,7 +1988,8 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "install-runtime":
         report = install_tool_runtime(args.root, args.destination, qualify=not args.skip_qualification, perl_binary=args.perl_binary, orthofinder_python=args.orthofinder_python)
     elif args.command == "target-family-map":
-        report = write_target_family_map(pd.read_csv(args.orthology, sep="\t"), output)
+        family_proof = json.loads(Path(args.family_provenance).read_text())
+        report = write_target_family_map(pd.read_csv(args.orthology, sep="\t"), output, family_provenance=family_proof.get("family_provenance", family_proof))
     elif args.command == "analyze-primary":
         report = write_h3(json.loads(Path(args.config).read_text()), args.root, args.external_prediction)
     elif args.command == "refusal-challenge":

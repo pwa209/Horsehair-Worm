@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from horsehair import agents, agent_analysis, report
-from horsehair.core import atomic_json, canonical_hash, digest
+from horsehair.core import atomic_json, canonical_hash, digest,read_json
 from horsehair.inference import holm
 
 
@@ -88,6 +88,93 @@ def computational_result(root,config,positive=False):
               "source_result_hashes":{str(protocol_path):digest(protocol_path),str(curve_path):digest(curve_path)}}
     atomic_json(root/"results/inference/H4.json",result)
     return result
+
+
+def auxiliary_fixture(root,config,*,ready=True):
+    """Generated readiness contract only, never deposited scientific evidence."""
+    directory=root/'results/behaviour';directory.mkdir(parents=True,exist_ok=True)
+    def fit(terms):
+        return {'terms':terms,'coefficient':[0.]*len(terms),'covariance_laplace':[[float(i==j) for j in range(len(terms))] for i in range(len(terms))],
+                'design_audit':{'protected_primary_estimable':True,'full_column_space_preserved':True}}
+    choice_fit=fit(['Intercept','infection','dop','infection:dop'])
+    mating_fit=fit(['Intercept','male_infection','female_infection'])
+    source={'choice':{'trials':20,'mutually_consistent_trials':20 if ready else 19,'ambiguous_trials':0 if ready else 1,'source_coding_reconciled':ready},
+            'mating':{'independence_verified':ready,'pair_records':20}}
+    validation={'status':'complete' if ready else 'pending_source_reconciliation','confirmatory_ready':ready,
+                'source_coding_reconciled':ready,'future_outcomes_used_for_preprocessing':False,
+                'scores':[{'scheme':'individual','individual_id':'QA-only'}],'training_contracts':[{'fixture':'generated contract'}]}
+    sensitivity={'status':'not_required' if ready else 'pending','confirmatory_ready':ready}
+    choice={'status':'complete','engagement':choice_fit,'conditional_preference':choice_fit,
+            'design_audit':{name:choice_fit['design_audit'] for name in ('engagement','conditional_preference')},
+            'source_coding_reconciled':ready,'confirmatory_ready':ready,'deposited_source_trials':20,
+            'included_source_trials':source['choice']['mutually_consistent_trials'],'ambiguous_source_trials':source['choice']['ambiguous_trials']}
+    mating={endpoint:{**copy.deepcopy(mating_fit),'status':'complete'} for endpoint in ('male_escape','male_mounting')}
+    mating['specificity']={'status':'complete','escape':mating_fit,'mounting':mating_fit,
+                          'male_infection_coefficient_difference':0.,'cluster_bootstrap_interval':[-.1,.1]}
+    mating['statistical_models_complete']=True
+    models={'choice':choice,'choice_validation':validation,'choice_sensitivity':sensitivity,'mating':mating}
+    atomic_json(directory/'mantis_models.json',models);atomic_json(directory/'mantis_source_audit.json',source)
+    for name in ('mantis_choice_canonical.parquet','mantis_mating_canonical.parquet'):
+        (directory/name).write_text('GENERATED HASH-BOUND CONTRACT INPUT; NO SCIENTIFIC OBSERVATIONS\n')
+    model_path=str((directory/'mantis_models.json').resolve())
+    for name,record in [('mantis_choice_validation.json',validation),('mantis_choice_sensitivity.json',sensitivity)]:
+        atomic_json(directory/name,{**record,'config_sha256':canonical_hash(config),'source_sha256':report._source_sha(),
+                                   'source_result_paths':[model_path],'source_result_hashes':{model_path:digest(model_path)}})
+    paths=[directory/name for name in ('mantis_models.json','mantis_source_audit.json','mantis_choice_canonical.parquet',
+           'mantis_mating_canonical.parquet','mantis_choice_validation.json','mantis_choice_sensitivity.json')]
+    audit={'config_sha256':canonical_hash(config),'source_sha256':report._source_sha(),'choice_status':'complete',
+           'choice_source_coding_reconciled':ready,'choice_source_trials':20,'choice_mutually_consistent_trials':source['choice']['mutually_consistent_trials'],
+           'choice_ambiguous_trials':source['choice']['ambiguous_trials'],'choice_confirmatory_ready':ready,
+           'choice_validation_status':validation['status'],'choice_sensitivity_status':sensitivity['status'],
+           'mating_models_complete':True,'mating_independence_verified':ready,
+           'mating_models':{name:{'status':'complete'} for name in ('male_escape','male_mounting','specificity')},
+           'source_result_paths':[str(p.resolve()) for p in paths],'source_result_hashes':{str(p.resolve()):digest(p) for p in paths}}
+    atomic_json(directory/'mantis_statistical_design_audit.json',audit)
+    return directory,audit
+
+
+def test_declared_auxiliary_science_is_required_even_after_all_primary_and_visual_results(tmp_path,monkeypatch):
+    config=config_fixture();config['sources']={'mantis_polarization_doi':'QA-only-choice','mantis_mating_doi':'QA-only-mating'}
+    for claim in ('H1','H2','H3'):biological_result(tmp_path,config,claim,estimate=-.2,pvalue=.8)
+    computational_result(tmp_path,config)
+    for number,_,_ in report.FIGURES:atomic_json(tmp_path/f'results/figure_inputs/{number}.json',{'fixture':'render boundary mocked'})
+    monkeypatch.setattr(report,'render_figure',lambda path,out,title,number,**kwargs:{'id':number,'paths':['generated-qa.png']})
+    monkeypatch.setattr(report,'_visual_review',lambda *a:True)
+    missing=report.build_report(config,tmp_path)
+    assert missing['primary_analyses_complete'] and missing['figures_complete'] and missing['visual_inspection_complete']
+    assert not missing['analysis_complete'] and not missing['complete'] and not missing['publication_ready']
+    auxiliary_fixture(tmp_path,config,ready=False)
+    pending=report.build_report(config,tmp_path)
+    assert pending['primary_analyses_complete'] and not pending['auxiliary_analyses_complete']
+    assert any('ambiguity' in p for p in pending['auxiliary_readiness']['pending'])
+    auxiliary_fixture(tmp_path,config,ready=True)
+    complete=report.build_report(config,tmp_path)
+    assert complete['primary_analyses_complete'] and complete['auxiliary_analyses_complete']
+    assert complete['analysis_complete'] and complete['complete'] and complete['publication_ready']
+
+
+@pytest.mark.parametrize('corruption',['stale_source','stale_config','mutated_model','pending_fit','missing_endpoint'])
+def test_auxiliary_readiness_refuses_stale_missing_and_pending_hash_bound_models(tmp_path,corruption):
+    config=config_fixture();config['sources']={'mantis_polarization_doi':'QA-only-choice','mantis_mating_doi':'QA-only-mating'}
+    directory,audit=auxiliary_fixture(tmp_path,config)
+    assert report.auxiliary_readiness(config,tmp_path)['ready']
+    if corruption in ('stale_source','stale_config'):
+        audit['source_sha256' if corruption=='stale_source' else 'config_sha256']='0'*64
+    else:
+        path=directory/'mantis_models.json';models=read_json(path)
+        if corruption=='pending_fit':
+            models['choice']={'status':'pending_nonestimable_design','numeric_claim_available':False,'design_audit':None}
+        elif corruption=='missing_endpoint':models['mating'].pop('male_escape')
+        else:models['choice']['engagement']['coefficient'][0]=999.
+        atomic_json(path,models)
+        if corruption!='mutated_model':
+            audit['source_result_hashes'][str(path.resolve())]=digest(path)
+            for name in ('mantis_choice_validation.json','mantis_choice_sensitivity.json'):
+                bound=read_json(directory/name);bound['source_result_hashes'][str(path.resolve())]=digest(path)
+                atomic_json(directory/name,bound);audit['source_result_hashes'][str((directory/name).resolve())]=digest(directory/name)
+    atomic_json(directory/'mantis_statistical_design_audit.json',audit)
+    result=report.auxiliary_readiness(config,tmp_path)
+    assert not result['ready'] and result['pending']
 
 
 def test_missing_primary_member_prevents_joint_positive_claim(tmp_path):

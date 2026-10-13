@@ -43,6 +43,107 @@ def verify_observed_inputs(record):
     return hashes
 
 
+def auxiliary_readiness(config, root, *, source_sha=None):
+    """Verify declared Mantis science independently of native job completion.
+
+    Primary H1–H4 decisions remain usable while auxiliary assays are pending.
+    Whole-study completion requires current, hash-bound results, identifiable
+    fits, reconciled source coding and supported independent validation units.
+    """
+    root=Path(root);sources=config.get('sources',{});declared=config.get('mantis_sources',{})
+    required=[]
+    if sources.get('mantis_polarization_doi') or 'choice' in declared:required.append('mantis_choice')
+    if sources.get('mantis_mating_doi') or 'mating' in declared:required.append('mantis_mating')
+    result={'status':'not_required' if not required else 'pending','ready':not required,
+            'required_assays':required,'assays':{},'pending':[],'source_result_hashes':{}}
+    if not required:return result
+    directory=root/'results/behaviour';identity=source_sha or _source_sha()
+    audit_path=directory/'mantis_statistical_design_audit.json'
+    try:
+        audit=read_json(audit_path)
+        if audit.get('config_sha256')!=canonical_hash(config) or audit.get('source_sha256')!=identity:
+            raise ValueError('Mantis statistical design audit belongs to another configuration/source')
+        hashes=verify_observed_inputs(audit)
+        names=['mantis_models.json','mantis_source_audit.json']
+        if 'mantis_choice' in required:names+=['mantis_choice_canonical.parquet','mantis_choice_validation.json','mantis_choice_sensitivity.json']
+        if 'mantis_mating' in required:names+=['mantis_mating_canonical.parquet']
+        if not {str((directory/name).resolve()) for name in names}<=set(hashes):
+            raise ValueError('Mantis audit omits a required result/canonical/source file hash')
+        models=read_json(directory/'mantis_models.json');raw=read_json(directory/'mantis_source_audit.json')
+        result['source_result_hashes']={str(audit_path.resolve()):digest(audit_path),**hashes}
+        def fit_available(fit, protected):
+            terms=fit.get('terms',[]);coef=np.asarray(fit.get('coefficient',[]),float)
+            covariance=np.asarray(fit.get('covariance_laplace',[]),float)
+            return (bool(terms) and len(terms)==len(set(terms)) and set(protected)<=set(terms)
+                    and coef.shape==(len(terms),) and np.isfinite(coef).all()
+                    and covariance.ndim==2 and covariance.shape[0]>=len(terms) and covariance.shape[0]==covariance.shape[1]
+                    and np.isfinite(covariance).all())
+        if 'mantis_choice' in required:
+            problems=[];choice=models.get('choice',{});source=raw.get('choice',{})
+            validation=read_json(directory/'mantis_choice_validation.json');sensitivity=read_json(directory/'mantis_choice_sensitivity.json')
+            for label,record in [('validation',validation),('sensitivity',sensitivity)]:
+                if record.get('config_sha256')!=canonical_hash(config) or record.get('source_sha256')!=identity:
+                    problems.append(f'{label} configuration/source is stale')
+                verify_observed_inputs(record)
+            if audit.get('choice_status')!='complete' or choice.get('status')!='complete':problems.append('Choice statistical fit remains pending')
+            for component in ('engagement','conditional_preference'):
+                design=(choice.get('design_audit') or {}).get(component,{})
+                if (design.get('protected_primary_estimable') is not True or design.get('full_column_space_preserved') is not True
+                        or not fit_available(choice.get(component,{}),['infection','dop','infection:dop'])):
+                    problems.append(f'{component} identifiable numerical fit is unavailable')
+            counts=(source.get('trials'),source.get('mutually_consistent_trials'),source.get('ambiguous_trials'))
+            if (any(not isinstance(v,int) or isinstance(v,bool) or v<0 for v in counts)
+                    or not counts[0] or counts[1]+counts[2]!=counts[0]):problems.append('Choice source trial counts are unavailable/inconsistent')
+            if (source.get('source_coding_reconciled') is not True or source.get('ambiguous_trials')!=0
+                    or choice.get('source_coding_reconciled') is not True or audit.get('choice_source_coding_reconciled') is not True):
+                problems.append('Deposited choice endpoint ambiguity remains unresolved')
+            for field,expected in [('choice_source_trials',source.get('trials')),('choice_mutually_consistent_trials',source.get('mutually_consistent_trials')),
+                                   ('choice_ambiguous_trials',source.get('ambiguous_trials'))]:
+                if audit.get(field)!=expected:problems.append(f'{field} disagrees with actual source audit')
+            if (choice.get('deposited_source_trials')!=source.get('trials') or choice.get('included_source_trials')!=source.get('mutually_consistent_trials')
+                    or choice.get('ambiguous_source_trials')!=source.get('ambiguous_trials')):problems.append('Choice model denominators disagree with source inclusion')
+            if (validation.get('status')!='complete' or audit.get('choice_validation_status')!=validation.get('status')
+                    or validation.get('confirmatory_ready') is not True or choice.get('confirmatory_ready') is not True
+                    or audit.get('choice_confirmatory_ready') is not True or validation.get('future_outcomes_used_for_preprocessing') is not False
+                    or not validation.get('scores') or not validation.get('training_contracts')):
+                problems.append('Independent choice validation/confirmatory readiness remains pending')
+            if sensitivity.get('status')!='not_required' or audit.get('choice_sensitivity_status')!=sensitivity.get('status'):
+                problems.append('Choice source-ambiguity sensitivity does not establish reconciled inputs')
+            result['assays']['mantis_choice']={'ready':not problems,'pending':problems,'fit_status':choice.get('status'),'validation_status':validation.get('status')}
+            result['pending'].extend('mantis_choice: '+p for p in problems)
+        if 'mantis_mating' in required:
+            problems=[];mating=models.get('mating',{});source=raw.get('mating',{})
+            endpoints=list(config.get('behaviour',{}).get('mantis_mating',{}).get('latency_outcomes',['male_escape','male_mounting']))
+            expected=set(endpoints)|{'specificity'}
+            if mating.get('statistical_models_complete') is not True or audit.get('mating_models_complete') is not True:
+                problems.append('Mating statistical models remain pending')
+            if source.get('independence_verified') is not True or audit.get('mating_independence_verified') is not True:
+                problems.append('Mating individual reuse/independence remains unresolved')
+            statuses=audit.get('mating_models',{})
+            if set(statuses)!=expected:problems.append('Declared mating endpoint roster is incomplete/unexpected')
+            for endpoint in expected:
+                record=mating.get(endpoint,{})
+                if record.get('status')!='complete' or statuses.get(endpoint,{}).get('status')!='complete':
+                    problems.append(f'{endpoint} scientific fit remains pending');continue
+                if endpoint!='specificity' and (record.get('design_audit') or {}).get('protected_primary_estimable') is not True:
+                    problems.append(f'{endpoint} protected infection coefficients are not identified')
+                if endpoint=='specificity':
+                    interval=record.get('cluster_bootstrap_interval',[])
+                    if (not _finite(record.get('male_infection_coefficient_difference')) or len(interval)!=2
+                            or not all(_finite(v) for v in interval) or interval[0]>interval[1]
+                            or not all(fit_available(record.get(v,{}),['male_infection','female_infection'])
+                                and (record.get(v,{}).get('design_audit') or {}).get('protected_primary_estimable') is True
+                                for v in ('escape','mounting'))):
+                        problems.append('Mating specificity numerical contrast is unavailable')
+                elif not fit_available(record,['male_infection','female_infection']):problems.append(f'{endpoint} numerical coefficients are unavailable')
+            result['assays']['mantis_mating']={'ready':not problems,'pending':problems}
+            result['pending'].extend('mantis_mating: '+p for p in problems)
+    except (ValueError,TypeError,KeyError,OSError,AttributeError) as error:
+        result['pending'].append('Auxiliary Mantis evidence is missing, stale or invalid: '+str(error))
+    result['ready']=not result['pending'];result['status']='complete' if result['ready'] else 'pending'
+    return result
+
+
 def _operational_gates(result, claim, config):
     """Compute criteria; an asserted operational_gates_passed flag is insufficient."""
     missing = []
@@ -253,19 +354,24 @@ def build_report(config, root):
             figure["visual_inspection_verified"] = _visual_review(figure,output)
         figures.append(figure)
     atomic_json(output/"figure_manifest.json", figures)
-    analysis_complete = family_complete and all(c["status"] in ("supported","not_supported") for c in claims)
+    primary_complete = family_complete and all(c["status"] in ("supported","not_supported") for c in claims)
+    auxiliary=auxiliary_readiness(config,root)
+    analysis_complete=primary_complete and auxiliary['ready']
     figures_complete = all(f.get("paths") for f in figures)
     visual_complete = figures_complete and all(f.get("visual_inspection_verified") for f in figures)
     report = {"protocol_id":config["protocol_id"],"config_sha256":canonical_hash(config),"source_sha256":_source_sha(),"claims":claims,"figures":figures,
         "primary_family":{"tests":["H1","H2","H3"],"method":"Holm","status":"computed" if family_complete else "pending"},
         "analyses_available":all(c["result"] is not None for c in claims),
+        "primary_analyses_complete":bool(primary_complete),"auxiliary_analyses_complete":auxiliary['ready'],"auxiliary_readiness":auxiliary,
         "analysis_complete":analysis_complete,"figures_complete":bool(figures_complete),"visual_inspection_complete":bool(visual_complete),
         "complete":bool(analysis_complete and figures_complete),"publication_ready":bool(analysis_complete and visual_complete),
-        "interpretation":"Analysis completion, hypothesis support and publication readiness are separate. Unsupported means that acceptance criteria were not met, not proof of no effect. Negative results can complete an analysis; missing diagnostics, constraints and visual checks remain pending."}
+        "interpretation":"Primary H1–H4 completion, whole-study completion, hypothesis support and publication readiness are separate. Overall analysis completion additionally requires the declared auxiliary Mantis assays to have current identifiable results, reconciled coding and independent validation. Native job success and diagnostic conditional fits cannot complete pending science. Negative results can complete an analysis; missing diagnostics, source reconciliation and visual checks remain pending."}
     atomic_json(output/"report.json", report)
     text = ["# Study execution and evidence report","",f"Protocol: {config['protocol_id']}","",
             "Each claim uses its designated comparison and independent unit. Result availability alone does not establish support.",""]
     text += [f"- {c['claim_id']}: {c['status']}; {c['test']}." for c in claims]
+    text += ['',f"Primary H1–H4 analyses complete: {bool(primary_complete)}.",f"Declared auxiliary assays complete: {auxiliary['ready']}."]
+    if auxiliary['pending']:text += ['']+['- '+reason for reason in auxiliary['pending']]
     (output/"report.md").write_text("\n".join(text)+"\n",encoding="utf-8")
     return report
 

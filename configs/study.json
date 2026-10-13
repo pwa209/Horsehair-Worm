@@ -57,27 +57,27 @@
     "fly_sources": []
   },
   "molecular": {
-    "tool_runtime_directory": "data/tool_runtime_v3",
+    "tool_runtime_directory": "data/tool_runtime_v4",
     "orthofinder_python": "/home/pwa209/hhw-orthofinder-py311-np126-scipy1112/bin/python",
-    "rna_output_directory": "data/rna-repair-20261013",
-    "rna_plan_directory": "data/rna-plan-repair-20261013",
-    "orthology_directory": "data/molecular/orthology-repair-20261013",
+    "rna_output_directory": "data/rna-repair-v4-20261013",
+    "rna_plan_directory": "data/rna-plan-repair-v4-20261013",
+    "orthology_directory": "data/molecular/orthology-repair-v4-20261013",
     "primary_score": "ant_reversible",
     "gene_permutations": 10000,
     "gene_fdr": 0.05,
     "minimum_prediction_genes": 40,
-    "minimum_prediction_orthogroups": 20,
+    "minimum_prediction_families": 20,
     "ridge_alphas": [0.0001, 0.0006309573, 0.0039810717, 0.0251188643, 0.1584893192, 1, 6.309573445, 39.81071706, 251.1886432, 1584.893192, 10000],
     "elasticnet_l1_ratios": [0.1, 0.5, 0.9],
     "protein_embeddings_optional": true,
     "protein_pca_components_max": 16
   },
   "interventions": {
-    "gene_catalog": "data/molecular/orthology-repair-20261013/fly_gene_catalog.tsv",
-    "target_family_map": "data/molecular/orthology-repair-20261013/fly_target_families.tsv"
+    "gene_catalog": "data/molecular/orthology-repair-v4-20261013/fly_gene_catalog.tsv",
+    "target_family_map": "data/molecular/orthology-repair-v4-20261013/fly_target_families.tsv"
   },
   "agents": {
-    "output_dir": "results/repair-2026-10-13",
+    "output_dir": "results/repair-v4-2026-10-13",
     "envs": ["foraging", "corridor", "delayed_choice"],
     "architectures": ["rnn", "gru", "modular"],
     "development_seeds": [100, 101, 102, 103, 104],
