@@ -2,12 +2,197 @@
 from __future__ import annotations
 import argparse
 import json
+import math
 import os
+import shutil
+import signal
 import subprocess
 import sys
+import tarfile
+import tempfile
 import time
+import uuid
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from .core import atomic_json, canonical_hash, environment_record, read_json, source_identity, validate_config,digest,native_job_id
+
+
+def _qualification_timeout():
+    """Keep time for process termination, durable evidence and lease completion."""
+    cleanup_margin=300.
+    remaining=3600.
+    if os.environ.get('HHW_MAX_HOURS'):
+        hours=float(os.environ['HHW_MAX_HOURS'])
+        if not math.isfinite(hours) or hours<=0:raise ValueError('Invalid qualification allocation duration')
+        remaining=min(remaining,hours*3600)
+    if os.environ.get('SLURM_JOB_END_TIME'):
+        native_end=float(os.environ['SLURM_JOB_END_TIME'])
+        if not math.isfinite(native_end):raise ValueError('Invalid qualification allocation end time')
+        remaining=min(remaining,native_end-time.time())
+    timeout=remaining-cleanup_margin
+    if timeout<=0:raise RuntimeError('Insufficient allocation time for qualification and its cleanup margin')
+    return timeout,cleanup_margin
+
+
+def _qualification_workspace(root,job_id):
+    if job_id:
+        value=os.environ.get('SLURM_TMPDIR')
+        if not value:raise RuntimeError('Native qualification requires SLURM_TMPDIR; no scratch-filesystem fixture fallback')
+        base=Path(value).resolve()
+        kind='SLURM_TMPDIR'
+    else:
+        base=(Path(root)/'tests').resolve()
+        base.mkdir(parents=True,exist_ok=True)
+        kind='local_unique_test_directory'
+    if not base.is_dir():raise ValueError('Qualification workspace base must be an existing directory')
+    workspace=Path(tempfile.mkdtemp(prefix='hhw-qualification-'+(job_id or 'local')+'-',dir=base)).resolve()
+    if not workspace.is_relative_to(base) or workspace==base:raise ValueError('Qualification workspace escapes its designated base')
+    return workspace,kind
+
+
+def _stop_qualification(process):
+    """Stop only the freshly launched pytest process and its owned group."""
+    if process.poll() is not None:return
+    if os.name=='posix':
+        try:os.killpg(process.pid,signal.SIGTERM)
+        except ProcessLookupError:return
+    else:
+        subprocess.run(['taskkill','/PID',str(process.pid),'/T','/F'],capture_output=True,timeout=10,
+                       creationflags=subprocess.CREATE_NO_WINDOW)
+    try:process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        if os.name=='posix':
+            try:os.killpg(process.pid,signal.SIGKILL)
+            except ProcessLookupError:pass
+        else:process.kill()
+        process.wait(timeout=5)
+
+
+def _copy_qualification_file(source,destination):
+    """One durable copy per finished artifact; never fsync every test message."""
+    destination=Path(destination);temporary=destination.with_name(destination.name+'.partial')
+    with Path(source).open('rb') as reader,temporary.open('xb') as writer:
+        shutil.copyfileobj(reader,writer,length=1024*1024)
+        writer.flush();os.fsync(writer.fileno())
+    temporary.replace(destination)
+    return {'path':str(destination.resolve()),'sha256':digest(destination),'bytes':destination.stat().st_size}
+
+
+def _qualification_junit(path):
+    tree=ET.parse(path)
+    cases=tree.findall('.//testcase')
+    suites=tree.findall('.//testsuite') if tree.getroot().tag!='testsuite' else [tree.getroot()]
+    counts={key:sum(int(suite.get(key,'0')) for suite in suites) for key in ('tests','failures','errors','skipped')}
+    if not cases or counts['tests']!=len(cases):raise ValueError('Qualification JUnit lacks a complete nonempty testcase roster')
+    if sum(case.find('skipped') is not None for case in cases)!=counts['skipped']:
+        raise ValueError('Qualification JUnit skip counts disagree with actual cases')
+    return counts
+
+
+def _preserve_qualification_failure(workspace,evidence,deadline):
+    """Keep bounded fixture evidence as well as the complete log/JUnit."""
+    archive=workspace/'failed-workspace.tar'
+    total=0;files=0;limit=1_000_000_000;omitted=[]
+    try:
+        with tarfile.open(archive,'x') as output:
+            for path in workspace.rglob('*'):
+                if path==archive:continue
+                if time.monotonic()>=deadline:raise TimeoutError('Failure-fixture preservation reached cleanup deadline')
+                if path.is_symlink():
+                    omitted.append({'path':path.relative_to(workspace).as_posix(),'target':os.readlink(path),
+                                    'reason':'symlink targets are never followed or copied'})
+                    continue
+                if not path.is_file():continue
+                size=path.stat().st_size
+                if total+size>limit:raise ValueError('Failure-fixture preservation reached its one-GB bound')
+                output.add(path,arcname=path.relative_to(workspace).as_posix(),recursive=False)
+                total+=size;files+=1
+        artifact=_copy_qualification_file(archive,evidence/'failed-workspace.tar')
+        return {'status':'preserved','files':files,'uncompressed_bytes':total,'omitted_symlinks':omitted,**artifact}
+    except (OSError,ValueError,TimeoutError) as error:
+        return {'status':'bounded_incomplete','files':files,'uncompressed_bytes':total,'reason':str(error),
+                'local_workspace_path':str(workspace),'omitted_symlinks':omitted,
+                'complete_log_and_junit_preserved_separately':True}
+
+
+def _cpu_qualification(config,root,source):
+    root=Path(root).resolve();source=Path(source).resolve();job_id=native_job_id()
+    allocation_clock=time.monotonic();timeout,cleanup_margin=_qualification_timeout()
+    workspace,kind=_qualification_workspace(root,job_id)
+    attempt=uuid.uuid4().hex
+    evidence=root/'state/qualification-evidence'/((job_id or 'local')+'-'+attempt)
+    evidence.mkdir(parents=True,exist_ok=False)
+    state=root/'state/cpu-qualification.json'
+    if state.exists():_copy_qualification_file(state,evidence/'previous-cpu-qualification.json')
+    identity=source_identity(source);config_sha=canonical_hash(config)
+    local_log=workspace/'pytest.log';local_junit=workspace/'junit.xml'
+    command=[sys.executable,'-u','-m','pytest',str(source/'tests'),'-v','--color=no','--basetemp',str(workspace/'pytest'),
+             '--junitxml',str(local_junit),'-o','cache_dir='+str(workspace/'cache'),'-o','faulthandler_timeout=120']
+    environment=os.environ.copy()
+    # Qualification always executes the complete immutable suite, regardless of
+    # an interactive shell's optional pytest selectors or unrelated plugins.
+    for key in ('PYTEST_ADDOPTS','PYTEST_PLUGINS'):environment.pop(key,None)
+    environment.update(PYTHONUNBUFFERED='1',PYTHONDONTWRITEBYTECODE='1',PYTEST_DISABLE_PLUGIN_AUTOLOAD='1')
+    started=time.monotonic();deadline=allocation_clock+timeout
+    record={'schema_version':2,'status':'running','qualification_attempt':attempt,'slurm_job_id':job_id,
+            'source_sha256':identity['sha256'],'config_sha256':config_sha,'started_unix':time.time(),
+            'timeout_seconds':timeout,'cleanup_margin_seconds':cleanup_margin,'command':command,
+            'workspace':str(workspace),'workspace_kind':kind,'local_live_log':str(local_log),
+            'live_progress_destination':'inherited stdout; Slurm writes its existing batch log',
+            'evidence_directory':str(evidence),
+            'test_selection':'complete source/tests directory; no environment selectors or third-party plugin autoload',
+            'evidence_class':'software qualification; not biological evidence'}
+    atomic_json(evidence/'receipt.json',record);atomic_json(state,record)
+    process=None;error=None;returncode=None;timed_out=False
+    try:
+        record['environment']=environment_record()
+        with local_log.open('xb',buffering=0) as log:
+            process=subprocess.Popen(command,cwd=source,env=environment,stdout=log,stderr=subprocess.STDOUT,
+                start_new_session=os.name=='posix',creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
+            with local_log.open('rb') as progress:
+                def relay():
+                    value=progress.read()
+                    if value:sys.stdout.write(value.decode('utf-8',errors='replace'));sys.stdout.flush()
+                while True:
+                    remaining=deadline-time.monotonic()
+                    if remaining<=0:
+                        timed_out=True;_stop_qualification(process);break
+                    try:returncode=process.wait(timeout=min(1.,remaining));break
+                    except subprocess.TimeoutExpired:relay()
+                relay()
+            returncode=process.returncode
+        counts=_qualification_junit(local_junit) if local_junit.is_file() else None
+        record['test_counts']=counts
+        if counts is None and not timed_out:raise ValueError('Qualification process did not produce a complete JUnit receipt')
+        if returncode==0 and counts and any(counts[key] for key in ('failures','errors','skipped')):
+            raise ValueError('Qualification cannot succeed with failed, errored or skipped tests')
+        if source_identity(source)!=identity or canonical_hash(config)!=config_sha:
+            raise ValueError('Qualification source/configuration changed during the test process')
+    except BaseException as exc:
+        error=exc
+        if process is not None:_stop_qualification(process)
+        returncode=process.returncode if process is not None else None
+        record['error']={'type':type(exc).__name__,'message':str(exc)}
+    record.update(status='timed_out' if timed_out else 'complete' if returncode==0 and error is None else 'failed',
+                  returncode=returncode,elapsed_seconds=time.monotonic()-started,finished_unix=time.time())
+    artifacts={}
+    for label,path in [('log',local_log),('junit',local_junit)]:
+        if path.is_file():artifacts[label]=_copy_qualification_file(path,evidence/path.name)
+    record['artifacts']=artifacts
+    record['source_verified_unchanged']=source_identity(source)==identity
+    if not record['source_verified_unchanged']:
+        record['status']='failed'
+        if error is None:
+            error=ValueError('Qualification source changed before evidence finalization')
+            record['error']={'type':type(error).__name__,'message':str(error)}
+    if record['status']!='complete':
+        record['failed_fixture_evidence']=_preserve_qualification_failure(workspace,evidence,deadline+cleanup_margin-120.)
+    record['workspace_deleted']=False
+    record['receipt_sha256']=canonical_hash(record)
+    atomic_json(evidence/'receipt.json',record);atomic_json(state,record)
+    if error is not None:raise error
+    if record['status']!='complete':raise RuntimeError('Native implementation qualification '+record['status']+'; inspect '+str(evidence/'receipt.json'))
+    return record
 
 
 def qualification(config,root,gpu=False):
@@ -53,14 +238,7 @@ def qualification(config,root,gpu=False):
                 'elapsed_seconds':time.monotonic()-started,'loss':float(loss.detach().cpu()),'cpu_cuda_regression':comparisons}
         atomic_json(root/'state/cuda-qualification.json',record)
     else:
-        (root/'tests').mkdir(parents=True,exist_ok=True)
-        command=[sys.executable,'-m','pytest',str(source/'tests'),'-q','--basetemp',str(root/'tests'/('qualification-'+os.environ.get('SLURM_JOB_ID','local')))]
-        response=subprocess.run(command,cwd=source,text=True,capture_output=True)
-        record={'status':'complete' if response.returncode==0 else 'failed','returncode':response.returncode,
-                'stdout':response.stdout,'stderr':response.stderr,'environment':environment_record(),
-                'evidence_class':'software qualification; not biological evidence'}
-        atomic_json(root/'state/cpu-qualification.json',record)
-        if response.returncode:raise RuntimeError('Native implementation qualification failed; inspect receipt')
+        record=_cpu_qualification(config,root,source)
     print(json.dumps(record))
     return record
 

@@ -185,6 +185,149 @@ def test_server_ignoring_range_restarts_atomically(tmp_path):
     assert target.read_bytes() == body
 
 
+def _seed_resumable_fixture(tmp_path, prefix_size=4):
+    body = b"0123456789"
+    item = object_for(body)
+    target = safe_destination(tmp_path, item["relative_path"])
+    target.parent.mkdir(parents=True)
+    partial = target.with_name(target.name + ".part")
+    partial.write_bytes(body[:prefix_size])
+    sidecar = partial.with_name(partial.name + ".json")
+    sidecar.write_text(json.dumps({"asset_hash": canonical_hash(item), "etag": '"stable"',
+        "last_modified": "Fri, 05 Dec 2025 23:29:36 GMT"}))
+    return body, item, target, partial, sidecar
+
+
+@pytest.mark.parametrize("headers", [
+    {"Content-Range": "bytes 5-9/10"},
+    {"Content-Range": "bytes 4-3/10"},
+    {"Content-Range": "bytes 4-10/10"},
+    {"Content-Range": "bytes 4-9/11"},
+    {"Content-Range": "bytes 4-9/*"},
+    {"Content-Range": "bytes 4-9/10 trailing"},
+    {"Content-Range": "bytes 4-9/10", "Content-Length": "5"},
+    {"Content-Range": "bytes 4-9/10", "Content-Length": "-6"},
+    {"Content-Range": "bytes 4-9/10", "Content-Length": "6x"}])
+def test_invalid_full_range_headers_preserve_existing_prefix_and_sidecar(tmp_path, headers):
+    body, item, target, partial, sidecar = _seed_resumable_fixture(tmp_path)
+    before = partial.read_bytes(), sidecar.read_bytes()
+    with pytest.raises(AcquisitionError):
+        download_asset(item, tmp_path, session=Session(Response(body[4:], 206, headers)))
+    assert (partial.read_bytes(), sidecar.read_bytes()) == before
+    assert not target.exists()
+
+
+@pytest.mark.parametrize("status", [200, 206])
+@pytest.mark.parametrize("encoding", ["gzip", "br", "gzip, identity"])
+def test_unsolicited_encoding_is_rejected_before_restart_or_resume_write(tmp_path, status, encoding):
+    body, item, target, partial, sidecar = _seed_resumable_fixture(tmp_path)
+    before = partial.read_bytes(), sidecar.read_bytes()
+    headers = {"Content-Encoding": encoding, "Content-Range": "bytes 4-9/10"}
+    session = Session(Response(body if status == 200 else body[4:], status, headers))
+    with pytest.raises(AcquisitionError, match="encoded download representation"):
+        download_asset(item, tmp_path, session=session)
+    assert session.calls[0][1]["headers"]["Accept-Encoding"] == "identity"
+    assert (partial.read_bytes(), sidecar.read_bytes()) == before
+    assert not target.exists()
+
+
+@pytest.mark.parametrize("headers", [
+    {"Content-Range": "bytes 4-9/10", "ETag": '"different"'},
+    {"Content-Range": "bytes 4-9/10", "Last-Modified": "Sat, 06 Dec 2025 20:54:25 GMT"}])
+def test_changed_returned_resume_validators_preserve_existing_prefix_and_sidecar(tmp_path, headers):
+    body, item, target, partial, sidecar = _seed_resumable_fixture(tmp_path)
+    before = partial.read_bytes(), sidecar.read_bytes()
+    with pytest.raises(AcquisitionError, match="changed during resumed transfer"):
+        download_asset(item, tmp_path, session=Session(Response(body[4:], 206, headers)))
+    assert (partial.read_bytes(), sidecar.read_bytes()) == before
+    assert not target.exists()
+
+
+def test_short_stream_retains_old_validator_and_valid_prefix_for_next_resume(tmp_path):
+    body, item, target, partial, sidecar = _seed_resumable_fixture(tmp_path)
+    with pytest.raises(AcquisitionError, match="shorter than its declared byte span"):
+        download_asset(item, tmp_path, session=Session(Response(body[4:7], 206,
+            {"Content-Range": "bytes 4-9/10", "Content-Length": "6"})))
+    assert not target.exists() and partial.read_bytes() == body[:7]
+    retained = json.loads(sidecar.read_text())
+    assert retained["etag"] == '"stable"'
+    assert retained["last_modified"] == "Fri, 05 Dec 2025 23:29:36 GMT"
+    assert retained["transfer_response"]["expected_body_bytes"] == 6
+    session = Session(Response(body[7:], 206, {"Content-Range": "bytes 7-9/10", "Content-Length": "3", "Content-Encoding": "identity"}))
+    assert download_asset(item, tmp_path, session=session)["status"] == "verified"
+    assert session.calls[0][1]["headers"]["If-Range"] == '"stable"'
+    assert target.read_bytes() == body and not partial.exists() and not sidecar.exists()
+
+
+def test_overlong_ranged_stream_never_appends_the_excess_chunk_or_promotes(tmp_path):
+    body, item, target, partial, sidecar = _seed_resumable_fixture(tmp_path)
+    with pytest.raises(AcquisitionError, match="exceeds its declared byte span"):
+        download_asset(item, tmp_path, session=Session(Response(body[4:] + b"x", 206,
+            {"Content-Range": "bytes 4-9/10", "Content-Length": "6"})))
+    assert not target.exists() and partial.read_bytes() == body[:4]
+
+
+def test_source_without_pinned_size_cannot_promote_a_shorter_declared_range(tmp_path):
+    body, item, target, partial, sidecar = _seed_resumable_fixture(tmp_path)
+    item["bytes"] = None
+    receipt = json.loads(sidecar.read_text())
+    receipt["asset_hash"] = canonical_hash(item)
+    sidecar.write_text(json.dumps(receipt))
+    with pytest.raises(AcquisitionError, match="does not complete its declared representation"):
+        download_asset(item, tmp_path, session=Session(Response(body[4:8], 206,
+            {"Content-Range": "bytes 4-7/10", "Content-Length": "4"})))
+    assert partial.read_bytes() == body[:8] and not target.exists()
+
+
+def test_full_restart_length_mismatch_is_rejected_before_existing_prefix_is_truncated(tmp_path):
+    body, item, target, partial, sidecar = _seed_resumable_fixture(tmp_path)
+    before = partial.read_bytes(), sidecar.read_bytes()
+    with pytest.raises(AcquisitionError, match="Content-Length differs from pinned"):
+        download_asset(item, tmp_path, session=Session(Response(body, 200, {"Content-Length": "9"})))
+    assert (partial.read_bytes(), sidecar.read_bytes()) == before
+    assert not target.exists()
+
+
+def test_compliant_full_restart_with_new_validator_verifies_original_source_pin(tmp_path):
+    body, item, target, partial, sidecar = _seed_resumable_fixture(tmp_path)
+    session = Session(Response(body, 200, {"Content-Length": "10", "Content-Encoding": "identity", "ETag": '"new"'}))
+    assert download_asset(item, tmp_path, session=session)["status"] == "verified"
+    assert target.read_bytes() == body and not partial.exists() and not sidecar.exists()
+
+
+def test_interrupted_restart_cannot_bind_old_prefix_to_replacement_validator(tmp_path, monkeypatch):
+    import horsehair.acquire as acquire
+    body, item, target, partial, sidecar = _seed_resumable_fixture(tmp_path)
+    old_sidecar = sidecar.read_bytes()
+    def interrupted_sidecar(path, value):
+        # Simulate failure at the restart binding boundary, before any payload
+        # write. Old representation bytes must already be gone at this point.
+        assert partial.stat().st_size == 0
+        raise OSError("Synthetic sidecar-write interruption")
+    monkeypatch.setattr(acquire, "atomic_json", interrupted_sidecar)
+    with pytest.raises(AcquisitionError, match="Synthetic sidecar-write interruption"):
+        download_asset(item, tmp_path, attempts=1,
+            session=Session(Response(body, 200, {"ETag": '"new"', "Content-Length": "10"})))
+    assert not target.exists() and partial.stat().st_size == 0
+    assert sidecar.read_bytes() == old_sidecar
+
+
+@pytest.mark.parametrize("valid", [True, False])
+def test_complete_partial_416_still_requires_pinned_checksum(tmp_path, valid):
+    body, item, target, partial, sidecar = _seed_resumable_fixture(tmp_path, 10)
+    if not valid:
+        partial.write_bytes(b"xxxxxxxxxx")
+    before = partial.read_bytes(), sidecar.read_bytes()
+    session = Session(Response(b"", 416))
+    if valid:
+        assert download_asset(item, tmp_path, session=session)["status"] == "verified"
+        assert target.read_bytes() == body and not partial.exists() and not sidecar.exists()
+    else:
+        with pytest.raises(AcquisitionError, match="Provider checksum mismatch"):
+            download_asset(item, tmp_path, session=session)
+        assert not target.exists() and (partial.read_bytes(), sidecar.read_bytes()) == before
+
+
 def test_bad_complete_partial_is_preserved_before_fresh_verified_get(tmp_path):
     from horsehair.acquire import quarantine_invalid_complete_partial
     body = b'0123456789'

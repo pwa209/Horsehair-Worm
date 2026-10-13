@@ -468,30 +468,76 @@ def download_asset(item: dict, root: str | Path, *, session: requests.Session | 
                     report["path"] = str(target)
                     return report
                 response.raise_for_status()
+                # Requests iter_content transparently decodes Content-Encoding.
+                # Range offsets and provider checksums describe representation
+                # bytes, so an unsolicited encoded response cannot be appended.
+                encoding = response.headers.get("Content-Encoding", "").strip().lower()
+                if encoding not in ("", "identity"):
+                    raise AcquisitionError(f"Unexpected encoded download representation: {encoding}")
+                content_length = response.headers.get("Content-Length")
+                if content_length is not None:
+                    if not re.fullmatch(r"[0-9]+", content_length.strip()):
+                        raise AcquisitionError("Invalid download Content-Length")
+                    content_length = int(content_length)
+                expected_body_bytes = None
                 if response.status_code == 206:
                     content_range = response.headers.get("Content-Range", "")
-                    if not content_range.startswith(f"bytes {offset}-"):
+                    matched = re.fullmatch(r"bytes ([0-9]+)-([0-9]+)/([0-9]+)", content_range.strip())
+                    if matched is None:
+                        raise AcquisitionError("Server returned an invalid complete Content-Range")
+                    first, last, total = map(int, matched.groups())
+                    if first != offset or last < first or last >= total:
                         raise AcquisitionError("Server returned an incorrect range")
+                    if item.get("bytes") is not None and total != int(item["bytes"]):
+                        raise AcquisitionError("Server range total differs from pinned source byte count")
+                    expected_body_bytes = last - first + 1
+                    if content_length is not None and content_length != expected_body_bytes:
+                        raise AcquisitionError("Server Content-Length differs from its declared range")
+                    for header, key in (("ETag", "etag"), ("Last-Modified", "last_modified")):
+                        previous, current = receipt.get(key), response.headers.get(header)
+                        if previous and current and previous != current:
+                            raise AcquisitionError(f"Provider {header} changed during resumed transfer")
                     mode = "ab"
                 elif response.status_code == 200:
                     mode, offset = "wb", 0
+                    if item.get("bytes") is not None:
+                        expected_body_bytes = int(item["bytes"])
+                    elif content_length is not None:
+                        expected_body_bytes = content_length
+                    if content_length is not None and expected_body_bytes != content_length:
+                        raise AcquisitionError("Server Content-Length differs from pinned source byte count")
                 else:
                     raise AcquisitionError(f"Unexpected download status {response.status_code}")
-                receipt = {"asset_hash": signature, "etag": response.headers.get("ETag"), "last_modified": response.headers.get("Last-Modified"), "url": response.url}
-                atomic_json(receipt_path, receipt)
+                # A compliant 206 may omit validators; retain the validators of
+                # the prefix rather than silently losing its resume binding.
+                receipt = {"asset_hash": signature,
+                    "etag": response.headers.get("ETag") or (receipt.get("etag") if mode == "ab" else None),
+                    "last_modified": response.headers.get("Last-Modified") or (receipt.get("last_modified") if mode == "ab" else None),
+                    "url": response.url,
+                    "transfer_response": {"status_code": response.status_code, "range_start": offset,
+                        "content_range": response.headers.get("Content-Range"), "content_length": content_length,
+                        "content_encoding": encoding or "identity", "expected_body_bytes": expected_body_bytes}}
                 algorithms = {"sha256"}
                 if item.get("provider_checksum"):
                     algorithms.add(item["provider_checksum"].split(":",1)[0].replace("-", ""))
                 contexts = {name: hashlib.new(name) for name in algorithms}
-                if mode == "ab":
+                if mode == "ab" and offset:
                     with partial.open("rb") as prefix:
                         for chunk in iter(lambda: prefix.read(8 * 1024 * 1024), b""):
                             for context in contexts.values():
                                 context.update(chunk)
+                received_body_bytes = 0
                 with partial.open(mode) as handle:
+                    # On 200, truncate the old representation before publishing
+                    # its replacement validator. An interrupted restart must not
+                    # bind surviving old prefix bytes to a newly returned ETag.
+                    atomic_json(receipt_path, receipt)
                     for chunk in response.iter_content(chunk_size=8 * 1024 * 1024):
                         if chunk:
+                            if expected_body_bytes is not None and received_body_bytes + len(chunk) > expected_body_bytes:
+                                raise AcquisitionError("Streamed download body exceeds its declared byte span; partial retained")
                             handle.write(chunk)
+                            received_body_bytes += len(chunk)
                             for context in contexts.values():
                                 context.update(chunk)
                             transferred += len(chunk)
@@ -504,6 +550,10 @@ def download_asset(item: dict, root: str | Path, *, session: requests.Session | 
                                     time.sleep(min(delay, 1.0))
                     handle.flush()
                     os.fsync(handle.fileno())
+                if expected_body_bytes is not None and received_body_bytes != expected_body_bytes:
+                    raise AcquisitionError("Streamed download body is shorter than its declared byte span; partial retained")
+                if response.status_code == 206 and offset + received_body_bytes != total:
+                    raise AcquisitionError("Ranged download does not complete its declared representation; partial retained")
             report = verify_file(partial, item, computed_digests={name: context.hexdigest() for name, context in contexts.items()})
             partial.replace(target)
             receipt_path.unlink(missing_ok=True)
