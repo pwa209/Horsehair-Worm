@@ -299,19 +299,33 @@ def test_worker_timeout_retains_hashed_diagnostics_and_remains_failed(tmp_path, 
 
 
 def test_isolated_python_probe_checks_real_fit_and_keeps_parent_environment(tmp_path, monkeypatch):
-    import os, sys
+    import os, sys, subprocess
     import horsehair.molecular as module
-    expected = {name: version.split("+", 1)[0] for name, version in module.numerical_runtime_proof()["versions"].items()}
+    # Alliance's main environment obtains NumPy/SciPy through module PYTHONPATH.
+    # The production OrthoFinder child deliberately clears that path and uses
+    # its own installed packages. Exercise that actual configured child on
+    # Narval; an ordinary local/CI interpreter has installed site packages.
+    config = json.loads((Path(__file__).resolve().parents[1] / 'configs/study.json').read_text())
+    configured = Path(config.get('molecular', {}).get('orthofinder_python', sys.executable))
+    python = configured if configured.is_file() else Path(sys.executable)
+    clean_env = os.environ.copy()
+    for key in ['PYTHONPATH', 'PYTHONHOME']:
+        clean_env.pop(key, None)
+    clean_env['PYTHONNOUSERSITE'] = '1'
+    versions = json.loads(subprocess.check_output([str(python), '-c',
+        'import json,numpy,scipy; print(json.dumps(dict(numpy=numpy.__version__,scipy=scipy.__version__)))'],
+        env=clean_env, text=True, timeout=30))
+    expected = {name: version.split("+", 1)[0] for name, version in versions.items()}
     monkeypatch.setattr(module, "ORTHOFINDER_PYTHON_PACKAGES", expected)
     unrelated = str(tmp_path / "unrelated-python-module-directory")
     monkeypatch.setenv("PYTHONPATH", unrelated)
-    proof = module.qualify_orthofinder_python(sys.executable, tmp_path / "valid-environment.log")
+    proof = module.qualify_orthofinder_python(python, tmp_path / "valid-environment.log")
     assert proof["known_serial_fit_passed"]
     assert proof["versions"] and all(Path(path).is_file() for path in proof["module_hashes"])
     assert os.environ["PYTHONPATH"] == unrelated
     monkeypatch.setattr(module, "ORTHOFINDER_PYTHON_PACKAGES", {"numpy": "0.0.0", "scipy": "0.0.0"})
     with pytest.raises(MolecularError, match="isolated NumPy"):
-        module.qualify_orthofinder_python(sys.executable, tmp_path / "different-environment.log")
+        module.qualify_orthofinder_python(python, tmp_path / "different-environment.log")
 
 
 def test_fastme_numerical_fixture_requires_the_known_unrooted_split(tmp_path):

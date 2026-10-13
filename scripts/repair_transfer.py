@@ -1,16 +1,15 @@
 """Explicit finite RNA transfer recovery, preserving rejected provider bytes.
 
-Run in a network-enabled Slurm allocation. The pinned source manifest remains
-unchanged; verified finals are reverified, and the rejected complete partial is
-preserved with independently measured digests before downloading a fresh copy.
+Run hashing and quarantine in Slurm. The pinned source manifest remains
+unchanged and rejected complete bytes are preserved with measured digests.
+Resume the finite transfer_sources.py invocation on a separately qualified
+Narval transfer endpoint; compute-proxy access to ENA is not assumed.
 """
 import argparse
 import json
 import os
 import re
 from pathlib import Path
-import subprocess
-import sys
 import time
 
 from horsehair.acquire import quarantine_invalid_complete_partial, validate_manifest
@@ -66,12 +65,9 @@ def main():
                         job_id=native_job_id()):
         try:
             record['quarantine'] = quarantine_invalid_complete_partial(item, args.root, args.recovery_id)
-            record['status'] = 'fresh_transfer'
-            atomic_json(journal, record)
-            subprocess.run([sys.executable, str(release / 'scripts/transfer_sources.py'),
-                            '--root', str(args.root), '--config', str(args.config),
-                            '--identity', str(args.identity), '--group', 'rna'], cwd=release, check=True)
-            record.update(status='complete', transfer=read_json(args.root / 'state/transfer-rna.json'))
+            record.update(status='quarantined', transfer_pending=True,
+                next_interface='scripts/transfer_sources.py --group rna on a separately qualified Narval transfer endpoint',
+                compute_proxy_access_assumed=False)
         except BaseException as error:
             record.update(status='failed', error_type=type(error).__name__, error=str(error))
             atomic_json(journal, record)
