@@ -96,6 +96,68 @@ def test_evaluation_no_optimisation_and_reproducible_restoration():
     assert all(p.grad is None for p in policy.parameters())
 
 
+@pytest.mark.parametrize('deterministic',[False,True])
+def test_nonfinite_actions_are_unavailable_in_stochastic_and_deterministic_controls(deterministic):
+    torch=pytest.importorskip('torch')
+    logits=torch.tensor([[0.,0.,float('inf'),0.,0.]])
+    with pytest.raises(agents.NumericalPolicyError,match='Nonfinite'):
+        agents._sample_action(logits,np.random.default_rng(1),deterministic)
+
+
+def numerical_fixture_policy(fail_at=14, intervention_only=False):
+    torch=pytest.importorskip('torch')
+    class Policy(torch.nn.Module):
+        def __init__(self):
+            super().__init__();self.weight=torch.nn.Parameter(torch.zeros(1));self.architecture='gru';self.calls=[]
+        def initial_state(self,n,device=None):
+            state=torch.zeros(n,2);state[0,1]=1.;return state
+        def forward(self,obs,state,perturbation=None):
+            self.calls.append(len(obs))
+            logits=torch.zeros(len(obs),agents.ACTION_DIM);logits[:,2]=100.
+            if perturbation is not None or not intervention_only:
+                logits[(state[:,1]>0)&(state[:,0]>=fail_at),2]=float('inf')
+            new_state=state.clone();new_state[:,0]+=1
+            return logits,torch.zeros(len(obs)),new_state
+    return Policy()
+
+
+def delayed_roster():
+    return [next(s for s in range(40_000_000,40_000_100) if agents.Environment('delayed_choice',s,'heldout').delay==delay) for delay in (10,20)]
+
+
+def test_evaluation_never_propagates_or_samples_completed_batch_members():
+    policy=numerical_fixture_policy()
+    before=agents.state_hash(policy)
+    rows,meta=agents.evaluate(policy,'delayed_choice',delayed_roster())
+    assert len(rows)==2 and meta['numerically_available']
+    assert sorted(r['steps'] for r in rows)==[12,22]
+    assert policy.calls[:12]==[2]*12 and policy.calls[12:]==[1]*10
+    assert agents.state_hash(policy)==before
+
+
+def test_active_numerical_failure_retains_null_outcomes_diagnostics_and_other_episode():
+    policy=numerical_fixture_policy(fail_at=5)
+    rows,meta=agents.evaluate(policy,'delayed_choice',delayed_roster(),on_numerical_failure='record')
+    failed=next(r for r in rows if r['numerical_status']=='unavailable')
+    valid=next(r for r in rows if r['numerical_status']=='available')
+    assert all(failed[k] is None for k in ('success','redirection','motor_accuracy'))
+    assert failed['steps']==5 and failed['numerical_failure_step']==5 and failed['numerical_failure_reason']=='nonfinite_logits'
+    assert valid['steps']==22 and meta['environment_steps']==27 and not meta['numerically_available']
+    assert meta['unavailable_episodes'][0]['episode_seed']==failed['episode_seed']
+    with pytest.raises(agents.NumericalPolicyError,match='step'):
+        agents.evaluate(numerical_fixture_policy(fail_at=5),'delayed_choice',delayed_roster())
+
+
+def test_kl_calibration_ignores_terminal_members_and_rejects_active_nonfinite_state():
+    policy=numerical_fixture_policy(intervention_only=True)
+    _,meta=agents.evaluate(policy,'delayed_choice',delayed_roster(),capture=True)
+    assert agents._clean_kl(policy,agents.Perturbation('recurrent_gate',1,[.1]),meta['sequence'])==pytest.approx(0.)
+    policy=numerical_fixture_policy(fail_at=5,intervention_only=True)
+    _,meta=agents.evaluate(policy,'delayed_choice',delayed_roster(),capture=True)
+    with pytest.raises(agents.NumericalPolicyError,match='calibration'):
+        agents._clean_kl(policy,agents.Perturbation('recurrent_gate',1,[.1]),meta['sequence'])
+
+
 def test_final_fails_before_development_protocol_is_frozen(tmp_path):
     config = {"agents": {"n_envs": 2, "total_steps": 16}}
     with pytest.raises(RuntimeError, match="frozen development protocol"):
@@ -282,6 +344,44 @@ def test_cpu_benchmark_cannot_claim_complete_after_missing_trial_condition(tmp_p
         agents.aggregate_benchmarks(measured_technical_agent_fixture[0],tmp_path)
 
 
+def test_cpu_benchmark_retains_attempted_grid_but_not_finite_qualification_for_unavailable_episode(tmp_path,measured_technical_agent_fixture):
+    import pandas as pd
+    config,_,cpu,_=measured_technical_agent_fixture
+    destination=tmp_path/'results/agents/benchmark-cpu-evaluation/delayed_choice_gru_900'
+    path=destination/'agent_trials.parquet';trials=pd.read_parquet(path)
+    trials.loc[0,['success','redirection','motor_accuracy']]=np.nan
+    trials.loc[0,'numerical_status']='unavailable';trials.loc[0,'numerical_failure_reason']='nonfinite_hidden_state'
+    trials.loc[0,'numerical_failure_step']=5
+    trials.to_parquet(path,index=False)
+    record=copy.deepcopy(cpu['reports'][0]);record['trial_file_sha256']=agents.digest(path)
+    grid=agents._validate_benchmark_grid(config,destination,record)
+    assert grid['complete_mechanism_grid'] and not grid['numerically_valid_grid'] and grid['unavailable_episode_rows']==1
+    trials.loc[0,'success']=0  # assigning an outcome to a failed episode is forbidden
+    trials.to_parquet(path,index=False);record['trial_file_sha256']=agents.digest(path)
+    with pytest.raises(RuntimeError,match='substituted'):
+        agents._validate_benchmark_grid(config,destination,record)
+
+
+def test_available_tag_cannot_hide_invalid_measured_calibration_or_endpoints(tmp_path,measured_technical_agent_fixture):
+    import pandas as pd
+    config,_,cpu,_=measured_technical_agent_fixture
+    destination=tmp_path/'results/agents/benchmark-cpu-evaluation/delayed_choice_gru_900'
+    path=destination/'agent_trials.parquet';original=pd.read_parquet(path)
+    record=copy.deepcopy(cpu['reports'][0])
+    for column,value in [('clean_policy_kl',np.nan),('clean_policy_kl',-.1),('achieved_parameter_norm',np.inf),
+                         ('target_policy_kl',-.1),('success',.5),('redirection',2),('motor_accuracy',1.1)]:
+        trials=original.copy();trials[column]=trials[column].astype(float)
+        trials.loc[0,column]=value;trials.to_parquet(path,index=False)
+        record['trial_file_sha256']=agents.digest(path)
+        with pytest.raises(RuntimeError,match='calibration|ranges'):
+            agents._validate_benchmark_grid(config,destination,record)
+    trials=original.copy();trials.loc[0,'clean_policy_kl']=np.nan
+    trials.loc[0,'calibration_numerical_status']='unavailable';trials.to_parquet(path,index=False)
+    record['trial_file_sha256']=agents.digest(path)
+    grid=agents._validate_benchmark_grid(config,destination,record)
+    assert grid['complete_mechanism_grid'] and not grid['numerically_valid_grid'] and grid['unavailable_calibration_rows']==1
+
+
 def test_admission_requires_native_cuda_and_does_not_use_competence_to_choose_timing(tmp_path,measured_technical_agent_fixture,monkeypatch):
     from horsehair import admission
     config,training,_,_ = measured_technical_agent_fixture
@@ -359,6 +459,13 @@ def test_final_admission_consumes_actual_cpu_roster_and_counts_evaluation_storag
     assert forecast["all_remaining_training_gpu_hours"]==pytest.approx(forecast["gpu_hours"])
     assert forecast["additional_files"]>=20*9
     assert tmp_path/"state/agent-cpu-evaluation-benchmark.json" in forecast["inputs"]
+    original_grid=agents._validate_benchmark_grid
+    def unavailable_grid(*args):
+        return {**original_grid(*args),"numerically_valid_grid":False}
+    monkeypatch.setattr(agents,'_validate_benchmark_grid',unavailable_grid)
+    with pytest.raises(admission.AdmissionError,match='unavailable numerical evidence'):
+        admission._agents(config,tmp_path,native,identity,1.5,'agents-final')
+    monkeypatch.setattr(agents,'_validate_benchmark_grid',original_grid)
     entry = aggregate["records"][0]
     entry["sha256"] = "0"*64
     agents._json(tmp_path/"state/agent-cpu-evaluation-benchmark.json",aggregate)

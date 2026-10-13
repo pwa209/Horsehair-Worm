@@ -441,24 +441,40 @@ def state_hash(policy):
     return _state_dict_hash(policy.state_dict())
 
 
+class NumericalPolicyError(ValueError):
+    """An action distribution is unavailable, never a substituted outcome."""
+
+
 def _sample_action(logits, rng, deterministic=False):
     torch = _torch()
+    if not torch.isfinite(logits).all():
+        raise NumericalPolicyError("Nonfinite policy logits; action probabilities are unavailable")
     probabilities = torch.softmax(logits, -1).detach().cpu().numpy()
-    return np.argmax(probabilities, axis=-1) if deterministic else np.asarray([rng.choice(ACTION_DIM, p=p/p.sum()) for p in probabilities])
+    if not np.isfinite(probabilities).all() or not (probabilities.sum(axis=-1)>0).all():
+        raise NumericalPolicyError("Nonfinite policy probabilities; action probabilities are unavailable")
+    if deterministic:
+        return np.argmax(probabilities, axis=-1)
+    generators = rng if isinstance(rng, (list, tuple)) else [rng]*len(probabilities)
+    return np.asarray([generator.choice(ACTION_DIM, p=p/p.sum()) for generator,p in zip(generators,probabilities)])
 
 
-def evaluate(policy, task, seeds, split="heldout", perturbation=None, probe=None, cue_removal=False, deterministic=False, capture=False):
+def evaluate(policy, task, seeds, split="heldout", perturbation=None, probe=None, cue_removal=False, deterministic=False, capture=False,
+             on_numerical_failure="raise"):
     torch = _torch()
+    if on_numerical_failure not in ("raise", "record"):
+        raise ValueError("Unknown numerical failure policy")
     before = state_hash(policy)
     active_policy, active_perturbation = _perturbed_policy(policy, perturbation)
     active_policy.eval()
     device = next(policy.parameters()).device
     environments = [Environment(task, int(s), split, probe) for s in seeds]
-    rng = np.random.default_rng(int(seeds[0])+9349)
+    # One fixed action stream per episode preserves paired action noise when a
+    # different batch member terminates early or becomes numerically unavailable.
+    rngs = [np.random.default_rng(int(seed)+9349) for seed in seeds]
     state = active_policy.initial_state(len(environments))
     obs = np.stack([e.observe() for e in environments])
     finished = np.zeros(len(environments), dtype=bool)
-    rows, sequence = [], []
+    rows, sequence, unavailable = [], [], []
     steps = 0
     with torch.no_grad():
         for t in range(200):
@@ -469,22 +485,41 @@ def evaluate(policy, task, seeds, split="heldout", perturbation=None, probe=None
                 tensor[:, 14:22] = 0
             if capture:
                 sequence.append((tensor.detach().cpu().clone(), state.detach().cpu().clone(), (~finished).copy()))
-            logits, _, state = active_policy(tensor, state, active_perturbation)
-            actions = _sample_action(logits, rng, deterministic)
-            for i, environment in enumerate(environments):
-                if finished[i]:
-                    continue
-                obs[i], _, done, info = environment.step(int(actions[i]))
+            indices = np.flatnonzero(~finished)
+            logits, _, next_state = active_policy(tensor[indices], state[indices], active_perturbation)
+            valid_logits = torch.isfinite(logits).all(-1).cpu().numpy()
+            valid_state = torch.isfinite(next_state).all(-1).cpu().numpy()
+            valid = valid_logits & valid_state
+            if not valid.all():
+                for local in np.flatnonzero(~valid):
+                    i = int(indices[local])
+                    failure = {"episode_seed":int(seeds[i]),"step":t,"probe":probe or "main",
+                               "reason":"nonfinite_logits" if not valid_logits[local] else "nonfinite_hidden_state"}
+                    if on_numerical_failure == "raise":
+                        raise NumericalPolicyError(f"Numerical policy failure: {failure}")
+                    unavailable.append(failure)
+                    rows.append({"episode_seed":int(seeds[i]),"success":None,"redirection":None,"motor_accuracy":None,
+                                 "steps":environments[i].t,"truncated":False,"numerical_status":"unavailable",
+                                 "numerical_failure_reason":failure["reason"],"numerical_failure_step":t})
+                    finished[i] = True
+            active_indices = indices[valid]
+            state[active_indices] = next_state[valid]
+            actions = _sample_action(logits[valid], [rngs[int(i)] for i in active_indices], deterministic)
+            for local, i in enumerate(active_indices):
+                environment = environments[int(i)]
+                obs[i], _, done, info = environment.step(int(actions[local]))
                 steps += 1
                 if done:
                     finished[i] = True
                     rows.append({"episode_seed": int(seeds[i]), "success": int(info["success"]), "redirection": int(info["redirection"]),
-                                 "steps": info["steps"], "motor_accuracy": info["motor_accuracy"], "truncated": info["truncated"]})
+                                 "steps": info["steps"], "motor_accuracy": info["motor_accuracy"], "truncated": info["truncated"],
+                                 "numerical_status":"available","numerical_failure_reason":None,"numerical_failure_step":None})
             if finished.all():
                 break
     if before != state_hash(policy):
         raise AssertionError("Base-policy weights changed during evaluation")
-    return rows, {"environment_steps": steps, "weight_sha256": before, "sequence": sequence}
+    return rows, {"environment_steps": steps, "weight_sha256": before, "sequence": sequence,
+                  "numerically_available":not unavailable,"unavailable_episodes":unavailable}
 
 
 def _checkpoint(path, policy, optimizer, steps, config, seed, task, learning_rate, budget, observation, states, environments, serials, rollout_rng, metrics):
@@ -691,13 +726,21 @@ def _clean_kl(policy, perturbation, sequences):
     state = active.initial_state(sequences[0][0].shape[0])
     with torch.no_grad():
         for obs, clean_state, mask in sequences:
+            if not mask.any():
+                continue
             obs = obs.to(device)
-            clean_logits, _, _ = policy(obs, clean_state.to(device))
-            changed_logits, _, state = active(obs, state, p)
-            log_p, log_q = torch.log_softmax(clean_logits, -1), torch.log_softmax(changed_logits, -1)
+            clean_logits, _, _ = policy(obs[mask], clean_state.to(device)[mask])
+            changed_logits, _, changed_state = active(obs[mask], state[mask], p)
+            if not torch.isfinite(clean_logits).all() or not torch.isfinite(changed_logits).all() or not torch.isfinite(changed_state).all():
+                raise NumericalPolicyError("Nonfinite active policy state/logits during clean KL calibration")
+            state[mask] = changed_state
+            log_p, log_q = torch.log_softmax(clean_logits.double(), -1), torch.log_softmax(changed_logits.double(), -1)
             divergence = (log_p.exp()*(log_p-log_q)).sum(-1)
-            if mask.any():
-                values.extend(divergence[torch.as_tensor(mask, device=device)].cpu().tolist())
+            if not torch.isfinite(divergence).all():
+                raise NumericalPolicyError("Nonfinite clean policy KL; functional matching is unavailable")
+            values.extend(divergence.cpu().tolist())
+    if not values:
+        raise NumericalPolicyError("No active calibration observations for clean policy KL")
     return max(float(np.mean(values)), 0.0)
 
 
@@ -763,9 +806,14 @@ def _restoration_check(policy, task, seeds, perturbation):
     state[:] = torch.sin(torch.arange(state.numel(), device=device).reshape_as(state))*.1
     snapshot = {k: v.detach().clone() for k, v in policy.state_dict().items()}
     with torch.no_grad():
-        original = torch.softmax(policy(obs, state)[0], -1)
+        original_logits = policy(obs, state)[0]
+        if not torch.isfinite(original_logits).all():
+            raise NumericalPolicyError("Clean restoration-reference logits are nonfinite")
+        original = torch.softmax(original_logits, -1)
         active, p = _perturbed_policy(policy, perturbation)
-        altered = torch.softmax(active(obs, state, p)[0], -1)
+        altered_logits = active(obs, state, p)[0]
+        altered_available = bool(torch.isfinite(altered_logits).all())
+        altered = torch.softmax(altered_logits, -1) if altered_available else None
         # Restore the intervention to exactly zero, holding observation, state,
         # RNG-independent probabilities, and all original weights constant.
         restored = torch.softmax(policy(obs, state, None)[0], -1)
@@ -773,7 +821,8 @@ def _restoration_check(policy, task, seeds, perturbation):
     unchanged = all(torch.equal(v, policy.state_dict()[k]) for k, v in snapshot.items())
     if maximum > 1e-7 or not unchanged:
         raise AssertionError("Agent restoration did not recover original action probabilities and weights")
-    return {"restoration_max_probability_error": maximum, "altered_max_probability_change": float((original-altered).abs().max()),
+    return {"restoration_max_probability_error": maximum, "altered_max_probability_change": float((original-altered).abs().max()) if altered_available else None,
+            "intervened_probability_status":"available" if altered_available else "unavailable",
             "base_weights_unchanged": unchanged}
 
 
@@ -798,7 +847,7 @@ def perturbation_experiment(policy, task, seed, config, protocol, destination):
     rule_types = ("synthetic", "biological") if biological else ("synthetic",)
     strengths = config.get("strengths", [0, .05, .1, .2, .4, .8])
     protocol_hash = _digest(protocol)
-    restoration = []
+    restoration, numerical_failures = [], []
     for rule_type in rule_types:
         for mechanism in MECHANISMS:
             for rank in config.get("ranks", [1, 2, 4, 8]):
@@ -809,26 +858,40 @@ def perturbation_experiment(policy, task, seed, config, protocol, destination):
                     theta = _normalize(np.ones(rank))*float(biological["classes"][mechanism])
                 for matching_arm in ("parameter_norm", "policy_kl"):
                     for strength in strengths:
+                        point = {"rule_type":rule_type,"mechanism":mechanism,"rank":rank,"strength":strength,"matching_arm":matching_arm}
                         multiplier = float(strength)
                         target_kl = float(strength)**2/2
                         if matching_arm == "policy_kl" and strength > 0:
                             lo, hi = 0.0, 8.0
                             for _ in range(int(config.get("kl_bisections", 10))):
                                 mid = (lo+hi)/2
-                                achieved = _clean_kl(policy, Perturbation(mechanism, rank, theta*mid), clean_meta["sequence"])
+                                try:
+                                    achieved = _clean_kl(policy, Perturbation(mechanism, rank, theta*mid), clean_meta["sequence"])
+                                except NumericalPolicyError as exc:
+                                    # Numerical divergence is an unavailable upper
+                                    # bracket, never a finite measured KL value.
+                                    numerical_failures.append({**point,"stage":"kl_bisection","multiplier":mid,"reason":str(exc)})
+                                    hi = mid
+                                    continue
                                 if achieved < target_kl:
                                     lo = mid
                                 else:
                                     hi = mid
                             multiplier = (lo+hi)/2
                         perturbation = Perturbation(mechanism, rank, theta*multiplier)
-                        achieved_kl = _clean_kl(policy, perturbation, clean_meta["sequence"])
+                        try:
+                            achieved_kl = _clean_kl(policy, perturbation, clean_meta["sequence"])
+                        except NumericalPolicyError as exc:
+                            achieved_kl = None
+                            numerical_failures.append({**point,"stage":"selected_calibration","multiplier":multiplier,"reason":str(exc)})
+                        functional_matched = achieved_kl is not None and abs(achieved_kl-target_kl) <= max(1e-6, target_kl*.1)
                         restoration.append({"mechanism": mechanism, "rank": rank, "strength": strength, "matching_arm": matching_arm,
                                             **_restoration_check(policy, task, calibration_seeds[:4], perturbation)})
                         # Every primary strength includes full competence probes,
                         # not merely a benign rate of emitting actions.
                         for probe in (None, *PROBES):
-                            rows, meta = evaluate(policy, task, evaluation_seeds, perturbation=perturbation, probe=probe)
+                            rows, meta = evaluate(policy, task, evaluation_seeds, perturbation=perturbation, probe=probe,on_numerical_failure="record")
+                            numerical_failures.extend({**point,"stage":"evaluation","restoration_control":"none",**failure} for failure in meta["unavailable_episodes"])
                             evaluation_steps += meta["environment_steps"]
                             for row, clean in zip(sorted(rows, key=lambda r: r["episode_seed"]), sorted(baseline[probe], key=lambda r: r["episode_seed"])):
                                 all_rows.append({"training_seed": seed, "architecture": policy.architecture, "task": task,
@@ -836,7 +899,8 @@ def perturbation_experiment(policy, task, seed, config, protocol, destination):
                                                  "rule_type": rule_type, "strength": strength, "matching_arm": matching_arm,
                                                  "achieved_parameter_norm": float(np.linalg.norm(theta*multiplier)), "clean_policy_kl": achieved_kl,
                                                  "norm_match_within_10pct": abs(float(np.linalg.norm(theta*multiplier))-float(strength)) <= max(1e-6, float(strength)*.1),
-                                                 "target_policy_kl": target_kl, "functional_match_within_10pct": abs(achieved_kl-target_kl) <= max(1e-6, target_kl*.1),
+                                                  "target_policy_kl": target_kl, "functional_match_within_10pct": functional_matched,
+                                                  "calibration_numerical_status":"available" if achieved_kl is not None else "unavailable",
                                                  "probe": probe or "main", "heldout_condition": True, "restoration_control": "none",
                                                  "baseline_success": clean["success"], "baseline_redirection": clean["redirection"],
                                                  "baseline_motor_accuracy": clean["motor_accuracy"], "protocol_sha256": protocol_hash, **row})
@@ -847,14 +911,16 @@ def perturbation_experiment(policy, task, seed, config, protocol, destination):
                             if control == "random_subspace":
                                 active = Perturbation(mechanism, rank, theta*multiplier, random_restoration=True)
                             rows, meta = evaluate(policy, task, evaluation_seeds, perturbation=active,
-                                                  cue_removal=control == "cue_removal", deterministic=control == "lower_action_noise")
+                                                  cue_removal=control == "cue_removal", deterministic=control == "lower_action_noise",on_numerical_failure="record")
+                            numerical_failures.extend({**point,"stage":"evaluation","restoration_control":control,**failure} for failure in meta["unavailable_episodes"])
                             evaluation_steps += meta["environment_steps"]
                             for row in rows:
                                 all_rows.append({"training_seed": seed, "architecture": policy.architecture, "task": task,
                                                  "perturbation": mechanism, "rank": rank, "effective_coefficients": rank,
                                                  "rule_type": rule_type, "strength": strength, "matching_arm": matching_arm,
                                                  "achieved_parameter_norm": float(np.linalg.norm(theta*multiplier)), "clean_policy_kl": achieved_kl,
-                                                 "target_policy_kl": target_kl, "functional_match_within_10pct": abs(achieved_kl-target_kl) <= max(1e-6, target_kl*.1),
+                                                  "target_policy_kl": target_kl, "functional_match_within_10pct": functional_matched,
+                                                  "calibration_numerical_status":"available" if achieved_kl is not None else "unavailable",
                                                  "probe": "main", "heldout_condition": True, "restoration_control": control,
                                                  "protocol_sha256": protocol_hash, **row})
     if before != state_hash(policy):
@@ -868,6 +934,9 @@ def perturbation_experiment(policy, task, seed, config, protocol, destination):
                "base_weight_sha256": before, "base_weights_unchanged": True, "protocol_sha256": protocol_hash,
                "baseline_competence": baseline_competence, "baseline_competence_qualified": competence_qualified,
                "baseline_probe_accuracy_min": float(config.get("baseline_probe_accuracy_min", .8)),
+                "numerically_available":all(row["numerical_status"]=="available" and row["calibration_numerical_status"]=="available" for row in all_rows),
+                "unavailable_episode_rows":sum(row["numerical_status"]=="unavailable" for row in all_rows),
+                "numerical_failures":numerical_failures,
                "trial_file_sha256": hashlib.sha256((destination/"agent_trials.parquet").read_bytes()).hexdigest(),
                "biological_direction_status": protocol.get("biological_direction_status"),
                "heldout_architecture": policy.architecture == protocol["heldout_architecture"],
@@ -1215,8 +1284,36 @@ def _validate_benchmark_grid(config, destination, record):
     if set(restored_points)!=expected or len(restored_points)!=len(expected) or any(
             row["restoration_max_probability_error"]>1e-7 or row["base_weights_unchanged"] is not True for row in restoration):
         raise RuntimeError("CPU benchmark restoration qualification is incomplete or failed")
+    statuses = trials.get("numerical_status",pd.Series("available",index=trials.index))
+    calibration = trials.get("calibration_numerical_status",pd.Series("available",index=trials.index))
+    if not statuses.isin(["available","unavailable"]).all() or not calibration.isin(["available","unavailable"]).all():
+        raise RuntimeError("CPU benchmark has unknown numerical availability metadata")
+    endpoints = trials[["success","redirection","motor_accuracy"]]
+    available = statuses.eq("available")
+    if not np.isfinite(endpoints[available].to_numpy(dtype=float)).all() or not endpoints[~available].isna().all().all():
+        raise RuntimeError("CPU benchmark numerical failures contain substituted or invalid endpoints")
+    if (not endpoints.loc[available,'success'].isin([0,1]).all()
+            or not endpoints.loc[available,'redirection'].isin([0,1]).all()
+            or not endpoints.loc[available,'motor_accuracy'].between(0,1).all()):
+        raise RuntimeError("CPU benchmark endpoints are outside their binary/accuracy ranges")
+    for column in ('achieved_parameter_norm','target_policy_kl'):
+        values=pd.to_numeric(trials[column],errors='coerce').to_numpy(dtype=float)
+        if not np.isfinite(values).all() or (values<0).any():
+            raise RuntimeError(f"CPU benchmark calibration {column} must be finite and nonnegative")
+    if not np.allclose(trials.target_policy_kl.to_numpy(dtype=float),trials.strength.to_numpy(dtype=float)**2/2,rtol=1e-10,atol=1e-12):
+        raise RuntimeError("CPU benchmark functional targets differ from configured strengths")
+    calibration_available=calibration.eq('available')
+    kl=pd.to_numeric(trials.clean_policy_kl,errors='coerce').to_numpy(dtype=float)
+    if (not np.isfinite(kl[calibration_available]).all() or (kl[calibration_available]<0).any()
+            or not trials.loc[~calibration_available,'clean_policy_kl'].isna().all()):
+        raise RuntimeError("CPU benchmark available clean_policy_kl must be finite/nonnegative; unavailable calibration must retain null")
+    if (~available).any() and ("numerical_failure_reason" not in trials or trials.loc[~available,"numerical_failure_reason"].isna().any()):
+        raise RuntimeError("CPU benchmark unavailable endpoints lack numerical failure evidence")
+    numerically_valid = bool(available.all() and calibration.eq("available").all())
     return {"grid_points":len(expected),"condition_groups":len(conditions),"trial_rows":len(trials),
-            "complete_mechanism_grid":True,"full_calibration_algorithm":True,"restoration_qualified":True}
+            "complete_mechanism_grid":True,"full_calibration_algorithm":True,"restoration_qualified":True,
+            "numerically_valid_grid":numerically_valid,"unavailable_episode_rows":int((~available).sum()),
+            "unavailable_calibration_rows":int(calibration.eq("unavailable").sum())}
 
 
 def benchmark_cpu_evaluation(config, root, task_index=None):
@@ -1271,7 +1368,7 @@ def aggregate_benchmarks(config, root):
     """Write a complete source-bound CPU roster; native accounting is checked at admission."""
     root = Path(root)
     directory = _directory(root,config.get("agents",config))
-    records, inputs = [], []
+    records, inputs, valid_grid = [], [], True
     for task,architecture,seeds in benchmark_cells(config):
         for seed in seeds:
             name = _cell_name(task,architecture,seed)
@@ -1282,12 +1379,14 @@ def aggregate_benchmarks(config, root):
             if (record.get("task"),record.get("architecture"),record.get("seed"))!=(task,architecture,seed):
                 raise RuntimeError("CPU benchmark roster contains another policy cell")
             record.update(_validate_benchmark_grid(config,path.parent,record))
+            valid_grid = valid_grid and record["numerically_valid_grid"]
             records.append({"path":str(path.resolve()),"sha256":digest(path),"task":task,"architecture":architecture,"seed":seed})
             inputs.extend([training_path,path])
     result = {"benchmark_kind":"cpu-evaluation-aggregate","full_config_sha256":canonical_hash(config),
               "source_sha256":source_identity(Path(__file__).resolve().parents[2])["sha256"],
               "benchmark_specification":benchmark_specification(config),"evaluation_device":"cpu",
               "complete_mechanism_grid":True,"complete_architecture_task_coverage":True,
+               "numerically_valid_grid":valid_grid,
               "measured_policies":len(records),"architecture_task_cells":len(benchmark_cells(config)),
               "records":records,"scientific_result":False,
               "evidence_class":"complete technical benchmark roster; native completed-job accounting required for admission",

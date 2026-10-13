@@ -45,36 +45,62 @@ def adapt_polarization_frame(frame: pd.DataFrame) -> tuple[pd.DataFrame, dict[st
     if required - set(table):
         raise ValueError(f"Dryad Data S2 native schema missing {sorted(required - set(table))}")
     table = table.rename(columns={value: key for key, value in mapping.items()})
+    table["source_row_index"] = np.arange(len(table)) + 2
+    table["source_response"] = table.response.copy()
+    table["source_stimulus_side"] = table.stimulus_side.copy()
     table.response = table.response.astype(str).str.strip()
     categories = {"hori-pola": "polarized", "unpola": "unpolarized", "M": "middle"}
     if not set(table.response).issubset(categories):
         raise ValueError("Unrecognized native response category; result_hori cannot recover nonchoice")
     table.response = table.response.map(categories)
+    ambiguous_reasons = [[] for _ in range(len(table))]
+    record_disagreement = lambda mask, reason: [ambiguous_reasons[i].append(reason) for i in np.flatnonzero(np.asarray(mask, bool))]
+    secondary_missing_count = 0
     if "result_hori" in table:
+        table["source_result_hori"] = table.result_hori.copy()
         expected = table.response.eq("polarized").astype(int)
-        choice = ~table.response.eq("middle")
-        if not table.loc[choice, "result_hori"].eq(expected[choice]).all():
-            raise ValueError("Native result and result_hori contradict each other")
+        present = table.result_hori.notna()
+        secondary_missing_count = int((~present).sum())
+        if not set(table.loc[present, "result_hori"]).issubset({0, 1}):
+            raise ValueError("Native result_hori contains an unrecognized binary code")
+        # The README defines 0 for a middle/nonchoice too. A recorded M with
+        # result_hori=1 is contradictory, not a polarized response to invent.
+        record_disagreement(present & ~table.result_hori.eq(expected), "result/result_hori contradiction")
+    table.stimulus_side = table.stimulus_side.astype(str).str.strip()
     if not set(table.stimulus_side).issubset({"R", "L"}):
         raise ValueError("Native polarized stimulus side is not R/L")
     if "location" in table:
+        table["source_location"] = table.location.copy()
+        location = table.location.astype(str).str.strip()
+        if not set(location).issubset({"R", "L", "M"}):
+            raise ValueError("Native location contains an unrecognized third-of-box code")
         expected = np.where(table.response.eq("middle"), "M",
                             np.where(table.response.eq("polarized"), table.stimulus_side,
                                      table.stimulus_side.map({"R": "L", "L": "R"})))
-        if not table.location.astype(str).eq(expected).all():
-            raise ValueError("Native location, window side and response coding contradict each other")
+        record_disagreement(~location.eq(expected), "result/location/window contradiction")
+        table["response_location_window"] = np.where(location.eq("M"), "middle",
+            np.where(location.eq(table.stimulus_side), "polarized", "unpolarized"))
+    table["coding_ambiguous"] = [bool(reasons) for reasons in ambiguous_reasons]
+    table["coding_ambiguity_reason"] = ["; ".join(reasons) for reasons in ambiguous_reasons]
+    table["analysis_included"] = ~table.coding_ambiguous
     if table.individual_id.isna().any():
         raise ValueError("Missing source individual identifier")
     table.individual_id = table.individual_id.astype(str)
-    if "trial_id" not in table:
-        # Row keys are provenance only, never additional animal identities.
-        table["source_row_index"] = np.arange(len(table)) + 2
-    elif table.duplicated(["individual_id", "year", "date", "trial_id"]).any():
+    if "trial_id" in table and table.duplicated(["individual_id", "year", "date", "trial_id"]).any():
         raise ValueError("Duplicate source trial number; reconcile sheet rows before analysis")
     report = {"doi": POLARIZATION_DOI, "sheet_role": "Data S2 laboratory two-choice test",
               "native_choice_field": "result", "three_response_categories": categories,
               "trials": len(table), "individuals": int(table.individual_id.nunique()),
               "repeated_trials": int(len(table) - table.individual_id.nunique()),
+              "mutually_consistent_trials": int(table.analysis_included.sum()),
+              "ambiguous_trials": int(table.coding_ambiguous.sum()),
+              "ambiguous_source_rows": table.loc[table.coding_ambiguous, "source_row_index"].astype(int).tolist(),
+              "missing_secondary_binary_labels": secondary_missing_count,
+              "source_coding_reconciled": not bool(table.coding_ambiguous.any()),
+              "parser_repair_amendment": {"id": "mantis-coding-ambiguity-20261013-v1",
+                  "type": "prospective parser-repair amendment after source-coding audit, before fitting outcomes",
+                  "rule": "Preserve every deposited row and endpoint; exclude mutually contradictory endpoint annotations from the conditional consistent-row fit. Recorded-result and location/window alternatives are separately labelled sensitivity evidence, never raw corrections.",
+                  "confirmatory_limit": "Unresolved deposited contradictions prevent an unqualified author replication or confirmatory claim; completing a conditional fit does not reconcile source coding"},
               "dop_units": "source", "dop_recode": "none; native degree scale retained",
               "rights": "CC0", "schema_source": "Published Dryad README on dataset landing page",
               "source_metadata_url": "https://datadryad.org/dataset/doi:10.5061/dryad.jh9w0vtkb"}
@@ -96,8 +122,13 @@ def read_polarization_source(path: Path) -> tuple[pd.DataFrame, dict[str, Any]]:
         raise ValueError(f"Expected one laboratory Data S2 sheet; found {len(candidates)} matching schemas")
     sheet, header, frame = candidates[0]
     table, report = adapt_polarization_frame(frame)
+    table.source_row_index += header
+    report["ambiguous_source_rows"] = table.loc[table.coding_ambiguous, "source_row_index"].astype(int).tolist()
     report.update(sheet=sheet, header_row=header + 1,
                   source_path=str(Path(path).resolve()), source_sha256=hashlib.sha256(Path(path).read_bytes()).hexdigest())
+    readme = Path(path).parent / "README.md"
+    if readme.exists():
+        report.update(readme_path=str(readme.resolve()), readme_sha256=hashlib.sha256(readme.read_bytes()).hexdigest())
     return table, report
 
 
@@ -372,12 +403,18 @@ def audit_exposure_source(source: dict[str, Any], root: Path) -> dict[str, Any]:
     if field not in metadata:
         return {"ready": False, "pending": ["Original source exposure/Rx column absent"]}
     raw = metadata[field]
-    codes = raw.astype(str).map(source.get("exposure_values", {}))
+    # Pandas 3's astype(str) preserves missing entries as floating NaN. Source
+    # labels are metadata, so serialize observed strings and missing counts
+    # separately rather than exporting a nonstandard JSON NaN or inventing Rx.
+    labels = raw.map(lambda value: None if pd.isna(value) else str(value)).astype(object)
+    missing_labels = labels.isna() | labels.fillna("").str.strip().eq("")
+    codes = labels.map(source.get("exposure_values", {}))
     if source.get("cohort_exposure_provenance") and source.get("cohort_exposure_status") in (0, 1):
-        codes.loc[raw.isna() | raw.astype(str).str.strip().eq("")] = source["cohort_exposure_status"]
-    codes.loc[raw.astype(str).str.lower().isin(["uninfected", "unexposed"])] = 0
+        codes.loc[missing_labels] = source["cohort_exposure_status"]
+    codes.loc[labels.fillna("").str.lower().isin(["uninfected", "unexposed"])] = 0
     pending = []
-    unknown = sorted(raw[codes.isna()].astype(str).unique())
+    unknown = sorted({"<missing>" if missing_labels.loc[index] else labels.loc[index]
+                      for index in labels.index[codes.isna()]})
     if unknown or not set(codes.dropna()).issubset({0, 1}):
         pending.append(f"Published exposed/unexposed encoding unresolved for native labels {unknown}")
     offset = metadata.get("exposure_elapsed_at_start_hours", pd.Series(source.get("exposure_elapsed_at_start_hours", np.nan), index=metadata.index))
@@ -386,7 +423,10 @@ def audit_exposure_source(source: dict[str, Any], root: Path) -> dict[str, Any]:
         pending.append("Recording-start offset from exposure is unavailable; Day3 directory labels do not establish elapsed hours")
     if codes.eq(1).any() and not source.get("exposure_clock_provenance"):
         pending.append("Exposure-clock/protocol provenance is not recorded")
-    return {"ready": not pending, "native_exposure_levels": sorted(raw.astype(str).unique()),
+    return {"ready": not pending,
+            "native_exposure_levels": sorted(labels.loc[~missing_labels].unique()),
+            "native_exposure_missing_count": int(missing_labels.sum()),
+            "exposure_label_column": field,
             "pending": pending, "exposure_clock_provenance": source.get("exposure_clock_provenance"),
             "rule": "Exposure is measured from original treatment assignment, never from future cadaver/survival labels"}
 
@@ -1777,6 +1817,77 @@ def validate_mantis_choice(frame: pd.DataFrame, config: dict[str, Any] | None = 
         "summary": (pd.DataFrame(rows).groupby("scheme")[["hurdle_log_score_per_trial", "multinomial_log_score_per_trial", "three_category_brier"]].mean().to_dict() if rows else {})}
 
 
+def analyze_mantis_choice(frame: pd.DataFrame, config: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Preserve contradictory observations and bound their inferential use.
+
+    Conditional exclusion and alternative endpoint interpretations are a declared
+    parser amendment. No observed field is corrected, and neither successful
+    conditional fitting nor sensitivity agreement reconciles the source.
+    """
+    config = config or {}
+    consistent = frame.loc[frame.analysis_included].copy() if "analysis_included" in frame else frame.copy()
+    ambiguous = int(len(frame) - len(consistent))
+    if consistent.empty:
+        raise ValueError("No mutually consistent source endpoint annotations for a conditional choice fit")
+    fitted = fit_mantis_choice(consistent, config)
+    validation = validate_mantis_choice(consistent, config)
+    fitted.update(source_coding_reconciled=ambiguous == 0, ambiguous_source_trials=ambiguous,
+        included_source_trials=len(consistent), deposited_source_trials=len(frame),
+        inference_scope=("Conditional diagnostic fit of mutually consistent deposited annotations; source coding remains unresolved"
+                         if ambiguous else "Recorded source endpoint with individual/trial hierarchy"),
+        confirmatory_ready=bool(ambiguous == 0 and validation.get("status") == "complete"))
+    validation["source_coding_reconciled"] = ambiguous == 0
+    validation["confirmatory_ready"] = fitted["confirmatory_ready"]
+    if ambiguous:
+        validation["conditional_validation_status"] = validation["status"]
+        validation["status"] = "pending_source_reconciliation"
+        validation["pending"].append("Deposited endpoint contradictions remain; conditional-row validation does not reconcile source coding")
+    sensitivity = {"status": "not_required" if not ambiguous else "pending", "source_coding_reconciled": ambiguous == 0,
+        "confirmatory_ready": False if ambiguous else fitted["confirmatory_ready"],
+        "ambiguous_source_trials": ambiguous, "variants": {}, "pending": [],
+        "interpretation": "Alternatives use recorded source result or observed location/window separately; they are diagnostic analyses of unresolved annotations, never corrections or independent replications"}
+    if ambiguous:
+        alternatives = {"recorded_result_all_rows": frame.copy()}
+        if "response_location_window" in frame:
+            location = frame.copy()
+            location["response"] = location.response_location_window
+            alternatives["location_window_all_rows"] = location
+        else:
+            sensitivity["pending"].append("No observed location/window alternative endpoint")
+        for label, alternative in alternatives.items():
+            try:
+                alternative_fit = fit_mantis_choice(alternative, config)
+                sensitivity["variants"][label] = {"status": "complete", "trials": len(alternative),
+                    "independent_source_rows": alternative.source_row_index.astype(int).tolist() if "source_row_index" in alternative else None,
+                    "fit": alternative_fit}
+            except (ValueError, RuntimeError) as error:
+                sensitivity["variants"][label] = {"status": "pending", "reason": str(error)}
+                sensitivity["pending"].append(f"{label}: {error}")
+        # Report the source-unit interaction slope, undoing each variant's own
+        # training DOP standardization before comparing point estimates.
+        summaries = {}
+        for label, alternative, fit in [("mutually_consistent_rows", consistent, fitted),
+            *[(label, alternatives[label], record["fit"]) for label, record in sensitivity["variants"].items() if record["status"] == "complete"]]:
+            raw = alternative.dop.to_numpy(float)
+            divisor = 100. if config.get("dop_units") == "percent" else 1.
+            dop = raw / divisor
+            scale = 1. if set(np.unique(dop)).issubset({0, 1}) else max(float(dop.std()), 1e-10)
+            endpoint_summaries = {}
+            for endpoint in ("engagement", "conditional_preference"):
+                index = fit[endpoint]["terms"].index("infection:dop")
+                estimate = float(fit[endpoint]["coefficient"][index] / (scale * divisor))
+                standard_error = float(fit[endpoint]["standard_error_laplace"][index] / (scale * divisor))
+                endpoint_summaries[endpoint] = {"infection_by_dop_source_unit_slope": estimate,
+                    "ci95_laplace": [estimate - stats.norm.ppf(.975) * standard_error, estimate + stats.norm.ppf(.975) * standard_error]}
+            summaries[label] = endpoint_summaries
+        sensitivity["source_unit_interaction_summaries"] = summaries
+        sensitivity["status"] = "complete_diagnostic_source_ambiguity_pending" if not sensitivity["pending"] else "pending"
+        sensitivity["interaction_sign_consistency"] = {endpoint: bool(len(summaries) == 3 and
+            len({np.sign(summary[endpoint]["infection_by_dop_source_unit_slope"]) for summary in summaries.values()}) == 1)
+            for endpoint in ("engagement", "conditional_preference")}
+    return {"choice": fitted, "choice_validation": validation, "choice_sensitivity": sensitivity}
+
+
 def aft_objective(theta: np.ndarray, x: np.ndarray, times: np.ndarray,
                   censored: np.ndarray) -> float:
     sigma = np.exp(theta[-1])
@@ -2007,9 +2118,9 @@ def run(config: dict[str, Any], root: Path, stage: str, **kwargs: Any) -> dict[s
             (output / "mantis_source_audit.json").write_text(json.dumps({"choice": choice_audit, "mating": mating_audit}, indent=2), encoding="utf-8")
             choice_settings = dict(settings.get("mantis_choice", {}), dop_units="source")
             mating_settings = settings.get("mantis_mating", {})
-            results["choice"] = fit_mantis_choice(choice_table, choice_settings)
+            results.update(analyze_mantis_choice(choice_table, choice_settings))
             results["choice"]["source_audit"] = choice_audit
-            results["choice_validation"] = validate_mantis_choice(choice_table, choice_settings)
+            choice_table.loc[choice_table.coding_ambiguous].to_parquet(output / "mantis_ambiguous_observations.parquet", index=False)
             results["mating"] = {outcome: fit_censored_latency(mating_table, outcome, mating_settings)
                                   for outcome in ("male_escape", "male_mounting")}
             results["mating"]["specificity"] = fit_mating_specificity(mating_table, mating_settings)
@@ -2020,8 +2131,7 @@ def run(config: dict[str, Any], root: Path, stage: str, **kwargs: Any) -> dict[s
         for name, source in declared.items():
             frame = read_table(root / source["path"], source.get("sheet"))
             if name == "choice":
-                results[name] = fit_mantis_choice(frame, source)
-                results["choice_validation"] = validate_mantis_choice(frame, source)
+                results.update(analyze_mantis_choice(frame, source))
             elif name == "mating":
                 results[name] = {outcome: fit_censored_latency(frame, outcome, source)
                                  for outcome in source.get("latency_outcomes", ["male_escape", "male_mounting"])}
@@ -2035,6 +2145,20 @@ def run(config: dict[str, Any], root: Path, stage: str, **kwargs: Any) -> dict[s
             source_result_paths=[str((output / "mantis_models.json").resolve())],
             source_result_hashes={str((output / "mantis_models.json").resolve()): digest(output / "mantis_models.json")})
         atomic_json(output / "mantis_choice_validation.json", validation)
+        sensitivity = results.get("choice_sensitivity", {"status": "pending", "pending": ["Choice sensitivity unavailable"]})
+        sensitivity.update(config_sha256=canonical_hash(config), source_sha256=validation["source_sha256"],
+            source_result_paths=validation["source_result_paths"], source_result_hashes=validation["source_result_hashes"])
+        atomic_json(output / "mantis_choice_sensitivity.json", sensitivity)
+        audit = results.get("choice", {}).get("source_audit", {})
+        amendment = audit.get("parser_repair_amendment")
+        if amendment:
+            inputs = [candidate for candidate in [output / "mantis_choice_canonical.parquet", output / "mantis_ambiguous_observations.parquet", output / "mantis_source_audit.json"] if candidate.exists()]
+            atomic_json(output / "mantis_coding_amendment.json", dict(amendment,
+                source_coding_reconciled=audit["source_coding_reconciled"], ambiguous_trials=audit["ambiguous_trials"],
+                mutually_consistent_trials=audit["mutually_consistent_trials"], total_source_trials=audit["trials"],
+                config_sha256=canonical_hash(config), source_sha256=validation["source_sha256"],
+                source_result_paths=[str(candidate.resolve()) for candidate in inputs],
+                source_result_hashes={str(candidate.resolve()): digest(candidate) for candidate in inputs}))
         return results
     path = root / "data" / "fly_observations.parquet"
     if stage == "pilot" and not path.exists() and operational_sources:

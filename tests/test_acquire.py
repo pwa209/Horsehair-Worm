@@ -185,6 +185,51 @@ def test_server_ignoring_range_restarts_atomically(tmp_path):
     assert target.read_bytes() == body
 
 
+def test_bad_complete_partial_is_preserved_before_fresh_verified_get(tmp_path):
+    from horsehair.acquire import quarantine_invalid_complete_partial
+    body = b'0123456789'
+    bad = b'xxxxxxxxxx'
+    item = object_for(body)
+    target = safe_destination(tmp_path, item['relative_path'])
+    target.parent.mkdir(parents=True)
+    partial = target.with_name(target.name + '.part')
+    sidecar = partial.with_name(partial.name + '.json')
+    partial.write_bytes(bad)
+    sidecar.write_text(json.dumps({'asset_hash': canonical_hash(item), 'etag': 'old-object'}))
+    original_sidecar = sidecar.read_bytes()
+    record = quarantine_invalid_complete_partial(item, tmp_path, 'fixture-repair')
+    assert not partial.exists() and not sidecar.exists() and not target.exists()
+    assert Path(record['preserved_partial']).read_bytes() == bad
+    assert Path(record['preserved_sidecar']).read_bytes() == original_sidecar
+    assert record['observed_digests']['md5'] == hashlib.md5(bad).hexdigest()
+    assert record['provider_checksum'] == item['provider_checksum']
+    session = Session(Response(body))
+    assert download_asset(item, tmp_path, session=session)['status'] == 'verified'
+    assert 'Range' not in session.calls[0][1]['headers']
+    assert target.read_bytes() == body
+    assert Path(record['preserved_partial']).read_bytes() == bad
+
+
+@pytest.mark.parametrize('variant', ['unknown-provenance', 'incomplete', 'valid', 'final'])
+def test_partial_recovery_never_moves_other_or_verified_source(tmp_path, variant):
+    from horsehair.acquire import quarantine_invalid_complete_partial
+    body = b'0123456789'
+    item = object_for(body)
+    target = safe_destination(tmp_path, item['relative_path'])
+    target.parent.mkdir(parents=True)
+    partial = target.with_name(target.name + '.part')
+    sidecar = partial.with_name(partial.name + '.json')
+    partial.write_bytes(body if variant == 'valid' else b'xxxx' if variant == 'incomplete' else b'xxxxxxxxxx')
+    sidecar.write_text(json.dumps({'asset_hash': 'unknown' if variant == 'unknown-provenance' else canonical_hash(item)}))
+    if variant == 'final':
+        target.write_bytes(body)
+    before = partial.read_bytes(), sidecar.read_bytes()
+    with pytest.raises(AcquisitionError):
+        quarantine_invalid_complete_partial(item, tmp_path, 'fixture-repair')
+    assert (partial.read_bytes(), sidecar.read_bytes()) == before
+    assert not (target.parent / '.quarantine').exists()
+
+
 def test_fastq_download_is_gated_before_network(tmp_path):
     with pytest.raises(AcquisitionError, match="crosswalk"):
         download_asset(object_for(kind="fastq", eligible=False), tmp_path)

@@ -72,7 +72,26 @@ def exclusive_file_lock(path: Path, timeout: float = 30):
     remains a separate atomically replaced file protected by this guard.
     """
     path = Path(path)
+    if timeout < 0:
+        raise ValueError('Receipt guard timeout must be nonnegative')
     path.parent.mkdir(parents=True, exist_ok=True)
+    owner_path = path.with_name(path.name + '.owner.json')
+    started = time.monotonic()
+    owner = {'pid': os.getpid(), 'host': platform.node(), 'slurm_job_id': native_job_id(),
+             'guard_path': str(path.resolve()), 'acquired_unix': None, 'state': 'held',
+             'authority': 'informational only; the kernel lock determines ownership'}
+    def owner_diagnostic():
+        try:
+            return read_json(owner_path)
+        except (OSError, ValueError):
+            return None
+    def persist_owner():
+        # Diagnostic filesystem trouble must not change the locking contract or
+        # turn an acquired scientific transaction into an unrecorded failure.
+        try:
+            atomic_json(owner_path, owner)
+        except (OSError, ValueError):
+            pass
     with path.open('a+b') as handle:
         if os.name == 'nt':
             import msvcrt
@@ -89,18 +108,35 @@ def exclusive_file_lock(path: Path, timeout: float = 30):
                 fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
             def release():
                 fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
-        deadline = time.monotonic() + timeout
+        deadline = started + timeout
         while True:
             try:
                 acquire();break
             except (BlockingIOError, PermissionError):
                 if time.monotonic() >= deadline:
-                    raise TimeoutError('Live process holds the receipt guard; preserve its owner')
+                    raise ReceiptLockTimeout(path, time.monotonic()-started, owner_diagnostic())
                 time.sleep(min(.2, max(0, deadline-time.monotonic())))
+        owner['acquired_unix'] = time.time()
+        owner['waited_seconds'] = time.monotonic()-started
+        persist_owner()
         try:
             yield
         finally:
+            owner.update(state='released', released_unix=time.time())
+            persist_owner()
             release()
+
+
+class ReceiptLockTimeout(TimeoutError):
+    """A live kernel-lock contention event; no permission to remove its guard."""
+    def __init__(self, path: Path, waited_seconds: float, last_known_holder: dict | None):
+        self.path = str(Path(path).resolve())
+        self.waited_seconds = waited_seconds
+        self.last_known_holder = last_known_holder
+        self.diagnostics = {'guard_path': self.path, 'waited_seconds': waited_seconds,
+            'last_known_holder': last_known_holder, 'owner_metadata_is_authoritative': False}
+        super().__init__('Live process holds the receipt guard; preserve its owner; '
+                         + json.dumps(self.diagnostics, sort_keys=True))
 
 
 def source_identity(root: Path) -> dict:

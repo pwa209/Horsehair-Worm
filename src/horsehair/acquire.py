@@ -381,6 +381,55 @@ def verify_file(path: str | Path, item: dict, *, computed_digests: dict[str, str
     return {"asset_id": item["asset_id"], "path": str(path), "bytes": size, "provider_checksum": digest, "sha256": digests["sha256"], "retrieved_utc": utc_now(), "status": "verified"}
 
 
+def quarantine_invalid_complete_partial(item: dict, root: str | Path, recovery_id: str) -> dict:
+    """Preserve a positively identified bad complete partial before a fresh GET.
+
+    This explicit maintenance operation never relaxes a provider checksum,
+    touches a verified final file, or discards the failed bytes/provenance.
+    Hashing belongs in a scheduled allocation for large source files.
+    """
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", recovery_id):
+        raise AcquisitionError("Invalid finite recovery identity")
+    if not item.get("provider_checksum") or not isinstance(item.get("bytes"), int):
+        raise AcquisitionError("Recovery requires a pinned size and provider checksum")
+    target = safe_destination(root, item["relative_path"])
+    partial = target.with_name(target.name + ".part")
+    sidecar = partial.with_name(partial.name + ".json")
+    if target.exists():
+        raise AcquisitionError("Final source exists; never quarantine or overwrite it")
+    if partial.is_symlink() or sidecar.is_symlink() or not partial.is_file() or not sidecar.is_file():
+        raise AcquisitionError("Recovery requires ordinary partial bytes and their original sidecar")
+    receipt = json.loads(sidecar.read_text(encoding="utf8"))
+    if receipt.get("asset_hash") != canonical_hash(item):
+        raise AcquisitionError("Partial transfer provenance differs; preserve for manual source review")
+    if partial.stat().st_size != item["bytes"]:
+        raise AcquisitionError("Incomplete partial may resume; this recovery requires declared complete length")
+    algorithm = item["provider_checksum"].split(":", 1)[0].replace("-", "")
+    digests = file_digests(partial, {"sha256", algorithm})
+    try:
+        verify_file(partial, item, computed_digests=digests)
+    except AcquisitionError as error:
+        reason = str(error)
+    else:
+        raise AcquisitionError("Partial verifies successfully; allow ordinary verified promotion")
+    # Every path is resolved inside the authorized source root before moving.
+    area = safe_destination(root, str(PurePosixPath(item["relative_path"]).parent / ".quarantine" / recovery_id))
+    area.mkdir(parents=True, exist_ok=False)
+    record = {"status": "preserving_invalid_partial", "asset_id": item["asset_id"],
+              "asset_hash": canonical_hash(item), "source_version": item["version"],
+              "provider_checksum": item["provider_checksum"], "bytes": partial.stat().st_size,
+              "observed_digests": digests, "reason": reason, "created_utc": utc_now(),
+              "original_partial": str(partial), "original_sidecar": str(sidecar),
+              "preserved_partial": str(area / partial.name), "preserved_sidecar": str(area / sidecar.name),
+              "sidecar_sha256": file_hash(sidecar), "source_definition_unchanged": True}
+    atomic_json(area / "recovery.json", record)
+    partial.rename(area / partial.name)
+    sidecar.rename(area / sidecar.name)
+    record["status"] = "quarantined_invalid_partial"
+    atomic_json(area / "recovery.json", record)
+    return record
+
+
 def download_asset(item: dict, root: str | Path, *, session: requests.Session | None = None, attempts: int = 4, bandwidth_bytes_per_second: int | None = 64 * 1024**2, max_seconds: float | None = None) -> dict:
     if bandwidth_bytes_per_second is not None and bandwidth_bytes_per_second <= 0:
         raise AcquisitionError("Transfer bandwidth ceiling must be positive")

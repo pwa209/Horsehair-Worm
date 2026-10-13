@@ -14,7 +14,7 @@ import subprocess
 import time
 from pathlib import Path
 
-from .core import atomic_json, canonical_hash, digest, exclusive_file_lock, native_job_id, read_json, source_identity
+from .core import atomic_json, canonical_hash, digest, exclusive_file_lock, native_job_id, read_json, source_identity, ReceiptLockTimeout
 
 
 NODES = (
@@ -44,14 +44,21 @@ def _native_states(ids, runner=subprocess.run):
         return {}
     if any(not re.fullmatch(r'\d+(?:_\d+)?', value) for value in ids):
         raise ValueError('Invalid native study job identity')
-    response = runner(['sacct', '-j', ','.join(ids), '--format=JobIDRaw,State,ExitCode', '--noheader', '--parsable2'], text=True, capture_output=True)
+    response = runner(['sacct', '-j', ','.join(ids), '--format=JobID%64,JobIDRaw%64,State,ExitCode', '--noheader', '--parsable2'], text=True, capture_output=True)
     if response.returncode:
         raise RuntimeError('Native job state is unavailable; no phase will be submitted')
     states = {}
     for line in response.stdout.splitlines():
         parts = line.strip().split('|')
-        if len(parts) >= 3 and re.fullmatch(r'\d+(?:_\d+)?', parts[0]):
-            states[parts[0]] = {'state': parts[1].split()[0].split('+')[0], 'exit_code': parts[2]}
+        if len(parts) >= 4 and re.fullmatch(r'\d+(?:_\d+)?', parts[0]):
+            if not re.fullmatch(r'\d+', parts[1]):
+                raise ValueError('Invalid physical native allocation identity')
+            item = {'state': parts[2].split()[0].split('+')[0], 'exit_code': parts[3], 'job_id_raw': parts[1]}
+            if parts[0] in states and states[parts[0]] != item:
+                raise ValueError('Conflicting native allocation records')
+            if any(v['job_id_raw'] == parts[1] for k, v in states.items() if k != parts[0]):
+                raise ValueError('Physical native allocation has conflicting logical identities')
+            states[parts[0]] = item
     return states
 
 
@@ -458,21 +465,35 @@ def run(config, root, *, segment=0, max_seconds=None, interval=60):
         with lock.open('x') as handle:
             json.dump({'job_id': native_job_id(), 'segment': segment, 'started_unix': time.time()}, handle)
     owner=lock.read_bytes()
-    last_signature = None;last_storage = 0.
+    last_signature = None;last_storage = 0.;warning_count = 0;last_warning_signature = None
     try:
         record=None
-        while record is None or time.monotonic() < deadline:
-            ids = []
-            for path in (root/'state').glob('*submission*.json'):
-                ledger = read_json(path)
-                if ledger.get('job_id'):
-                    ids.append(str(ledger['job_id']))
-                ids.extend(str(task['job_id']) for task in ledger.get('tasks', {}).values() if task.get('state') == 'submitted')
-            if ids:
-                native_accounting(root, ids)
-            if time.monotonic() - last_storage > 6*3600:
-                storage_snapshot(root);last_storage = time.monotonic()
-            record = tick(config, root, release)
+        while time.monotonic() < deadline:
+            try:
+                ids = []
+                for path in (root/'state').glob('*submission*.json'):
+                    ledger = read_json(path)
+                    if ledger.get('job_id'):
+                        ids.append(str(ledger['job_id']))
+                    ids.extend(str(task['job_id']) for task in ledger.get('tasks', {}).values() if task.get('state') == 'submitted')
+                if ids:
+                    native_accounting(root, ids)
+                if time.monotonic() - last_storage > 6*3600:
+                    storage_snapshot(root);last_storage = time.monotonic()
+                record = tick(config, root, release)
+            except ReceiptLockTimeout as exc:
+                # A live receipt writer retains its kernel lock. Defer this tick
+                # without altering owners, native costs or submission journals.
+                warning_count += 1
+                warning = {'status':'waiting_for_receipt_guard','warning_count':warning_count,'last_unix':time.time(),
+                           'controller_job_id':native_job_id(),'segment':segment,'config_sha256':canonical_hash(config),
+                           'source_sha256':identity['source_identity']['sha256'],**exc.diagnostics}
+                atomic_json(directory/'receipt-guard-warning.json',warning)
+                signature = canonical_hash({'guard_path':exc.path,'holder':exc.last_known_holder})
+                if signature != last_warning_signature:
+                    print(json.dumps(warning),flush=True);last_warning_signature = signature
+                time.sleep(min(interval,max(0,deadline-time.monotonic())))
+                continue
             signature = canonical_hash({'phases': record['phases'], 'initial': record['initial_tasks'], 'status': record['status']})
             if signature != last_signature:
                 print(json.dumps({'status': record['status'], 'phases': {key:value['status'] for key,value in record['phases'].items()}, 'failed_native_stages': record['failed_native_stages']}), flush=True)
@@ -480,7 +501,11 @@ def run(config, root, *, segment=0, max_seconds=None, interval=60):
             if record['status'] == 'complete':
                 return record
             time.sleep(min(interval, max(0, deadline-time.monotonic())))
-        record.update(segment=segment, segment_status='finite_segment_finished', continuation='next prequeued controller segment' if segment < 3 else 'four-segment window exhausted; preserve state for reviewed continuation')
+        if record is None:
+            record={'status':'waiting_for_receipt_guard','scientific_results_complete':False,'publication_ready':False,
+                    'phases':{},'initial_tasks':{},'failed_native_stages':[], 'config_sha256':canonical_hash(config),
+                    'source_sha256':identity['source_identity']['sha256']}
+        record.update(segment=segment,receipt_guard_warning_count=warning_count,segment_status='finite_segment_finished', continuation='next prequeued controller segment' if segment < 3 else 'four-segment window exhausted; preserve state for reviewed continuation')
         atomic_json(directory/'status.json', record)
         return record
     finally:

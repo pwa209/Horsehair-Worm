@@ -51,6 +51,8 @@ The converted fly archive has an author-defined processed 3Hz clock. This suppor
 
 Survivors in exposed fly cohorts remain exposed. Missing unexposed controls, exposure times and intervention identities are never supplied by guessing. Pooled matrices and death-aligned summaries cannot replace chronological individual tracks or original control/reagent/gene/family crosswalks.
 
-The agent primary experiment is computational. Behavioural state-model parameters do not identify signs of neural weight changes. A biological bridge remains conditional on separately validated, prospectively frozen evidence.
+The agent primary experiment is computational. Behavioural state-model parameters do not identify signs of neural weight changes. A biological bridge remains conditional on separately validated, prospectively frozen evidence. Numerically unavailable episodes remain in the planned roster with explicit diagnostics and null endpoints; they cannot be discarded, imputed, or accepted as complete timing or H4 evidence.
+
+Mantis endpoint contradictions remain in the canonical deposited observations. A declared parser amendment separates a conditional fit of mutually consistent rows from two all-row endpoint sensitivity interpretations. Computational completion of these diagnostics does not reconcile author annotations or establish confirmatory readiness.
 
 Negative effects and failed model discrimination are scientific outcomes when required diagnostics are complete. Missing data/diagnostics, insufficient competence and underidentified models remain explicit limitations. Completed results, selected checkpoints, final count tables, source and evidence are copied to an immutable personal-project archive with verified file hashes and native project-quota checks. The bounded archive excludes raw sequencing and large processing intermediates. Publication readiness additionally requires actual visual review of figures.

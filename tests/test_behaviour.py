@@ -91,8 +91,29 @@ def test_native_processed_three_hz_requires_deposited_validator_and_trims_only_b
     assert frame.y.iloc[0] == pytest.approx(.875)
     audit = audit_exposure_source(source, tmp_path)
     assert not audit["ready"] and any("offset" in reason for reason in audit["pending"])
+    assert audit["native_exposure_levels"] == []
+    assert audit["native_exposure_missing_count"] == 2
+    import json
+    from horsehair.core import atomic_json
+    # Exercise the same strict writer used by native source-audit; successful
+    # discovery alone did not catch pandas3's NaN metadata serialization.
+    atomic_json(tmp_path / "fly_adapters.json", found)
+    assert json.loads((tmp_path / "fly_adapters.json").read_text())["fly_sources"][0]["formal_exposure_readiness"]["ready"] is False
     (tmp_path / "triggerOnDeath2019Fun.m").write_text("data.params.fr = 30;\n")
     assert not discover_fly_sources(tmp_path, tmp_path)["fly_sources"]
+
+
+def test_unknown_missing_rx_is_json_safe_and_remains_unknown(tmp_path):
+    import json
+    from horsehair.behaviour import audit_exposure_source
+    pd.DataFrame({"Rx": [None, "Unrecorded treatment", "", "Unexposed"]}).to_excel(tmp_path / "metadata.xlsx", index=False)
+    source = {"metadata": "metadata.xlsx"}
+    audit = audit_exposure_source(source, tmp_path)
+    assert not audit["ready"]
+    assert audit["native_exposure_missing_count"] == 2
+    assert audit["native_exposure_levels"] == ["Unexposed", "Unrecorded treatment"]
+    assert any("<missing>" in reason and "Unrecorded treatment" in reason for reason in audit["pending"])
+    assert json.loads(json.dumps(audit, allow_nan=False))["ready"] is False
 
 
 @pytest.mark.parametrize("ids", [[1, 1], [1, 2.5], [1, 3], [1, "note"]])
@@ -333,8 +354,81 @@ def test_native_polarization_adapter_keeps_nonchoices_and_repeated_animals():
     assert audit["individuals"] == 2 and audit["repeated_trials"] == 1
     bad = table.copy()
     bad.loc[0, "location"] = "L"
-    with pytest.raises(ValueError, match="contradict"):
-        adapt_polarization_frame(bad)
+    ambiguous, audit = adapt_polarization_frame(bad)
+    assert len(ambiguous) == len(table)
+    assert ambiguous.source_location.iloc[0] == "L"
+    assert ambiguous.response.iloc[0] == "polarized"
+    assert not ambiguous.analysis_included.iloc[0]
+    assert audit["ambiguous_trials"] == 1 and audit["source_coding_reconciled"] is False
+
+
+def polarization_coding_fixture():
+    """Generated rows matching the published aggregate coding combinations.
+
+    IDs and covariates are synthetic unit fixtures, not deposited observations.
+    No regression result from this fixture is study evidence.
+    """
+    combinations = [("M", "L", "M", 0, 49), ("M", "R", "M", 0, 47),
+        ("hori-pola", "L", "L", 1, 30), ("hori-pola", "R", "R", 1, 29),
+        ("unpola", "R", "L", 0, 23), ("unpola", "L", "R", 0, 22),
+        ("hori-pola", "L", "R", 1, 2), ("hori-pola", "R", "L", 1, 1),
+        ("unpola", "R", "R", 0, 1), ("M", "R", "M", 1, 1),
+        ("unpola", "L", "L", 0, 1)]
+    rows = [{"result": result, "pola_window": side, "location": location, "result_hori": binary}
+            for result, side, location, binary, count in combinations for _ in range(count)]
+    table = pd.DataFrame(rows)
+    rng = np.random.default_rng(413)
+    table["id"] = [f"generated-individual-{i}" for i in range(len(table))]
+    table["no"] = np.arange(len(table)) + 1
+    table["year"], table["date"] = 2021, "2021-01-01"
+    table["box"], table["light intensity"] = "A", 10.
+    table["inf"] = rng.integers(0, 2, len(table))
+    table["degree"] = rng.uniform(.2, .9, len(table))
+    return table
+
+
+def test_deposited_coding_conflicts_are_preserved_and_counted_without_raw_correction():
+    import json
+    from horsehair.behaviour import adapt_polarization_frame
+    raw = polarization_coding_fixture()
+    original = raw.copy(deep=True)
+    adapted, audit = adapt_polarization_frame(raw)
+    pd.testing.assert_frame_equal(raw, original)
+    assert len(adapted) == 206
+    assert audit["mutually_consistent_trials"] == 200 and audit["ambiguous_trials"] == 6
+    assert adapted.coding_ambiguity_reason.str.contains("result/location/window").sum() == 5
+    assert adapted.coding_ambiguity_reason.str.contains("result/result_hori").sum() == 1
+    np.testing.assert_array_equal(adapted.source_response, raw.result)
+    np.testing.assert_array_equal(adapted.source_location, raw.location)
+    np.testing.assert_array_equal(adapted.source_result_hori, raw.result_hori)
+    nonchoice = adapted[adapted.source_response.eq("M") & adapted.source_result_hori.eq(1)].iloc[0]
+    assert nonchoice.response == "middle" and nonchoice.response_location_window == "middle"
+    assert not nonchoice.analysis_included  # binary conflict is not a hidden choice
+    assert json.loads(json.dumps(audit, allow_nan=False))["source_coding_reconciled"] is False
+    raw.loc[0, "result"] = "unknown endpoint"
+    with pytest.raises(ValueError, match="Unrecognized"):
+        adapt_polarization_frame(raw)
+
+
+def test_mantis_conditional_and_alternative_fits_do_not_reconcile_source_conflicts():
+    from horsehair.behaviour import adapt_polarization_frame, analyze_mantis_choice
+    table, _ = adapt_polarization_frame(polarization_coding_fixture())
+    original = table.copy(deep=True)
+    result = analyze_mantis_choice(table, {"dop_units": "source"})
+    pd.testing.assert_frame_equal(table, original)
+    assert result["choice"]["denominators"]["trials"] == 200
+    assert result["choice"]["confirmatory_ready"] is False
+    assert result["choice_validation"]["status"] == "pending_source_reconciliation"
+    sensitivity = result["choice_sensitivity"]
+    assert sensitivity["status"] == "complete_diagnostic_source_ambiguity_pending"
+    assert sensitivity["confirmatory_ready"] is False
+    assert set(sensitivity["variants"]) == {"recorded_result_all_rows", "location_window_all_rows"}
+    for variant in sensitivity["variants"].values():
+        assert variant["trials"] == 206 and variant["fit"]["denominators"]["trials"] == 206
+    for variants in sensitivity["source_unit_interaction_summaries"].values():
+        for endpoint in variants.values():
+            assert np.isfinite(endpoint["infection_by_dop_source_unit_slope"])
+            assert np.isfinite(endpoint["ci95_laplace"]).all()
 
 
 def test_native_mating_adapter_keeps_unknown_independence_explicit():

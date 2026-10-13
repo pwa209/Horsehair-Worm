@@ -74,6 +74,15 @@ def validate_trial_roster(frame, settings, protocol, *, architecture, task, seed
     for _, group in frame.groupby(group_columns, dropna=False):
         if set(group.episode_seed.astype(int)) != seeds:
             raise ValueError("Held-out environment seed roster differs across conditions")
+    if 'numerical_status' in frame and not frame.numerical_status.eq('available').all():
+        unavailable = frame[~frame.numerical_status.eq('available')]
+        if (not unavailable.numerical_status.eq('unavailable').all()
+                or not unavailable[['success','redirection','motor_accuracy']].isna().all().all()
+                or 'numerical_failure_reason' not in unavailable or unavailable.numerical_failure_reason.isna().any()):
+            raise ValueError('Numerically unavailable trials contain substituted endpoints or missing diagnostics')
+        raise ValueError(f'Explicit unavailable numerical agent evidence: {len(unavailable)} episode rows; H4 remains incomplete, no failed episodes are imputed or dropped')
+    if 'calibration_numerical_status' in frame and not frame.calibration_numerical_status.eq('available').all():
+        raise ValueError('Explicit unavailable clean-policy calibration evidence; H4 remains incomplete')
     for column in ("success", "redirection", "motor_accuracy", "achieved_parameter_norm", "clean_policy_kl", "target_policy_kl"):
         values = pd.to_numeric(frame[column], errors="coerce").to_numpy()
         if not np.isfinite(values).all():

@@ -61,3 +61,47 @@ def test_atomic_receipt_keeps_old_and_prepared_files_after_persistent_denial(tmp
         core.atomic_json(path, {'state':'submitted','job_id':'123'})
     assert core.read_json(path)=={'state':'submitting'}
     assert core.read_json(path.with_name('receipt.json.partial'))=={'state':'submitted','job_id':'123'}
+
+
+def test_receipt_guard_contention_reports_holder_and_releases_without_unlink(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+    from horsehair.core import exclusive_file_lock, ReceiptLockTimeout
+    guard = tmp_path / 'budget.mutex'
+    acquired, release = Event(), Event()
+    def holder():
+        with exclusive_file_lock(guard):
+            acquired.set()
+            assert release.wait(5)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(holder)
+        assert acquired.wait(5)
+        inode = guard.stat().st_ino
+        try:
+            with pytest.raises(ReceiptLockTimeout) as raised:
+                with exclusive_file_lock(guard, timeout=.1):
+                    pytest.fail('A second writer acquired a live guard')
+            diagnostics = raised.value.diagnostics
+            assert diagnostics['guard_path'] == str(guard.resolve())
+            assert diagnostics['waited_seconds'] >= .09
+            assert diagnostics['last_known_holder']['state'] == 'held'
+            assert diagnostics['owner_metadata_is_authoritative'] is False
+        finally:
+            release.set()
+        future.result()
+    with exclusive_file_lock(guard, timeout=.1):
+        assert guard.stat().st_ino == inode
+    assert read_json(guard.with_name(guard.name + '.owner.json'))['state'] == 'released'
+
+
+def test_receipt_owner_diagnostic_failure_cannot_break_kernel_release(tmp_path, monkeypatch):
+    from horsehair import core
+    def failed_metadata(*args, **kwargs):
+        raise OSError('diagnostic write unavailable')
+    monkeypatch.setattr(core, 'atomic_json', failed_metadata)
+    guard = tmp_path / 'guard.mutex'
+    with pytest.raises(ValueError, match='transaction failed'):
+        with core.exclusive_file_lock(guard):
+            raise ValueError('transaction failed')
+    with core.exclusive_file_lock(guard, timeout=0):
+        assert guard.is_file()

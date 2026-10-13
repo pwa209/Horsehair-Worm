@@ -45,21 +45,34 @@ def parse_sacct(text):
     required = {"JobIDRaw", "State", "ElapsedRaw", "AllocCPUS", "MaxRSS", "AllocTRES"}
     if not rows or not required.issubset(rows[0]):
         raise AdmissionError("Native sacct must contain JobIDRaw/State/ElapsedRaw/AllocCPUS/MaxRSS/AllocTRES")
-    jobs = {}
+    jobs = {}; aliases = {}
     for row in rows:
-        job_id = row["JobIDRaw"].split(".", 1)[0]
+        raw_id = row["JobIDRaw"].split(".", 1)[0]
+        # Older non-array evidence remains readable. New native evidence binds
+        # both identities; JobIDRaw alone cannot identify an array task.
+        job_id = row.get("JobID", row["JobIDRaw"]).split(".", 1)[0]
         if not re.fullmatch(r"\d+(?:_\d+)?", job_id):
             raise AdmissionError("Invalid native job identity")
-        record = jobs.setdefault(job_id, {"peak_rss_bytes": None})
+        if not re.fullmatch(r"\d+", raw_id):
+            raise AdmissionError("Physical JobIDRaw must be numeric; logical array JobID is required separately")
+        if raw_id in aliases and aliases[raw_id] != job_id:
+            raise AdmissionError("Physical allocation has conflicting logical identities")
+        aliases[raw_id] = job_id
+        record = jobs.setdefault(job_id, {"peak_rss_bytes": None,"job_id_raw":raw_id})
+        if record["job_id_raw"] != raw_id:
+            raise AdmissionError("Logical allocation has conflicting physical identities")
         if row["MaxRSS"]:
             peak = memory_bytes(row["MaxRSS"])
             record["peak_rss_bytes"] = max(peak, record["peak_rss_bytes"] or 0)
-        if "." not in row["JobIDRaw"]:
+        if "." not in row.get("JobID", row["JobIDRaw"]):
             gpu = re.search(r"(?:^|,)gres/gpu(?:[:=][^,=]+)?=(\d+)(?:,|$)", row["AllocTRES"])
             elapsed, cpus = float(row["ElapsedRaw"]), int(row["AllocCPUS"])
             if not math.isfinite(elapsed) or elapsed < 0 or cpus < 0:
                 raise AdmissionError("Invalid native elapsed time or allocated CPU count")
-            record.update(job_id=job_id, state=row["State"].split()[0], elapsed_seconds=elapsed, cpus=cpus, gpus=int(gpu[1]) if gpu else 0, alloc_tres=row["AllocTRES"])
+            allocation = dict(job_id=job_id, state=row["State"].split()[0].split('+')[0], elapsed_seconds=elapsed, cpus=cpus, gpus=int(gpu[1]) if gpu else 0, alloc_tres=row["AllocTRES"],exit_code=row.get("ExitCode", ""))
+            if "elapsed_seconds" in record and any(record[key]!=value for key,value in allocation.items()):
+                raise AdmissionError("Conflicting duplicate native allocation records")
+            record.update(allocation)
     return jobs
 
 
@@ -77,7 +90,7 @@ def _proof(record, config, identity, native, *, require_cuda=False):
         raise AdmissionError("Benchmark belongs to another immutable source release")
     job_id = str(record.get("slurm_job_id", ""))
     job = native.get(job_id)
-    if not job or job.get("state") != "COMPLETED" or not job.get("peak_rss_bytes"):
+    if not job or job.get("state") != "COMPLETED" or job.get("exit_code") not in (None,"","0:0") or not job.get("peak_rss_bytes"):
         raise AdmissionError(f"Completed native timing/peak RSS is pending for benchmark job {job_id}")
     positive(job["elapsed_seconds"], "selected native job elapsed time")
     positive(job["cpus"], "selected native allocated CPUs")
@@ -282,6 +295,8 @@ def _agents(config, root, native, identity, safety, phase):
                 raise AdmissionError(str(error)) from error
             if (record.get("task"),record.get("architecture"),record.get("seed"))!=(entry["task"],entry["architecture"],entry["seed"]) or not grid["complete_mechanism_grid"]:
                 raise AdmissionError("CPU evaluation native cell differs from its roster")
+            if grid.get("numerically_valid_grid") is not True:
+                raise AdmissionError("CPU evaluation grid contains explicit unavailable numerical evidence; complete finite cost coverage is pending")
             job = _proof(record,config,identity,native)
             if job["gpus"]!=0 or record.get("evaluation_device")!="cpu" or record.get("allocated_cpus")!=job["cpus"] or record.get("calibration_episodes")!=spec["calibration_episodes"] or record.get("kl_bisections")!=spec["kl_bisections"]:
                 raise AdmissionError("Evaluation cost must use native CPU allocation and complete configured calibration")

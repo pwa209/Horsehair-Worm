@@ -157,6 +157,18 @@ def test_full_frozen_assay_roster_and_restored_episode_outcomes():
         analysis.validate_trial_roster(bad_restore,config,protocol,architecture="rnn",task="foraging",seed=1000)
 
 
+def test_explicit_numerical_failure_cannot_be_imputed_dropped_or_treated_as_complete_H4():
+    frame,config,protocol=complete_trial_fixture()
+    frame['numerical_status']='available';frame['numerical_failure_reason']=None
+    frame.loc[0,['success','redirection','motor_accuracy']]=np.nan
+    frame.loc[0,'numerical_status']='unavailable';frame.loc[0,'numerical_failure_reason']='nonfinite_logits'
+    with pytest.raises(ValueError,match='Explicit unavailable numerical'):
+        analysis.validate_trial_roster(frame,config,protocol,architecture='rnn',task='foraging',seed=1000)
+    frame.loc[0,'success']=0
+    with pytest.raises(ValueError,match='substituted'):
+        analysis.validate_trial_roster(frame,config,protocol,architecture='rnn',task='foraging',seed=1000)
+
+
 @pytest.mark.parametrize("biological_ready,qualified,expected",[(False,True,"supported"),(False,False,"pending")])
 def test_full_analysis_never_accepts_headline_without_biology_and_baseline_competence(tmp_path,monkeypatch,biological_ready,qualified,expected):
     # This generated-seed fixture isolates inference/claim gating; source integrity

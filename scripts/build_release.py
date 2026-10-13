@@ -4,6 +4,7 @@ No biological data, private proposal, credentials, Git internals or local work
 artifacts enter the release. The generated request is an ignored local artifact.
 """
 import argparse
+from datetime import datetime, timezone
 import base64
 import gzip
 import hashlib
@@ -38,7 +39,7 @@ for name in files:
         raise ValueError('Private or generated file appears in tracked release')
     if (repo/name).is_symlink():raise ValueError('Release symlinks are forbidden')
 c=read_json(repo/'configs/study.json');validate_config(c)
-release_id='20261012-'+commit[:12]+'-'+identity['sha256'][:12]
+release_id=datetime.now(timezone.utc).strftime('%Y%m%d')+'-'+commit[:12]+'-'+identity['sha256'][:12]
 record={'schema_version':1,'release_id':release_id,'git_commit':commit,'github':'https://github.com/pwa209/Horsehair-Worm','config_sha256':canonical_hash(c),'source_identity':identity}
 buffer=io.BytesIO()
 with tarfile.open(fileobj=buffer,mode='w') as archive:

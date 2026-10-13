@@ -279,14 +279,15 @@ def execute(a,config,root):
         from . import molecular
         if a.stage=='runtime':
             from .molecular_pipeline import runtime_directory
-            result=molecular.install_tool_runtime(root,runtime_directory(config,root),qualify=True)
+            result=molecular.install_tool_runtime(root,runtime_directory(config,root),qualify=True,
+                orthofinder_python=config.get('molecular',{}).get('orthofinder_python'))
         elif a.stage=='prepare-rna-full':result=molecular.prepare_full_rna(config,root)
         elif a.stage=='rna-run':
             if a.task_index is None:raise ValueError('Fixed biological task index required')
-            result=molecular.run_rna_task(Path(root)/'data/rna_full_plan/rna_plan.json',a.task_index)
+            result=molecular.run_rna_task(molecular.rna_directories(config,root)['full_plan']/'rna_plan.json',a.task_index)
             result.update(config_sha256=canonical_hash(config),full_config_sha256=canonical_hash(config))
             atomic_json(Path(root)/'state'/f'rna-full-{a.task_index}.json',result)
-        elif a.stage=='ant':result=molecular.run_ant(root)
+        elif a.stage=='ant':result=molecular.run_ant(root,config)
         else:result=molecular.run_mantis(root)
     elif a.command=='agent-analysis':
         from .agent_analysis import run

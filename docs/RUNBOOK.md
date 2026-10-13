@@ -62,11 +62,23 @@ Generated plans supply allocations, dependencies and array indices. These are th
 
 Agent benchmark indices are 0–11, development seed-cell indices 0–59 (three learning rates per cell, 180 fits), and final/evaluation policy indices 0–239. RNA count indices are 0–59. Controller segment indices are 0–3. The full configuration and frozen protocol bind all scientific stages; source-changing repairs require fresh matching benchmark evidence and an appropriate release/output amendment.
 
+## Repair and fresh evidence
+
+Preserve the previous immutable release, its native receipts, logs and checkpoints before superseding a failed controller. Cancel only positively identified study controllers; terminal accounting must reconcile their leases before a replacement graph starts. Array evidence uses Slurm's logical `JobID` (parent and index) and retains numeric `JobIDRaw` as allocation provenance. Historical raw-key costs are migrated only from matching native allocation evidence, so a finished array member is charged once. Live receipt-lock contention defers a bounded controller tick; it never authorizes removing a kernel guard.
+
+Code repairs require fresh source/configuration-bound benchmarks. Set `agents.output_dir` to a new relative result namespace to preserve earlier policy measurements. RNA processing and molecular-runtime namespaces likewise preserve earlier outputs; reuse of the unchanged reference index requires its pinned reference proof.
+
+The explicit `scripts/repair_transfer.py` maintenance interface runs in a network-enabled Slurm allocation. It accepts one checksum-failed eligible ant asset and a new recovery identity. A complete-length partial is independently hashed, compared with its unchanged provider checksum, and preserved with its sidecar and forensic receipt before a fresh transfer begins directly on Narval. Verified final sources are never quarantined or overwritten. A partial with different provenance, an active transfer guard, a valid partial, or an ambiguous recovery journal requires inspection rather than automatic replay.
+
+Agent evaluation samples only active episodes, uses paired episode-specific action streams, and validates logits, recurrent states and clean-policy divergence. Genuine numerical failures retain planned episode/grid membership with null endpoints and explicit diagnostics. They cannot supply complete timing coverage, inferred effects or H4 support. Failed episodes and seeds are never imputed or discarded.
+
 ## Scientific source gates
 
 The author-defined processed fly frame clock permits recording-relative chronology with its deposited validator and per-file metadata. Exact exposure progression additionally requires a source-verified exposure-to-recording offset for every exposed experiment. Missing unexposed controls, intervention identities, animal/reagent/gene/family crosswalks or shared-control covariance cannot be supplied from filenames or pooled summaries. These gates remain visible in controller status.
 
 Independent mantis behavioural and RNA subjects remain separate. The computational agent primary protocol uses synthetic perturbations; behavioural model parameters do not identify signs of neural weight changes. Biological transfer requires a separately validated prospective bridge.
+
+Deposited mantis endpoint disagreements remain in the canonical table and source audit. The declared parser amendment permits a conditional fit of mutually consistent annotations and separately labelled all-row recorded-result and location/window sensitivity fits. These diagnostics do not correct the source or establish an unqualified author replication; source reconciliation remains pending even if numerical fitting completes.
 
 ## Review and retention
 

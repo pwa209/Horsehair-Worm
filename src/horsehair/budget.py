@@ -47,23 +47,31 @@ def native_accounting(root, job_ids, runner=subprocess.run):
     """
     ids=list(dict.fromkeys(str(x) for x in job_ids))
     if not ids or any(not re.fullmatch(r'\d+(?:_\d+)?',x) for x in ids):raise ValueError('Invalid native job identifiers')
-    response=runner(['sacct','-j',','.join(ids),'--format=JobIDRaw,State,ElapsedRaw,AllocCPUS,AllocTRES,ExitCode,MaxRSS','--units=K','--noheader','--parsable2'],text=True,capture_output=True)
+    response=runner(['sacct','-j',','.join(ids),'--format=JobID%64,JobIDRaw%64,State,ElapsedRaw,AllocCPUS,AllocTRES,ExitCode,MaxRSS','--units=K','--noheader','--parsable2'],text=True,capture_output=True)
     if response.returncode:raise RuntimeError('Native accounting query failed; leases preserved')
     terminal={'COMPLETED','FAILED','CANCELLED','TIMEOUT','OUT_OF_MEMORY','NODE_FAIL','PREEMPTED','BOOT_FAIL','DEADLINE','REVOKED'}
-    observed={};peaks={};rows=[]
+    observed={};peaks={};rows=[];aliases={};logical_raw={};condensed_pending=set()
     def rss_bytes(value):
         match=re.fullmatch(r'(\d+(?:\.\d+)?)([KMGT]?)',value)
         if not match:raise ValueError('Unrecognized native memory measurement')
         return float(match[1])*1024**(' KMGT'.index(match[2]) if match[2] else 0)
     for line in response.stdout.splitlines():
         fields=line.strip().split('|')
-        if len(fields)>=7 and fields[6]:
-            ident=fields[0].split('.')[0]
-            if ident not in peaks or rss_bytes(fields[6])>rss_bytes(peaks[ident]):peaks[ident]=fields[6]
+        if len(fields)<8:raise ValueError('Native accounting lacks logical and physical allocation identities')
+        ident,raw=fields[0].split('.')[0],fields[1].split('.')[0]
+        if not re.fullmatch(r'\d+(?:_\d+)?',ident):
+            match=re.fullmatch(r'(\d+)_\[.+\]',ident)
+            if match:condensed_pending.add(match[1])
+            continue  # condensed pending-array rows are not allocations
+        if not re.fullmatch(r'\d+',raw):raise ValueError('Invalid physical native allocation identity')
+        if raw in aliases and aliases[raw]!=ident or ident in logical_raw and logical_raw[ident]!=raw:
+            raise ValueError('Conflicting logical/physical native identities')
+        aliases[raw]=ident;logical_raw[ident]=raw
+        if fields[7]:
+            if ident not in peaks or rss_bytes(fields[7])>rss_bytes(peaks[ident]):peaks[ident]=fields[7]
     for line in response.stdout.splitlines():
         fields=line.strip().split('|')
-        if len(fields)<6:continue
-        ident,state,seconds,cpus,tres,exit_code=fields[:6]
+        ident,raw,state,seconds,cpus,tres,exit_code=fields[:7]
         if '.' in ident or not re.fullmatch(r'\d+(?:_\d+)?',ident):continue
         state=state.split()[0].split('+')[0]
         if state not in terminal:continue
@@ -76,16 +84,42 @@ def native_accounting(root, job_ids, runner=subprocess.run):
             # Older records may only expose the typed GPU field.
             gpu=sum(int(p.split('=',1)[1]) for p in tres.split(',') if p.startswith('gres/gpu:') and '=' in p)
         hours=int(seconds)/3600
-        observed[ident]={'state':state,'exit_code':exit_code,'elapsed_seconds':int(seconds),'cpus':int(cpus),'gpus':gpu,
+        item={'state':state,'exit_code':exit_code,'elapsed_seconds':int(seconds),'cpus':int(cpus),'gpus':gpu,
+                         'job_id':ident,'job_id_raw':raw,
                          'cpu_core_hours':hours*int(cpus),'gpu_hours':hours*gpu,'basis':'sacct final allocated wall time'}
-        if int(seconds)>0 and int(cpus)>0:rows.append('|'.join([ident,state,seconds,cpus,peaks.get(ident,''),tres]))
+        if ident in observed and observed[ident]!=item:raise ValueError('Conflicting final native allocation records')
+        observed[ident]=item
+        if int(seconds)>0 and int(cpus)>0:rows.append('|'.join([ident,raw,state,seconds,cpus,peaks.get(ident,''),tres,exit_code]))
     path=Path(root)/'state/resource-budget.json';path.parent.mkdir(parents=True,exist_ok=True)
     with exclusive_file_lock(path.with_suffix('.mutex')):
         record=read_json(path) if path.exists() else {'spent_cpu_core_hours':0.,'spent_gpu_hours':0.,'leases':{}}
         native=record.setdefault('native_jobs',{})
+        known=record.setdefault('native_raw_aliases',{})
+        if any(raw in known and known[raw]!=ident for raw,ident in aliases.items()):
+            raise ValueError('Native allocation identity changed; explicit reconciliation needed')
+        def same_allocation(old,new):
+            return all(old.get(key)==new.get(key) for key in ('state','exit_code','elapsed_seconds','cpus','gpus','cpu_core_hours','gpu_hours','basis'))
+        # Upgrade old JobIDRaw-only receipts using actual paired native evidence.
+        # Never infer an array index from row order or a job's name.
+        for raw,ident in aliases.items():
+            if raw!=ident and raw in native:
+                old=native[raw]
+                if ident not in observed or not same_allocation(old,observed[ident]):
+                    raise ValueError('Legacy physical accounting differs from native allocation evidence')
+                if ident in native and not same_allocation(native[ident],old):
+                    raise ValueError('Duplicate accounting identities contain conflicting allocations')
+                del native[raw]
+                record.setdefault('native_identity_reconciliations',[]).append({'previous_job_id_raw_key':raw,'logical_job_id':ident})
+            # A historical raw-ID owner still finishes against its original key.
+            # The alias is evidence, never permission to rename a live lease.
+            if raw!=ident and ident in observed and raw in record['leases']:
+                if ident in record['leases']:
+                    raise ValueError('Duplicate physical/logical leases require explicit reconciliation')
+                record['leases'][ident]=record['leases'].pop(raw)
+            known[raw]=ident
         for ident,item in observed.items():
             old=native.get(ident)
-            if old and old!=item:raise ValueError('Final native accounting changed; explicit reconciliation needed')
+            if old and not same_allocation(old,item):raise ValueError('Final native accounting changed; explicit reconciliation needed')
             native[ident]=item
             if ident in record['leases']:
                 record['leases'][ident].update(state='native_reconciled',native=item)
@@ -93,14 +127,28 @@ def native_accounting(root, job_ids, runner=subprocess.run):
         record['spent_cpu_core_hours']=sum(v['cpu_core_hours'] for v in native.values())+sum(v['cpus']*v.get('elapsed_hours',0) for v in unreconciled)
         record['spent_gpu_hours']=sum(v['gpu_hours'] for v in native.values())+sum(v['gpus']*v.get('elapsed_hours',0) for v in unreconciled)
         record['accounting_basis']='final sacct allocations where available; provisional command wall time otherwise'
+        record['accounting_identity_schema']=2
         atomic_json(path,record)
         accounting=Path(root)/'state/native-accounting.tsv'
         old_rows={}
         if accounting.exists():
-            for line in accounting.read_text().splitlines()[1:]:old_rows[line.split('|')[0]]=line
+            lines=accounting.read_text().splitlines()
+            old_header=lines[0].split('|')
+            for line in lines[1:]:
+                if not line.strip():continue
+                old=dict(zip(old_header,line.split('|')))
+                raw=old['JobIDRaw'];ident=known.get(raw,old.get('JobID',raw))
+                old_rows[ident]='|'.join([ident,raw,old['State'],old['ElapsedRaw'],old['AllocCPUS'],old.get('MaxRSS',''),old['AllocTRES'],old.get('ExitCode','')])
         for line in rows:old_rows[line.split('|')[0]]=line
-        accounting.write_text('JobIDRaw|State|ElapsedRaw|AllocCPUS|MaxRSS|AllocTRES\n'+'\n'.join(old_rows.values())+'\n',encoding='utf8')
-        return {'reconciled':observed,'pending_native_records':[i for i in ids if i not in observed],
+        atomic_text='JobID|JobIDRaw|State|ElapsedRaw|AllocCPUS|MaxRSS|AllocTRES|ExitCode\n'+'\n'.join(old_rows[key] for key in sorted(old_rows))+'\n'
+        temporary=accounting.with_suffix('.tmp');temporary.write_text(atomic_text,encoding='utf8');temporary.replace(accounting)
+        pending=[]
+        for ident in ids:
+            if ident in observed:continue
+            children={key for key in logical_raw if key.startswith(ident+'_')}
+            if ident in condensed_pending or (children and not children.issubset(observed)) or (not children and aliases.get(ident) not in observed):
+                pending.append(ident)
+        return {'reconciled':observed,'native_raw_aliases':aliases,'pending_native_records':pending,
                 'spent_cpu_core_hours':record['spent_cpu_core_hours'],'spent_gpu_hours':record['spent_gpu_hours']}
 
 

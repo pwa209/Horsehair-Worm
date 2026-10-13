@@ -112,10 +112,14 @@ def test_native_state_reader_keeps_array_ids_ignores_steps_and_refuses_unavailab
     calls = []
     def runner(command,**kwargs):
         calls.append(command)
-        return SimpleNamespace(returncode=0,stdout="800_0|COMPLETED|0:0\n800_0.batch|COMPLETED|0:0\n800_1|CANCELLED+ by 1|0:15\n")
+        return SimpleNamespace(returncode=0,stdout="800_0|901|COMPLETED|0:0\n800_0.batch|901.batch|COMPLETED|0:0\n800_1|800|CANCELLED+ by 1|0:15\n")
     result = pipeline._native_states(["800","800"],runner=runner)
     assert set(result)=={"800_0","800_1"} and result["800_1"]["state"]=="CANCELLED"
     assert calls[0][calls[0].index("-j")+1]=="800"
+    assert '--format=JobID%64,JobIDRaw%64,State,ExitCode' in calls[0]
+    assert result['800_0']['job_id_raw']=='901' and result['800_1']['job_id_raw']=='800'
+    planned = task('array',4,array='0-1%1')
+    assert pipeline._task_status({'state':'submitted','job_id':'800'},result,planned)=='failed'
     with pytest.raises(RuntimeError,match="unavailable"):
         pipeline._native_states(["800"],runner=lambda *a,**k:SimpleNamespace(returncode=1,stdout=""))
     with pytest.raises(ValueError,match="Invalid native"):
@@ -264,6 +268,45 @@ def configure_lock_run(fixture,monkeypatch):
     path = fixture.root/"state/pipeline/qa-release/controller.lock"
     atomic_json(path,{"job_id":"700","segment":0,"started_unix":1.})
     return path
+
+
+def test_controller_defers_live_receipt_guard_and_recovers_without_replaying(controller_fixture,monkeypatch):
+    from horsehair import budget
+    from horsehair.core import ReceiptLockTimeout
+    fixture=controller_fixture;path=configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'_native_states',lambda *a:{'700':state()})
+    now=[0.];monkeypatch.setattr(pipeline.time,'monotonic',lambda:now[0])
+    monkeypatch.setattr(pipeline.time,'sleep',lambda duration:now.__setitem__(0,now[0]+duration))
+    calls=[]
+    def accounting(*args):
+        calls.append(args)
+        if len(calls)==1:
+            raise ReceiptLockTimeout(fixture.root/'state/resource-budget.mutex',30.,{'pid':123,'state':'held'})
+    monkeypatch.setattr(budget,'native_accounting',accounting)
+    result=pipeline.run(fixture.config,fixture.root,max_seconds=90,interval=30)
+    assert result['status']=='complete' and len(calls)==2 and not path.exists()
+    warning=read_json(path.parent/'receipt-guard-warning.json')
+    assert warning['warning_count']==1 and warning['last_known_holder']['pid']==123
+    assert warning['owner_metadata_is_authoritative'] is False
+    assert not fixture.submitted
+
+
+def test_repeated_receipt_guard_contention_cannot_exceed_finite_controller_window(controller_fixture,monkeypatch):
+    from horsehair import budget
+    from horsehair.core import ReceiptLockTimeout
+    fixture=controller_fixture;path=configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'_native_states',lambda *a:{'700':state()})
+    now=[0.];monkeypatch.setattr(pipeline.time,'monotonic',lambda:now[0])
+    monkeypatch.setattr(pipeline.time,'sleep',lambda duration:now.__setitem__(0,now[0]+duration))
+    calls=[]
+    def accounting(*args):
+        calls.append(args)
+        raise ReceiptLockTimeout(fixture.root/'state/resource-budget.mutex',30.,{'pid':123,'state':'held'})
+    monkeypatch.setattr(budget,'native_accounting',accounting)
+    result=pipeline.run(fixture.config,fixture.root,max_seconds=60,interval=30)
+    assert result['status']=='waiting_for_receipt_guard' and result['segment_status']=='finite_segment_finished'
+    assert result['receipt_guard_warning_count']==2 and len(calls)==2 and now[0]==60
+    assert not result['scientific_results_complete'] and not path.exists() and not fixture.submitted
 
 
 @pytest.mark.parametrize("native_proof",[{}, {"700":state("RUNNING")}, {"700":state("PENDING")}])

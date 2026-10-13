@@ -131,12 +131,31 @@ Official HTTPS source archives were SHA-256 verified on 12 October 2026:
 These hashes were computed from official archive bytes; the old release metadata
 does not publish a digest. The manifest retains exact source URLs, versions and
 commits. The OrthoFinder distribution includes its required `diamond`, `mcl`
-and `fastme` binaries. The prepared Python environment supplies NumPy/SciPy;
-TransDecoder needs Perl `DB_File`, `URI::Escape` and Rscript. Installation checks
-dependencies, runs utility version/help commands, then executes the official
-OrthoFinder four-species example and TransDecoder transcript example. Missing
-dependencies or a failed example stop qualification. No runtime installer or
-instruction from a biological dataset README is executed.
+and `fastme` binaries. OrthoFinder uses a separate Python 3.11 environment pinned
+to NumPy 1.26.4 and SciPy 1.11.2; its wrapper clears child `PYTHONPATH`/`PYTHONHOME`
+and sets library threads to one while keeping the explicitly requested OrthoFinder
+algorithm and sequence-search threads. The main study and R environments retain
+their own dependencies. TransDecoder uses the verified isolated site Perl 5.30.2
+with `DB_File` and `URI::Escape`, plus Rscript. Vendor source is unchanged.
+
+Qualification verifies a known log-linear `curve_fit` serially and in a forked
+worker. Its bounded OrthoFinder fixture contains identical copies of eight
+distinct proteins from the pinned official example and one additional identical
+paralog per species. The full run must retain all 18 known proteins in both the
+orthogroup and root-HOG tables, recover the eight identity pairs, and recover the
+four-gene paralog group. An independent FastME distance fixture and the actual
+official TransDecoder transcript example must also pass. The additional paralogs
+exercise the upstream gene-distance branch, which selects groups of at least
+four genes; an all-two-gene fixture triggers an upstream undefined cleanup
+variable rather than a memory failure. Process-group snapshots and per-worker
+C-level tracebacks precede the unchanged 300-second qualification deadline.
+
+These are software checks. The complete ant/fly proteome benchmark remains
+required before downstream admission. Interrupted or unqualified directories
+are preserved; reuse requires the complete qualification receipt, pinned archive
+hashes, wrapper/output hashes, interpreter and native numerical-library proof.
+Missing dependencies or failed checks stop qualification. No instruction from
+a biological dataset README is executed.
 
 Score freezing refuses fly outcome columns or a provenance flag indicating that
 target outcomes were inspected. It requires source, contrast, orthology and
@@ -285,7 +304,7 @@ produces `pending` with reasons and no invented numeric forecast. Receipts bind
 the immutable code/configuration and every benchmark/accounting/quota input hash.
 
 Native accounting is `state/native-accounting.tsv`, generated with pipe-delimited
-`sacct` fields `JobIDRaw,State,ElapsedRaw,AllocCPUS,MaxRSS,AllocTRES`. Allocation
+`sacct` fields `JobID,JobIDRaw,State,ElapsedRaw,AllocCPUS,MaxRSS,AllocTRES,ExitCode`. Logical array identities retain their physical allocation provenance. Allocation
 rows provide elapsed time/resources; step rows provide peak RSS. Only completed
 jobs with positive measured timing/RSS can support admission. The actual
 `state/resource-budget.json` supplies spent and outstanding reserved hours.

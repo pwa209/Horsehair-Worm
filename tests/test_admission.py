@@ -18,6 +18,15 @@ def test_native_sacct_joins_completed_allocation_and_batch_peak():
         memory_bytes("")
 
 
+def test_native_sacct_maps_array_allocation_and_step_to_logical_id():
+    jobs=parse_sacct('JobID|JobIDRaw|State|ElapsedRaw|AllocCPUS|MaxRSS|AllocTRES|ExitCode\n800_0|901|COMPLETED|120|6||cpu=6,gres/gpu=1|0:0\n800_0.batch|901.batch|COMPLETED|119|6|2G|cpu=6|0:0\n800_1|800|FAILED|10|4|1G|cpu=4|1:0\n')
+    assert set(jobs)=={'800_0','800_1'}
+    assert jobs['800_0']['job_id_raw']=='901' and jobs['800_0']['peak_rss_bytes']==2*1024**3
+    assert jobs['800_1']['state']=='FAILED'
+    with pytest.raises(AdmissionError,match='conflicting logical'):
+        parse_sacct('JobID|JobIDRaw|State|ElapsedRaw|AllocCPUS|MaxRSS|AllocTRES\n800_0|901|COMPLETED|120|6|2G|cpu=6\n800_1|901|COMPLETED|120|6|2G|cpu=6\n')
+
+
 def config_for(root):
     return {"resources": {"cpu_ceiling": 64, "cpu_core_hours_cap": 20000, "gpu_hours_cap": 400, "scratch_budget_bytes": 100_000_000_000, "scratch_budget_files": 250000, "scratch_reserve_bytes": 2_000_000_000, "rna_cores": 8, "rna_concurrency": 2}, "molecular": {}, "paths": {"root": str(root)}}
 

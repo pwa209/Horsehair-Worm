@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -109,6 +110,38 @@ def test_rna_pilot_plan_uses_actual_mates_and_preserves_source_crop(tmp_path):
         assert job["cohort"] == "discovery"
 
 
+def test_repair_rna_namespaces_preserve_original_outputs_and_separate_full_plan(tmp_path):
+    from horsehair.molecular import rna_directories
+    from horsehair.acquire import AcquisitionError
+    config = {"molecular": {"rna_output_directory": "data/rna-repair", "rna_plan_directory": "data/rna-plan-repair"}}
+    paths = rna_directories(config, tmp_path)
+    assert paths["full_plan"] == tmp_path / "data/rna-plan-repair/full"
+    old = tmp_path / "data/rna/completed-original.txt"
+    old.parent.mkdir(parents=True); old.write_text("preserved prior pilot")
+    rows, samples = ant_fixture(); crosswalk, _ = ant_crosswalk(rows, samples)
+    reference = {"assembly": "GCA_003651465.1", "genome_fasta": "/refs/genome.fa", "gtf": "/refs/genes.gtf", "star_index": "/refs/index", "reference_manifest_hash": "frozen"}
+    plan = rna_plan(crosswalk, reference, tmp_path, paths["pilot_plan"], pilot=2, work_directory="data/rna-repair")
+    assert all(Path(job["output"]).parent == paths["output"] for job in plan["jobs"])
+    assert old.read_text() == "preserved prior pilot"
+    with pytest.raises(AcquisitionError, match="Unsafe"):
+        rna_directories({"molecular": {"rna_output_directory": "../outside"}}, tmp_path)
+
+
+def test_rna_state_replacement_retains_exact_prior_receipt_bytes(tmp_path):
+    from horsehair.molecular import _rna_state_receipt
+    old = tmp_path / "state/rna-pilot-0.json"
+    old.parent.mkdir()
+    original = b'{"status":"pilot_processed", "source_sha256":"old"}\n'
+    old.write_bytes(original)
+    new = {"status": "pilot_processed", "source_sha256": "new"}
+    _rna_state_receipt(tmp_path, "rna-pilot-0.json", new)
+    historical = list((old.parent / "rna_receipt_history").glob("*.json"))
+    assert len(historical) == 1 and historical[0].read_bytes() == original
+    assert json.loads(old.read_text()) == new
+    _rna_state_receipt(tmp_path, "rna-pilot-0.json", new)
+    assert len(list((old.parent / "rna_receipt_history").glob("*.json"))) == 1
+
+
 def test_representative_orf_and_orthology_coverage_require_source_ids(tmp_path):
     proteins = tmp_path / "protein.fa"
     proteins.write_text(">tx1.p1\nMAAA\n>tx1.p2\nMAAAAAA\n>tx2.p1\nMKKK\n")
@@ -183,9 +216,21 @@ def test_bounded_official_fixture_checks_actual_shared_groups(tmp_path):
     assert len(fixture["expected_identical_pairs"]) == 8
     groups = tmp_path / "groups.tsv"
     rows = [{"Orthogroup": f"OG{i}", "qualification_a": pair["pair"][0], "qualification_b": pair["pair"][1]} for i, pair in enumerate(fixture["expected_identical_pairs"])]
+    for species in ["qualification_a", "qualification_b"]:
+        rows[0][species] += ", " + species + "_p000_duplicate"
     pd.DataFrame(rows).to_csv(groups, sep="\t", index=False)
     proof = validate_qualification_orthogroups(groups, fixture)
     assert proof["validated_identical_pairs"] == 8 and proof["biological_accuracy_claim"] is False
+    assert proof["validated_paralog_group_genes"] == 4
+    from horsehair.molecular import validate_qualification_hogs
+    hogs = tmp_path / "N0.tsv"
+    pd.DataFrame(rows).rename(columns={"Orthogroup": "HOG"}).to_csv(hogs, sep="\t", index=False)
+    assert validate_qualification_hogs(hogs, fixture)["validated_hog_proteins"] == 18
+    incomplete = pd.DataFrame(rows).rename(columns={"Orthogroup": "HOG"})
+    incomplete.loc[0, "qualification_b"] = "qualification_b_p000"
+    incomplete.to_csv(hogs, sep="\t", index=False)
+    with pytest.raises(MolecularError, match="retain every known"):
+        validate_qualification_hogs(hogs, fixture)
     rows[0]["qualification_b"], rows[1]["qualification_b"] = rows[1]["qualification_b"], rows[0]["qualification_b"]
     pd.DataFrame(rows).to_csv(groups, sep="\t", index=False)
     with pytest.raises(MolecularError, match="identical qualification protein pair"):
@@ -202,6 +247,71 @@ def test_external_utility_deadline_preserves_streamed_output_and_failure_proof(t
     receipt = json.loads(log.with_suffix(".receipt.json").read_text())
     assert receipt["status"] == "timed_out" and receipt["elapsed_seconds"] < 5
     assert receipt["log_sha256"] == file_hash(log)
+
+
+def test_worker_diagnostic_signals_only_registered_members_of_its_process_group(tmp_path, monkeypatch):
+    import types
+    import horsehair.molecular as module
+    proc, traces = tmp_path / "proc", tmp_path / "traces"
+    proc.mkdir(); traces.mkdir()
+    for pid, group in [(101, 100), (102, 100), (103, 999)]:
+        directory = proc / str(pid); directory.mkdir()
+        (directory / "stat").write_text(f"{pid} (python worker) S 100 {group} 0 0\n")
+        (directory / "wchan").write_text("futex_wait_queue")
+    (traces / "101.log").write_text("registered Python worker")
+    (traces / "103.log").write_text("unrelated process")
+    signaled = []
+    monkeypatch.setattr(module, "os", types.SimpleNamespace(name="posix", getpgid=lambda pid: 100, kill=lambda pid, sig: signaled.append((pid, sig))))
+    monkeypatch.setattr(module, "signal", types.SimpleNamespace(SIGUSR2=12))
+    rows = module.tool_process_snapshot(100, traces, proc_root=proc)
+    assert {row["pid"] for row in rows} == {101, 102}
+    assert signaled == [(101, 12)]
+    assert next(row for row in rows if row["pid"] == 102)["trace_requested"] is False
+
+
+def test_worker_trace_launcher_preserves_vendor_arguments_and_source(tmp_path):
+    import subprocess, sys
+    from horsehair.molecular import orthofinder_launcher_text
+    official = tmp_path / "official.py"
+    official.write_text("import sys; print(repr(sys.argv)); print(__name__)\n")
+    original = official.read_bytes()
+    launcher = tmp_path / "launcher.py"
+    launcher.write_text(orthofinder_launcher_text(official))
+    response = subprocess.run([sys.executable, str(launcher), "-a", "2"], capture_output=True, text=True, check=True)
+    assert repr([str(official), "-a", "2"]) in response.stdout
+    assert "__main__" in response.stdout
+    assert official.read_bytes() == original
+
+
+def test_worker_timeout_retains_hashed_diagnostics_and_remains_failed(tmp_path, monkeypatch):
+    import sys
+    import horsehair.molecular as module
+    monkeypatch.setattr(module, "tool_process_snapshot", lambda group, traces: [{"pid": group, "state": "S", "trace_requested": False}])
+    log = tmp_path / "diagnostic.log"
+    with pytest.raises(MolecularError, match="timed_out"):
+        module.run_bounded_tool([sys.executable, "-c", "import time;print('waiting',flush=True);time.sleep(10)"], log, timeout_seconds=.3, python_worker_traces=True)
+    report = json.loads(log.with_suffix(".receipt.json").read_text())
+    diagnostic = json.loads(log.with_suffix(".diagnostics.json").read_text())
+    assert report["status"] == diagnostic["status"] == "timed_out"
+    assert report["worker_diagnostics_sha256"] == file_hash(report["worker_diagnostics_path"])
+    assert diagnostic["snapshots"] and not diagnostic["trace_hashes"]
+    assert not (tmp_path / "runtime_qualification.json").exists()
+
+
+def test_isolated_python_probe_checks_real_fit_and_keeps_parent_environment(tmp_path, monkeypatch):
+    import os, sys
+    import horsehair.molecular as module
+    expected = {name: version.split("+", 1)[0] for name, version in module.numerical_runtime_proof()["versions"].items()}
+    monkeypatch.setattr(module, "ORTHOFINDER_PYTHON_PACKAGES", expected)
+    unrelated = str(tmp_path / "unrelated-python-module-directory")
+    monkeypatch.setenv("PYTHONPATH", unrelated)
+    proof = module.qualify_orthofinder_python(sys.executable, tmp_path / "valid-environment.log")
+    assert proof["known_serial_fit_passed"]
+    assert proof["versions"] and all(Path(path).is_file() for path in proof["module_hashes"])
+    assert os.environ["PYTHONPATH"] == unrelated
+    monkeypatch.setattr(module, "ORTHOFINDER_PYTHON_PACKAGES", {"numpy": "0.0.0", "scipy": "0.0.0"})
+    with pytest.raises(MolecularError, match="isolated NumPy"):
+        module.qualify_orthofinder_python(sys.executable, tmp_path / "different-environment.log")
 
 
 def test_fastme_numerical_fixture_requires_the_known_unrooted_split(tmp_path):
@@ -245,9 +355,12 @@ def test_qualified_runtime_reuse_requires_every_hash_and_pinned_archive(tmp_path
     monkeypatch.setattr(module, "TOOL_RUNTIME", tools)
     report = {"status": "runtime_qualified", "recipe": module.RUNTIME_QUALIFICATION_RECIPE, "tools": tools,
         "archives": archives, "bin": str(runtime / "bin"),
-        "checks": {"orthofinder_example": {"validated_identical_pairs": 8}, "transdecoder_example": {"peptides": 2}, "fastme_numerical": {"expected_split_recovered": True}},
+        "checks": {"orthofinder_example": {"validated_identical_pairs": 8, "validated_paralog_group_genes": 4, "validated_hog_proteins": 18}, "transdecoder_example": {"peptides": 2}, "fastme_numerical": {"expected_split_recovered": True}},
         "interpreters": {name: {"path": str(path), "sha256": file_hash(path)} for name, path in [("python", python), ("perl", perl)]},
         "runtime_file_hashes": {str(path.resolve()): file_hash(path) for path in (runtime / "bin").iterdir()}}
+    report["numerical_runtime"] = module.numerical_runtime_proof()
+    monkeypatch.setattr(module, "ORTHOFINDER_PYTHON_PACKAGES", {name: value.split("+", 1)[0] for name, value in report["numerical_runtime"]["versions"].items()})
+    report["interpreters"]["orthofinder_python"] = {"path": str(python), "sha256": file_hash(python)}
     report["qualification_hash"] = canonical_hash(report)
     atomic_json(runtime / "runtime_qualification.json", report)
     assert module.validate_tool_runtime(runtime)["qualification_hash"] == report["qualification_hash"]
