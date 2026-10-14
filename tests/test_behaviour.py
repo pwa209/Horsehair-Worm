@@ -85,14 +85,18 @@ def test_native_processed_three_hz_requires_deposited_validator_and_trims_only_b
     source = found["fly_sources"][0]
     assert source["excluded_blank_roi_excel_rows"] == [4]
     frame = read_fly_source(source, tmp_path)
-    assert frame.exposure_status.eq(1).all()  # survival never becomes unexposed
+    # The exposed classifier training subset does not identify treatment for
+    # every raw ROI, including NI rows excluded by the author classifier.
+    assert frame.exposure_status.isna().all()
     np.testing.assert_allclose(np.diff(frame[frame.roi_id.eq(1)].record_time_s), 1 / 3)
     assert frame.coordinate_units.eq("native_ROI_height").all()
     assert frame.y.iloc[0] == pytest.approx(.875)
     audit = audit_exposure_source(source, tmp_path)
-    assert not audit["ready"] and any("offset" in reason for reason in audit["pending"])
+    assert not audit["ready"] and any("<missing>" in reason for reason in audit["pending"])
     assert audit["native_exposure_levels"] == []
     assert audit["native_exposure_missing_count"] == 2
+    assert audit["unresolved_exposure_animals"] == 2
+    assert audit["exposed_animals"] == audit["unexposed_animals"] == 0
     import json
     from horsehair.core import atomic_json
     # Exercise the same strict writer used by native source-audit; successful

@@ -369,8 +369,7 @@ def discover_fly_sources(directory: Path, root: Path, config: dict[str, Any] | N
                     "arena_normalization": "local_physical" if physical else "relative_long_axis",
                     "coordinate_scale": mm_scale if physical else 1,
                     "coordinate_units": "mm" if physical else "native_ROI_height",
-                    "cohort_exposure_status": 1,
-                    "cohort_exposure_provenance": "eLife85410 Methods Real-time summiting classifier: all1306 training flies and the novel test cohort exposed to E.muscae; companion page maps these15 classifier experiments. Blank Rx does not denote an unexposed animal.",
+                    "exposure_membership_pending": "The publication identifies the selected classifier cohort as exposed; author loader excludes NI and incompletely annotated cadavers. It does not identify original exposure assignment for every native ROI. Blank Rx stays unknown until row-bound source treatment metadata is available.",
                     "provenance": "Author companion page https://lab.debivort.org/zombie-summiting/ explicitly maps Fig 4 + Supp to classifier tracking; publication eLife.85410 Methods standard 30-degree food-bottom arenas; convertMargo.m preserves ROI.bounds; autoDenoise.m establishes [x,y,width,height]; scaleHt.m establishes reversed image-y orientation. Per-file native rectangles used, not observed-position extrema."}
             if not declaration:
                 declaration = config.get("documented_classifier_assay", {})
@@ -409,10 +408,15 @@ def audit_exposure_source(source: dict[str, Any], root: Path) -> dict[str, Any]:
     labels = raw.map(lambda value: None if pd.isna(value) else str(value)).astype(object)
     missing_labels = labels.isna() | labels.fillna("").str.strip().eq("")
     codes = labels.map(source.get("exposure_values", {}))
-    if source.get("cohort_exposure_provenance") and source.get("cohort_exposure_status") in (0, 1):
+    legacy_classifier_assignment = str(source.get("cohort_exposure_provenance", "")).startswith(
+        "eLife85410 Methods Real-time summiting classifier:")
+    if (source.get("cohort_exposure_provenance") and source.get("cohort_exposure_status") in (0, 1)
+            and not legacy_classifier_assignment):
         codes.loc[missing_labels] = source["cohort_exposure_status"]
     codes.loc[labels.fillna("").str.lower().isin(["uninfected", "unexposed"])] = 0
     pending = []
+    if legacy_classifier_assignment:
+        pending.append("Legacy full-tray classifier exposure declaration is invalid: selected published cohort does not establish original treatment for every ROI; preserve and regenerate derived exposure annotations before formal fitting")
     unknown = sorted({"<missing>" if missing_labels.loc[index] else labels.loc[index]
                       for index in labels.index[codes.isna()]})
     if unknown or not set(codes.dropna()).issubset({0, 1}):
@@ -426,6 +430,11 @@ def audit_exposure_source(source: dict[str, Any], root: Path) -> dict[str, Any]:
     return {"ready": not pending,
             "native_exposure_levels": sorted(labels.loc[~missing_labels].unique()),
             "native_exposure_missing_count": int(missing_labels.sum()),
+            "exposed_animals": int(codes.eq(1).sum()),
+            "unexposed_animals": int(codes.eq(0).sum()),
+            "unresolved_exposure_animals": int(codes.isna().sum()),
+            "exposed_animals_missing_offset": int((codes.eq(1) & (~np.isfinite(offset) | offset.lt(0))).sum()),
+            "requires_exposure_annotation_regeneration": legacy_classifier_assignment,
             "exposure_label_column": field,
             "pending": pending, "exposure_clock_provenance": source.get("exposure_clock_provenance"),
             "rule": "Exposure is measured from original treatment assignment, never from future cadaver/survival labels"}

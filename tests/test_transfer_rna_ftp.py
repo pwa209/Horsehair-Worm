@@ -1,5 +1,7 @@
 """FTP transport integrity and launch guards; no public data are downloaded."""
 import hashlib
+import errno
+import ftplib
 import importlib.util
 import json
 import os
@@ -82,7 +84,7 @@ class FTP:
 
 def download(item, root, ftp, **kwargs):
     return transport.download_ftp_asset(item, root, HELPERS, ftp_factory=lambda: ftp,
-                                        sleeper=lambda _: None, **kwargs)
+                                        sleeper=lambda _: None, attempts=1, **kwargs)
 
 
 def paths(root, item):
@@ -460,3 +462,198 @@ def test_worker_cannot_claim_pilot_completion_for_ids_outside_frozen_selection(p
         transport.worker(case.context, case.case, 'worker-fixture')
     assert run.ftp_calls == [] and not (case.root / 'state/transfer-rna-pilot.json').exists()
     assert core.read_json(case.root / 'state/transfer-rna.json')['status'] == 'failed'
+
+
+@pytest.mark.parametrize('error', [TimeoutError('socket stalled'), ConnectionResetError('peer reset'),
+    EOFError('control disconnected'), ftplib.error_temp('426 data connection interrupted'),
+    OSError(errno.ENETUNREACH, 'network unreachable')])
+def test_transient_network_failure_reconnects_only_after_rehashing_exact_prefix(tmp_path, error, monkeypatch):
+    body = b'123456789'; item = source(body)
+    first, second = FTP(body), FTP(body)
+    def interrupted(command, callback, blocksize, rest):
+        callback(body[:3]); raise error
+    first.retrbinary = interrupted
+    instances = iter([first, second]); delays = []
+    result = transport.download_ftp_asset(item, tmp_path, HELPERS,
+        ftp_factory=lambda: next(instances), sleeper=delays.append)
+    assert result['resumed_from_bytes'] == 3 and paths(tmp_path, item)[0].read_bytes() == body
+    assert first.closed and second.closed and 10 in delays
+    assert next(c for c in second.calls if c[0] == 'retrieve')[2] == 3
+    target = paths(tmp_path, item)[0]
+    history = core.read_json(target.with_name(target.name + '.ftp-retries.json'))
+    assert [e['status'] for e in history['attempts']] == ['failed', 'verified']
+    assert history['attempts'][0]['integrity_diagnostic']['bytes_written'] == 3
+    assert history['attempts'][0]['retry_scheduled'] is True
+
+
+def test_network_retry_is_finite_and_checkpoint_history_retains_every_failure(tmp_path):
+    item = source(b'12345'); created = []
+    def factory():
+        ftp = FTP(b'12345')
+        def fail(*_args, **_kwargs): raise TimeoutError('fixture persistent timeout')
+        ftp.retrbinary = fail; created.append(ftp); return ftp
+    delays = []
+    with pytest.raises(TimeoutError, match='persistent timeout'):
+        transport.download_ftp_asset(item, tmp_path, HELPERS, ftp_factory=factory, sleeper=delays.append)
+    assert len(created) == 6 and delays == [10, 20, 40, 60, 60] and all(f.closed for f in created)
+    target, partial, sidecar = paths(tmp_path, item)
+    assert not target.exists() and partial.read_bytes() == b'' and core.read_json(sidecar)['prefix_bytes'] == 0
+    history = core.read_json(target.with_name(target.name + '.ftp-retries.json'))
+    assert len(history['attempts']) == 6 and history['attempts'][-1]['retry_scheduled'] is False
+
+
+@pytest.mark.parametrize('error', [ftplib.error_perm('550 unavailable'),
+    OSError(errno.ENOSPC, 'disk full'), OSError(errno.EACCES, 'permission denied'),
+    transport.TransferError('wrong representation'), acquire.AcquisitionError('checksum mismatch')])
+def test_permanent_ftp_integrity_or_local_storage_failure_is_not_retried(tmp_path, error):
+    item = source(b'12345'); attempts = []
+    def factory():
+        ftp = FTP(b'12345'); attempts.append(ftp)
+        def fail(*_args, **_kwargs): raise error
+        ftp.retrbinary = fail; return ftp
+    with pytest.raises(type(error)):
+        transport.download_ftp_asset(item, tmp_path, HELPERS, ftp_factory=factory,
+                                    sleeper=lambda _: pytest.fail('Permanent failures must not back off'))
+    assert len(attempts) == 1
+
+
+def test_corruption_between_transport_attempts_refuses_append_or_a_new_retrieval(tmp_path):
+    body = b'123456789'; item = source(body); first, second = FTP(body), FTP(body)
+    def fail(command, callback, blocksize, rest): callback(body[:3]); raise TimeoutError('socket stalled')
+    first.retrbinary = fail; instances = iter([first, second])
+    def corrupt(_delay): paths(tmp_path, item)[1].write_bytes(b'abc')
+    with pytest.raises(transport.TransferError, match='prefix bytes changed'):
+        transport.download_ftp_asset(item, tmp_path, HELPERS, ftp_factory=lambda: next(instances), sleeper=corrupt)
+    assert not any(c[0] == 'retrieve' for c in second.calls) and paths(tmp_path, item)[1].read_bytes() == b'abc'
+
+
+def test_attempt_deadline_can_retry_but_global_deadline_cannot(tmp_path, monkeypatch):
+    body = b'12345'; item = source(body); clock = [0.0]
+    monkeypatch.setattr(transport.time, 'monotonic', lambda: clock[0])
+    first, second = FTP(body), FTP(body); instances = iter([first, second])
+    def timed(command, callback, blocksize, rest):
+        clock[0] = 2; callback(body)
+    first.retrbinary = timed
+    result = transport.download_ftp_asset(item, tmp_path, HELPERS, ftp_factory=lambda: next(instances),
+                                        sleeper=lambda _: None, attempt_seconds=1, deadline=100)
+    assert result['status'] == 'verified' and paths(tmp_path, item)[0].read_bytes() == body
+    clock[0] = 0; other = source(body, 'SRR124_1.fastq.gz'); first = FTP(body); first.retrbinary = timed
+    with pytest.raises(transport.TransferDeadline):
+        transport.download_ftp_asset(other, tmp_path, HELPERS, ftp_factory=lambda: first,
+                                    sleeper=lambda _: pytest.fail('Global deadline must never retry'), deadline=1)
+
+
+@pytest.fixture
+def resume_case(preserved_case, monkeypatch):
+    case = preserved_case; target, partial, sidecar = paths(case.root, case.item)
+    body = b'12345'; partial.write_bytes(body[:3])
+    remote = {'ftp_size': 5, 'ftp_mdtm': '20261014090000'}
+    core.atomic_json(sidecar, {'asset_hash': core.canonical_hash(case.item), 'protocol': 'ftp',
+        'canonical_url': case.item['url'], 'route_url': transport.ftp_route(case.item)[1], **remote,
+        'status': 'partial', 'prefix_bytes': 3, 'prefix_md5': hashlib.md5(body[:3]).hexdigest(),
+        'prefix_sha256': hashlib.sha256(body[:3]).hexdigest()})
+    previous = case.context.primary.parent/'previous-transfer-release'
+    (previous/'scripts').mkdir(parents=True); (previous/'configs').mkdir()
+    (previous/'scripts/transfer_rna_ftp.py').write_bytes(b'previous immutable transport source')
+    core.atomic_json(previous/'configs/study.json', case.context.config)
+    previous_identity = {'source_identity': core.source_identity(previous),
+                         'config_sha256': case.context.identity['config_sha256']}
+    core.atomic_json(previous/'release.json', previous_identity)
+    case.failed.update(pid=220605, error_type='TimeoutError', error='timed out',
+        source_identity=case.context.identity['source_identity']['sha256'],
+        config_sha256=case.context.identity['config_sha256'],
+        maintenance_source_sha256=previous_identity['source_identity']['sha256'],
+        transfer_script_sha256=core.digest(previous/'scripts/transfer_rna_ftp.py'))
+    core.atomic_json(case.root/'state/transfer-rna.json', case.failed)
+    case.proof.update(worker_pid=220605, failed_transfer=case.failed,
+        failed_transfer_sha256=core.digest(case.root/'state/transfer-rna.json'), ftp_representation=remote,
+        previous_maintenance_release=str(previous))
+    core.atomic_json(case.case/'provider-worker-proof.json', case.proof)
+    # Separate recovery case; the old bad-343 preservation remains immutable.
+    new_case = case.root/'maintenance/rna-later-timeout-fixture'; new_case.mkdir()
+    case.previous_case = case.case; case.case = new_case
+    monkeypatch.setenv('SLURM_JOB_ID', '778')
+    monkeypatch.setattr(transport.socket, 'gethostname', lambda: 'nc10443')
+    def runner(command, **kwargs):
+        if command[0] == 'sacct':
+            job = command[2]
+            state, code = ('COMPLETED', '0:0') if job == '778' else ('CANCELLED', '0:15')
+            return SimpleNamespace(stdout=f'{job}|{state}|{code}|pwa209|def-ptewarie_cpu|2026-10-14T10:00:00|2026-10-14T10:01:00|60|1|nc10443\n')
+        if command[0] == 'ps': return SimpleNamespace(stdout='123 current-launcher.py\n')
+        raise AssertionError(command)
+    case.runner = runner
+    case.worker_proof = case.previous_case/'provider-worker-proof.json'
+    return case
+
+
+def prepare(case):
+    return transport.prepare_resume_case(case.context, case.case, case.worker_proof, '5525704', runner=case.runner)
+
+
+def test_scheduled_resume_proof_binds_exact_bytes_native_job_and_preserves_old_bad_bytes(resume_case, monkeypatch):
+    case = resume_case; old = Path(case.ready['quarantine']['preserved_partial']).read_bytes()
+    ready = prepare(case)
+    assert ready['recovery_mode'] == 'verified_ftp_prefix_resume' and ready['prefix_proof_job_id'] == '778'
+    assert ready['quarantine_performed'] is False and ready['prefix_digests']['sha256'] == hashlib.sha256(b'123').hexdigest()
+    monkeypatch.setattr(transport.socket, 'gethostname', lambda: 'narval1')
+    real_digest = core.digest
+    def small_only(path):
+        assert not str(path).endswith('.fastq.gz.part'), 'Login preflight must only inspect the scheduled byte proof'
+        return real_digest(path)
+    monkeypatch.setattr(core, 'digest', small_only)
+    checked = transport.preflight(case.context, case.case, runner=case.runner)
+    assert checked.asset == case.item
+    result = transport.launch(case.context, case.case, 'resume-fixture', runner=case.runner,
+                              popen=lambda *_a, **_k: SimpleNamespace(pid=999))
+    assert result['prefix_proof_job_id'] == '778' and 'preservation_job_id' not in result
+    assert result['previous_transfer_script_sha256'] == case.failed['transfer_script_sha256']
+    assert Path(case.ready['quarantine']['preserved_partial']).read_bytes() == old
+    assert paths(case.root, case.item)[1].read_bytes() == b'123'
+
+
+@pytest.mark.parametrize('fault', ['host', 'allocation', 'corrupt', 'sidecar', 'guard', 'failed_checksum'])
+def test_resume_preparation_refuses_ambiguous_or_integrity_failures(resume_case, monkeypatch, fault):
+    case = resume_case
+    if fault == 'host': monkeypatch.setattr(transport.socket, 'gethostname', lambda: 'narval1')
+    if fault == 'allocation': monkeypatch.delenv('SLURM_JOB_ID')
+    if fault == 'corrupt': paths(case.root, case.item)[1].write_bytes(b'abc')
+    if fault == 'sidecar':
+        _, _, sidecar = paths(case.root, case.item); record = core.read_json(sidecar)
+        record['protocol'] = 'https'; core.atomic_json(sidecar, record)
+    if fault == 'guard': (case.root/'state/.transfer-rna.lock').write_bytes(b'foreign owner')
+    if fault == 'failed_checksum':
+        case.failed['error_type'] = 'AcquisitionError'; core.atomic_json(case.root/'state/transfer-rna.json', case.failed)
+        case.proof.update(failed_transfer=case.failed, failed_transfer_sha256=core.digest(case.root/'state/transfer-rna.json'))
+        core.atomic_json(case.worker_proof, case.proof)
+    with pytest.raises(transport.TransferError): prepare(case)
+    assert not (case.case/'ready.json').exists() and paths(case.root, case.item)[1].exists()
+
+
+@pytest.mark.parametrize('fault', ['native_failed', 'native_owner', 'wait_active', 'prefix', 'code', 'provider', 'receipt'])
+def test_resume_preflight_requires_unchanged_native_source_and_prefix_proof(resume_case, monkeypatch, fault):
+    case = resume_case; ready = prepare(case); runner = case.runner
+    monkeypatch.setattr(transport.socket, 'gethostname', lambda: 'narval1')
+    if fault in {'native_failed', 'native_owner', 'wait_active'}:
+        def altered(command, **kwargs):
+            result = case.runner(command, **kwargs)
+            if command[0] == 'sacct':
+                text = result.stdout
+                if fault == 'native_failed' and command[2] == '778': text = text.replace('COMPLETED|0:0', 'FAILED|1:0')
+                if fault == 'native_owner': text = text.replace('|pwa209|', '|other|')
+                if fault == 'wait_active' and command[2] == '5525704': text = text.replace('CANCELLED', 'RUNNING')
+                return SimpleNamespace(stdout=text)
+            return result
+        runner = altered
+    if fault == 'prefix': paths(case.root, case.item)[1].write_bytes(b'abc')
+    if fault == 'code': case.context.maintenance_identity['source_identity']['sha256'] = 'changed'
+    if fault == 'provider':
+        case.proof['ftp_representation']['ftp_mdtm'] = '20261014090001'; core.atomic_json(case.worker_proof, case.proof)
+    if fault == 'receipt': core.atomic_json(case.root/'state/transfer-rna.json', {'status': 'running'})
+    with pytest.raises(transport.TransferError): transport.preflight(case.context, case.case, runner=runner)
+    assert not list(case.case.glob('restart-*'))
+
+
+def test_resume_case_and_launch_journals_are_never_replayed(resume_case):
+    case = resume_case; prepare(case)
+    with pytest.raises(transport.TransferError, match='never overwrite'):
+        prepare(case)
