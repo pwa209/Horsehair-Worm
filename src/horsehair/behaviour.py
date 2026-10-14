@@ -542,27 +542,141 @@ def source_summit_metric(speed: np.ndarray, height: np.ndarray, parameters: dict
         "meanPsWalkSpeed": finite_mean(presummit_speed), "meanPsDist": finite_mean(presummit_distance)}
 
 
-def replicate_source_summit(config: dict[str, Any], root: Path) -> dict[str, Any]:
+def _summit_source_text(value: Any, contents: dict[str, Any]) -> str | None:
+    """Decode only the inspected singleton MATLAB string representation.
+
+    The publication's v7.3 files store sourceStruct as an MCOS reference, not
+    a character array. Its uint32 marker must never become a source filename.
+    Unsupported object representations remain unresolved; no MATLAB executes.
+    """
+    if isinstance(value, str):
+        return value
+    if isinstance(value, np.ndarray) and value.size == 1 and value.dtype.kind in "US":
+        return str(value.reshape(-1)[0])
+    try:
+        reference = np.asarray(value)
+    except (TypeError, ValueError):
+        return None
+    if reference.dtype.kind not in "iu" or reference.size != 6:
+        return None
+    marker = reference.reshape(-1).tolist()
+    if marker[:4] != [3707764736, 2, 1, 1] or marker[5] != 1 or marker[4] < 1:
+        return None
+    subsystem = contents.get("#subsystem#", {})
+    if not isinstance(subsystem, dict):
+        return None
+    cells = subsystem.get("MCOS")
+    if not isinstance(cells, (list, tuple)) or marker[4] + 1 >= len(cells):
+        return None
+    payload = np.asarray(cells[marker[4] + 1])
+    if payload.dtype.kind not in "iu" or payload.ndim > 2 or np.any(payload < 0):
+        return None
+    words = payload.reshape(-1)
+    if len(words) < 5 or words[:4].tolist() != [1, 2, 1, 1]:
+        return None
+    units = int(words[4])
+    if units < 1 or units > 65536 or len(words) != 5 + (units + 3) // 4:
+        return None
+    raw = np.asarray(words[5:], dtype="<u8").tobytes()
+    if any(raw[units * 2:]):
+        return None
+    try:
+        decoded = raw[:units * 2].decode("utf-16-le")
+    except UnicodeDecodeError:
+        return None
+    return decoded if "\x00" not in decoded else None
+
+
+def _summit_data_pair(directory: Path, quant_path: Path, original: str | None) -> tuple[Path, str]:
+    """Resolve deposited identity or the unique publication-associated basename.
+
+    The archive has Cs_tallwells_30deg.mat.mat. Sex-specific results require
+    their actual sex-specific source; a mixed-sex matrix supplies no column
+    assignment and is never split by matching observed metrics or sample size.
+    """
+    if original:
+        basename = original.replace("\\", "/").split("/")[-1]
+        paired = [path for path in directory.rglob("*.mat") if path.name == basename] if basename.endswith(".mat") else []
+        if len(paired) > 1:
+            raise ValueError("Ambiguous deposited data structs for the original author source identity")
+        if len(paired) == 1:
+            return paired[0], "Decoded original author sourceStruct basename"
+    alias = quant_path.name.replace("_QUANT", "").replace("QUANT", "")
+    paired = [path for path in directory.rglob("*.mat") if path.name in (alias, alias + ".mat")]
+    if len(paired) != 1:
+        description = f"; original author source {original!r}" if original else "; original sourceStruct undecodable"
+        raise ValueError("No unique deposited data struct for the source quantitative result" + description)
+    return paired[0], "Unique publication-associated quantitative/data basename; double .mat extension accepted"
+
+
+def _summit_pair_audit(expected: dict[str, Any], data: dict[str, Any],
+                       expected_contents: dict[str, Any]) -> dict[str, Any]:
+    speed = np.asarray(nested(data, "Cadavers.speed.toDmatrix"))
+    height = np.asarray(nested(data, "Cadavers.ypos.toDmatrix"))
+    if speed.ndim == 1:
+        speed, height = speed[:, None], height[:, None]
+    if speed.ndim != 2 or height.shape != speed.shape:
+        raise ValueError("Deposited author speed/height dimensions disagree")
+    number = float(np.asarray(expected["numCad"]).squeeze())
+    if not np.isfinite(number) or number < 1 or number != math.floor(number):
+        raise ValueError("Published cadaver count is not a positive integer")
+    reported = int(number)
+    expected_stamp = _summit_source_text(expected.get("sourceStamp"), expected_contents)
+    actual_stamp = f"{data.get('dateStamp')}_{data.get('timeStamp')}" if "dateStamp" in data and "timeStamp" in data else None
+    issues = []
+    if expected_stamp is None or actual_stamp is None:
+        issues.append("Original author quantitative/data source version stamps are missing or undecodable")
+    if reported != speed.shape[1]:
+        issues.append(f"Published source has {reported} cadavers but deposited data have {speed.shape[1]}; no reshape or invented columns can reconcile cohorts")
+    if expected_stamp is not None and actual_stamp is not None and expected_stamp != actual_stamp:
+        issues.append(f"Author sourceStamp {expected_stamp!r} differs from deposited source stamp {actual_stamp!r}; original quantitative source version is required")
+    for name in ("sumInt", "sumHt", "psWalkSpeed", "psDist"):
+        if name not in expected or np.asarray(expected[name]).size != reported:
+            issues.append(f"Published {name} dimensions disagree with its original cadaver count")
+    return {"published_cadavers": reported, "deposited_cadavers": int(speed.shape[1]),
+            "author_quantitative_source_stamp": expected_stamp, "deposited_data_stamp": actual_stamp,
+            "paired_source_ready": not issues, "pending": issues}
+
+
+def replicate_source_summit(config: dict[str, Any], root: Path, *, output_dir: Path | None = None,
+                            source_directory: Path | None = None
+                            ) -> dict[str, Any]:
     from .core import atomic_json, canonical_hash, digest, source_identity
     root = Path(root)
-    directory = root / "data" / "extracted" / "fly"
+    directory = Path(source_directory) if source_directory is not None else root / "data" / "extracted" / "fly"
+    output = Path(output_dir) if output_dir is not None else root / "results" / "behaviour" / "source_replication"
+    if not directory.resolve().is_relative_to(root.resolve()) or not output.resolve().is_relative_to(root.resolve()):
+        raise ValueError("Source replication inputs and outputs must remain in the specified study root")
     files = sorted(directory.rglob("*QUANT*.mat"))
     designated = config.get("behaviour", {}).get("source_replication_files")
     if designated:
+        if not isinstance(designated, list) or any(not isinstance(path, (str, Path)) for path in designated):
+            raise ValueError("Designated replication sources must be regular QUANT paths beneath the source directory")
         files = [root / path for path in designated]
-    rows, pending, inputs = [], [], []
+    for path in files:
+        if (path.is_symlink() or not path.is_file() or path.suffix != ".mat" or "QUANT" not in path.name
+                or not path.resolve().is_relative_to(directory.resolve())):
+            raise ValueError("Designated replication sources must be regular QUANT paths beneath the source directory")
+    # Numerical amendments and earlier failed comparisons are distinct evidence.
+    output.mkdir(parents=True, exist_ok=False)
+    rows, pending, inputs, pair_audits = [], [], [], []
     for quant_path in files:
+        if quant_path.is_file():
+            inputs.append(quant_path)
         try:
-            expected = nested(load_mat(quant_path), "summit")
-            original = str(expected.get("sourceStruct", "")).replace("\\", "/").split("/")[-1]
-            paired = list(directory.rglob(original)) if original else []
-            if len(paired) != 1:
-                alias = quant_path.name.replace("_QUANT", "").replace("QUANT", "")
-                paired = list(directory.rglob(alias))
-            if len(paired) != 1:
-                raise ValueError("No unique deposited data struct for the source quantitative result")
-            data_path = paired[0]
+            quant_contents = load_mat(quant_path)
+            expected = nested(quant_contents, "summit")
+            original = _summit_source_text(expected.get("sourceStruct"), quant_contents)
+            data_path, binding = _summit_data_pair(directory, quant_path, original)
+            inputs.append(data_path)
             data = nested(load_mat(data_path), "data")
+            audit = _summit_pair_audit(expected, data, quant_contents)
+            pair_audits.append({"source_quant": str(quant_path.resolve()), "source_data": str(data_path.resolve()),
+                "original_author_source": original, "source_binding": binding, **audit})
+            if audit["pending"]:
+                pending.append({"source_quant": str(quant_path.resolve()),
+                    "reason": "; ".join(audit["pending"]), "reason_code": "deposited_source_version_or_cohort_mismatch"})
+                continue
             computed = source_summit_metric(nested(data, "Cadavers.speed.toDmatrix"),
                 nested(data, "Cadavers.ypos.toDmatrix"), expected["params"], data["params"])
             for name, value in computed.items():
@@ -579,16 +693,19 @@ def replicate_source_summit(config: dict[str, Any], root: Path) -> dict[str, Any
                 rows.append({"source_quant": str(quant_path.resolve()), "source_data": str(data_path.resolve()),
                     "quantity": name, "maximum_absolute_error": error, "passed": passed,
                     "source_array_values": int(observed.size), "finite_values": int(finite.sum())})
-            inputs.extend([quant_path, data_path])
         except (ValueError, KeyError, OSError, TypeError) as error:
-            pending.append({"source_quant": str(quant_path.resolve()), "reason": str(error)})
-    output = root / "results" / "behaviour" / "source_replication"
-    output.mkdir(parents=True, exist_ok=True)
+            pending.append({"source_quant": str(quant_path.resolve()), "reason": str(error),
+                            "reason_code": "unresolved_deposited_source"})
     table_path = output / "summit_metric_reproduction.tsv"
     pd.DataFrame(rows).to_csv(table_path, sep="\t", index=False)
     status = "pending" if not rows or pending else "complete" if all(row["passed"] for row in rows) else "failed"
+    author_methods = [path for path in directory.rglob("*.m") if path.name in
+                      {"integrateSummitBump.m", "quantifySummitIndividualFiles.m"}]
+    inputs.extend(author_methods)
     inputs = sorted(set(inputs + [table_path]))
     result = {"status": status, "source_replication_passed": status == "complete", "comparisons": len(rows),
+        "source_pair_audits": pair_audits, "quantitative_source_files": len(files),
+        "author_method_paths": [str(path.resolve()) for path in sorted(author_methods)],
         "pending": pending or ([{"reason": "No paired deposited quantitative/data source structs"}] if not rows else []),
         "evidence_class": "published source numerical replication; not prospective biological inference",
         "analysis_scope": "Author death-aligned descriptive summit metric with stored original parameters and source arrays; no values enter prediction features or increase biological replication",
