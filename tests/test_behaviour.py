@@ -755,6 +755,64 @@ def test_streaming_native_ingestion_and_cached_bins(tmp_path):
     assert (tmp_path / "results" / "behaviour" / "streaming_bin_provenance.json").is_file()
 
 
+@pytest.mark.parametrize("dimension", [1, 2])
+@pytest.mark.parametrize("irregular_clock", [False, True])
+@pytest.mark.parametrize("maximum_speed", [None, .15])
+def test_ingestion_bins_exact_reference_equivalence(tmp_path, dimension, irregular_clock, maximum_speed):
+    from horsehair.behaviour import _ingestion_bin_trajectories
+    frame, _ = source_fixture(tmp_path)
+    rng = np.random.default_rng(314)
+    for animal in frame.animal_id.unique():
+        selector = frame.animal_id.eq(animal)
+        count = int(selector.sum())
+        times = .4 + (np.cumsum(rng.uniform(.13, .75, count)) if irregular_clock else np.arange(count) / 3)
+        if irregular_clock:times[count // 2:] += 11.25
+        frame.loc[selector, "record_time_s"] = times
+        frame.loc[selector, "x"] = np.cos(times / 13) if dimension == 2 else np.nan
+        frame.loc[selector, "y"] = np.sin(times / 17)
+        indices = frame.index[selector]
+        # Leading/trailing masks, short and long gaps, a finite untracked point,
+        # and a speed outlier exercise availability clocks and per-bin masks.
+        frame.loc[indices[np.r_[0:2, 17:19, 60:77, count-4:count]], "y"] = np.nan
+        frame.loc[indices[35], "tracking_valid"] = False
+        frame.loc[indices[90], "y"] = 30.
+        if dimension == 2:frame.loc[indices[110:114], "x"] = np.nan
+    frame["recorded_label"] = np.where(frame.roi_id.eq(1), None, "actual source label")
+    frame["recorded_value"] = np.where(frame.roi_id.eq(1), np.nan, 7.25)
+    widths = [1., 2.5, 5., 10., 20.]
+    actual = _ingestion_bin_trajectories(frame, widths, maximum_speed=maximum_speed)
+    for width in widths:
+        expected = bin_trajectories(frame, width, maximum_speed=maximum_speed)
+        pd.testing.assert_frame_equal(actual[width], expected, check_exact=True)
+
+
+def test_ingestion_bins_preserve_empty_clock_and_no_eligible_errors(tmp_path):
+    from horsehair.behaviour import _ingestion_bin_trajectories
+    frame, _ = source_fixture(tmp_path, length=2)
+    with pytest.raises(ValueError, match="No eligible chronological"):
+        bin_trajectories(frame, 10.)
+    with pytest.raises(ValueError, match="No eligible chronological"):
+        _ingestion_bin_trajectories(frame, [5., 10., 20.])
+
+
+def test_streaming_ingest_uses_combined_storage_bins_without_reference_rescans(tmp_path, monkeypatch):
+    import horsehair.behaviour as module
+    _, source = source_fixture(tmp_path)
+    original = module._ingestion_bin_trajectories
+    calls = []
+    def storage_bins(frame, widths, **kwargs):
+        calls.append((frame.animal_id.iloc[0], list(widths)))
+        return original(frame, widths, **kwargs)
+    monkeypatch.setattr(module, "_ingestion_bin_trajectories", storage_bins)
+    monkeypatch.setattr(module, "bin_trajectories", lambda *a, **k: pytest.fail("Storage must not rescan each width"))
+    result = module.run({"behaviour": {"fly_sources": [source]}}, tmp_path, "ingest")
+    assert result["animals_by_experiment"] == {"source1": 2}
+    assert len(calls) == 2 and all(widths == [5., 10., 20.] for _, widths in calls)
+    for width in (5, 10, 20):
+        stored = pd.read_parquet(tmp_path / f"results/behaviour/fly_bins_{width}s.parquet")
+        assert stored.animal_id.nunique() == 2
+
+
 def test_streaming_schema_preserves_missing_first_roi_and_later_text_and_numeric_metadata(tmp_path):
     import json
     import pyarrow as pa

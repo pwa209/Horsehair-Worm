@@ -9,19 +9,22 @@ from __future__ import annotations
 import ast
 import copy
 import json
+import math
 import os
 import re
 import shlex
 import subprocess
 from types import SimpleNamespace
 from pathlib import Path
+from contextlib import nullcontext
 
 from .core import atomic_json, canonical_hash, digest, exclusive_file_lock, read_json, source_identity
 from .pipeline import TERMINAL_FAILURE, _array_indices, _native_states, _task_status, _task_terminal
 
 INITIAL_TARGETS = {"source-audit", "source-replication", *[f"pipeline-controller-{i}" for i in range(4)]}
-ADDED_FILES = {"src/horsehair/repair.py", "scripts/amend_pipeline.py", "tests/test_repair.py"}
-INGEST_HELPERS = {"_trajectory_parquet_schemas", "_trajectory_arrow_table"}
+ADDED_FILES = {"src/horsehair/repair.py", "scripts/amend_pipeline.py", "tests/test_repair.py",
+               "scripts/transfer_rna_ftp.py", "tests/test_transfer_rna_ftp.py"}
+INGEST_HELPERS = {"_trajectory_parquet_schemas", "_trajectory_arrow_table", "_ingestion_bin_trajectories"}
 
 
 def _inside(path, directory):
@@ -79,7 +82,38 @@ def _normalized_script(text):
         or line.startswith("#SBATCH --error=")))
 
 
-def _check_script(task, original, execution, root):
+def _runtime_adjustments(descriptor, original, candidates, targets):
+    adjustments = descriptor.get("runtime_adjustments", {})
+    if not isinstance(adjustments, dict) or set(adjustments) - {"source-audit"} or not set(adjustments) <= targets:
+        raise ValueError("Runtime amendment may declare only a replaced source-audit")
+    for name, change in adjustments.items():
+        if descriptor["phase"] != "managed-initial" or not isinstance(change, dict):
+            raise ValueError("Runtime amendment is limited to the initial source audit")
+        if set(change) != {"old_hours", "new_hours", "failed_job_id", "justification"}:
+            raise ValueError("Runtime amendment requires explicit bounded hours, failed job and justification")
+        old, new = change["old_hours"], change["new_hours"]
+        before, after = original[name]["resources"], candidates[name]["resources"]
+        if (type(old) is not int or type(new) is not int or old != 8 or not old < new <= 168
+                or not isinstance(change["justification"], str) or not change["justification"].strip()
+                or not re.fullmatch(r"[0-9]+", str(change["failed_job_id"]))
+                or before.get("hours") != old or after.get("hours") != new
+                or before.get("gpu") is not False or before.get("array")
+                or {key:value for key,value in before.items() if key != "hours"}
+                   != {key:value for key,value in after.items() if key != "hours"}):
+            raise ValueError("Audit runtime amendment must preserve CPU, memory, GPU and array contracts within bounded hours")
+    return adjustments
+
+
+def _runtime_script_projection(text, hours):
+    lines = text.splitlines()
+    time_lines = [line for line in lines if line.startswith("#SBATCH --time")]
+    lease_lines = [line for line in lines if line.startswith("export HHW_MAX_HOURS")]
+    if time_lines != [f"#SBATCH --time={hours}:00:00"] or lease_lines != [f"export HHW_MAX_HOURS={hours}"]:
+        raise ValueError("Audit script Slurm and lease time bounds must exactly match its declared hours")
+    return "\n".join(line for line in lines if line not in {*time_lines, *lease_lines})
+
+
+def _check_script(task, original, execution, root, runtime=None):
     path = _inside(task["script"], root / "plans")
     text = path.read_text(encoding="utf8")
     if canonical_hash(text) != task.get("script_sha256"):
@@ -95,6 +129,9 @@ def _check_script(task, original, execution, root):
     if (len(exports) != 1 or not exports[0].endswith(suffix)
             or Path(exports[0][:-len(suffix)]).resolve() != execution / "src"):
         raise ValueError("Replacement Python import path differs from its execution release")
+    if runtime:
+        text = _runtime_script_projection(text, runtime["new_hours"])
+        old_text = _runtime_script_projection(old_text, runtime["old_hours"])
     if _normalized_script(text) != _normalized_script(old_text):
         raise ValueError("Replacement script changes the original command/environment contract")
 
@@ -221,6 +258,108 @@ def _unused_terminal_arrays(root, checks, observed):
     return unused
 
 
+def _runtime_native_proofs(adjustments, original, ledger, observed):
+    proofs = {}
+    for name, change in adjustments.items():
+        ident = str(ledger["tasks"][name]["job_id"])
+        facts = observed.get(ident, {})
+        tres = dict(pair.split("=", 1) for pair in facts.get("alloc_tres", "").split(",") if "=" in pair)
+        if (str(change["failed_job_id"]) != ident or facts.get("state") != "TIMEOUT"
+                or type(facts.get("elapsed_seconds")) is not int
+                or facts["elapsed_seconds"] < change["old_hours"] * 3600
+                or facts.get("cpus") != original[name]["resources"]["cpus"]
+                or tres.get("cpu") != str(facts.get("cpus"))
+                or any(key.startswith("gres/gpu") and value != "0" for key,value in tres.items())
+                or not re.fullmatch(r"[0-9]+", str(facts.get("job_id_raw", "")))
+                or facts.get("node_list") in {None, "", "None assigned"}
+                or facts.get("start") in {None, "", "None", "Unknown"}
+                or facts.get("end") in {None, "", "None", "Unknown"}
+                or facts.get("unallocated_metadata")):
+            raise ValueError("Audit runtime increase requires matching native allocated eight-hour TIMEOUT evidence")
+        proofs[name] = {"job_id":ident, "native_record":copy.deepcopy(facts),
+                        "native_record_sha256":canonical_hash(facts)}
+    return proofs
+
+
+def _runtime_readmission(root, rid, phase, plan, ledger, config, identity, observed, accounted):
+    """Called under the budget guard; reserve all registered unfinished bounds.
+
+    Missing final native proofs are conservatively treated as unfinished. Active
+    leases outside the registered DAG are also reserved; registered leases are
+    already represented by their full task bounds and are not added twice.
+    """
+    from .pipeline import NODES, prospective_registered_budget
+    budget_path = root / "state/resource-budget.json"
+    if not budget_path.is_file():
+        raise ValueError("Audit runtime re-admission requires the durable resource budget")
+    budget = read_json(budget_path)
+    plans, ledgers, hashes, members = {}, {}, {}, set()
+    # Only canonical controller phases are registered workload. Archived and
+    # subordinate replacement ledgers must not be counted as additional jobs.
+    for registered_phase in ["managed-initial", *[name for name, _, _ in NODES]]:
+        path = root / "state" / (rid + "-" + registered_phase + "-submission.json")
+        if not path.is_file():
+            continue
+        plan_path = root / "plans" / (rid + "-" + registered_phase) / "plan.json"
+        current_plan = plan if registered_phase == phase else read_json(plan_path)
+        current_ledger = ledger if registered_phase == phase else read_json(path)
+        if (current_plan.get("release_identity") != identity
+                or current_plan.get("phase") != registered_phase or Path(current_plan["root"]).resolve() != root
+                or current_plan.get("config_sha256") != canonical_hash(config)
+                or current_ledger.get("plan_sha256") != canonical_hash(current_plan)
+                or current_ledger.get("source_sha256") != identity["sha256"]
+                or current_ledger.get("config_sha256") != canonical_hash(config)):
+            raise ValueError("Audit budget re-admission found an unbound registered phase")
+        plans[registered_phase], ledgers[registered_phase] = current_plan, current_ledger
+        hashes[registered_phase] = {"plan_sha256":canonical_hash(current_plan), "ledger_sha256":canonical_hash(current_ledger)}
+        for task in current_plan["tasks"]:
+            resources = task["resources"]
+            if (type(resources.get("hours")) is not int or not 1 <= resources["hours"] <= 168
+                    or type(resources.get("cpus")) is not int or resources["cpus"] < 1):
+                raise ValueError("Registered workload has an unbounded allocation")
+            record = current_ledger.get("tasks", {}).get(task["name"], {})
+            ident = str(record.get("job_id", ""))
+            members.add(ident)
+            if resources.get("array"):
+                members.update(ident+"_"+str(index) for index in _array_indices(resources["array"]))
+    if phase not in plans:
+        raise ValueError("Amended phase is absent from the canonical registered workload")
+    states = dict(observed)
+    for ident, facts in budget.get("native_jobs", {}).items():
+        if facts.get("basis") == "sacct final allocated wall time" and facts.get("state") in TERMINAL_FAILURE | {"COMPLETED"}:
+            if ident in states and (states[ident]["state"], states[ident]["exit_code"]) != (facts["state"], facts["exit_code"]):
+                raise ValueError("Audit re-admission found conflicting final native state evidence")
+            states.setdefault(ident, {"state":facts["state"], "exit_code":facts["exit_code"]})
+    spent = {key:float(budget.get(key, accounted.get(key, float("nan"))))
+             for key in ("spent_cpu_core_hours", "spent_gpu_hours")}
+    if any(not math.isfinite(value) or value < 0 for value in spent.values()):
+        raise ValueError("Audit re-admission requires finite nonnegative native spent costs")
+    totals = prospective_registered_budget(plans, ledgers, states, spent)
+    outside = {}
+    for ident, lease in budget.get("leases", {}).items():
+        logical = budget.get("native_raw_aliases", {}).get(ident, ident)
+        if lease.get("state") != "running" or logical in members:
+            continue
+        if logical in budget.get("native_jobs", {}):
+            raise ValueError("Active external lease contradicts a final native allocation")
+        hours, cpus, gpus = lease.get("max_hours"), lease.get("cpus"), lease.get("gpus")
+        if (not isinstance(hours, (int, float)) or isinstance(hours, bool) or not math.isfinite(hours) or not 0 < hours <= 168
+                or type(cpus) is not int or cpus < 1 or type(gpus) is not int or gpus not in {0,1}):
+            raise ValueError("Active external lease is not a bounded resource reservation")
+        outside[ident] = copy.deepcopy(lease)
+        totals["cpu_core_hours"] += cpus * hours
+        totals["gpu_hours"] += gpus * hours
+    for total, cap in (("cpu_core_hours", "cpu_core_hours_cap"), ("gpu_hours", "gpu_hours_cap")):
+        ceiling = config["resources"].get(cap)
+        if (not isinstance(ceiling, (int, float)) or isinstance(ceiling, bool) or not math.isfinite(ceiling) or ceiling <= 0
+                or totals[total] > ceiling):
+            raise ValueError("Raised audit runtime exceeds the registered workload resource budget")
+    return {"status":"admitted", "config_sha256":canonical_hash(config), "source_sha256":identity["sha256"],
+            "resource_budget_sha256":canonical_hash(budget), "registered_workload_hashes":hashes,
+            "prospective_registered_budget":totals, "external_active_leases":outside,
+            "rule":"Native spent plus full unfinished registered allocation bounds and nonduplicated external active leases; checked under resource-budget guard"}
+
+
 def register_amendment(descriptor_path, *, native=None, accountant=None):
     """Register already-confirmed replacement jobs, with recoverable pair writes.
 
@@ -291,6 +430,7 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
             raise ValueError("Replacement tasks do not match original named nodes")
         if phase == "managed-initial" and not targets <= INITIAL_TARGETS:
             raise ValueError("Initial repair may replace only failed preprocessing and controller nodes")
+        runtime_adjustments = _runtime_adjustments(descriptor, original, candidates, targets)
         for name in set(candidates) - targets:
             if candidates[name] != original.get(name) or submitted.get("tasks", {}).get(name) != old_ledger.get("tasks", {}).get(name):
                 raise ValueError("An unaffected planned task or job was altered")
@@ -309,14 +449,14 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
         releases = {}
         for name in targets:
             candidate = candidates[name]
-            if candidate.get("resources") != original[name].get("resources"):
+            if candidate.get("resources") != original[name].get("resources") and name not in runtime_adjustments:
                 raise ValueError("Replacement changed a node's frozen resource/array contract")
             execution, execution_record, execution_identity = _release(descriptor["execution_releases"][name], config)
             if execution_identity != identity:
                 if name != "source-audit":
                     raise ValueError("Only source-audit may use the preprocessing repair release")
                 _preprocessing_release(primary, execution, identity, execution_identity)
-            _check_script(candidate, original[name], execution, root)
+            _check_script(candidate, original[name], execution, root, runtime_adjustments.get(name))
             record = submitted.get("tasks", {}).get(name, {})
             if (record.get("state") != "submitted" or not re.fullmatch(r"[0-9]+", str(record.get("job_id", "")))
                     or record.get("script_sha256") != candidate["script_sha256"]):
@@ -356,6 +496,10 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
             if name.startswith("pipeline-controller-"):
                 if "#SBATCH --hold" not in Path(candidate["script"]).read_text(encoding="utf8").splitlines() or observed[record["job_id"]]["state"] != "PENDING":
                     raise ValueError("Replacement controllers must remain explicitly held until registration completes")
+            if name in runtime_adjustments:
+                if "#SBATCH --hold" not in Path(candidate["script"]).read_text(encoding="utf8").splitlines() or observed[record["job_id"]]["state"] != "PENDING":
+                    raise ValueError("Runtime-adjusted source audit must remain explicitly held and pending until budget re-admission and registration complete")
+        runtime_native_proofs = _runtime_native_proofs(runtime_adjustments, original, old_ledger, observed)
         unused_arrays = _unused_terminal_arrays(root,checks,observed)
         amended_plan, amended_ledger = copy.deepcopy(old_plan), copy.deepcopy(old_ledger)
         preserved_dependencies = {}
@@ -387,6 +531,8 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
             "replaced_tasks": sorted(targets), "execution_releases": releases, "archive": str(archive),
             "preserved_original_completed_dependencies": preserved_dependencies,
             "dependency_preservation_rule": "Original positive completed preconditions revalidated at registration; actual replacement acknowledgement/command/dependency-resolution records remain unchanged"}
+        if runtime_adjustments:
+            amendment.update(runtime_adjustments=copy.deepcopy(runtime_adjustments), runtime_native_proofs=runtime_native_proofs)
         amended_plan.setdefault("dag_amendments", []).append(amendment)
         amended_ledger.setdefault("dag_amendments", []).append(amendment)
         amended_ledger["plan_sha256"] = canonical_hash(amended_plan)
@@ -416,16 +562,21 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
         accounted = accountant(root, accounting_ids)
         if accounted.get("pending_native_records"):
             raise ValueError("Old allocation cost proof remains pending; no registration committed")
-        journal.update(status="committing", old_allocation_accounting=accounted)
-        atomic_json(journal_path, journal)
-        atomic_json(plan_path, amended_plan)
-        atomic_json(ledger_path, amended_ledger)
-        phase_journal = base / (phase + "-plan-journal.json")
-        if phase_journal.exists():
-            previous = read_json(phase_journal)
-            if not (archive / "original-phase-journal.json").exists():_archive_bytes(archive / "original-phase-journal.json", phase_journal.read_bytes())
-            atomic_json(phase_journal, {**previous, "state":"submitted", "source_sha256":identity["sha256"],
-                "plan_sha256":canonical_hash(amended_plan), "ledger":str(ledger_path), "dag_amendment":str(journal_path)})
-        journal["status"] = "complete"
-        atomic_json(journal_path, journal)
+        budget_guard = exclusive_file_lock(root / "state/resource-budget.mutex") if runtime_adjustments else nullcontext()
+        with budget_guard:
+            if runtime_adjustments:
+                journal["runtime_readmission"] = _runtime_readmission(root, rid, phase, amended_plan, amended_ledger,
+                    config, identity, observed, accounted)
+            journal.update(status="committing", old_allocation_accounting=accounted)
+            atomic_json(journal_path, journal)
+            atomic_json(plan_path, amended_plan)
+            atomic_json(ledger_path, amended_ledger)
+            phase_journal = base / (phase + "-plan-journal.json")
+            if phase_journal.exists():
+                previous = read_json(phase_journal)
+                if not (archive / "original-phase-journal.json").exists():_archive_bytes(archive / "original-phase-journal.json", phase_journal.read_bytes())
+                atomic_json(phase_journal, {**previous, "state":"submitted", "source_sha256":identity["sha256"],
+                    "plan_sha256":canonical_hash(amended_plan), "ledger":str(ledger_path), "dag_amendment":str(journal_path)})
+            journal["status"] = "complete"
+            atomic_json(journal_path, journal)
         return journal

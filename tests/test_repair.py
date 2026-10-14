@@ -10,7 +10,8 @@ from horsehair.core import atomic_json, canonical_hash, read_json, source_identi
 
 def fixture(tmp_path, phase="managed-initial", replace_controllers=False):
     root, primary, preprocessing = tmp_path / "study", tmp_path / "v7", tmp_path / "v8"
-    config = {"paths":{"root":str(root)}, "resources":{"cpu_ceiling":16}}
+    config = {"paths":{"root":str(root)}, "resources":{"cpu_ceiling":16,
+        "cpu_core_hours_cap":2000, "gpu_hours_cap":400}}
     code = "def run(stage):\n    if stage in ('ingest', 'validate'):\n        return 0\n    return 1\n"
     for directory, changed in [(primary, False), (preprocessing, True)]:
         atomic_json(directory / "configs/study.json", config)
@@ -24,6 +25,7 @@ def fixture(tmp_path, phase="managed-initial", replace_controllers=False):
         script = script_directory / (name + ".sbatch")
         script.parent.mkdir(parents=True, exist_ok=True)
         text = ("#!/bin/bash\n" + ("#SBATCH --hold\n" if hold else "")
+            + "#SBATCH --time=8:00:00\nexport HHW_MAX_HOURS=8\n"
             + "cd " + shlex.quote(directory.as_posix()) + "\n"
             + "export PYTHONPATH=" + shlex.quote((directory / "src").as_posix()) + ':"${PYTHONPATH:-}"\n'
             + "python -m horsehair.cli " + name + "\n")
@@ -302,3 +304,169 @@ def test_template_positive_step_memory_is_rejected_but_zero_step_measurement_is_
         with pytest.raises(ValueError,match="positive native step memory"):parse_rows([*rows,step])
     else:
         assert parse_rows([*rows,step])["5469496_0"]["unallocated_metadata"]
+
+
+def runtime_fixture(tmp_path, hours=24):
+    f = fixture(tmp_path)
+    audit = next(task for task in f["replacement"]["tasks"] if task["name"] == "source-audit")
+    audit["resources"]["hours"] = hours
+    path = Path(audit["script"])
+    text = path.read_text().replace("#!/bin/bash\n", "#!/bin/bash\n#SBATCH --hold\n").replace(
+        "#SBATCH --time=8:00:00", f"#SBATCH --time={hours}:00:00").replace(
+        "export HHW_MAX_HOURS=8", f"export HHW_MAX_HOURS={hours}")
+    path.write_text(text)
+    audit["script_sha256"] = canonical_hash(text)
+    f["submitted"]["tasks"]["source-audit"]["script_sha256"] = audit["script_sha256"]
+    f["descriptor"]["runtime_adjustments"] = {"source-audit":{"old_hours":8,"new_hours":hours,
+        "failed_job_id":"10", "justification":"Measured full eight-hour CPU-bound audit timed out; increase the bounded allocation only"}}
+    f["native"]["10"] = {"state":"TIMEOUT", "exit_code":"0:9", "elapsed_seconds":28801,"cpus":8,
+        "alloc_tres":"billing=8,cpu=8,mem=64G,node=1", "job_id_raw":"10", "node_list":"nc1000",
+        "start":"2026-10-13T12:00:00", "end":"2026-10-13T20:00:01", "unallocated_metadata":False}
+    atomic_json(f["root"] / "state/resource-budget.json", {"spent_cpu_core_hours":74., "spent_gpu_hours":0.,
+        "native_jobs":{"10":{**f["native"]["10"], "basis":"sacct final allocated wall time"}}, "leases":{}})
+    refresh_runtime_fixture(f)
+    return f
+
+
+def refresh_runtime_fixture(f):
+    f["submitted"]["plan_sha256"] = canonical_hash(f["replacement"])
+    atomic_json(f["replacement_path"], f["replacement"])
+    atomic_json(f["replacement_ledger"], f["submitted"])
+    atomic_json(f["descriptor_path"], f["descriptor"])
+
+
+def test_audit_runtime_amendment_is_narrow_native_bound_and_readmitted(tmp_path):
+    f = runtime_fixture(tmp_path)
+    original = copy.deepcopy(f["old"])
+    result = register(f)
+    plan = read_json(f["plan_path"])
+    audit = next(task for task in plan["tasks"] if task["name"] == "source-audit")
+    assert audit["resources"] == {"cpus":8,"memory":"64G","hours":24,"gpu":False}
+    assert plan["config_sha256"] == original["config_sha256"] and plan["release_identity"] == original["release_identity"]
+    admission = result["runtime_readmission"]
+    assert admission["status"] == "admitted"
+    assert admission["prospective_registered_budget"]["cpu_core_hours"] == 74 + 8 * 24 + 8 * 8
+    assert result["runtime_native_proofs"]["source-audit"]["native_record"]["state"] == "TIMEOUT"
+    assert result["runtime_adjustments"] == f["descriptor"]["runtime_adjustments"]
+    assert register(f) == result
+
+
+@pytest.mark.parametrize("fault", ["other-task","cpu","memory","gpu","array","unbounded","nan","float","bool",
+    "old-hours","missing-declaration","not-timeout","short-native","wrong-native-cpu","wrong-job",
+    "native-gpu","time-mismatch","lease-mismatch","duplicate-time","extra-command"])
+def test_runtime_extension_rejects_contract_changes_before_canonical_mutation(tmp_path, fault):
+    f = runtime_fixture(tmp_path)
+    audit = next(task for task in f["replacement"]["tasks"] if task["name"] == "source-audit")
+    change = f["descriptor"]["runtime_adjustments"]["source-audit"]
+    if fault == "other-task":f["descriptor"]["runtime_adjustments"] = {"source-replication":change}
+    elif fault in {"cpu","memory","gpu","array"}:
+        key, value = {"cpu":("cpus",9),"memory":("memory","128G"),"gpu":("gpu",True),"array":("array","0-1%1")}[fault]
+        audit["resources"][key] = value
+    elif fault in {"unbounded","nan","float","bool"}:
+        change["new_hours"] = {"unbounded":169,"nan":float("nan"),"float":24.0,"bool":True}[fault]
+        if fault == "nan":
+            # atomic_json itself forbids NaN; test the explicit runtime guard.
+            with pytest.raises(ValueError):repair._runtime_adjustments(f["descriptor"],
+                {task["name"]:task for task in f["old"]["tasks"]},
+                {task["name"]:task for task in f["replacement"]["tasks"]},f["targets"])
+            return
+    elif fault == "old-hours":change["old_hours"] = 7
+    elif fault == "missing-declaration":f["descriptor"].pop("runtime_adjustments")
+    elif fault == "not-timeout":f["native"]["10"]["state"] = "FAILED"
+    elif fault == "short-native":f["native"]["10"]["elapsed_seconds"] = 28799
+    elif fault == "wrong-native-cpu":f["native"]["10"]["cpus"] = 4
+    elif fault == "wrong-job":change["failed_job_id"] = "20"
+    elif fault == "native-gpu":f["native"]["10"]["alloc_tres"] += ",gres/gpu=1"
+    else:
+        path = Path(audit["script"]); text = path.read_text()
+        if fault == "time-mismatch":text = text.replace("--time=24:00:00", "--time=48:00:00")
+        elif fault == "lease-mismatch":text = text.replace("HHW_MAX_HOURS=24", "HHW_MAX_HOURS=8")
+        elif fault == "duplicate-time":text += "#SBATCH --time=24:00:00\n"
+        else:text += "python -m horsehair.cli changed-model\n"
+        path.write_text(text);audit["script_sha256"] = canonical_hash(text)
+        f["submitted"]["tasks"]["source-audit"]["script_sha256"] = audit["script_sha256"]
+    refresh_runtime_fixture(f)
+    ledger = f["root"] / "state/v7-managed-initial-submission.json"
+    before = f["plan_path"].read_bytes(), ledger.read_bytes()
+    with pytest.raises(ValueError):register(f)
+    assert before == (f["plan_path"].read_bytes(), ledger.read_bytes()) and not f["calls"]
+
+
+@pytest.mark.parametrize("fault", ["running","completed","failed","missing-hold"])
+def test_runtime_adjusted_audit_cannot_compute_before_prospective_readmission(tmp_path, fault):
+    f = runtime_fixture(tmp_path)
+    audit = next(task for task in f["replacement"]["tasks"] if task["name"] == "source-audit")
+    if fault == "missing-hold":
+        path = Path(audit["script"])
+        text = path.read_text().replace("#SBATCH --hold\n", "")
+        path.write_text(text)
+        audit["script_sha256"] = canonical_hash(text)
+        f["submitted"]["tasks"]["source-audit"]["script_sha256"] = audit["script_sha256"]
+    else:
+        ident = f["submitted"]["tasks"]["source-audit"]["job_id"]
+        f["native"][ident]["state"] = fault.upper()
+    refresh_runtime_fixture(f)
+    ledger = f["root"] / "state/v7-managed-initial-submission.json"
+    before = f["plan_path"].read_bytes(), ledger.read_bytes()
+    with pytest.raises(ValueError, match="explicitly held and pending"):register(f)
+    assert before == (f["plan_path"].read_bytes(), ledger.read_bytes()) and not f["calls"]
+
+
+def register_extra_workload(f, array="0-59%1"):
+    plan = {**f["old"], "phase":"agents-development", "tasks":[{"name":"development",
+        "resources":{"cpus":2,"memory":"16G","hours":4,"gpu":True,"array":array},"depends":[]}]}
+    ledger = {"plan_sha256":canonical_hash(plan),"source_sha256":f["identity"]["sha256"],
+        "config_sha256":canonical_hash(f["config"]),"tasks":{"development":{"state":"submitted","job_id":"400"}}}
+    atomic_json(f["root"] / "plans/v7-agents-development/plan.json", plan)
+    atomic_json(f["root"] / "state/v7-agents-development-submission.json", ledger)
+
+
+def test_runtime_readmission_keeps_all_unfinished_array_members_and_external_leases(tmp_path):
+    f = runtime_fixture(tmp_path)
+    register_extra_workload(f)
+    path = f["root"] / "state/resource-budget.json"
+    budget = read_json(path)
+    budget["leases"] = {"400_0":{"state":"running","cpus":2,"gpus":1,"max_hours":4},
+        "900":{"state":"running","cpus":2,"gpus":0,"max_hours":4}}
+    atomic_json(path, budget)
+    receipt = register(f)["runtime_readmission"]
+    assert set(receipt["registered_workload_hashes"]) == {"managed-initial","agents-development"}
+    assert receipt["prospective_registered_budget"]["gpu_hours"] == 240
+    assert receipt["prospective_registered_budget"]["cpu_core_hours"] == 74 + 192 + 64 + 480 + 8
+    assert set(receipt["external_active_leases"]) == {"900"}
+
+
+@pytest.mark.parametrize("fault", ["gpu-cap","external-cpu-cap","absent-budget","unbound-phase"])
+def test_runtime_readmission_refuses_overbudget_or_unverified_scope_without_pair_mutation(tmp_path, fault):
+    f = runtime_fixture(tmp_path)
+    path = f["root"] / "state/resource-budget.json"
+    if fault == "gpu-cap":register_extra_workload(f,"0-100%1")
+    elif fault == "external-cpu-cap":
+        budget = read_json(path)
+        budget["leases"] = {"900":{"state":"running","cpus":64,"gpus":0,"max_hours":48}}
+        atomic_json(path,budget)
+    elif fault == "absent-budget":path.unlink()
+    else:
+        register_extra_workload(f)
+        extra = f["root"] / "state/v7-agents-development-submission.json"
+        value = read_json(extra);value["plan_sha256"] = "changed";atomic_json(extra,value)
+    ledger = f["root"] / "state/v7-managed-initial-submission.json"
+    before = f["plan_path"].read_bytes(), ledger.read_bytes()
+    with pytest.raises(ValueError):register(f)
+    assert before == (f["plan_path"].read_bytes(), ledger.read_bytes())
+
+
+@pytest.mark.parametrize("shared_change", [False, True])
+def test_preprocessing_projection_allows_only_named_storage_helper_without_numeric_changes(tmp_path, shared_change):
+    f = fixture(tmp_path)
+    path = f["preprocessing"] / "src/horsehair/behaviour.py"
+    text = path.read_text() + "\ndef _ingestion_bin_trajectories(frame, widths):\n    return frame\n"
+    if shared_change:text += "\ndef bin_trajectories(frame):\n    return frame\n"
+    path.write_text(text)
+    record = read_json(f["preprocessing"] / "release.json")
+    record["source_identity"] = source_identity(f["preprocessing"])
+    atomic_json(f["preprocessing"] / "release.json", record)
+    if shared_change:
+        with pytest.raises(ValueError, match="outside chronological ingestion"):register(f)
+    else:
+        assert register(f)["status"] == "complete"

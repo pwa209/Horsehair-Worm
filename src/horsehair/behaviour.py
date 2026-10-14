@@ -824,6 +824,85 @@ def bin_trajectories(frame: pd.DataFrame, bin_seconds: float = 10,
     return pd.DataFrame(outputs)
 
 
+def _ingestion_bin_trajectories(frame: pd.DataFrame, bin_values: list[float],
+                               maximum_gap_seconds: float = 2,
+                               missing_threshold: float = .2,
+                               maximum_speed: float | None = None) -> dict[float, pd.DataFrame]:
+    """Storage-only acceleration of the unchanged ``bin_trajectories`` contract.
+
+    Compute the same available one-second positions once per animal. Each
+    right-closed bin occupies a contiguous slice; avoid scanning the entire
+    recording for every bin. Keep the reference's per-bin reduction order,
+    interpolation availability clock, partial-bin masking and metadata values.
+    Numerical/model consumers continue to use the unchanged reference method.
+    """
+    frame, _ = validate_observations(frame)
+    outputs: dict[float, list[dict[str, Any]]] = {value: [] for value in bin_values}
+    for _, group in frame.groupby(["experiment_id", "animal_id"], sort=False):
+        times = group.record_time_s.to_numpy(float)
+        dimension = 2 if group.x.notna().any() else 1
+        coordinates = ["x", "y"] if dimension == 2 else ["y"]
+        positions = group[coordinates].to_numpy(float, copy=True)
+        valid = group.tracking_valid.to_numpy(bool) & np.isfinite(positions).all(1)
+        positions[~valid] = np.nan
+        available = times.copy()
+        good = np.flatnonzero(valid & np.isfinite(positions).all(1))
+        # Only actual missing runs enter the same scalar interpolation arithmetic
+        # as the reference; adjacent observed frames need no Python iteration.
+        lefts, rights = good[:-1], good[1:]
+        candidates = (rights != lefts + 1) & ~(times[rights] - times[lefts] > maximum_gap_seconds)
+        for left, right in zip(lefts[candidates], rights[candidates]):
+            displacement = np.linalg.norm(positions[right] - positions[left])
+            if maximum_speed is not None and displacement / (times[right] - times[left]) > maximum_speed:
+                continue
+            fraction = (times[left + 1:right] - times[left]) / (times[right] - times[left])
+            positions[left + 1:right] = positions[left] + fraction[:, None] * (positions[right] - positions[left])
+            available[left + 1:right] = times[right]
+        seconds = np.arange(math.ceil(times[0]), math.floor(times[-1]) + 1, dtype=float)
+        second_position = np.full((len(seconds), dimension), np.nan)
+        indices = np.searchsorted(times, seconds, side="right") - 1
+        destinations = np.flatnonzero(indices >= 0)
+        source_indices = indices[destinations]
+        usable = ((available[source_indices] <= seconds[destinations])
+                  & (seconds[destinations] - times[source_indices] <= maximum_gap_seconds))
+        second_position[destinations[usable]] = positions[source_indices[usable]]
+        if len(seconds) < 2:
+            continue
+        displacement = np.vstack([np.full((1, dimension), np.nan), np.diff(second_position, axis=0)])
+        if maximum_speed is not None:
+            displacement[np.linalg.norm(displacement, axis=1) > maximum_speed] = np.nan
+        context = group.iloc[0].to_dict()
+        for value in outputs:
+            bins = np.ceil(seconds / value).astype(np.int64)
+            labels = np.arange(int(bins.min()), int(bins.max()) + 1, dtype=np.int64)
+            starts = np.searchsorted(bins, labels, side="left")
+            ends = np.searchsorted(bins, labels, side="right")
+            endpoint_previous = None
+            for label, start, end in zip(labels, starts, ends):
+                selection = displacement[start:end]
+                count = int(end - start)
+                endpoint_time = int(label) * value
+                complete = count >= int(value) and seconds[end - 1] >= endpoint_time
+                observed_fraction = np.isfinite(selection).all(1).mean() if count else 0.
+                endpoint = second_position[end - 1] if count else np.full(dimension, np.nan)
+                observed = (complete and observed_fraction >= 1 - missing_threshold
+                            and np.isfinite(endpoint).all() and endpoint_previous is not None
+                            and np.isfinite(endpoint_previous).all())
+                delta = endpoint - endpoint_previous if observed else np.full(dimension, np.nan)
+                meta = context.copy()
+                meta.update(record_time_s=endpoint_time, state_bin_seconds=value,
+                            missing_fraction=1 - observed_fraction, observed=bool(observed),
+                            dx=delta[0] if dimension == 2 else np.nan, dy=delta[-1],
+                            x=endpoint[0] if dimension == 2 else np.nan, y=endpoint[-1],
+                            path_length=float(np.nansum(np.linalg.norm(selection, axis=1))),
+                            n_one_second_bins=count)
+                outputs[value].append(meta)
+                endpoint_previous = endpoint
+    if any(not rows for rows in outputs.values()):
+        raise ValueError("No eligible chronological trajectory bins")
+    return {value: pd.DataFrame(rows) for value, rows in outputs.items()}
+
+
 def _trajectory_parquet_schemas(sources: list[dict[str, Any]], root: Path) -> tuple[Any, Any]:
     """Fix nullable storage types before streaming any large trajectory arrays.
 
@@ -2318,14 +2397,16 @@ def run(config: dict[str, Any], root: Path, stage: str, **kwargs: Any) -> dict[s
                     if native_writer is None:
                         native_writer = pq.ParquetWriter(temporary, schema, compression="zstd")
                     native_writer.write_table(table)
+                    cached_bins = _ingestion_bin_trajectories(frame, bin_values,
+                        missing_threshold=float(settings.get("missing_threshold", .2)),
+                        maximum_speed=settings.get("maximum_speed"))
                     for value in bin_values:
-                        binned = bin_trajectories(frame, value,
-                            missing_threshold=float(settings.get("missing_threshold", .2)),
-                            maximum_speed=settings.get("maximum_speed"))
+                        binned = cached_bins[value]
                         table = _trajectory_arrow_table(binned, bin_schema)
                         if value not in writers:
                             writers[value] = pq.ParquetWriter(output / f"fly_bins_{value:g}s.partial.parquet", bin_schema, compression="zstd")
                         writers[value].write_table(table)
+                    del cached_bins
         finally:
             if native_writer is not None:
                 native_writer.close()
