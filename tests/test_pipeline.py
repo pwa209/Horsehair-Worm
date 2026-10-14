@@ -9,13 +9,14 @@ import os
 import subprocess
 import sys
 import signal
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
 from horsehair import pipeline
-from horsehair.core import atomic_json, canonical_hash, read_json, source_identity
+from horsehair.core import atomic_json, canonical_hash, digest, read_json, source_identity
 from horsehair.slurm import submit
 
 
@@ -301,6 +302,195 @@ def configure_lock_run(fixture,monkeypatch):
     path = fixture.root/"state/pipeline/qa-release/controller.lock"
     atomic_json(path,{"job_id":"700","segment":0,"started_unix":1.})
     return path
+
+
+def cached_storage_fixture(root, measured=100000.):
+    """Generated quota/occupancy evidence, never a biological result."""
+    quota = root / 'state/quota-100000000000000.txt'
+    quota.parent.mkdir(parents=True, exist_ok=True)
+    quota.write_text('Generated native quota evidence fixture\n', encoding='utf8')
+    record = {'status': 'measured', 'root': str(root.resolve()), 'measured_unix': measured,
+              'captured_utc': datetime.fromtimestamp(measured, timezone.utc).isoformat(),
+              'study_bytes': 1000, 'study_files': 10, 'personal_available_bytes': 5000,
+              'personal_available_files': 100, 'native_source_paths': [str(quota.resolve())],
+              'native_source_hashes': {str(quota.resolve()): digest(quota)}}
+    path = root / 'state/storage-budget.json'
+    atomic_json(path, record)
+    return path, quota, record
+
+
+def test_recent_storage_cache_preserves_original_receipt_and_deadline(tmp_path):
+    path, quota, record = cached_storage_fixture(tmp_path)
+    original = path.read_bytes()
+    observed = pipeline._cached_storage_snapshot(tmp_path, now=100060.)
+    assert observed['age_seconds'] == 60
+    assert observed['refresh_due_unix'] == 121600
+    assert observed['receipt_sha256'] == digest(path)
+    assert observed['native_source_hashes'] == {str(quota.resolve()): digest(quota)}
+    assert path.read_bytes() == original
+
+
+@pytest.mark.parametrize('change', ['stale', 'future', 'nan', 'string-time', 'boolean-time',
+    'naive-utc', 'future-utc', 'different-stamp', 'wrong-root', 'pending-status', 'zero-bytes',
+    'infinite-quota', 'negative-files', 'fractional-files', 'missing-pins', 'extra-pin',
+    'changed-native', 'missing-native', 'external-native', 'unrecognized-native', 'malformed-receipt'])
+def test_invalid_storage_cache_requires_fresh_measurement(tmp_path, change):
+    path, quota, record = cached_storage_fixture(tmp_path)
+    now = 100060.
+    if change == 'stale':
+        now = record['measured_unix'] + pipeline.STORAGE_REFRESH_SECONDS
+    elif change == 'future':
+        now = record['measured_unix'] - 1
+    elif change in {'nan', 'string-time', 'boolean-time'}:
+        # Deliberately malformed JSON can contain NaN; no receipt writer accepts it.
+        record['measured_unix'] = {'nan': float('nan'), 'string-time': '100000', 'boolean-time': True}[change]
+    elif change == 'naive-utc':
+        record['captured_utc'] = '1970-01-02T03:46:40'
+    elif change == 'future-utc':
+        record['captured_utc'] = datetime.fromtimestamp(now + 1, timezone.utc).isoformat()
+    elif change == 'different-stamp':
+        record['captured_utc'] = datetime.fromtimestamp(99990., timezone.utc).isoformat()
+    elif change == 'wrong-root':
+        record['root'] = str(tmp_path.parent)
+    elif change == 'pending-status':
+        record['status'] = 'pending'
+    elif change == 'zero-bytes':
+        record['study_bytes'] = 0
+    elif change == 'infinite-quota':
+        record['personal_available_bytes'] = float('inf')
+    elif change == 'negative-files':
+        record['personal_available_files'] = -1
+    elif change == 'fractional-files':
+        record['study_files'] = 10.5
+    elif change == 'missing-pins':
+        record['native_source_hashes'] = {}
+    elif change == 'extra-pin':
+        record['native_source_hashes']['unrelated-file'] = '0' * 64
+    elif change == 'changed-native':
+        quota.write_text('Changed generated quota evidence\n')
+    elif change == 'missing-native':
+        quota.unlink()
+    elif change in {'external-native', 'unrecognized-native'}:
+        other = tmp_path.parent / 'quota-100000.txt' if change == 'external-native' else quota.with_name('forecast.txt')
+        other.write_text('Generated other evidence fixture\n')
+        record['native_source_paths'] = [str(other.resolve())]
+        record['native_source_hashes'] = {str(other.resolve()): digest(other)}
+    elif change == 'malformed-receipt':
+        path.write_text('[]')
+        assert pipeline._cached_storage_snapshot(tmp_path, now=now) is None
+        return
+    path.write_text(__import__('json').dumps(record))
+    assert pipeline._cached_storage_snapshot(tmp_path, now=now) is None
+
+
+@pytest.mark.parametrize('fresh', [True, False])
+def test_restart_uses_valid_cache_but_refreshes_invalid_before_tick(controller_fixture, monkeypatch, fresh):
+    from horsehair import budget
+    fixture = controller_fixture
+    lock = configure_lock_run(fixture, monkeypatch)
+    monkeypatch.setattr(pipeline, '_native_states', lambda *a: {'700': state()})
+    path, quota, record = cached_storage_fixture(fixture.root)
+    original = path.read_bytes()
+    now = 100060. if fresh else 121600.
+    monkeypatch.setattr(pipeline.time, 'time', lambda: now)
+    monkeypatch.setattr(pipeline.time, 'monotonic', lambda: 1000.)
+    calls = []
+    monkeypatch.setattr(budget, 'storage_snapshot', lambda *a: calls.append('refresh'))
+    def tick(*args, **kwargs):
+        calls.append('tick')
+        return {'status': 'complete', 'phases': {}, 'initial_tasks': {}, 'failed_native_stages': []}
+    monkeypatch.setattr(pipeline, 'tick', tick)
+    result = pipeline.run(fixture.config, fixture.root, max_seconds=30)
+    assert result['status'] == 'complete' and not lock.exists()
+    assert calls == (['tick'] if fresh else ['refresh', 'tick'])
+    assert path.read_bytes() == original
+    journal = lock.parent / 'storage-cache-use-800.json'
+    assert journal.exists() is fresh
+    if fresh:
+        assert read_json(journal)['measured_unix'] == record['measured_unix']
+        assert read_json(journal)['receipt_sha256'] == digest(path)
+
+
+def test_restart_cache_expires_at_original_deadline_without_six_hour_extension(controller_fixture, monkeypatch):
+    from horsehair import budget
+    fixture = controller_fixture
+    configure_lock_run(fixture, monkeypatch)
+    monkeypatch.setattr(pipeline, '_native_states', lambda *a: {'700': state()})
+    cached_storage_fixture(fixture.root)
+    clock = [0.]
+    monkeypatch.setattr(pipeline.time, 'time', lambda: 121570. + clock[0])
+    monkeypatch.setattr(pipeline.time, 'monotonic', lambda: clock[0])
+    monkeypatch.setattr(pipeline.time, 'sleep', lambda duration: clock.__setitem__(0, clock[0] + duration))
+    calls = []
+    monkeypatch.setattr(budget, 'storage_snapshot', lambda *a: calls.append(('refresh', clock[0])))
+    def tick(*args, **kwargs):
+        calls.append(('tick', clock[0]))
+        return {'status': 'active', 'phases': {}, 'initial_tasks': {}, 'failed_native_stages': []}
+    monkeypatch.setattr(pipeline, 'tick', tick)
+    pipeline.run(fixture.config, fixture.root, max_seconds=60, interval=30)
+    assert calls == [('tick', 0.), ('refresh', 30.), ('tick', 30.)]
+
+
+def maintenance_framework_fixture(fixture, monkeypatch):
+    framework = fixture.release.with_name('maintenance-framework')
+    atomic_json(framework/'configs/study.json', fixture.config)
+    source = framework/'src/horsehair/pipeline.py'
+    source.parent.mkdir(parents=True)
+    source.write_text('# Distinct generated framework fixture; never scientific evidence\n')
+    identity = source_identity(framework)
+    atomic_json(framework/'release.json', {'release_id': 'qa-framework', 'source_identity': identity,
+                'config_sha256': canonical_hash(fixture.config)})
+    monkeypatch.setattr(pipeline, '__file__', str(source))
+    return framework, identity
+
+
+def test_maintenance_controller_uses_primary_tick_namespace_and_distinct_framework_journal(controller_fixture, monkeypatch):
+    fixture = controller_fixture
+    lock = configure_lock_run(fixture, monkeypatch)
+    monkeypatch.setattr(pipeline, '_native_states', lambda *a: {'700': state()})
+    framework, framework_identity = maintenance_framework_fixture(fixture, monkeypatch)
+    observed = []
+    def tick(config, root, release):
+        observed.append(release)
+        return {'status': 'complete', 'phases': {}, 'initial_tasks': {}, 'failed_native_stages': []}
+    monkeypatch.setattr(pipeline, 'tick', tick)
+    pipeline.run(fixture.config, fixture.root, primary_release=fixture.release, max_seconds=30)
+    assert observed == [fixture.release.resolve()]
+    assert not lock.exists() and not (fixture.root/'state/pipeline/qa-framework').exists()
+    record = read_json(lock.parent/'controller-framework-800.json')
+    assert record['primary_source_identity'] == fixture.identity
+    assert record['framework_source_identity'] == framework_identity != fixture.identity
+    assert record['primary_release'] == str(fixture.release.resolve())
+    assert record['framework_release'] == str(framework.resolve())
+
+
+@pytest.mark.parametrize('fault', ['missing-primary', 'primary-source', 'framework-source', 'primary-config',
+                                 'framework-config', 'wrong-root'])
+def test_maintenance_controller_rejects_changed_release_or_full_configuration_before_lock_claim(controller_fixture, monkeypatch, fault):
+    fixture = controller_fixture
+    lock = configure_lock_run(fixture, monkeypatch)
+    framework, framework_identity = maintenance_framework_fixture(fixture, monkeypatch)
+    primary = fixture.release
+    if fault == 'missing-primary':
+        primary = framework.with_name('absent-primary')
+    elif fault.endswith('source'):
+        target = primary if fault == 'primary-source' else framework
+        (target/'src/horsehair/pipeline.py').write_text('# Changed generated fixture\n')
+    elif fault.endswith('config'):
+        target = primary if fault == 'primary-config' else framework
+        altered = copy.deepcopy(fixture.config)
+        altered['resources']['cpu_ceiling'] += 1
+        atomic_json(target/'configs/study.json', altered)
+        record = read_json(target/'release.json')
+        record['source_identity'] = source_identity(target)
+        record['config_sha256'] = canonical_hash(altered)
+        atomic_json(target/'release.json', record)
+    else:
+        fixture.config['paths']['root'] = str(fixture.root.parent)
+    original = lock.read_bytes()
+    with pytest.raises((ValueError, FileNotFoundError)):
+        pipeline.run(fixture.config, fixture.root, primary_release=primary, max_seconds=30)
+    assert lock.read_bytes() == original and not list(lock.parent.glob('controller-framework-*.json'))
 
 
 def test_controller_defers_live_receipt_guard_and_recovers_without_replaying(controller_fixture,monkeypatch):

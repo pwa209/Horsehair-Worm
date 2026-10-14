@@ -7,12 +7,14 @@ scientific completion. Provider transfer workers remain independent.
 from __future__ import annotations
 
 import json
+import hashlib
 import math
 import os
 import re
 import subprocess
 import time
 from pathlib import Path
+from datetime import datetime, timezone
 
 from .core import atomic_json, canonical_hash, digest, exclusive_file_lock, native_job_id, read_json, source_identity, ReceiptLockTimeout
 
@@ -31,6 +33,60 @@ NODES = (
     ('synthesis', ('behaviour', 'interventions', 'molecular-transfer', 'agents-final', 'molecular-corroboration'), None),
 )
 TERMINAL_FAILURE = {'FAILED', 'TIMEOUT', 'OUT_OF_MEMORY', 'CANCELLED', 'NODE_FAIL', 'BOOT_FAIL', 'PREEMPTED', 'DEADLINE', 'REVOKED'}
+STORAGE_REFRESH_SECONDS = 6 * 3600
+
+
+def _cached_storage_snapshot(root, *, now=None):
+    """Reuse only recent, root-bound measurements with unchanged quota evidence."""
+    root = Path(root).resolve()
+    path = root / 'state/storage-budget.json'
+    try:
+        if path.is_symlink() or not path.is_file():
+            return None
+        raw = path.read_bytes()
+        record = json.loads(raw)
+        current = time.time() if now is None else now
+        measured = record.get('measured_unix')
+        if (not isinstance(record, dict) or record.get('status') != 'measured'
+                or not isinstance(record.get('root'), str) or Path(record['root']).resolve() != root
+                or type(measured) not in (int, float) or not math.isfinite(measured)
+                or type(current) not in (int, float) or not math.isfinite(current)
+                or not 0 <= current - measured < STORAGE_REFRESH_SECONDS):
+            return None
+        captured = datetime.fromisoformat(record.get('captured_utc', '').replace('Z', '+00:00'))
+        if (captured.tzinfo is None or captured.utcoffset() != timezone.utc.utcoffset(captured)
+                or not 0 <= current - captured.timestamp() < STORAGE_REFRESH_SECONDS
+                or abs(captured.timestamp() - measured) > 1):
+            return None
+        for key in ('study_bytes', 'study_files', 'personal_available_bytes', 'personal_available_files'):
+            value = record.get(key)
+            if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
+                return None
+            if key.endswith('files') and int(value) != value:
+                return None
+        sources, hashes = record.get('native_source_paths'), record.get('native_source_hashes')
+        if (not isinstance(sources, list) or not sources or not all(isinstance(p, str) for p in sources)
+                or len(sources) != len(set(sources)) or not isinstance(hashes, dict)
+                or set(hashes) != set(sources)):
+            return None
+        for source in sources:
+            native_path = Path(source)
+            if (not native_path.is_absolute() or native_path.is_symlink()
+                    or not native_path.resolve().is_relative_to(root / 'state')
+                    or not native_path.is_file() or not re.fullmatch(r'quota-[0-9]+\.txt', native_path.name)
+                    or not isinstance(hashes[source], str) or not re.fullmatch(r'[0-9a-f]{64}', hashes[source])
+                    or digest(native_path) != hashes[source]):
+                return None
+        receipt_hash = hashlib.sha256(raw).hexdigest()
+        if digest(path) != receipt_hash:
+            return None
+        return {'basis': 'Verified measured storage receipt reused until its original six-hour deadline',
+                'receipt_path': str(path), 'receipt_sha256': receipt_hash,
+                'measured_unix': measured, 'captured_utc': record['captured_utc'],
+                'age_seconds': current - measured, 'refresh_due_unix': measured + STORAGE_REFRESH_SECONDS,
+                'native_source_hashes': hashes}
+    except (OSError, ValueError, TypeError, AttributeError, OverflowError):
+        return None
 
 
 def _recovery_guard(path):
@@ -456,9 +512,10 @@ def tick(config, root, release, *, native=None, planner=None, submitter=None, as
     return record
 
 
-def run(config, root, *, segment=0, max_seconds=None, interval=60):
+def run(config, root, *, segment=0, max_seconds=None, interval=60, primary_release=None):
     from .budget import native_accounting, storage_snapshot
-    root = Path(root); release = Path(__file__).resolve().parents[2]
+    root = Path(root).resolve(); framework = Path(__file__).resolve().parents[2]
+    release = framework if primary_release is None else Path(primary_release).resolve()
     if not native_job_id():
         raise RuntimeError('The sustained pipeline controller belongs in Slurm')
     if segment not in range(4) or interval < 30:
@@ -467,7 +524,16 @@ def run(config, root, *, segment=0, max_seconds=None, interval=60):
     if not math.isfinite(limit) or limit < 30:
         raise ValueError('Controller lifetime must be at least30seconds and bounded')
     deadline = time.monotonic() + limit
+    framework_identity = read_json(framework/'release.json')
     identity = read_json(release/'release.json')
+    for candidate, record in ((framework, framework_identity), (release, identity)):
+        if (record.get('source_identity') != source_identity(candidate)
+                or record.get('config_sha256') != canonical_hash(config)
+                or read_json(candidate/'configs/study.json') != config
+                or Path(config['paths']['root']).resolve() != root):
+            raise ValueError('Controller framework/primary release source or full configuration changed')
+    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*', identity.get('release_id', '')):
+        raise ValueError('Unsafe controller primary release identity')
     directory = root/'state/pipeline'/identity['release_id'];directory.mkdir(parents=True, exist_ok=True)
     lock = directory/'controller.lock'
     recovery=directory/'controller-recovery.lock'
@@ -485,8 +551,24 @@ def run(config, root, *, segment=0, max_seconds=None, interval=60):
         with lock.open('x') as handle:
             json.dump({'job_id': native_job_id(), 'segment': segment, 'started_unix': time.time()}, handle)
     owner=lock.read_bytes()
-    last_signature = None;last_storage = 0.;warning_count = 0;last_warning_signature = None
+    last_signature = None;last_storage = None;warning_count = 0;last_warning_signature = None
     try:
+        framework_record = {'controller_job_id': native_job_id(), 'segment': segment, 'started_unix': time.time(),
+                            'framework_release': str(framework), 'framework_source_identity': framework_identity['source_identity'],
+                            'primary_release': str(release), 'primary_source_identity': identity['source_identity'],
+                            'config_sha256': canonical_hash(config),
+                            'provenance_rule': 'Controller framework executes from its own verified source; primary plans, numeric jobs and scientific result validation retain the verified primary release'}
+        atomic_json(directory / ('controller-framework-' + str(native_job_id()) + '.json'), framework_record)
+        print(json.dumps({'controller_framework': framework_record}), flush=True)
+        storage_cache = _cached_storage_snapshot(root)
+        if storage_cache is not None:
+            last_storage = time.monotonic() - storage_cache['age_seconds']
+            cache_use = {**storage_cache, 'controller_job_id': native_job_id(), 'segment': segment,
+                         'checked_unix': time.time(), 'config_sha256': canonical_hash(config),
+                         'source_sha256': identity['source_identity']['sha256'],
+                         'controller_framework_source_sha256': framework_identity['source_identity']['sha256']}
+            atomic_json(directory / ('storage-cache-use-' + str(native_job_id()) + '.json'), cache_use)
+            print(json.dumps({'storage_cache': cache_use}), flush=True)
         record=None
         while time.monotonic() < deadline:
             try:
@@ -498,7 +580,7 @@ def run(config, root, *, segment=0, max_seconds=None, interval=60):
                     ids.extend(str(task['job_id']) for task in ledger.get('tasks', {}).values() if task.get('state') == 'submitted')
                 if ids:
                     native_accounting(root, ids)
-                if time.monotonic() - last_storage > 6*3600:
+                if last_storage is None or time.monotonic() - last_storage >= STORAGE_REFRESH_SECONDS:
                     storage_snapshot(root);last_storage = time.monotonic()
                 record = tick(config, root, release)
             except ReceiptLockTimeout as exc:
@@ -507,7 +589,8 @@ def run(config, root, *, segment=0, max_seconds=None, interval=60):
                 warning_count += 1
                 warning = {'status':'waiting_for_receipt_guard','warning_count':warning_count,'last_unix':time.time(),
                            'controller_job_id':native_job_id(),'segment':segment,'config_sha256':canonical_hash(config),
-                           'source_sha256':identity['source_identity']['sha256'],**exc.diagnostics}
+                           'source_sha256':identity['source_identity']['sha256'],
+                           'controller_framework_source_sha256':framework_identity['source_identity']['sha256'],**exc.diagnostics}
                 atomic_json(directory/'receipt-guard-warning.json',warning)
                 signature = canonical_hash({'guard_path':exc.path,'holder':exc.last_known_holder})
                 if signature != last_warning_signature:

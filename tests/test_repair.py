@@ -5,7 +5,186 @@ from pathlib import Path
 import pytest
 
 from horsehair import repair
-from horsehair.core import atomic_json, canonical_hash, read_json, source_identity
+from horsehair.core import atomic_json, canonical_hash, digest, read_json, source_identity
+
+
+def controller_maintenance_fixture(tmp_path):
+    """Synthetic framework qualification and scheduler facts; never real results."""
+    from horsehair.slurm import completed_native_dependency
+    f = fixture(tmp_path, replace_controllers=True)
+    controllers = {f'pipeline-controller-{index}' for index in range(4)}
+    old = copy.deepcopy(f['old'])
+    old_ledger = copy.deepcopy(f['ledger'])
+    for item in old['tasks']:
+        if item['name'] not in controllers:
+            continue
+        index = int(item['name'].rsplit('-', 1)[1])
+        item['dependency_kind'] = 'afterok' if index == 0 else 'afterany'
+        item['depends'] = [] if index == 0 else [f'pipeline-controller-{index - 1}']
+        path = Path(item['script'])
+        text = path.read_text().replace('python -m horsehair.cli ' + item['name'],
+            'python -m horsehair.cli --config configs/study.json verify-source --identity release.json\n'
+            + 'python -m horsehair.cli --config configs/study.json pipeline --segment ' + str(index))
+        path.write_text(text)
+        item['script_sha256'] = canonical_hash(text)
+        old_ledger['tasks'][item['name']]['script_sha256'] = item['script_sha256']
+    old_ledger['plan_sha256'] = canonical_hash(old)
+    atomic_json(f['plan_path'], old)
+    atomic_json(f['root']/'state/v7-managed-initial-submission.json', old_ledger)
+    budget = {'spent_cpu_core_hours': 10., 'spent_gpu_hours': 0., 'leases': {}, 'native_jobs': {
+        '990': {'state': 'COMPLETED', 'exit_code': '0:0', 'elapsed_seconds': 60, 'cpus': 2, 'gpus': 0,
+                'basis': 'sacct final allocated wall time'}}}
+    atomic_json(f['root']/'state/resource-budget.json', budget)
+    framework = f['preprocessing']
+    framework_identity = source_identity(framework)
+    case = f['root']/'maintenance/controller-qualification-fixture'
+    case.mkdir(parents=True)
+    log, junit = case/'pytest.log', case/'junit.xml'
+    log.write_text('Generated qualification fixture: 1 passed\n')
+    junit.write_text('<testsuites><testsuite tests="1" failures="0" errors="0" skipped="0"><testcase name="generated_fixture"/></testsuite></testsuites>')
+    qualification = {'status': 'complete', 'returncode': 0, 'slurm_job_id': '990',
+        'source_identity': framework_identity, 'source_sha256': framework_identity['sha256'],
+        'primary_source_sha256': f['identity']['sha256'], 'config_sha256': canonical_hash(f['config']),
+        'source_verified_unchanged': True,
+        'test_selection': 'complete source/tests directory; no environment selectors or third-party plugin autoload',
+        'test_counts': {'tests': 1, 'failures': 0, 'errors': 0, 'skipped': 0},
+        'artifacts': {label: {'path': str(path.resolve()), 'sha256': digest(path)}
+                      for label, path in [('log', log), ('junit', junit)]}}
+    qualification_path = case/'qualification.json'
+    atomic_json(qualification_path, qualification)
+    replacement, submitted = copy.deepcopy(old), copy.deepcopy(old_ledger)
+    for item in replacement['tasks']:
+        if item['name'] not in controllers:
+            continue
+        index = int(item['name'].rsplit('-', 1)[1])
+        text = Path(item['script']).read_text()
+        text = text.replace('cd ' + shlex.quote(f['primary'].as_posix()), 'cd ' + shlex.quote(framework.as_posix()))
+        text = text.replace(shlex.quote((f['primary']/'src').as_posix()), shlex.quote((framework/'src').as_posix()))
+        text = text.replace('#!/bin/bash\n', '#!/bin/bash\n#SBATCH --hold\n')
+        text = text.replace('pipeline --segment ' + str(index),
+                            'pipeline --segment ' + str(index) + ' --primary-release ' + shlex.quote(f['primary'].as_posix()))
+        path = f['replacement_path'].parent/(item['name']+'.sbatch')
+        path.write_text(text)
+        item.update(script=str(path), script_sha256=canonical_hash(text))
+        proof = completed_native_dependency(f['root'], '990', dependency_kind=item['dependency_kind'])
+        item['completed_external_dependencies'] = [proof]
+        submitted['tasks'][item['name']] = {'state': 'submitted', 'job_id': str(200 + index),
+            'script_sha256': item['script_sha256'], 'dependency_kind': item['dependency_kind'],
+            'issued_native_dependencies': [], 'completed_native_dependencies': [proof]}
+    submitted['plan_sha256'] = canonical_hash(replacement)
+    atomic_json(f['replacement_path'], replacement)
+    atomic_json(f['replacement_ledger'], submitted)
+    descriptor = {**f['descriptor'], 'execution_releases': {name: str(framework) for name in controllers},
+        'required_external_dependencies': {name: ['990'] for name in controllers},
+        'controller_maintenance': {'framework_release': str(framework), 'primary_release': str(f['primary']),
+            'qualification_path': str(qualification_path), 'qualification_sha256': digest(qualification_path),
+            'qualification_job_id': '990'}}
+    atomic_json(f['descriptor_path'], descriptor)
+    native = {key: value for key, value in f['native'].items() if int(key) < 100}
+    native.update({str(200 + index): {'state': 'PENDING', 'exit_code': '0:0'} for index in range(4)})
+    native['990'] = {'state': 'COMPLETED', 'exit_code': '0:0', 'elapsed_seconds': 60, 'cpus': 2}
+    f.update(old=old, ledger=old_ledger, replacement=replacement, submitted=submitted, descriptor=descriptor,
+             native=native, framework=framework, framework_identity=framework_identity,
+             qualification_path=qualification_path, qualification=qualification, controllers=controllers)
+    return f
+
+
+def test_qualified_maintenance_replaces_only_all_held_controllers_and_keeps_primary_science(tmp_path):
+    f = controller_maintenance_fixture(tmp_path)
+    result = register(f)
+    assert result['status'] == 'complete'
+    plan = read_json(f['plan_path'])
+    assert plan['release_identity'] == f['identity']
+    for item in plan['tasks']:
+        if item['name'] in f['controllers']:
+            assert item['execution_release']['source_identity'] == f['framework_identity']
+            assert '--primary-release ' in Path(item['script']).read_text()
+        else:
+            assert item == next(old for old in f['old']['tasks'] if old['name'] == item['name'])
+    audit = plan['dag_amendments'][-1]['controller_maintenance']
+    assert audit['primary_source_identity'] == f['identity']
+    assert audit['framework_source_identity'] == f['framework_identity'] != f['identity']
+    assert register(f) == result
+
+
+@pytest.mark.parametrize('fault', ['missing-primary', 'primary-source', 'framework-source', 'framework-config',
+    'missing-qualification', 'qualification-pin', 'qualification-source', 'qualification-config',
+    'qualification-primary', 'qualification-skipped', 'qualification-junit', 'missing-native', 'failed-native',
+    'zero-allocation', 'missing-required-dependency', 'missing-completed-proof', 'wrong-proof-kind',
+    'missing-planned-proof', 'wrong-primary-command', 'extra-command', 'changed-verification',
+    'changed-resources', 'unheld-controller', 'partial-roster', 'mixed-science-target', 'missing-maintenance-declaration'])
+def test_maintenance_rejects_unsafe_provenance_commands_or_qualification_without_registration(tmp_path, fault):
+    f = controller_maintenance_fixture(tmp_path)
+    name = 'pipeline-controller-0'
+    item = next(task for task in f['replacement']['tasks'] if task['name'] == name)
+    proof = f['submitted']['tasks'][name]
+    if fault == 'missing-primary':
+        f['descriptor']['controller_maintenance']['primary_release'] = str(tmp_path/'missing-primary')
+    elif fault in {'primary-source', 'framework-source'}:
+        target = f['primary'] if fault == 'primary-source' else f['framework']
+        (target/'src/horsehair/behaviour.py').write_text('# Changed source fixture\n')
+    elif fault == 'framework-config':
+        config = copy.deepcopy(f['config'])
+        config['resources']['cpu_ceiling'] += 1
+        atomic_json(f['framework']/'configs/study.json', config)
+        record = read_json(f['framework']/'release.json')
+        record.update(source_identity=source_identity(f['framework']), config_sha256=canonical_hash(config))
+        atomic_json(f['framework']/'release.json', record)
+    elif fault == 'missing-qualification':
+        f['qualification_path'].unlink()
+    elif fault == 'qualification-pin':
+        f['descriptor']['controller_maintenance']['qualification_sha256'] = '0' * 64
+    elif fault.startswith('qualification-'):
+        if fault == 'qualification-source': f['qualification']['source_identity'] = f['identity']
+        elif fault == 'qualification-config': f['qualification']['config_sha256'] = '0' * 64
+        elif fault == 'qualification-primary': f['qualification']['primary_source_sha256'] = '0' * 64
+        elif fault == 'qualification-skipped': f['qualification']['test_counts']['skipped'] = 1
+        else: Path(f['qualification']['artifacts']['junit']['path']).write_text('<changed/>')
+        atomic_json(f['qualification_path'], f['qualification'])
+        f['descriptor']['controller_maintenance']['qualification_sha256'] = digest(f['qualification_path'])
+    elif fault == 'missing-native':
+        f['native'].pop('990')
+    elif fault == 'failed-native':
+        f['native']['990'].update(state='FAILED', exit_code='1:0')
+    elif fault == 'zero-allocation':
+        f['native']['990']['cpus'] = 0
+    elif fault == 'missing-required-dependency':
+        f['descriptor']['required_external_dependencies'][name] = []
+    elif fault == 'missing-completed-proof':
+        proof['completed_native_dependencies'] = []
+        proof['issued_native_dependencies'] = ['990']
+    elif fault == 'wrong-proof-kind':
+        proof['completed_native_dependencies'][0]['dependency_kind'] = 'afterany'
+    elif fault == 'missing-planned-proof':
+        item['completed_external_dependencies'] = []
+    elif fault in {'wrong-primary-command', 'extra-command', 'changed-verification', 'unheld-controller'}:
+        path = Path(item['script'])
+        text = path.read_text()
+        if fault == 'wrong-primary-command': text = text.replace(shlex.quote(f['primary'].as_posix()), shlex.quote(f['framework'].as_posix()))
+        elif fault == 'extra-command': text += 'python -m horsehair.cli behaviour --stage fit\n'
+        elif fault == 'changed-verification': text = text.replace('verify-source --identity release.json', 'verify-source --identity unrelated.json')
+        else: text = text.replace('#SBATCH --hold\n', '')
+        path.write_text(text)
+        item['script_sha256'] = canonical_hash(text)
+        proof['script_sha256'] = item['script_sha256']
+    elif fault == 'changed-resources':
+        item['resources']['hours'] += 1
+    elif fault == 'partial-roster':
+        f['descriptor']['execution_releases'].pop('pipeline-controller-3')
+    elif fault == 'mixed-science-target':
+        f['descriptor']['execution_releases']['source-replication'] = str(f['framework'])
+    else:
+        f['descriptor'].pop('controller_maintenance')
+    f['submitted']['plan_sha256'] = canonical_hash(f['replacement'])
+    atomic_json(f['replacement_path'], f['replacement'])
+    atomic_json(f['replacement_ledger'], f['submitted'])
+    atomic_json(f['descriptor_path'], f['descriptor'])
+    ledger = f['root']/'state/v7-managed-initial-submission.json'
+    before = f['plan_path'].read_bytes(), ledger.read_bytes()
+    with pytest.raises((ValueError, FileNotFoundError)):
+        register(f)
+    assert (f['plan_path'].read_bytes(), ledger.read_bytes()) == before
+    assert not f['calls']
 
 
 def fixture(tmp_path, phase="managed-initial", replace_controllers=False):

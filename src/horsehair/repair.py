@@ -74,6 +74,56 @@ def _preprocessing_release(primary, other, old_identity, new_identity):
         raise ValueError("Behaviour repair changed methods outside chronological ingestion")
 
 
+def _controller_maintenance(descriptor, targets, controllers, primary, identity, config, root):
+    """A qualified framework may control only the unchanged primary science DAG."""
+    change = descriptor.get('controller_maintenance')
+    if change is None:
+        return None
+    required = {'framework_release', 'primary_release', 'qualification_path',
+                'qualification_sha256', 'qualification_job_id'}
+    if (not isinstance(change, dict) or set(change) != required
+            or descriptor['phase'] != 'managed-initial' or targets != set(controllers)
+            or Path(change['primary_release']).resolve() != primary):
+        raise ValueError('Controller maintenance must replace exactly all four primary controller segments')
+    framework, framework_record, framework_identity = _release(change['framework_release'], config)
+    if framework == primary or framework_identity == identity:
+        raise ValueError('Controller maintenance requires a distinct verified framework release')
+    if any(Path(descriptor['execution_releases'][name]).resolve() != framework for name in controllers):
+        raise ValueError('All maintenance controllers must execute the same verified framework')
+    qualification_path = _inside(change['qualification_path'], root / 'maintenance')
+    if (qualification_path.is_symlink() or not qualification_path.is_file()
+            or digest(qualification_path) != change['qualification_sha256']):
+        raise ValueError('Controller framework qualification receipt is missing or changed')
+    qualification = read_json(qualification_path)
+    job = str(change['qualification_job_id'])
+    if (not re.fullmatch(r'[0-9]+', job) or qualification.get('slurm_job_id') != job
+            or qualification.get('status') != 'complete' or qualification.get('returncode') != 0
+            or qualification.get('source_identity') != framework_identity
+            or qualification.get('source_sha256') != framework_identity['sha256']
+            or qualification.get('config_sha256') != canonical_hash(config)
+            or qualification.get('primary_source_sha256') != identity['sha256']
+            or qualification.get('source_verified_unchanged') is not True
+            or qualification.get('test_selection') != 'complete source/tests directory; no environment selectors or third-party plugin autoload'):
+        raise ValueError('Controller qualification does not positively bind the framework and unchanged primary configuration/source')
+    counts = qualification.get('test_counts')
+    if (not isinstance(counts, dict) or type(counts.get('tests')) is not int or counts['tests'] <= 0
+            or any(type(counts.get(key)) is not int or counts[key] != 0 for key in ('failures', 'errors', 'skipped'))):
+        raise ValueError('Controller framework requires complete positive qualification with no failures/errors/skips')
+    artifacts = qualification.get('artifacts', {})
+    for label in ('log', 'junit'):
+        item = artifacts.get(label, {})
+        artifact = _inside(item.get('path', ''), root)
+        if (artifact.is_symlink() or not artifact.is_file()
+                or digest(artifact) != item.get('sha256')):
+            raise ValueError('Controller qualification log/JUnit evidence is absent or changed')
+    from .cli import _qualification_junit
+    if _qualification_junit(Path(artifacts['junit']['path'])) != counts:
+        raise ValueError('Controller qualification counts differ from its pinned JUnit evidence')
+    return {**change, 'framework_release': str(framework), 'framework_release_id': framework_record['release_id'],
+            'framework_source_identity': framework_identity, 'primary_source_identity': identity,
+            'config_sha256': canonical_hash(config), 'test_counts': counts}
+
+
 def _normalized_script(text):
     return "\n".join(line for line in text.splitlines() if not (
         line.startswith("cd ") or line.startswith("export PYTHONPATH=")
@@ -113,7 +163,7 @@ def _runtime_script_projection(text, hours):
     return "\n".join(line for line in lines if line not in {*time_lines, *lease_lines})
 
 
-def _check_script(task, original, execution, root, runtime=None):
+def _check_script(task, original, execution, root, runtime=None, controller_primary=None):
     path = _inside(task["script"], root / "plans")
     text = path.read_text(encoding="utf8")
     if canonical_hash(text) != task.get("script_sha256"):
@@ -132,6 +182,19 @@ def _check_script(task, original, execution, root, runtime=None):
     if runtime:
         text = _runtime_script_projection(text, runtime["new_hours"])
         old_text = _runtime_script_projection(old_text, runtime["old_hours"])
+    if controller_primary is not None:
+        old_commands = [line for line in old_text.splitlines() if line.startswith('python -m horsehair.cli ')
+                        and 'pipeline' in shlex.split(line)[4:]]
+        new_commands = [line for line in text.splitlines() if line.startswith('python -m horsehair.cli ')
+                        and 'pipeline' in shlex.split(line)[4:]]
+        if len(old_commands) != 1 or len(new_commands) != 1:
+            raise ValueError('Maintenance replacement must retain the original CLI pipeline command')
+        before, after = shlex.split(old_commands[0]), shlex.split(new_commands[0])
+        if (len(after) != len(before) + 2 or after[:-2] != before
+                or after[-2] != '--primary-release' or Path(after[-1]).resolve() != controller_primary
+                or '--primary-release' in before):
+            raise ValueError('Maintenance controller may append only its exact verified --primary-release argument')
+        text = text.replace(new_commands[0], old_commands[0], 1)
     if _normalized_script(text) != _normalized_script(old_text):
         raise ValueError("Replacement script changes the original command/environment contract")
 
@@ -441,6 +504,7 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
         controllers = {task["name"]: task for task in controllers_plan["tasks"] if task["name"].startswith("pipeline-controller-")}
         if len(controllers) != 4:
             raise ValueError("The complete four-segment primary controller roster is required")
+        controller_maintenance = _controller_maintenance(descriptor, targets, controllers, primary, identity, config, root)
         checks = [(name, original[name], old_ledger["tasks"][name]) for name in targets]
         checks += [(name, task, old_ledger["tasks"][name]) for name, task in original.items()] if phase == "rna-full" else []
         checks += [(name, task, controllers_ledger["tasks"][name]) for name, task in controllers.items()]
@@ -453,10 +517,15 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
                 raise ValueError("Replacement changed a node's frozen resource/array contract")
             execution, execution_record, execution_identity = _release(descriptor["execution_releases"][name], config)
             if execution_identity != identity:
-                if name != "source-audit":
-                    raise ValueError("Only source-audit may use the preprocessing repair release")
-                _preprocessing_release(primary, execution, identity, execution_identity)
-            _check_script(candidate, original[name], execution, root, runtime_adjustments.get(name))
+                if controller_maintenance is not None and name in controllers:
+                    if execution_identity != controller_maintenance['framework_source_identity']:
+                        raise ValueError('Controller execution does not match its qualified framework')
+                elif name == 'source-audit':
+                    _preprocessing_release(primary, execution, identity, execution_identity)
+                else:
+                    raise ValueError("Only source-audit or explicitly qualified primary controllers may use another execution release")
+            _check_script(candidate, original[name], execution, root, runtime_adjustments.get(name),
+                          primary if controller_maintenance is not None else None)
             record = submitted.get("tasks", {}).get(name, {})
             if (record.get("state") != "submitted" or not re.fullmatch(r"[0-9]+", str(record.get("job_id", "")))
                     or record.get("script_sha256") != candidate["script_sha256"]):
@@ -470,6 +539,17 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
             confirmed = set(map(str, record.get("issued_native_dependencies", []))) | {str(proof["job_id"]) for proof in record.get("completed_native_dependencies", [])}
             if not required <= confirmed:
                 raise ValueError("Replacement omitted a required qualification/preservation dependency")
+            if controller_maintenance is not None:
+                from .slurm import _verify_completed_dependency
+                qualifier = str(controller_maintenance['qualification_job_id'])
+                proofs = [proof for proof in record.get('completed_native_dependencies', [])
+                          if str(proof.get('job_id')) == qualifier
+                          and proof.get('dependency_kind') == candidate.get('dependency_kind', 'afterok')
+                          and proof.get('array') is None]
+                planned_proofs = candidate.get('completed_external_dependencies', [])
+                if qualifier not in required or len(proofs) != 1 or proofs[0] not in planned_proofs:
+                    raise ValueError('Every maintenance controller requires its unchanged positive completed qualification proof')
+                _verify_completed_dependency(root, proofs[0])
             new_ids.append(str(record["job_id"]))
             releases[name] = {"path": str(execution), "release_id": execution_record["release_id"],
                               "source_identity": execution_identity, "config_sha256": canonical_hash(config)}
@@ -481,7 +561,16 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
         for name in targets:
             if candidates[name]["resources"].get("array"):rosters[submitted["tasks"][name]["job_id"]] = _array_indices(candidates[name]["resources"]["array"])
         owner, account = os.environ.get("USER"), config.get("paths",{}).get("cpu_account")
-        observed = _repair_native_states(list(dict.fromkeys(jobs + new_ids)), rosters, owner=owner, account=account) if native is None else native
+        qualification_ids = [str(controller_maintenance['qualification_job_id'])] if controller_maintenance else []
+        observed = _repair_native_states(list(dict.fromkeys(jobs + new_ids + qualification_ids)), rosters, owner=owner, account=account) if native is None else native
+        if controller_maintenance:
+            proof = observed.get(qualification_ids[0], {})
+            if (proof.get('state') != 'COMPLETED' or proof.get('exit_code') != '0:0'
+                    or proof.get('unallocated_metadata') is True
+                    or not math.isfinite(float(proof.get('elapsed_seconds', 0)))
+                    or not math.isfinite(float(proof.get('cpus', 0)))
+                    or float(proof.get('elapsed_seconds', 0)) <= 0 or float(proof.get('cpus', 0)) <= 0):
+                raise ValueError('Controller framework qualification lacks positive allocated native completion')
         for name, task, record in checks:
             if not _task_terminal(record, observed, task):
                 raise ValueError("A replaced allocation or primary controller is not positively terminal: " + name)
@@ -533,6 +622,8 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
             "dependency_preservation_rule": "Original positive completed preconditions revalidated at registration; actual replacement acknowledgement/command/dependency-resolution records remain unchanged"}
         if runtime_adjustments:
             amendment.update(runtime_adjustments=copy.deepcopy(runtime_adjustments), runtime_native_proofs=runtime_native_proofs)
+        if controller_maintenance:
+            amendment['controller_maintenance'] = controller_maintenance
         amended_plan.setdefault("dag_amendments", []).append(amendment)
         amended_ledger.setdefault("dag_amendments", []).append(amendment)
         amended_ledger["plan_sha256"] = canonical_hash(amended_plan)

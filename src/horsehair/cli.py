@@ -404,7 +404,7 @@ def main(argv=None):
     submit=sub.add_parser('submit');submit.add_argument('--plan',type=Path,required=True);submit.add_argument('--ledger',type=Path,required=True);submit.add_argument('--environment-job')
     sub.add_parser('report')
     sub.add_parser('archive')
-    controller=sub.add_parser('pipeline');controller.add_argument('--segment',type=int,default=0);controller.add_argument('--max-seconds',type=float);controller.add_argument('--interval',type=int,default=60)
+    controller=sub.add_parser('pipeline');controller.add_argument('--segment',type=int,default=0);controller.add_argument('--max-seconds',type=float);controller.add_argument('--interval',type=int,default=60);controller.add_argument('--primary-release',type=Path)
     a=p.parse_args(argv)
     config=read_json(a.config)
     validate_config(config)
@@ -485,7 +485,7 @@ def execute(a,config,root):
         result=run(config,root,mode=a.mode,task_index=a.task_index)
     elif a.command=='pipeline':
         from .pipeline import run
-        result=run(config,root,segment=a.segment,max_seconds=a.max_seconds,interval=a.interval)
+        result=run(config,root,segment=a.segment,max_seconds=a.max_seconds,interval=a.interval,primary_release=a.primary_release)
     elif a.command=='slurm-plan':
         from .slurm import plan
         result=plan(config,a.release,a.output,a.phase)
