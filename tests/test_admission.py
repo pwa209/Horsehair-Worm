@@ -1,4 +1,5 @@
 import json
+import shutil
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -82,3 +83,105 @@ def test_measured_forecast_does_not_admit_over_budget_or_changed_qc(tmp_path):
     atomic_json(path, record)
     result = assess_admission(config, tmp_path, "rna-full")["rna-full"]
     assert result["status"] == "pending" and "QC-passing" in result["reasons"][0]
+
+
+def primary_rna_release_fixture(tmp_path):
+    """Copy actual source into a distinct release; all data/native facts are QA fixtures."""
+    from horsehair import core
+    root, release = tmp_path/'study', tmp_path/'primary'
+    config = measured_rna_fixture(root)
+    repository = Path(core.__file__).resolve().parents[2]
+    study = json.loads((repository/'configs/study.json').read_text())
+    config.update(schema_version=1, agents=study['agents'], inference=study['inference'])
+    config['resources']['gpu_concurrency'] = 1
+    config['paths'].update(cpu_account='fixture-cpu', gpu_account='fixture-gpu', environment='/fixture/env')
+    atomic_json(release/'configs/study.json', config)
+    package = release/'src/horsehair';package.mkdir(parents=True)
+    for name in ('__init__.py','core.py','admission.py','acquire.py','slurm.py','agents.py','pipeline.py'):
+        shutil.copyfile(repository/'src/horsehair'/name, package/name)
+    identity = source_identity(release)
+    atomic_json(release/'release.json', {'release_id':'qa-primary','source_identity':identity,'config_sha256':canonical_hash(config)})
+    for path in (root/'state').glob('rna-pilot-*.json'):
+        record=json.loads(path.read_text());record.update(config_sha256=canonical_hash(config),source_sha256=identity['sha256'])
+        atomic_json(path,record)
+    tasks=[{'name':name,'resources':{'cpus':1,'hours':1,'gpu':False}} for name in ('rna-reference','molecular-pilot')]
+    plan={'phase':'managed-initial','config_sha256':canonical_hash(config),'release_identity':identity,'tasks':tasks}
+    atomic_json(root/'plans/qa-primary-managed-initial/plan.json',plan)
+    atomic_json(root/'state/qa-primary-managed-initial-submission.json', {'plan_sha256':canonical_hash(plan),
+        'tasks':{task['name']:{'state':'submitted','job_id':str(70+index)} for index,task in enumerate(tasks)}})
+    budget=json.loads((root/'state/resource-budget.json').read_text())
+    budget['native_jobs']={str(index):{'state':'COMPLETED','exit_code':'0:0','elapsed_seconds':60,
+        'cpus':1,'gpus':0,'basis':'sacct final allocated wall time'} for index in (70,71)}
+    atomic_json(root/'state/resource-budget.json',budget)
+    return config,root,release,identity
+
+
+def test_maintenance_context_runs_actual_primary_admission_and_planner_without_source_override(tmp_path, monkeypatch):
+    from horsehair import pipeline
+    config,root,release,identity=primary_rna_release_fixture(tmp_path)
+    # The framework's actual reader correctly refuses primary-bound measurements.
+    framework=assess_admission(config,root,'rna-full')['rna-full']
+    assert framework['status']=='pending' and 'immutable source release' in framework['reasons'][0]
+    monkeypatch.setenv('PYTHONPATH', str(Path(__file__).resolve().parents[1]/'src'))
+    result=pipeline._primary_execution(config,root,release,'admission','rna-full')['rna-full']
+    assert result['status']=='admitted' and result['source_sha256']==identity['sha256']
+    destination=root/'plans/qa-primary-rna-full'
+    planned=pipeline._primary_execution(config,root,release,'plan','rna-full',destination)
+    assert planned['release_identity']==identity and planned['config_sha256']==canonical_hash(config)
+    counts=next(task for task in planned['tasks'] if task['name']=='rna-counts')
+    assert counts['resources']['array']=='0-59%2' and counts['resources']['hours']==1
+    assert str(release) in Path(counts['script']).read_text()
+    receipt=json.loads((root/'state/pipeline/qa-primary/primary-context/rna-full-plan.json').read_text())
+    assert receipt['module_path']==str(release/'src/horsehair/slurm.py') and receipt['receipt_sha256']==digest(destination/'plan.json')
+
+
+def test_primary_context_preserves_real_agent_benchmark_and_hardware_guards(tmp_path):
+    from horsehair import agents,pipeline
+    config,root,release,identity=primary_rna_release_fixture(tmp_path)
+    evidence=root/'state/fixture-input.json';atomic_json(evidence,{'evidence_class':'generated software fixture'})
+    path=agents._directory(root,config['agents'])/'benchmark-training/foraging_rnn_900/training_benchmark.json'
+    record={'benchmark_kind':'training','full_config_sha256':canonical_hash(config),'source_sha256':identity['sha256'],
+        'benchmark_specification':agents.benchmark_specification(config),'task':'foraging','architecture':'rnn','seed':900,
+        'slurm_job_id':'1','device':'cpu','source_result_paths':[str(evidence.resolve())],
+        'source_result_hashes':{str(evidence.resolve()):digest(evidence)}}
+    atomic_json(path,record)
+    result=pipeline._primary_execution(config,root,release,'admission','agents-final')['agents-final']
+    assert result['source_sha256']==identity['sha256'] and result['status']=='pending'
+    assert 'single allocated CUDA device' in result['reasons'][0]
+    # A changed scientific configuration/specification still cannot pass the
+    # immutable primary checker merely because the controller knows its SHA.
+    record['benchmark_specification']['training_steps']+=1;atomic_json(path,record)
+    result=pipeline._primary_execution(config,root,release,'admission','agents-final')['agents-final']
+    assert result['status']=='pending' and 'configuration/source/specification changed' in result['reasons'][0]
+
+
+@pytest.mark.parametrize('fault',['source','configuration','root'])
+def test_primary_context_rejects_drift_before_writing_any_admission(tmp_path,fault):
+    from horsehair import pipeline
+    config,root,release,_=primary_rna_release_fixture(tmp_path)
+    if fault=='source':(release/'src/horsehair/agents.py').write_text('# Changed generated fixture\n')
+    elif fault=='configuration':config['resources']['cpu_ceiling']-=1
+    else:config['paths']['root']=str(root.parent)
+    with pytest.raises(ValueError,match='Primary execution'):
+        pipeline._primary_execution(config,root,release,'admission','rna-full')
+    assert not (root/'state/admission-rna-full.json').exists()
+
+
+def test_primary_child_failure_never_reuses_stale_positive_admission(tmp_path,monkeypatch):
+    from types import SimpleNamespace
+    from horsehair import pipeline
+    config,root,release,identity=primary_rna_release_fixture(tmp_path)
+    path=root/'state/admission-rna-full.json'
+    atomic_json(path,{'phase':'rna-full','status':'admitted','config_sha256':canonical_hash(config),
+                      'source_sha256':identity['sha256'],'evidence_class':'generated stale QA receipt'})
+    original=path.read_bytes()
+    def failed(command,**kwargs):
+        assert command[:2]==[pipeline.sys.executable,'-s']
+        assert kwargs['cwd']==release and kwargs['timeout']==900
+        assert kwargs['env']['PYTHONNOUSERSITE']=='1'
+        return SimpleNamespace(returncode=1,stdout='',stderr='Generated child failure')
+    monkeypatch.setattr(pipeline.subprocess,'run',failed)
+    with pytest.raises(RuntimeError,match='no framework fallback'):
+        pipeline._primary_execution(config,root,release,'admission','rna-full')
+    assert path.read_bytes()==original
+    assert not (root/'state/pipeline/qa-primary/primary-context/rna-full-admission.json').exists()

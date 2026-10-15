@@ -190,10 +190,18 @@ def _check_script(task, original, execution, root, runtime=None, controller_prim
         if len(old_commands) != 1 or len(new_commands) != 1:
             raise ValueError('Maintenance replacement must retain the original CLI pipeline command')
         before, after = shlex.split(old_commands[0]), shlex.split(new_commands[0])
-        if (len(after) != len(before) + 2 or after[:-2] != before
-                or after[-2] != '--primary-release' or Path(after[-1]).resolve() != controller_primary
-                or '--primary-release' in before):
-            raise ValueError('Maintenance controller may append only its exact verified --primary-release argument')
+        old_flags = [i for i, value in enumerate(before) if value == '--primary-release' or value.startswith('--primary-release=')]
+        new_flags = [i for i, value in enumerate(after) if value == '--primary-release' or value.startswith('--primary-release=')]
+        if old_flags:
+            index = old_flags[0]
+            valid = (len(old_flags) == len(new_flags) == 1 and before == after
+                     and before[index] == '--primary-release' and index + 1 < len(before)
+                     and Path(before[index + 1]).resolve() == controller_primary)
+        else:
+            valid = (len(new_flags) == 1 and len(after) == len(before) + 2 and after[:-2] == before
+                     and after[-2] == '--primary-release' and Path(after[-1]).resolve() == controller_primary)
+        if not valid:
+            raise ValueError('Maintenance controller must preserve its single exact verified --primary-release argument or append it once')
         text = text.replace(new_commands[0], old_commands[0], 1)
     if _normalized_script(text) != _normalized_script(old_text):
         raise ValueError("Replacement script changes the original command/environment contract")

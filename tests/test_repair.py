@@ -107,6 +107,45 @@ def test_qualified_maintenance_replaces_only_all_held_controllers_and_keeps_prim
     assert register(f) == result
 
 
+@pytest.mark.parametrize('fault',[None,'duplicate-old','duplicate-new','wrong-old','wrong-new','extra-argument'])
+def test_repeated_controller_maintenance_preserves_exact_single_primary_argument(tmp_path,fault):
+    f=controller_maintenance_fixture(tmp_path)
+    primary=shlex.quote(f['primary'].as_posix())
+    for item in f['old']['tasks']:
+        if item['name'] not in f['controllers']:continue
+        path=Path(item['script']);text=path.read_text()
+        index=int(item['name'].rsplit('-',1)[1])
+        text=text.replace('pipeline --segment '+str(index),
+                          'pipeline --segment '+str(index)+' --primary-release '+primary)
+        if item['name']=='pipeline-controller-0':
+            if fault=='duplicate-old':text=text.replace(' --primary-release '+primary,' --primary-release '+primary+' --primary-release '+primary)
+            if fault=='wrong-old':text=text.replace(' --primary-release '+primary,' --primary-release '+shlex.quote(f['framework'].as_posix()))
+        path.write_text(text);item['script_sha256']=canonical_hash(text)
+        f['ledger']['tasks'][item['name']]['script_sha256']=item['script_sha256']
+    f['ledger']['plan_sha256']=canonical_hash(f['old'])
+    atomic_json(f['plan_path'],f['old'])
+    ledger_path=f['root']/'state/v7-managed-initial-submission.json'
+    atomic_json(ledger_path,f['ledger'])
+    if fault in {'duplicate-new','wrong-new','extra-argument'}:
+        item=next(item for item in f['replacement']['tasks'] if item['name']=='pipeline-controller-0')
+        path=Path(item['script']);text=path.read_text()
+        if fault=='duplicate-new':text=text.replace(' --primary-release '+primary,' --primary-release '+primary+' --primary-release '+primary)
+        elif fault=='wrong-new':text=text.replace(' --primary-release '+primary,' --primary-release '+shlex.quote(f['framework'].as_posix()))
+        else:text=text.replace('pipeline --segment 0','pipeline --segment 0 --interval 30')
+        path.write_text(text);item['script_sha256']=canonical_hash(text)
+        f['submitted']['tasks'][item['name']]['script_sha256']=item['script_sha256']
+        f['submitted']['plan_sha256']=canonical_hash(f['replacement'])
+        atomic_json(f['replacement_path'],f['replacement'])
+        atomic_json(f['replacement_ledger'],f['submitted'])
+    before=f['plan_path'].read_bytes(),ledger_path.read_bytes()
+    if fault is None:
+        assert register(f)['status']=='complete'
+    else:
+        with pytest.raises(ValueError,match='single exact verified'):
+            register(f)
+        assert (f['plan_path'].read_bytes(),ledger_path.read_bytes())==before and not f['calls']
+
+
 @pytest.mark.parametrize('fault', ['missing-primary', 'primary-source', 'framework-source', 'framework-config',
     'missing-qualification', 'qualification-pin', 'qualification-source', 'qualification-config',
     'qualification-primary', 'qualification-skipped', 'qualification-junit', 'missing-native', 'failed-native',

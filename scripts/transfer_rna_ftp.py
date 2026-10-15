@@ -20,7 +20,8 @@ import socket
 import subprocess
 import sys
 import time
-from types import SimpleNamespace
+from types import FunctionType, SimpleNamespace
+import requests
 from urllib.parse import unquote, urlsplit
 
 SOURCES = ['ant_rna', 'ant_reference', 'mantis_rna', 'fly_reference']
@@ -327,6 +328,146 @@ def download_ftp_asset(item, root, helpers, *, ftp_factory=ftplib.FTP, deadline=
             return result
 
 
+def _https_transient(error):
+    """Original acquisition wraps network exceptions; local I/O never retries."""
+    if isinstance(error, requests.RequestException):
+        cause = error
+    elif isinstance(error, RuntimeError) and str(error).startswith('Transfer failed for '):
+        cause = error.__cause__
+    else:
+        return False
+    if isinstance(cause, (requests.ConnectionError, requests.Timeout,
+                          requests.exceptions.ChunkedEncodingError)):
+        return True
+    return isinstance(cause, requests.HTTPError) and cause.response is not None and cause.response.status_code in {429, 500, 502, 503, 504}
+
+
+def download_https_asset(item, root, helpers, *, session, deadline, sleeper=time.sleep,
+                         attempts=MAX_ATTEMPTS):
+    """Explicit quarantined case only, using the original HTTPS transfer code.
+
+    Isolated function globals strengthen verification and atomic promotion: its
+    stream digests must equal an independent disk read before original provider
+    verification, and an existing final file cannot be overwritten. The
+    immutable primary module is never patched.
+    Every network retry rechecks its checkpointed prefix and original validators.
+    """
+    ftp_route(item)  # Identical canonical ENA FASTQ/size/MD5 whitelist.
+    if type(attempts) is not int or not 1 <= attempts <= MAX_ATTEMPTS:
+        raise ValueError('Finite HTTPS recovery requires 1..6 attempts')
+    if session.trust_env is not False:
+        raise TransferError('Canonical HTTPS recovery requires proxy-independent public transport')
+    core, acquire = helpers.core, helpers.acquire
+    root = Path(root).resolve()
+    if (root/item['relative_path']).is_symlink():
+        raise TransferError('A source target symlink cannot be adopted by HTTPS recovery')
+    target = acquire.safe_destination(root, item['relative_path'])
+    if target.exists(): return acquire.verify_file(target, item)
+    partial = target.with_name(target.name+'.part'); sidecar = partial.with_name(partial.name+'.json')
+    checkpoint = target.with_name(target.name+'.https-prefix.json')
+    history_path = target.with_name(target.name+'.https-retries.json')
+    promotion = target.with_name(target.name+'.https.json')
+    diagnostic = partial.with_name(partial.name+'.https-integrity.json')
+    signature = acquire.canonical_hash(item)
+    for path in (target, partial, sidecar, checkpoint, history_path, promotion, diagnostic):
+        if path.is_symlink(): raise TransferError('A foreign HTTPS recovery symlink must be preserved')
+    if promotion.exists(): raise TransferError('Preserve existing HTTPS promotion history when final source is absent')
+    history = core.read_json(history_path) if history_path.exists() else {
+        'asset_hash': signature, 'canonical_url': item['url'], 'protocol': 'https', 'attempts': []}
+    if (history.get('asset_hash') != signature or history.get('canonical_url') != item['url']
+        or history.get('protocol') != 'https' or not isinstance(history.get('attempts'), list)):
+        raise TransferError('HTTPS attempt history differs from the frozen canonical source')
+    last_verification = {}
+
+    def check_deadline():
+        if time.monotonic() >= deadline:
+            raise TransferDeadline('Finite HTTPS worker deadline reached; partial retained')
+
+    def prefix_binding(*, verify=False):
+        if not partial.exists() and not sidecar.exists():
+            if checkpoint.exists(): raise TransferError('HTTPS prefix checkpoint exists without its original bytes')
+            return
+        if (partial.is_symlink() or sidecar.is_symlink() or not partial.is_file() or not sidecar.is_file()):
+            raise TransferError('Ordinary HTTPS prefix and original transfer sidecar are required')
+        meta = core.read_json(sidecar); before = _snapshot(partial); meta_hash = core.digest(sidecar)
+        if (meta.get('asset_hash') != signature or meta.get('url') != item['url']
+            or before['bytes'] > item['bytes'] or not (meta.get('etag') or meta.get('last_modified'))
+            or meta.get('transfer_response', {}).get('content_encoding') != 'identity'):
+            raise TransferError('HTTPS prefix lacks unchanged canonical asset/representation/validator evidence')
+        check_deadline(); hashes = acquire.file_digests(partial, {'md5', 'sha256'}); check_deadline()
+        record = {'asset_hash': signature, 'canonical_url': item['url'], 'protocol': 'https',
+                  'snapshot': before, 'sidecar_sha256': meta_hash, 'prefix_digests': hashes}
+        if _snapshot(partial) != before or core.digest(sidecar) != meta_hash:
+            raise TransferError('HTTPS prefix changed during independent checkpoint verification')
+        if verify:
+            if not checkpoint.is_file() or core.read_json(checkpoint) != record:
+                raise TransferError('HTTPS prefix/validators changed before resume; do not append')
+        else:
+            if before['bytes'] == item['bytes']:
+                acquire.verify_file(partial, item, computed_digests=hashes)
+            core.atomic_json(checkpoint, record)
+
+    def independent_verify(path, source, *, computed_digests=None):
+        check_deadline()
+        disk = acquire.file_digests(path, {'md5', 'sha256'}); check_deadline()
+        same = computed_digests is None or computed_digests == disk
+        last_verification.update(asset_id=source['asset_id'], asset_hash=signature,
+            canonical_url=item['url'], protocol='https', provider_checksum=item['provider_checksum'],
+            bytes=Path(path).stat().st_size, stream_digests=computed_digests,
+            independent_disk_digests=disk, stream_equals_disk=same,
+            original_transfer_response=core.read_json(sidecar) if sidecar.is_file() else None)
+        core.atomic_json(diagnostic, last_verification)
+        if not same: raise TransferError('HTTPS stream/disk digests differ; preserve failed bytes')
+        return acquire.verify_file(path, source, computed_digests=disk)
+
+    original = acquire.download_asset
+    class NoOverwritePath(type(Path())):
+        def replace(self, destination):
+            os.link(self, destination)
+            self.unlink()
+            return Path(destination)
+    def atomic_destination(directory, relative):
+        return NoOverwritePath(acquire.safe_destination(directory, relative))
+    isolated = FunctionType(original.__code__, {**original.__globals__, 'verify_file': independent_verify,
+                            'safe_destination': atomic_destination},
+                            original.__name__, original.__defaults__, original.__closure__)
+    isolated.__kwdefaults__ = dict(original.__kwdefaults__ or {})
+    for attempt in range(1, attempts+1):
+        check_deadline(); prefix_binding(verify=True)
+        try:
+            result = isolated(item, root, session=session, attempts=1,
+                bandwidth_bytes_per_second=BANDWIDTH, max_seconds=min(ATTEMPT_SECONDS, deadline-time.monotonic()))
+        except BaseException as error:
+            finite_attempt = str(error) == 'Finite transfer runtime reached; partial transfer retained for resumption'
+            transient = _https_transient(error) or finite_attempt
+            retry = transient and attempt < attempts
+            if retry:
+                try: prefix_binding()
+                except BaseException as checkpoint_error:
+                    history['attempts'].append({'attempt': attempt, 'error_type': type(error).__name__,
+                        'error': str(error), 'retry_scheduled': False,
+                        'checkpoint_error_type': type(checkpoint_error).__name__, 'checkpoint_error': str(checkpoint_error)})
+                    core.atomic_json(history_path, history)
+                    raise checkpoint_error from error
+            history['attempts'].append({'attempt': attempt, 'error_type': type(error).__name__,
+                'error': str(error), 'transient_transport': transient, 'retry_scheduled': retry,
+                'partial_retained': partial.exists(), 'verification': dict(last_verification)})
+            core.atomic_json(history_path, history)
+            if not retry: raise
+            check_deadline(); delay = BACKOFF_SECONDS[attempt-1]
+            if deadline-time.monotonic() <= delay:
+                raise TransferDeadline('Finite HTTPS budget cannot admit another attempt') from error
+            sleeper(delay)
+        else:
+            history['attempts'].append({'attempt': attempt, 'status': 'verified', 'verification': dict(last_verification)})
+            core.atomic_json(history_path, history)
+            promoted = {**result, **last_verification, 'path': str(target), 'independent_disk_verified': True,
+                        'transfer_route': item['url'], 'primary_acquisition_code_unchanged': True}
+            with promotion.open('x') as output:
+                json.dump(promoted, output, indent=2, sort_keys=True); output.flush(); os.fsync(output.fileno())
+            return promoted
+
+
 def _module(name, path):
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
@@ -429,6 +570,20 @@ def _previous_transfer_release(context, proof, failed):
     return str(previous)
 
 
+def _quarantined_previous_transfer_release(context, proof, failed):
+    """Bind an older immutable proof without rewriting its preserved bytes."""
+    if proof.get('previous_maintenance_release'):
+        return _previous_transfer_release(context, proof, failed)
+    sha = failed.get('maintenance_source_sha256', '')
+    if not re.fullmatch('[0-9a-f]{64}', sha):
+        raise TransferError('Failed worker has no exact retained maintenance source identity')
+    candidates = [path for path in context.primary.resolve().parent.glob('*-'+sha[:12])
+                  if path.is_dir() and not path.is_symlink()]
+    if len(candidates) != 1:
+        raise TransferError('Exactly one retained failed-worker release is required; original proof remains unchanged')
+    return _previous_transfer_release(context, {**proof, 'previous_maintenance_release': str(candidates[0])}, failed)
+
+
 def prepare_resume_case(context, case_dir, worker_proof_path, terminal_wait_job, *, runner=subprocess.run):
     """Scheduled byte verification for a later network interruption; no quarantine.
 
@@ -511,6 +666,9 @@ def preflight(context, case_dir, *, runner=subprocess.run):
         or ready.get('config_sha256') != context.identity['config_sha256'] or ready.get('old_worker_host') != 'narval1'):
         raise TransferError('Preservation is not bound to unchanged primary source/configuration')
     resume = ready.get('recovery_mode') == 'verified_ftp_prefix_resume'
+    case_transport = ready.get('case_transport', 'ftp')
+    if case_transport not in {'ftp', 'canonical_https'} or resume and case_transport != 'ftp':
+        raise TransferError('Explicit canonical HTTPS is limited to a quarantined case asset')
     native = (native_resume_job(ready['prefix_proof_job_id'], completed=True, runner=runner)
               if resume else native_completed(ready['slurm_job_id'], runner))
     old_pid = ready['old_worker_pid']
@@ -545,6 +703,18 @@ def preflight(context, case_dir, *, runner=subprocess.run):
     if (proof.get('asset_sha256') != acquire.canonical_hash(asset)
         or proof.get('manifest_hash') != manifest['manifest_hash']):
         raise TransferError('Provider proof is not bound to the frozen asset/manifest')
+    previous_case_release = None
+    if case_transport == 'canonical_https':
+        previous_case_release = _quarantined_previous_transfer_release(context, proof, failed)
+        native_resume_job(ready['slurm_job_id'], completed=True, runner=runner)
+        probe = proof.get('provider_metadata', {}).get('canonical_https_probe', {})
+        span = min(65536, asset['bytes'])
+        if (probe.get('url') != asset['url'] or probe.get('status_code') != 206
+            or probe.get('content_range') != f"bytes 0-{span-1}/{asset['bytes']}"
+            or type(probe.get('received_bytes')) is not int or probe['received_bytes'] != span
+            or probe.get('content_encoding') != 'identity'
+            or not re.fullmatch('[0-9a-f]{64}', probe.get('sha256', ''))):
+            raise TransferError('Canonical HTTPS case lacks a pinned direct identity-encoded range probe')
     if resume:
         previous = _previous_transfer_release(context, proof, failed)
         prefix_path = ordinary(ready['prefix_proof_path'], root); prefix = core.read_json(prefix_path)
@@ -598,7 +768,8 @@ def preflight(context, case_dir, *, runner=subprocess.run):
         or core.read_json(journal) != q or preserved.stat().st_mtime_ns > journal.stat().st_mtime_ns):
         raise TransferError('Preserved failed bytes/sidecar/journal changed')
     return SimpleNamespace(case_dir=case_dir, ready=ready, ready_path=ready_path,
-        proof_path=proof_path, failed_path=failed_path, manifest=manifest, selected=selected, asset=asset, native=native)
+        proof_path=proof_path, failed_path=failed_path, manifest=manifest, selected=selected, asset=asset, native=native,
+        previous_maintenance_release=previous_case_release)
 
 
 def _owned_guard(path, owner, action):
@@ -618,6 +789,8 @@ def case_native_identity(checked):
             'previous_maintenance_source_sha256': checked.ready['previous_maintenance_source_sha256'],
             'previous_transfer_script_sha256': checked.ready['previous_transfer_script_sha256']}
     return {'recovery_mode': 'quarantined_invalid_partial',
+        'case_asset_id': checked.asset['asset_id'], 'case_transport': checked.ready.get('case_transport', 'ftp'),
+        'previous_maintenance_release': getattr(checked, 'previous_maintenance_release', None),
         'preservation_job_id': checked.ready['slurm_job_id'], 'preservation_native_proof': checked.native}
 
 
@@ -714,7 +887,10 @@ def worker(context, case_dir, restart_id):
             for item in ordered:
                 if time.monotonic()>=deadline:raise TransferDeadline('Finite data deadline reached before next file')
                 if item.get('kind')=='fastq':
-                    result=download_ftp_asset(item,root,context,deadline=deadline)
+                    if item['asset_id']==checked.asset['asset_id'] and checked.ready.get('case_transport')=='canonical_https':
+                        result=download_https_asset(item,root,context,session=session,deadline=deadline)
+                    else:
+                        result=download_ftp_asset(item,root,context,deadline=deadline)
                 else:
                     result=acquire.download_asset(item,root,session=session,attempts=1,bandwidth_bytes_per_second=BANDWIDTH,
                         max_seconds=deadline-time.monotonic())

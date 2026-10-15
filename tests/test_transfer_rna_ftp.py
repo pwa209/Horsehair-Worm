@@ -37,7 +37,7 @@ def source(body=b'compressed archive fixture bytes', name='SRR123_1.fastq.gz'):
         url='https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR123/001/SRR123/' + name,
         version='PRJNA-fixture', rights='INSDC public archive', size=len(body),
         checksum='md5:' + hashlib.md5(body).hexdigest(), kind='fastq', eligible=True,
-        run_accession='SRR123')
+        run_accession='SRR123', crosswalk_hash='c'*64)
 
 
 class FTP:
@@ -657,3 +657,250 @@ def test_resume_case_and_launch_journals_are_never_replayed(resume_case):
     case = resume_case; prepare(case)
     with pytest.raises(transport.TransferError, match='never overwrite'):
         prepare(case)
+
+
+class HTTPSResponse:
+    def __init__(self, item, body, *, status=200, offset=0, fail=None, headers=None):
+        self.status_code, self.url, self.body, self.fail = status, item['url'], body, fail
+        self.headers = {'Content-Length': str(item['bytes']-offset), 'ETag': '"stable-source"',
+            'Last-Modified': 'Sun, 23 Nov 2025 20:28:38 GMT', 'Content-Encoding': 'identity'}
+        if status == 206:
+            self.headers['Content-Range'] = f"bytes {offset}-{item['bytes']-1}/{item['bytes']}"
+        if headers: self.headers.update(headers)
+    def __enter__(self): return self
+    def __exit__(self, *_args): return False
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise transport.requests.HTTPError('fixture HTTP error', response=self)
+    def iter_content(self, chunk_size):
+        yield self.body
+        if self.fail: raise self.fail
+
+
+class HTTPSSession:
+    def __init__(self, responses):
+        self.responses, self.calls, self.trust_env, self.headers = iter(responses), [], False, {}
+    def get(self, url, **kwargs):
+        self.calls.append((url, kwargs)); return next(self.responses)
+
+
+def https_download(item, root, session, **kwargs):
+    return transport.download_https_asset(item, root, HELPERS, session=session,
+        deadline=time.monotonic()+3600, sleeper=lambda _: None, **kwargs)
+
+
+def test_explicit_https_uses_original_transfer_code_with_independent_disk_verification(tmp_path):
+    body = b'123456789'; item = source(body); original = acquire.download_asset
+    session = HTTPSSession([HTTPSResponse(item, body)])
+    result = https_download(item, tmp_path, session)
+    assert acquire.download_asset is original and original.__globals__['verify_file'] is acquire.verify_file
+    assert result['independent_disk_verified'] and result['stream_digests'] == result['independent_disk_digests']
+    assert result['stream_digests']['md5'] == item['provider_checksum'].split(':')[1]
+    assert result['original_transfer_response']['transfer_response']['content_encoding'] == 'identity'
+    assert result['path'] == str(paths(tmp_path, item)[0]) and paths(tmp_path, item)[0].read_bytes() == body
+    assert session.calls[0][1]['headers']['Accept-Encoding'] == 'identity'
+    assert not paths(tmp_path, item)[1].exists()
+
+
+def test_https_network_retry_rehashes_checkpoint_and_preserves_range_validators(tmp_path):
+    body = b'123456789'; item = source(body)
+    session = HTTPSSession([HTTPSResponse(item, body[:3], fail=transport.requests.Timeout('socket stall')),
+                            HTTPSResponse(item, body[3:], status=206, offset=3)])
+    result = https_download(item, tmp_path, session)
+    assert result['sha256'] == hashlib.sha256(body).hexdigest() and len(session.calls) == 2
+    assert session.calls[1][1]['headers']['Range'] == 'bytes=3-'
+    assert session.calls[1][1]['headers']['If-Range'] == '"stable-source"'
+    target = paths(tmp_path, item)[0]
+    history = core.read_json(target.with_name(target.name+'.https-retries.json'))
+    assert history['attempts'][0]['retry_scheduled'] and history['attempts'][1]['status'] == 'verified'
+
+
+def test_https_checksum_failure_never_retries_or_relaxes_provider_pin(tmp_path):
+    item = source(b'12345'); session = HTTPSSession([HTTPSResponse(item, b'abcde')])
+    with pytest.raises(acquire.AcquisitionError, match='checksum'):
+        https_download(item, tmp_path, session)
+    target, partial, sidecar = paths(tmp_path, item)
+    assert len(session.calls) == 1 and not target.exists() and partial.read_bytes() == b'abcde'
+    proof = core.read_json(partial.with_name(partial.name+'.https-integrity.json'))
+    assert proof['stream_digests'] == proof['independent_disk_digests']
+    assert proof['stream_digests']['md5'] != item['provider_checksum'].split(':')[1]
+    assert sidecar.exists()
+
+
+def test_https_independent_disk_disagreement_stops_before_promotion(tmp_path, monkeypatch):
+    item = source(b'12345'); real = acquire.file_digests
+    def corrupted(path, algorithms): Path(path).write_bytes(b'abcde'); return real(path, algorithms)
+    monkeypatch.setattr(acquire, 'file_digests', corrupted)
+    session = HTTPSSession([HTTPSResponse(item, b'12345')])
+    with pytest.raises(transport.TransferError, match='stream/disk'):
+        https_download(item, tmp_path, session)
+    assert not paths(tmp_path, item)[0].exists() and len(session.calls) == 1
+
+
+def test_https_corrupted_prefix_between_attempts_cannot_be_appended(tmp_path):
+    body = b'123456789'; item = source(body)
+    session = HTTPSSession([HTTPSResponse(item, body[:3], fail=transport.requests.Timeout('socket stall'))])
+    def corrupt(_delay): paths(tmp_path, item)[1].write_bytes(b'abc')
+    with pytest.raises(transport.TransferError, match='before resume'):
+        transport.download_https_asset(item, tmp_path, HELPERS, session=session,
+            deadline=time.monotonic()+3600, sleeper=corrupt)
+    assert len(session.calls) == 1 and paths(tmp_path, item)[1].read_bytes() == b'abc'
+
+
+@pytest.mark.parametrize('headers,message', [({'Content-Encoding': 'gzip'}, 'encoded'),
+    ({'Content-Length': '4'}, 'Content-Length'),
+    ({'Content-Range': 'bytes 2-8/9'}, 'incorrect range'), ({'ETag': '"changed"'}, 'ETag')])
+def test_https_original_range_encoding_length_and_validator_guards_remain_active(tmp_path, headers, message):
+    body = b'123456789'; item = source(body)
+    session = HTTPSSession([HTTPSResponse(item, body[:3], fail=transport.requests.Timeout('socket stall')),
+        HTTPSResponse(item, body[3:], status=206, offset=3, headers=headers)])
+    with pytest.raises(acquire.AcquisitionError, match=message): https_download(item, tmp_path, session)
+    assert not paths(tmp_path, item)[0].exists() and paths(tmp_path, item)[1].read_bytes() == body[:3]
+
+
+def test_https_promotion_is_exclusive_and_preserves_other_final_owner(tmp_path, monkeypatch):
+    body = b'12345'; item = source(body); target = paths(tmp_path, item)[0]; real = transport.os.link
+    def race(src, dst):
+        if Path(dst) == target: target.write_bytes(b'foreign owner')
+        return real(src, dst)
+    monkeypatch.setattr(transport.os, 'link', race)
+    with pytest.raises(acquire.AcquisitionError, match='Transfer failed'):
+        https_download(item, tmp_path, HTTPSSession([HTTPSResponse(item, body)]))
+    assert target.read_bytes() == b'foreign owner' and paths(tmp_path, item)[1].read_bytes() == body
+
+
+@pytest.mark.parametrize('fault', ['local', 'permanent-http', 'global', 'proxy'])
+def test_https_local_failure_permanent_http_deadline_and_proxy_are_not_retried(tmp_path, monkeypatch, fault):
+    item = source(b'12345'); response = HTTPSResponse(item, b'12345', status=404 if fault == 'permanent-http' else 200)
+    session = HTTPSSession([response])
+    if fault == 'local':
+        def fail(*_a, **_k): raise OSError(errno.ENOSPC, 'full filesystem')
+        monkeypatch.setattr(transport.os, 'link', fail)
+    if fault == 'global': monkeypatch.setattr(transport.time, 'monotonic', lambda: 100.)
+    if fault == 'proxy': session.trust_env = True
+    deadline = 99. if fault == 'global' else time.monotonic()+3600
+    with pytest.raises((transport.TransferError, transport.TransferDeadline, acquire.AcquisitionError)):
+        transport.download_https_asset(item, tmp_path, HELPERS, session=session, deadline=deadline,
+            sleeper=lambda _: pytest.fail('This failure must not retry'))
+    assert len(session.calls) <= 1
+
+
+@pytest.fixture
+def https_case(preserved_case):
+    case = preserved_case
+    previous = case.context.primary.parent/'retained-failed-worker-release'
+    (previous/'scripts').mkdir(parents=True); (previous/'configs').mkdir()
+    (previous/'scripts/transfer_rna_ftp.py').write_bytes(b'retained failed worker acquisition code')
+    core.atomic_json(previous/'configs/study.json', case.context.config)
+    identity = {'source_identity': core.source_identity(previous), 'config_sha256': case.context.identity['config_sha256']}
+    core.atomic_json(previous/'release.json', identity)
+    case.failed.update(source_identity=case.context.identity['source_identity']['sha256'],
+        config_sha256=case.context.identity['config_sha256'], maintenance_source_sha256=identity['source_identity']['sha256'],
+        transfer_script_sha256=core.digest(previous/'scripts/transfer_rna_ftp.py'))
+    core.atomic_json(case.root/'state/transfer-rna.json', case.failed)
+    case.proof.update(failed_transfer=case.failed, failed_transfer_sha256=core.digest(case.root/'state/transfer-rna.json'),
+        previous_maintenance_release=str(previous))
+    span = min(65536, case.item['bytes'])
+    case.proof['provider_metadata']['canonical_https_probe'] = {'url': case.item['url'], 'status_code': 206,
+        'content_range': f"bytes 0-{span-1}/{case.item['bytes']}", 'received_bytes': span,
+        'content_encoding': 'identity', 'sha256': 'd'*64}
+    core.atomic_json(case.case/'provider-worker-proof.json', case.proof)
+    case.ready.update(case_transport='canonical_https', failed_transfer_sha256=case.proof['failed_transfer_sha256'],
+        provider_proof_sha256=core.digest(case.case/'provider-worker-proof.json'))
+    core.atomic_json(case.case/'ready.json', case.ready)
+    old_runner = case.runner
+    def runner(command, **kwargs):
+        if command[0] == 'sacct':
+            return SimpleNamespace(stdout=f"{command[2]}|COMPLETED|0:0|pwa209|def-ptewarie_cpu|2026-10-15T06:00:00|2026-10-15T06:01:00|60|2|nc10443\n")
+        return old_runner(command, **kwargs)
+    case.runner = runner; case.previous = previous
+    return case
+
+
+def test_https_case_preflight_binds_direct_probe_and_original_failed_worker_release(https_case):
+    case = https_case; checked = transport.preflight(case.context, case.case, runner=case.runner)
+    result = transport.launch(case.context, case.case, 'https-case', runner=case.runner,
+                              popen=lambda *_a, **_k: SimpleNamespace(pid=777))
+    assert result['case_transport'] == 'canonical_https' and result['case_asset_id'] == case.item['asset_id']
+    assert result['previous_maintenance_release'] == str(case.previous.resolve())
+    assert Path(checked.ready['quarantine']['preserved_partial']).read_bytes() == b'abcde'
+
+
+def test_https_retained_release_resolution_does_not_rewrite_older_native_proof(https_case):
+    case = https_case; case.proof.pop('previous_maintenance_release')
+    core.atomic_json(case.case/'provider-worker-proof.json', case.proof)
+    case.ready['provider_proof_sha256'] = core.digest(case.case/'provider-worker-proof.json')
+    core.atomic_json(case.case/'ready.json', case.ready)
+    original = (case.case/'provider-worker-proof.json').read_bytes(), (case.case/'ready.json').read_bytes()
+    sibling = case.previous.parent/('retained-'+case.failed['maintenance_source_sha256'][:12])
+    for relative in ('scripts/transfer_rna_ftp.py', 'configs/study.json', 'release.json'):
+        dest = sibling/relative; dest.parent.mkdir(parents=True, exist_ok=True); dest.write_bytes((case.previous/relative).read_bytes())
+    checked = transport.preflight(case.context, case.case, runner=case.runner)
+    assert checked.previous_maintenance_release == str(sibling.resolve())
+    assert original == ((case.case/'provider-worker-proof.json').read_bytes(), (case.case/'ready.json').read_bytes())
+
+
+@pytest.mark.parametrize('fault', ['url', 'range', 'encoding', 'bytes', 'previous', 'native'])
+def test_https_case_preflight_refuses_changed_probe_old_source_or_native_evidence(https_case, fault):
+    case = https_case; runner = case.runner
+    probe = case.proof['provider_metadata']['canonical_https_probe']
+    if fault == 'url': probe['url'] = 'https://other.example/source.fastq.gz'
+    if fault == 'range': probe['content_range'] = 'bytes 1-4/5'
+    if fault == 'encoding': probe['content_encoding'] = 'gzip'
+    if fault == 'bytes': probe['received_bytes'] = True
+    if fault == 'previous': (case.previous/'scripts/transfer_rna_ftp.py').write_bytes(b'changed code')
+    if fault == 'native':
+        runner = lambda *_a, **_k: SimpleNamespace(stdout='5524039|FAILED|1:0|pwa209|def-ptewarie_cpu|2026-10-15T06:00:00|2026-10-15T06:01:00|60|2|nc10443\n')
+    core.atomic_json(case.case/'provider-worker-proof.json', case.proof)
+    case.ready['provider_proof_sha256'] = core.digest(case.case/'provider-worker-proof.json')
+    core.atomic_json(case.case/'ready.json', case.ready)
+    with pytest.raises(transport.TransferError): transport.preflight(case.context, case.case, runner=runner)
+    assert not list(case.case.glob('restart-*'))
+
+
+def test_worker_routes_only_explicit_quarantined_case_asset_over_https(https_case, monkeypatch):
+    case = https_case; second = source(b'54321', 'SRR123_2.fastq.gz')
+    run = setup_worker(case, monkeypatch, pilot_ids=[case.item['asset_id'], second['asset_id']],
+                       ftp_body=b'54321', extra_assets=[second])
+    calls = []
+    def https(item, root, context, **kwargs):
+        calls.append(item['asset_id']); assert kwargs['session'] is run.session
+        target = acquire.safe_destination(root, item['relative_path']); target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open('xb') as output: output.write(b'12345')
+        return acquire.verify_file(target, item)
+    monkeypatch.setattr(transport, 'download_https_asset', https)
+    result = transport.worker(case.context, case.case, 'worker-fixture')
+    assert calls == [case.item['asset_id']] and run.ftp_calls == [second['asset_id']]
+    assert result['case_transport'] == 'canonical_https' and result['status'] == 'complete'
+
+
+def test_https_temporary_http_failure_has_exact_finite_retry_budget(tmp_path):
+    item = source(b'12345'); session = HTTPSSession([HTTPSResponse(item, b'', status=503) for _ in range(6)])
+    delays = []
+    with pytest.raises(acquire.AcquisitionError, match='Transfer failed'):
+        transport.download_https_asset(item, tmp_path, HELPERS, session=session,
+            deadline=time.monotonic()+3600, sleeper=delays.append)
+    assert len(session.calls) == 6 and delays == [10, 20, 40, 60, 60]
+    assert not paths(tmp_path, item)[0].exists() and not paths(tmp_path, item)[1].exists()
+
+
+def test_https_provider_checksum_failure_with_network_cause_is_still_permanent(tmp_path, monkeypatch):
+    item = source(b'12345'); session = HTTPSSession([HTTPSResponse(item, b'12345')])
+    def provider_failure(*_a, **_k):
+        raise acquire.AcquisitionError('Provider checksum mismatch for fixture') from transport.requests.Timeout('earlier network issue')
+    monkeypatch.setattr(acquire, 'verify_file', provider_failure)
+    with pytest.raises(acquire.AcquisitionError, match='Provider checksum'):
+        transport.download_https_asset(item, tmp_path, HELPERS, session=session,
+            deadline=time.monotonic()+3600, sleeper=lambda _: pytest.fail('Integrity must not retry'))
+    assert len(session.calls) == 1 and paths(tmp_path, item)[1].read_bytes() == b'12345'
+
+
+def test_https_existing_target_symlink_is_rejected_before_cache_verification(tmp_path, monkeypatch):
+    item = source(b'12345'); target, _, _ = paths(tmp_path, item); target.parent.mkdir(parents=True)
+    target.write_bytes(b'12345')
+    original = Path.is_symlink
+    monkeypatch.setattr(Path, 'is_symlink', lambda path: Path(path) == target or original(path))
+    session = HTTPSSession([])
+    with pytest.raises(transport.TransferError, match='target symlink'):
+        https_download(item, tmp_path, session)
+    assert session.calls == [] and target.read_bytes() == b'12345'

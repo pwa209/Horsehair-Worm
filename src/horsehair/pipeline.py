@@ -12,7 +12,9 @@ import math
 import os
 import re
 import subprocess
+import sys
 import time
+import uuid
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -389,6 +391,105 @@ def _initial_ledger(root, release_id):
     return path, read_json(path)
 
 
+def _primary_execution(config, root, release, action, phase, directory=None):
+    """Run source-sensitive admission/planning in the immutable primary package.
+
+    A maintenance controller has different source bytes. Passing only a primary
+    hash into its admission code would still import framework benchmark helpers
+    and its planner would validate against the framework again. An isolated
+    interpreter imports the complete verified primary package instead. This
+    operation never submits jobs or changes scientific inputs/receipts.
+    """
+    root, release = Path(root).resolve(), Path(release).resolve()
+    identity = read_json(release/'release.json')
+    if (identity.get('source_identity') != source_identity(release)
+            or identity.get('config_sha256') != canonical_hash(config)
+            or read_json(release/'configs/study.json') != config
+            or Path(config['paths']['root']).resolve() != root
+            or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*', identity.get('release_id', ''))):
+        raise ValueError('Primary execution source/configuration/study namespace changed')
+    if action not in {'admission', 'plan'} or not re.fullmatch(r'[a-z0-9][a-z0-9-]*', phase):
+        raise ValueError('Unsupported primary execution operation/phase')
+    if action == 'plan':
+        directory = Path(directory).resolve()
+        if not directory.is_relative_to(root/'plans') or directory.exists():
+            raise ValueError('Primary plan output must be a fresh study plan directory')
+    nonce = uuid.uuid4().hex
+    request = {'release':str(release), 'root':str(root), 'source_identity':identity['source_identity'],
+               'config':config, 'action':action, 'phase':phase, 'nonce':nonce,
+               'directory':str(directory) if directory is not None else None}
+    program = r'''
+import importlib,json,sys
+from pathlib import Path
+request=json.load(sys.stdin)
+release=Path(request['release']).resolve()
+sys.path.insert(0,str(release/'src'))
+import horsehair
+from horsehair import core
+if (Path(horsehair.__file__).resolve()!=release/'src/horsehair/__init__.py'
+        or Path(core.__file__).resolve()!=release/'src/horsehair/core.py'):
+    raise ValueError('Primary package/core imported from another release')
+def verify():
+    record=core.read_json(release/'release.json')
+    if (record['source_identity']!=core.source_identity(release) or record['source_identity']!=request['source_identity']
+            or record['config_sha256']!=core.canonical_hash(request['config'])
+            or core.read_json(release/'configs/study.json')!=request['config']
+            or Path(request['config']['paths']['root']).resolve()!=Path(request['root']).resolve()):
+        raise ValueError('Primary child source/configuration/study namespace changed')
+verify()
+module_name={'admission':'admission','plan':'slurm'}[request['action']]
+module=importlib.import_module('horsehair.'+module_name)
+if Path(module.__file__).resolve()!=release/'src/horsehair'/(module_name+'.py'):
+    raise ValueError('Primary operation imported from another release')
+if request['action']=='admission':
+    result=module.assess_admission(request['config'],Path(request['root']),phase=request['phase'])
+else:
+    result=module.plan(request['config'],release,Path(request['directory']),request['phase'])
+verify()
+print('HHW_PRIMARY_CONTEXT_RESULT '+json.dumps({'nonce':request['nonce'],'action':request['action'],
+      'phase':request['phase'],'source_identity':request['source_identity'],
+      'config_sha256':core.canonical_hash(request['config']),'module_path':str(Path(module.__file__).resolve()),
+      'result':result},allow_nan=False),flush=True)
+'''
+    environment = dict(os.environ)
+    # Retain Alliance dependency-module paths (for example Arrow), while the
+    # child explicitly prepends/verifies the primary package and excludes user
+    # site packages. Do not substitute framework helpers in this process.
+    environment['PYTHONNOUSERSITE'] = '1'
+    response = subprocess.run([sys.executable, '-s', '-c', program], input=json.dumps(request, allow_nan=False),
+                              text=True, capture_output=True, cwd=release, env=environment, timeout=900)
+    if response.returncode:
+        raise RuntimeError('Verified primary '+action+' failed; no framework fallback: '+response.stderr[-4000:])
+    prefix = 'HHW_PRIMARY_CONTEXT_RESULT '
+    envelopes = [json.loads(line[len(prefix):]) for line in response.stdout.splitlines() if line.startswith(prefix)]
+    if len(envelopes) != 1:
+        raise ValueError('Primary execution returned no unique bound result')
+    envelope = envelopes[0]
+    expected_module = release/'src/horsehair'/('admission.py' if action == 'admission' else 'slurm.py')
+    if (envelope.get('nonce') != nonce or envelope.get('action') != action or envelope.get('phase') != phase
+            or envelope.get('source_identity') != identity['source_identity']
+            or envelope.get('config_sha256') != canonical_hash(config)
+            or Path(envelope.get('module_path', '')).resolve() != expected_module
+            or source_identity(release) != identity['source_identity'] or read_json(release/'release.json') != identity):
+        raise ValueError('Primary execution result/source/configuration identity changed')
+    result = envelope['result']
+    path = root/'state'/('admission-'+phase+'.json') if action == 'admission' else directory/'plan.json'
+    persisted = read_json(path)
+    returned = result.get(phase) if action == 'admission' else result
+    if (persisted != returned or persisted.get('config_sha256') != canonical_hash(config)
+            or persisted.get('phase') != phase
+            or (persisted.get('source_sha256') != identity['source_identity']['sha256'] if action == 'admission'
+                else persisted.get('release_identity') != identity['source_identity'])):
+        raise ValueError('Primary execution receipt differs from its returned source-bound result')
+    atomic_json(root/'state/pipeline'/identity['release_id']/'primary-context'/(phase+'-'+action+'.json'), {
+        'status':'complete', 'operation':action, 'phase':phase, 'checked_unix':time.time(),
+        'controller_job_id':native_job_id(), 'primary_release':str(release),
+        'source_sha256':identity['source_identity']['sha256'], 'config_sha256':canonical_hash(config),
+        'module_path':str(expected_module), 'receipt_path':str(path), 'receipt_sha256':digest(path),
+        'rule':'Original primary admission/planner and their own package helpers execute without scientific overrides; no jobs submitted by this operation'})
+    return result
+
+
 def tick(config, root, release, *, native=None, planner=None, submitter=None, assessor=None, readiness=None):
     from .admission import assess_admission
     from .slurm import plan, submit
@@ -438,7 +539,12 @@ def tick(config, root, release, *, native=None, planner=None, submitter=None, as
                 output_pending[name] = reason
     previous = read_json(base/'status.json') if (base/'status.json').exists() else {}
     phases = {}
-    planner, submitter, assessor = planner or plan, submitter or submit, assessor or assess_admission
+    primary_context = release.resolve() != Path(__file__).resolve().parents[2]
+    if planner is None:
+        planner = (lambda cfg, rel, directory, phase: _primary_execution(cfg, root, rel, 'plan', phase, directory)) if primary_context else plan
+    if assessor is None:
+        assessor = (lambda cfg, study, phase: _primary_execution(cfg, study, release, 'admission', phase)) if primary_context else assess_admission
+    submitter = submitter or submit
     readiness = readiness or _readiness
     for name, depends, admission_phase in NODES:
         if name in ledgers:

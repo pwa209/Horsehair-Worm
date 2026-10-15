@@ -464,6 +464,30 @@ def test_maintenance_controller_uses_primary_tick_namespace_and_distinct_framewo
     assert record['framework_release'] == str(framework.resolve())
 
 
+@pytest.mark.parametrize('admitted', [False, True])
+def test_maintenance_tick_routes_default_assessment_and_planning_to_primary(controller_fixture,monkeypatch,admitted):
+    from horsehair import admission,slurm
+    fixture=controller_fixture
+    maintenance_framework_fixture(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'NODES',(('agents-final',('initial:ready',),'agents-final'),))
+    monkeypatch.setattr(admission,'assess_admission',lambda *a,**k:pytest.fail('Do not import framework scientific assessment'))
+    monkeypatch.setattr(slurm,'plan',lambda *a,**k:pytest.fail('Do not construct scientific plans in framework context'))
+    observed=[]
+    def primary(config,root,release,action,phase,directory=None):
+        assert config==fixture.config and Path(root).resolve()==fixture.root.resolve()
+        assert Path(release).resolve()==fixture.release.resolve()
+        observed.append(action)
+        if action=='admission':
+            return {phase:{'status':'admitted' if admitted else 'pending','reasons':[] if admitted else ['Actual CPU grid unavailable']}}
+        return fixture.planner(config,release,directory,phase)
+    monkeypatch.setattr(pipeline,'_primary_execution',primary)
+    result=pipeline.tick(fixture.config,fixture.root,fixture.release,native={'100':state()},
+                         submitter=fixture.submitter,readiness=lambda *a:(True,[]))
+    assert observed==(['admission','plan'] if admitted else ['admission'])
+    assert result['phases']['agents-final']['status']==('queued' if admitted else 'resource_pending')
+    assert bool(fixture.submitted)==admitted
+
+
 @pytest.mark.parametrize('fault', ['missing-primary', 'primary-source', 'framework-source', 'primary-config',
                                  'framework-config', 'wrong-root'])
 def test_maintenance_controller_rejects_changed_release_or_full_configuration_before_lock_claim(controller_fixture, monkeypatch, fault):
