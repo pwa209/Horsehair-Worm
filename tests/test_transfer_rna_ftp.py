@@ -1104,3 +1104,46 @@ def test_https_fresh_response_cannot_truncate_a_concurrently_created_partial(tmp
         https_download(item,tmp_path,session)
     assert partial.read_bytes()==b'foreign evidence' and len(session.calls)==1
     assert not paths(tmp_path,item)[0].exists()
+
+
+def test_https_timeout_before_first_byte_resumes_verified_empty_prefix_with_explicit_range(tmp_path):
+    body=b'123456789'; item=source(body)
+    session=HTTPSSession([HTTPSResponse(item,b'',fail=transport.requests.Timeout('before first byte')),
+                         HTTPSResponse(item,body,status=206,offset=0)])
+    result=https_download(item,tmp_path,session)
+    assert result['sha256']==hashlib.sha256(body).hexdigest() and len(session.calls)==2
+    assert session.calls[1][1]['headers']['Range']=='bytes=0-'
+    assert session.calls[1][1]['headers']['If-Range']=='"stable-source"'
+    assert paths(tmp_path,item)[0].read_bytes()==body and not paths(tmp_path,item)[1].exists()
+    history=core.read_json(paths(tmp_path,item)[0].with_name(paths(tmp_path,item)[0].name+'.https-retries.json'))
+    assert history['attempts'][0]['retry_scheduled'] and history['attempts'][1]['status']=='verified'
+
+
+def test_https_empty_resume_ignoring_explicit_range_preserves_its_verified_inode(tmp_path):
+    body=b'123456789'; item=source(body); snapshots=[]
+    session=HTTPSSession([HTTPSResponse(item,b'',fail=transport.requests.Timeout('before first byte')),
+                         HTTPSResponse(item,body,status=200)])
+    def retain_snapshot(_delay): snapshots.append(transport._snapshot(paths(tmp_path,item)[1]))
+    with pytest.raises(transport.TransferError,match='ignored a verified prefix Range'):
+        transport.download_https_asset(item,tmp_path,HELPERS,session=session,
+            deadline=time.monotonic()+3600,sleeper=retain_snapshot)
+    assert len(session.calls)==2 and paths(tmp_path,item)[1].read_bytes()==b''
+    assert transport._snapshot(paths(tmp_path,item)[1])==snapshots[0]
+    assert not paths(tmp_path,item)[0].exists()
+
+
+@pytest.mark.parametrize('prefix_length',[0,3])
+def test_https_resumed_append_cannot_change_foreign_bytes_created_during_request(tmp_path,prefix_length):
+    body=b'123456789'; item=source(body); partial=paths(tmp_path,item)[1]
+    class ReplacingSession(HTTPSSession):
+        def get(self,url,**kwargs):
+            response=super().get(url,**kwargs)
+            if len(self.calls)==2:
+                partial.unlink(); partial.write_bytes(b'foreign evidence')
+            return response
+    session=ReplacingSession([HTTPSResponse(item,body[:prefix_length],fail=transport.requests.Timeout('stall')),
+                              HTTPSResponse(item,body[prefix_length:],status=206,offset=prefix_length)])
+    with pytest.raises(transport.TransferError,match='identity changed before append'):
+        https_download(item,tmp_path,session)
+    assert len(session.calls)==2 and partial.read_bytes()==b'foreign evidence'
+    assert not paths(tmp_path,item)[0].exists()

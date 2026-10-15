@@ -437,6 +437,7 @@ def _download_https_asset(item, root, helpers, *, session, deadline, sleeper, at
             if before['bytes'] == item['bytes']:
                 acquire.verify_file(partial, item, computed_digests=hashes)
             core.atomic_json(checkpoint, record)
+        return record
 
     def independent_verify(path, source, *, computed_digests=None):
         check_deadline()
@@ -452,12 +453,28 @@ def _download_https_asset(item, root, helpers, *, session, deadline, sleeper, at
         return acquire.verify_file(path, source, computed_digests=disk)
 
     original = acquire.download_asset
+    attempt_prefix = None
     class NoOverwritePath(type(Path())):
         def open(self, mode='r', *args, **kwargs):
             # A fresh response must not truncate a partial created by another
             # actor between the prefix check and HTTP response. Resumed HTTP200
             # is already refused by CanonicalSession, so every wb is fresh.
             if self == partial and mode == 'wb': mode = 'xb'
+            if self == partial and mode == 'ab':
+                flags = os.O_WRONLY | os.O_APPEND | getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_BINARY', 0)
+                if attempt_prefix is None: flags |= os.O_CREAT | os.O_EXCL
+                fd = os.open(self, flags, 0o600)
+                try:
+                    opened = os.fstat(fd)
+                    actual = {'device': opened.st_dev, 'inode': opened.st_ino,
+                        'bytes': opened.st_size, 'mtime_ns': opened.st_mtime_ns}
+                    if attempt_prefix is not None and (actual != attempt_prefix['snapshot']
+                        or core.digest(sidecar) != attempt_prefix['sidecar_sha256']):
+                        raise TransferError('HTTPS prefix identity changed before append; preserve foreign bytes')
+                    return os.fdopen(fd, mode, *args, **kwargs)
+                except BaseException:
+                    os.close(fd)
+                    raise
             return super().open(mode, *args, **kwargs)
         def replace(self, destination):
             os.link(self, destination)
@@ -473,6 +490,17 @@ def _download_https_asset(item, root, helpers, *, session, deadline, sleeper, at
         def get(self, url, **kwargs):
             if url != item['url']:
                 raise TransferError('HTTPS request identity differs from the pinned canonical source')
+            if attempt_prefix is not None and attempt_prefix['snapshot']['bytes'] == 0:
+                # A verified empty prefix is still owned evidence. Force the
+                # unchanged primary downloader's 206 append branch; HTTP200
+                # would otherwise reopen that same inode as a fresh wb file.
+                if (_snapshot(partial) != attempt_prefix['snapshot']
+                    or core.digest(sidecar) != attempt_prefix['sidecar_sha256']):
+                    raise TransferError('HTTPS empty prefix changed before its resumed request')
+                meta = core.read_json(sidecar)
+                headers = {**kwargs.get('headers', {}), 'Range': 'bytes=0-',
+                           'If-Range': meta.get('etag') or meta['last_modified']}
+                kwargs['headers'] = headers
             # The unchanged primary transfer code accepts redirects and HTTP200
             # restarts. This maintenance adapter refuses both before any body is
             # read, retaining validated prefix bytes if a representation changes.
@@ -491,7 +519,7 @@ def _download_https_asset(item, root, helpers, *, session, deadline, sleeper, at
     for attempt in range(1, attempts+1):
         started = time.monotonic()
         try:
-            check_deadline(); prefix_binding(verify=True)
+            check_deadline(); attempt_prefix = prefix_binding(verify=True)
             result = isolated(item, root, session=canonical_session, attempts=1,
                 bandwidth_bytes_per_second=BANDWIDTH, max_seconds=min(ATTEMPT_SECONDS, deadline-time.monotonic()))
         except BaseException as error:
