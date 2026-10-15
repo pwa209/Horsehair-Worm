@@ -1,14 +1,17 @@
-"""Finite, explicit ENA FTP transport using unchanged primary source checksums.
+"""Finite, explicit ENA transport using unchanged primary source checksums.
 
 Run --launch only on the failed worker's narval1 transfer endpoint after native
 preservation. No extraction or scientific analysis runs here. FTP is a transport
 route: the frozen canonical HTTPS URL and provider checksum remain unchanged.
+New all-FASTQ HTTPS recovery is enabled only by a native source-bound policy;
+retained older cases keep their explicit route and evidence unchanged.
 """
 from __future__ import annotations
 import argparse
 import errno
 import ftplib
 import hashlib
+import importlib.metadata
 import importlib.util
 import json
 import math
@@ -30,6 +33,9 @@ BANDWIDTH = 64 * 1024**2
 MAX_ATTEMPTS = 6
 ATTEMPT_SECONDS = 6 * 3600
 BACKOFF_SECONDS = (10, 20, 40, 60, 60)
+ALL_FASTQ_HTTPS_POLICY = 'all-selected-fastq-canonical-https-v1'
+RUNTIME_NAMESPACES = ('/project/def-ptewarie/pwa209/horsehair-worm/maintenance-runtime',)
+RUNTIME_PACKAGES = ('requests', 'urllib3', 'idna', 'certifi', 'charset_normalizer')
 
 
 class TransferError(RuntimeError):
@@ -344,7 +350,27 @@ def _https_transient(error):
 
 def download_https_asset(item, root, helpers, *, session, deadline, sleeper=time.sleep,
                          attempts=MAX_ATTEMPTS):
-    """Explicit quarantined case only, using the original HTTPS transfer code.
+    ftp_route(item)  # Identical canonical ENA FASTQ/size/MD5 whitelist.
+    return _download_https_asset(item, root, helpers, session=session, deadline=deadline,
+        sleeper=sleeper, attempts=attempts)
+
+
+def download_support_asset(item, root, helpers, *, session, deadline, sleeper=time.sleep,
+                           attempts=MAX_ATTEMPTS):
+    """Frozen non-FASTQ RNA/support assets get the same finite safe transport."""
+    parsed = urlsplit(item['url'])
+    if (item.get('kind') == 'fastq' or item.get('source_id') not in SOURCES
+        or parsed.scheme != 'https' or not parsed.hostname or parsed.username or parsed.password
+        or parsed.port is not None or parsed.fragment
+        or any(char in item['url'] for char in ('\r', '\n', '\x00'))
+        or type(item.get('bytes')) is not int or item['bytes'] <= 0):
+        raise TransferError('Support transport requires a frozen credential-free HTTPS source with pinned bytes')
+    return _download_https_asset(item, root, helpers, session=session, deadline=deadline,
+        sleeper=sleeper, attempts=attempts)
+
+
+def _download_https_asset(item, root, helpers, *, session, deadline, sleeper, attempts):
+    """Policy-selected canonical FASTQ, using the original HTTPS transfer code.
 
     Isolated function globals strengthen verification and atomic promotion: its
     stream digests must equal an independent disk read before original provider
@@ -352,9 +378,11 @@ def download_https_asset(item, root, helpers, *, session, deadline, sleeper=time
     immutable primary module is never patched.
     Every network retry rechecks its checkpointed prefix and original validators.
     """
-    ftp_route(item)  # Identical canonical ENA FASTQ/size/MD5 whitelist.
     if type(attempts) is not int or not 1 <= attempts <= MAX_ATTEMPTS:
         raise ValueError('Finite HTTPS recovery requires 1..6 attempts')
+    if (not isinstance(deadline, (int, float)) or isinstance(deadline, bool)
+        or not math.isfinite(deadline)):
+        raise ValueError('Canonical HTTPS transport requires a finite global deadline')
     if session.trust_env is not False:
         raise TransferError('Canonical HTTPS recovery requires proxy-independent public transport')
     core, acquire = helpers.core, helpers.acquire
@@ -369,6 +397,9 @@ def download_https_asset(item, root, helpers, *, session, deadline, sleeper=time
     promotion = target.with_name(target.name+'.https.json')
     diagnostic = partial.with_name(partial.name+'.https-integrity.json')
     signature = acquire.canonical_hash(item)
+    algorithms = {'sha256'}
+    if item.get('provider_checksum'):
+        algorithms.add(item['provider_checksum'].split(':', 1)[0].replace('-', ''))
     for path in (target, partial, sidecar, checkpoint, history_path, promotion, diagnostic):
         if path.is_symlink(): raise TransferError('A foreign HTTPS recovery symlink must be preserved')
     if promotion.exists(): raise TransferError('Preserve existing HTTPS promotion history when final source is absent')
@@ -394,7 +425,7 @@ def download_https_asset(item, root, helpers, *, session, deadline, sleeper=time
             or before['bytes'] > item['bytes'] or not (meta.get('etag') or meta.get('last_modified'))
             or meta.get('transfer_response', {}).get('content_encoding') != 'identity'):
             raise TransferError('HTTPS prefix lacks unchanged canonical asset/representation/validator evidence')
-        check_deadline(); hashes = acquire.file_digests(partial, {'md5', 'sha256'}); check_deadline()
+        check_deadline(); hashes = acquire.file_digests(partial, algorithms); check_deadline()
         record = {'asset_hash': signature, 'canonical_url': item['url'], 'protocol': 'https',
                   'snapshot': before, 'sidecar_sha256': meta_hash, 'prefix_digests': hashes}
         if _snapshot(partial) != before or core.digest(sidecar) != meta_hash:
@@ -409,10 +440,10 @@ def download_https_asset(item, root, helpers, *, session, deadline, sleeper=time
 
     def independent_verify(path, source, *, computed_digests=None):
         check_deadline()
-        disk = acquire.file_digests(path, {'md5', 'sha256'}); check_deadline()
+        disk = acquire.file_digests(path, algorithms); check_deadline()
         same = computed_digests is None or computed_digests == disk
         last_verification.update(asset_id=source['asset_id'], asset_hash=signature,
-            canonical_url=item['url'], protocol='https', provider_checksum=item['provider_checksum'],
+            canonical_url=item['url'], protocol='https', provider_checksum=item.get('provider_checksum'),
             bytes=Path(path).stat().st_size, stream_digests=computed_digests,
             independent_disk_digests=disk, stream_equals_disk=same,
             original_transfer_response=core.read_json(sidecar) if sidecar.is_file() else None)
@@ -422,6 +453,12 @@ def download_https_asset(item, root, helpers, *, session, deadline, sleeper=time
 
     original = acquire.download_asset
     class NoOverwritePath(type(Path())):
+        def open(self, mode='r', *args, **kwargs):
+            # A fresh response must not truncate a partial created by another
+            # actor between the prefix check and HTTP response. Resumed HTTP200
+            # is already refused by CanonicalSession, so every wb is fresh.
+            if self == partial and mode == 'wb': mode = 'xb'
+            return super().open(mode, *args, **kwargs)
         def replace(self, destination):
             os.link(self, destination)
             self.unlink()
@@ -432,24 +469,49 @@ def download_https_asset(item, root, helpers, *, session, deadline, sleeper=time
                             'safe_destination': atomic_destination},
                             original.__name__, original.__defaults__, original.__closure__)
     isolated.__kwdefaults__ = dict(original.__kwdefaults__ or {})
+    class CanonicalSession:
+        def get(self, url, **kwargs):
+            if url != item['url']:
+                raise TransferError('HTTPS request identity differs from the pinned canonical source')
+            # The unchanged primary transfer code accepts redirects and HTTP200
+            # restarts. This maintenance adapter refuses both before any body is
+            # read, retaining validated prefix bytes if a representation changes.
+            response = session.get(url, allow_redirects=False, **kwargs)
+            try:
+                if response.url != item['url']:
+                    raise TransferError('HTTPS response identity differs from the pinned canonical source')
+                if kwargs.get('headers', {}).get('Range') and response.status_code == 200:
+                    raise TransferError('HTTPS server ignored a verified prefix Range; preserve prefix without truncation')
+            except BaseException:
+                close = getattr(response, 'close', None)
+                if close is not None: close()
+                raise
+            return response
+    canonical_session = CanonicalSession()
     for attempt in range(1, attempts+1):
-        check_deadline(); prefix_binding(verify=True)
+        started = time.monotonic()
         try:
-            result = isolated(item, root, session=session, attempts=1,
+            check_deadline(); prefix_binding(verify=True)
+            result = isolated(item, root, session=canonical_session, attempts=1,
                 bandwidth_bytes_per_second=BANDWIDTH, max_seconds=min(ATTEMPT_SECONDS, deadline-time.monotonic()))
         except BaseException as error:
             finite_attempt = str(error) == 'Finite transfer runtime reached; partial transfer retained for resumption'
             transient = _https_transient(error) or finite_attempt
             retry = transient and attempt < attempts
-            if retry:
+            # Checkpoint even the final caught network failure. A later explicit
+            # restart may safely resume it; integrity/local failures never gain
+            # a new checkpoint or a blind fresh download. The global cutoff
+            # still forbids spending more time hashing after its deadline.
+            if transient:
                 try: prefix_binding()
                 except BaseException as checkpoint_error:
                     history['attempts'].append({'attempt': attempt, 'error_type': type(error).__name__,
                         'error': str(error), 'retry_scheduled': False,
                         'checkpoint_error_type': type(checkpoint_error).__name__, 'checkpoint_error': str(checkpoint_error)})
                     core.atomic_json(history_path, history)
-                    raise checkpoint_error from error
-            history['attempts'].append({'attempt': attempt, 'error_type': type(error).__name__,
+                    raise error from checkpoint_error
+            history['attempts'].append({'attempt': attempt, 'status': 'failed', 'created_unix': time.time(),
+                'elapsed_seconds': time.monotonic()-started, 'error_type': type(error).__name__,
                 'error': str(error), 'transient_transport': transient, 'retry_scheduled': retry,
                 'partial_retained': partial.exists(), 'verification': dict(last_verification)})
             core.atomic_json(history_path, history)
@@ -459,7 +521,8 @@ def download_https_asset(item, root, helpers, *, session, deadline, sleeper=time
                 raise TransferDeadline('Finite HTTPS budget cannot admit another attempt') from error
             sleeper(delay)
         else:
-            history['attempts'].append({'attempt': attempt, 'status': 'verified', 'verification': dict(last_verification)})
+            history['attempts'].append({'attempt': attempt, 'status': 'verified', 'created_unix': time.time(),
+                'elapsed_seconds': time.monotonic()-started, 'verification': dict(last_verification)})
             core.atomic_json(history_path, history)
             promoted = {**result, **last_verification, 'path': str(target), 'independent_disk_verified': True,
                         'transfer_route': item['url'], 'primary_acquisition_code_unchanged': True}
@@ -654,12 +717,145 @@ def prepare_resume_case(context, case_dir, worker_proof_path, terminal_wait_job,
     return ready
 
 
+def fastq_https_policy(context, manifest, *, preparation_job_id):
+    """Exact prospective route admission, written by native case preparation.
+
+    This changes only transport for the complete frozen eligible RNA roster.
+    Retained cases without this receipt keep their original explicit routing.
+    """
+    if not re.fullmatch(r'[0-9]+', str(preparation_job_id)):
+        raise TransferError('All-FASTQ transport policy requires its native preparation job identity')
+    context.acquire.validate_manifest(manifest)
+    selected = [a for a in manifest['assets'] if a['source_id'] in SOURCES
+                and (a.get('kind') != 'fastq' or a.get('eligible'))]
+    fastqs = [a for a in selected if a.get('kind') == 'fastq']
+    if not fastqs: raise TransferError('All-FASTQ transport policy requires a nonempty frozen FASTQ roster')
+    for item in fastqs: ftp_route(item)
+    return {'schema_version': 1, 'name': ALL_FASTQ_HTTPS_POLICY,
+        'preparation_job_id': str(preparation_job_id),
+        'primary_source_sha256': context.identity['source_identity']['sha256'],
+        'maintenance_source_sha256': context.maintenance_identity['source_identity']['sha256'],
+        'transfer_script_sha256': context.core.digest(Path(__file__)),
+        'config_sha256': context.identity['config_sha256'], 'manifest_hash': manifest['manifest_hash'],
+        'selection_hash': context.core.canonical_hash(selected),
+        'fastq_count': len(fastqs), 'fastq_roster_sha256': context.core.canonical_hash(fastqs),
+        'fastq_transport': 'canonical_https', 'support_transport': 'canonical_https',
+        'canonical_urls_and_provider_pins_unchanged': True, 'ftp_fallback_allowed': False,
+        'maximum_transport_attempts_per_asset': MAX_ATTEMPTS,
+        'maximum_attempt_seconds': ATTEMPT_SECONDS, 'maximum_worker_seconds': MAX_SECONDS,
+        'automatic_quarantine_retries': 0}
+
+
+def _preflight_https_destinations(context, selected):
+    """Audit the whole remaining roster using small files/inodes, never GB reads.
+
+    Every prefix is rehashed by the actual finite worker before appending. This
+    early audit refuses foreign FTP, missing or stale bindings before another
+    long transfer is launched. It neither adopts nor quarantines any bytes.
+    """
+    for item in selected:
+        target = context.acquire.safe_destination(context.root, item['relative_path'])
+        lexical = context.root / item['relative_path']
+        partial = target.with_name(target.name+'.part')
+        sidecar = partial.with_name(partial.name+'.json')
+        checkpoint = target.with_name(target.name+'.https-prefix.json')
+        promotion = target.with_name(target.name+'.https.json')
+        history = target.with_name(target.name+'.https-retries.json')
+        diagnostic = partial.with_name(partial.name+'.https-integrity.json')
+        for path in (lexical, target, partial, sidecar, checkpoint, promotion, history, diagnostic):
+            if path.is_symlink(): raise TransferError('Preserve foreign source/HTTPS evidence symlink: '+str(path))
+        if target.exists():
+            if not target.is_file() or partial.exists() or sidecar.exists():
+                raise TransferError('A final source has ambiguous partial evidence; preserve it: '+str(target))
+            continue  # The actual worker re-verifies every final source.
+        if promotion.exists():
+            raise TransferError('Preserve HTTPS promotion history whose final source is absent: '+str(promotion))
+        existing = any(path.exists() for path in (partial, sidecar, checkpoint))
+        if not existing: continue
+        if not all(path.is_file() for path in (partial, sidecar, checkpoint)):
+            raise TransferError('All-HTTPS roster contains a foreign/incomplete prefix; native preservation required: '+str(partial))
+        meta = context.core.read_json(sidecar); bound = context.core.read_json(checkpoint)
+        signature = context.acquire.canonical_hash(item)
+        if (meta.get('asset_hash') != signature or meta.get('url') != item['url']
+            or not (meta.get('etag') or meta.get('last_modified'))
+            or meta.get('transfer_response', {}).get('content_encoding') != 'identity'
+            or bound.get('asset_hash') != signature or bound.get('canonical_url') != item['url']
+            or bound.get('protocol') != 'https' or bound.get('snapshot') != _snapshot(partial)
+            or bound.get('sidecar_sha256') != context.core.digest(sidecar)
+            or not 0 <= partial.stat().st_size <= item['bytes']):
+            raise TransferError('All-HTTPS roster prefix is foreign or stale; native preservation required: '+str(partial))
+
+
+def validate_runtime_overlay(context, ready):
+    """Verify a narrowly scoped materialization of the exact existing packages.
+
+    Importing this script must already use the overlay, since requests imports
+    at module load. Native preparation and launch recheck this small-file
+    manifest; no global environment or immutable source release is modified.
+    """
+    if 'transport_runtime_overlay' not in ready: return None
+    proof = ready['transport_runtime_overlay']
+    if not isinstance(proof, dict) or set(proof) != {'root', 'manifest_sha256'}:
+        raise TransferError('Transport runtime overlay requires its exact root/manifest binding')
+    lexical = Path(proof['root']); root = lexical.resolve()
+    namespaces = [Path(path).resolve() for path in RUNTIME_NAMESPACES]
+    if (not lexical.is_absolute() or lexical.is_symlink() or not root.is_dir()
+        or not any(root.is_relative_to(base) and root != base for base in namespaces)
+        or not re.fullmatch('[0-9a-f]{64}', proof.get('manifest_sha256', ''))):
+        raise TransferError('Runtime overlay escaped the personal immutable runtime namespace')
+    manifest_path = ordinary(root/'runtime-manifest.json', root)
+    if context.core.digest(manifest_path) != proof['manifest_sha256']:
+        raise TransferError('Runtime overlay manifest changed after native preparation')
+    manifest = context.core.read_json(manifest_path)
+    files = manifest.get('files'); versions = manifest.get('versions')
+    if (manifest.get('schema_version') != 1 or not isinstance(files, dict) or not 1 <= len(files) <= 4096
+        or not isinstance(versions, dict) or set(versions) != set(RUNTIME_PACKAGES)
+        or any(not isinstance(value, str) or not value for value in versions.values())):
+        raise TransferError('Runtime overlay manifest has no exact package/file/version roster')
+    observed = set(); total = 0
+    for path in root.rglob('*'):
+        if path.is_symlink(): raise TransferError('Runtime overlay contains a foreign symlink')
+        # The one root-level copy receipt is inert provenance, never a Python
+        # import candidate; package/dist-info contents remain an exact roster.
+        if (path.is_file() and path not in {manifest_path, root/'copy-started.json'}
+            and '__pycache__' not in path.parts and path.suffix != '.pyc'):
+            observed.add(path.relative_to(root).as_posix())
+    if observed != set(files): raise TransferError('Runtime overlay file roster changed')
+    for relative, expected in files.items():
+        if (not isinstance(relative, str) or relative.startswith('/') or '..' in PurePosixPath(relative).parts
+            or '\\' in relative or not re.fullmatch('[0-9a-f]{64}', expected)):
+            raise TransferError('Runtime overlay contains an ambiguous file identity')
+        path = ordinary(root/relative, root); total += path.stat().st_size
+        if total > 64*1024**2 or context.core.digest(path) != expected:
+            raise TransferError('Runtime overlay package bytes changed or exceed the small-file ceiling')
+    distributions = {}
+    for distribution in importlib.metadata.distributions(path=[str(root)]):
+        name = re.sub(r'[-_.]+', '-', distribution.metadata['Name']).lower()
+        if name in distributions: raise TransferError('Runtime overlay has ambiguous distribution metadata')
+        distributions[name] = distribution.version
+    expected_versions = {name.replace('_', '-'): value for name, value in versions.items()}
+    if distributions != expected_versions:
+        raise TransferError('Runtime overlay distribution versions differ from the verified installed versions')
+    for package in RUNTIME_PACKAGES:
+        module = importlib.import_module(package)
+        origin = Path(module.__file__).resolve()
+        if not origin.is_relative_to(root) or origin.relative_to(root).as_posix() not in files:
+            raise TransferError('Loaded transport package origin/version differs from the verified overlay: '+package)
+    for name, module in list(sys.modules.items()):
+        if name.split('.')[0] in RUNTIME_PACKAGES and getattr(module, '__file__', None):
+            origin = Path(module.__file__).resolve()
+            if not origin.is_relative_to(root) or origin.relative_to(root).as_posix() not in files:
+                raise TransferError('Loaded transport submodule escaped the verified overlay: '+name)
+    return str(root)
+
+
 def preflight(context, case_dir, *, runner=subprocess.run):
     core, acquire, root = context.core, context.acquire, context.root
     if socket.gethostname().split('.')[0] != 'narval1': raise TransferError('One worker belongs on actual narval1')
     case_dir = Path(case_dir).resolve()
     if not case_dir.is_relative_to(root / 'maintenance'): raise TransferError('Case escaped personal maintenance namespace')
     ready_path = ordinary(case_dir / 'ready.json', root); ready = core.read_json(ready_path)
+    validate_runtime_overlay(context, ready)
     if (ready.get('status') != 'ready_for_transfer' or ready.get('transfer_launched') is not False
         or ready.get('source_definition_unchanged') is not True
         or ready.get('source_sha256') != context.identity['source_identity']['sha256']
@@ -697,6 +893,13 @@ def preflight(context, case_dir, *, runner=subprocess.run):
         or any(a.get('bytes') is None for a in selected)
         or sum(a['bytes'] for a in selected) > context.config['resources']['scratch_budget_bytes']):
         raise TransferError('Finite fixed RNA roster exceeds its resource ceilings')
+    if 'fastq_transport_policy' in ready:
+        if resume or case_transport != 'canonical_https':
+            raise TransferError('All-FASTQ HTTPS policy requires a quarantined canonical HTTPS case')
+        expected_policy = fastq_https_policy(context, manifest, preparation_job_id=ready['slurm_job_id'])
+        if ready['fastq_transport_policy'] != expected_policy:
+            raise TransferError('All-FASTQ HTTPS policy differs from its native source/configuration/roster identity')
+        _preflight_https_destinations(context, selected)
     first = [a for a in selected if a['asset_id'] == ready['asset_id']]
     if len(first) != 1 or first[0] != proof['asset']: raise TransferError('Preserved asset does not match frozen source')
     asset = first[0]; ftp_route(asset)
@@ -791,7 +994,11 @@ def case_native_identity(checked):
     return {'recovery_mode': 'quarantined_invalid_partial',
         'case_asset_id': checked.asset['asset_id'], 'case_transport': checked.ready.get('case_transport', 'ftp'),
         'previous_maintenance_release': getattr(checked, 'previous_maintenance_release', None),
-        'preservation_job_id': checked.ready['slurm_job_id'], 'preservation_native_proof': checked.native}
+        'preservation_job_id': checked.ready['slurm_job_id'], 'preservation_native_proof': checked.native,
+        **({'fastq_transport_policy': checked.ready['fastq_transport_policy']}
+           if 'fastq_transport_policy' in checked.ready else {}),
+        **({'transport_runtime_overlay': checked.ready['transport_runtime_overlay']}
+           if 'transport_runtime_overlay' in checked.ready else {})}
 
 
 def launch(context, case_dir, restart_id, *, runner=subprocess.run, popen=subprocess.Popen):
@@ -831,6 +1038,11 @@ def launch(context, case_dir, restart_id, *, runner=subprocess.run, popen=subpro
     for key in list(env):
         if key.lower() in {'http_proxy','https_proxy','all_proxy'}: env.pop(key)
     env['PYTHONUNBUFFERED'] = '1'
+    if 'transport_runtime_overlay' in checked.ready:
+        overlay = str(Path(checked.ready['transport_runtime_overlay']['root']).resolve())
+        prior = [entry for entry in env.get('PYTHONPATH', '').split(os.pathsep) if entry]
+        env['PYTHONPATH'] = os.pathsep.join([overlay, *[entry for entry in prior if Path(entry).resolve()!=Path(overlay)]])
+        env['PYTHONDONTWRITEBYTECODE'] = '1'
     command = ['nohup',sys.executable,str(Path(__file__).resolve()),'--primary-release',str(context.primary),
                '--case-dir',str(checked.case_dir),'--restart-id',restart_id,'--worker']
     try:
@@ -857,6 +1069,10 @@ def worker(context, case_dir, restart_id):
         or journal.get('primary_source_sha256') != context.identity['source_identity']['sha256']
         or journal.get('maintenance_source_sha256') != context.maintenance_identity['source_identity']['sha256']):
         raise TransferError('Worker launch source/receipt identity changed')
+    if journal.get('fastq_transport_policy') != checked.ready.get('fastq_transport_policy'):
+        raise TransferError('Worker launch transport policy differs from native preparation')
+    if journal.get('transport_runtime_overlay') != checked.ready.get('transport_runtime_overlay'):
+        raise TransferError('Worker launch runtime overlay differs from native preparation')
     owner = json.dumps({'pid':os.getpid(),'host':'narval1','restart_id':restart_id,'created_unix':time.time()},sort_keys=True).encode()
     guard = root/'state/.transfer-rna.lock'
     def transfer():
@@ -887,13 +1103,17 @@ def worker(context, case_dir, restart_id):
             for item in ordered:
                 if time.monotonic()>=deadline:raise TransferDeadline('Finite data deadline reached before next file')
                 if item.get('kind')=='fastq':
-                    if item['asset_id']==checked.asset['asset_id'] and checked.ready.get('case_transport')=='canonical_https':
+                    if ('fastq_transport_policy' in checked.ready or item['asset_id']==checked.asset['asset_id']
+                        and checked.ready.get('case_transport')=='canonical_https'):
                         result=download_https_asset(item,root,context,session=session,deadline=deadline)
                     else:
                         result=download_ftp_asset(item,root,context,deadline=deadline)
                 else:
-                    result=acquire.download_asset(item,root,session=session,attempts=1,bandwidth_bytes_per_second=BANDWIDTH,
-                        max_seconds=deadline-time.monotonic())
+                    if 'fastq_transport_policy' in checked.ready:
+                        result=download_support_asset(item,root,context,session=session,deadline=deadline)
+                    else:
+                        result=acquire.download_asset(item,root,session=session,attempts=1,bandwidth_bytes_per_second=BANDWIDTH,
+                            max_seconds=deadline-time.monotonic())
                 report['files'].append(result);core.atomic_json(restart/'download-receipts.json',report)
                 record.update(verified_files=len(report['files']),elapsed_seconds=time.monotonic()-started)
                 core.atomic_json(state,record)

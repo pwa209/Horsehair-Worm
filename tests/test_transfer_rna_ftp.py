@@ -6,6 +6,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import sys
 import time
 from types import SimpleNamespace
 
@@ -904,3 +905,202 @@ def test_https_existing_target_symlink_is_rejected_before_cache_verification(tmp
     with pytest.raises(transport.TransferError, match='target symlink'):
         https_download(item, tmp_path, session)
     assert session.calls == [] and target.read_bytes() == b'12345'
+
+
+def all_https_case(case, extra_assets=()):
+    manifest_path = case.root/'manifests/source_manifest.json'
+    manifest = core.read_json(manifest_path)
+    manifest['assets'].extend(extra_assets)
+    manifest.pop('manifest_hash')
+    manifest['manifest_hash'] = core.canonical_hash(manifest)
+    core.atomic_json(manifest_path, manifest)
+    case.proof['manifest_hash'] = manifest['manifest_hash']
+    core.atomic_json(case.case/'provider-worker-proof.json', case.proof)
+    case.ready.update(manifest_hash=manifest['manifest_hash'],
+        provider_proof_sha256=core.digest(case.case/'provider-worker-proof.json'),
+        fastq_transport_policy=transport.fastq_https_policy(case.context, manifest,
+            preparation_job_id=case.ready['slurm_job_id']))
+    core.atomic_json(case.case/'ready.json', case.ready)
+    return case
+
+
+def test_explicit_native_all_fastq_policy_routes_entire_roster_without_ftp_fallback(https_case, monkeypatch):
+    second = source(b'54321', 'SRR123_2.fastq.gz')
+    reference = acquire.asset(source='ant_reference', name='genome.fa.gz',
+        url='https://ftp.ncbi.nlm.nih.gov/public/genome.fa.gz', version='fixed', rights='public',
+        size=4, checksum='md5:'+hashlib.md5(b'ATCG').hexdigest(), kind='reference')
+    case = all_https_case(https_case, [second, reference])
+    run = setup_worker(case, monkeypatch, pilot_ids=[case.item['asset_id'], second['asset_id']],
+        ftp_body=b'not used', extra_assets=[second, reference])
+    fastq_calls, support_calls = [], []
+    def pinned_result(item, root, body):
+        target = acquire.safe_destination(root, item['relative_path']); target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(body); return acquire.verify_file(target, item)
+    def https(item, root, context, **kwargs):
+        fastq_calls.append(item['asset_id']); assert kwargs['session'] is run.session
+        return pinned_result(item, root, b'12345' if item==case.item else b'54321')
+    def support(item, root, context, **kwargs):
+        support_calls.append(item['asset_id']); assert kwargs['session'] is run.session
+        return pinned_result(item, root, b'ATCG')
+    monkeypatch.setattr(transport, 'download_https_asset', https)
+    monkeypatch.setattr(transport, 'download_support_asset', support)
+    result = transport.worker(case.context, case.case, 'worker-fixture')
+    assert fastq_calls == [case.item['asset_id'], second['asset_id']]
+    assert support_calls == [reference['asset_id']] and run.ftp_calls == []
+    assert result['status']=='complete' and result['verified_files']==3
+    assert result['fastq_transport_policy']==case.ready['fastq_transport_policy']
+    assert result['fastq_transport_policy']['ftp_fallback_allowed'] is False
+    assert result['fastq_transport_policy']['fastq_count']==2
+
+
+@pytest.mark.parametrize('field', ['maintenance_source_sha256', 'transfer_script_sha256', 'config_sha256',
+    'manifest_hash', 'selection_hash', 'fastq_roster_sha256', 'preparation_job_id', 'ftp_fallback_allowed'])
+def test_all_fastq_policy_refuses_any_changed_route_source_roster_or_native_binding(https_case, field):
+    case = all_https_case(https_case)
+    case.ready['fastq_transport_policy'][field]='changed'
+    core.atomic_json(case.case/'ready.json', case.ready)
+    with pytest.raises(transport.TransferError, match='policy differs'):
+        transport.preflight(case.context, case.case, runner=case.runner)
+    assert not list(case.case.glob('restart-*'))
+
+
+def test_all_roster_preflight_detects_later_ftp_prefix_without_hashing_large_bytes(https_case, monkeypatch):
+    second=source(b'54321', 'SRR123_2.fastq.gz'); case=all_https_case(https_case, [second])
+    _, partial, sidecar=paths(case.root, second)
+    partial.parent.mkdir(parents=True, exist_ok=True); partial.write_bytes(b'54')
+    core.atomic_json(sidecar, {'protocol':'ftp', 'asset_hash':core.canonical_hash(second)})
+    monkeypatch.setattr(acquire, 'file_digests', lambda *_a, **_k: pytest.fail('No GB reads on login'))
+    with pytest.raises(transport.TransferError, match='foreign/incomplete prefix'):
+        transport.preflight(case.context, case.case, runner=case.runner)
+    assert partial.read_bytes()==b'54' and core.read_json(sidecar)['protocol']=='ftp'
+    assert not list(case.case.glob('restart-*'))
+
+
+def test_https_final_transient_attempt_saves_a_reusable_verified_prefix(tmp_path):
+    body=b'123456789'; item=source(body)
+    first=HTTPSSession([HTTPSResponse(item, body[:3], fail=transport.requests.Timeout('final stall'))])
+    with pytest.raises(acquire.AcquisitionError, match='Transfer failed'):
+        https_download(item, tmp_path, first, attempts=1)
+    partial=paths(tmp_path,item)[1]; snapshot=transport._snapshot(partial)
+    second=HTTPSSession([HTTPSResponse(item, body[3:], status=206, offset=3)])
+    result=https_download(item,tmp_path,second,attempts=1)
+    assert result['sha256']==hashlib.sha256(body).hexdigest()
+    assert second.calls[0][1]['headers']['Range']=='bytes=3-' and snapshot['bytes']==3
+    history=core.read_json(paths(tmp_path,item)[0].with_name(item['relative_path'].split('/')[-1]+'.https-retries.json'))
+    assert len(history['attempts'])==2 and history['attempts'][0]['retry_scheduled'] is False
+    assert history['attempts'][1]['status']=='verified'
+
+
+def test_https_resume_ignoring_range_preserves_prior_prefix_instead_of_truncating(tmp_path):
+    body=b'123456789'; item=source(body)
+    session=HTTPSSession([HTTPSResponse(item,body[:3],fail=transport.requests.Timeout('stall')),
+                         HTTPSResponse(item,b'abcdefghi',status=200)])
+    with pytest.raises(transport.TransferError,match='ignored a verified prefix Range'):
+        https_download(item,tmp_path,session)
+    assert paths(tmp_path,item)[1].read_bytes()==body[:3]
+    assert not paths(tmp_path,item)[0].exists() and len(session.calls)==2
+    assert all(call[1]['allow_redirects'] is False for call in session.calls)
+
+
+def test_https_changed_response_url_is_rejected_before_any_body_is_written(tmp_path):
+    item=source(b'12345'); response=HTTPSResponse(item,b'12345')
+    response.url='https://foreign.example/unpinned.fastq.gz'
+    session=HTTPSSession([response])
+    with pytest.raises(transport.TransferError,match='response identity'):
+        https_download(item,tmp_path,session)
+    assert not paths(tmp_path,item)[1].exists() and len(session.calls)==1
+
+
+@pytest.mark.parametrize('checksum', [None, 'md5', 'sha512'])
+def test_support_assets_receive_strict_finite_transient_retry_and_exact_available_pins(tmp_path, checksum):
+    body=b'reference fixture bytes'
+    item=acquire.asset(source='mantis_rna',name='GSE_count.txt.gz',
+        url='https://ftp.ncbi.nlm.nih.gov/geo/fixed/GSE_count.txt.gz',version='fixed',rights='public',
+        size=len(body), checksum=checksum+':'+hashlib.new(checksum,body).hexdigest() if checksum else None)
+    session=HTTPSSession([HTTPSResponse(item,b'',status=503),HTTPSResponse(item,body)])
+    delays=[]
+    result=transport.download_support_asset(item,tmp_path,HELPERS,session=session,
+        deadline=time.monotonic()+3600,sleeper=delays.append)
+    assert len(session.calls)==2 and delays==[10] and result['independent_disk_verified']
+    assert result['stream_digests']==result['independent_disk_digests']
+    assert result['provider_checksum']==item.get('provider_checksum')
+    assert set(result['stream_digests'])==({'sha256',checksum} if checksum else {'sha256'})
+
+
+@pytest.fixture
+def overlay_case(https_case, monkeypatch):
+    case=all_https_case(https_case)
+    namespace=case.context.primary.parent/'personal-project/maintenance-runtime'
+    overlay=namespace/'exact-installed-runtime'; overlay.mkdir(parents=True)
+    files={}; modules={}
+    for package in transport.RUNTIME_PACKAGES:
+        path=overlay/package/'__init__.py'; path.parent.mkdir()
+        path.write_text('exact installed package fixture')
+        files[path.relative_to(overlay).as_posix()]=core.digest(path)
+        modules[package]=SimpleNamespace(__file__=str(path), __version__='fixture-version')
+    manifest={'schema_version':1,'files':files,'versions':{name:'fixture-version' for name in transport.RUNTIME_PACKAGES}}
+    core.atomic_json(overlay/'runtime-manifest.json',manifest)
+    core.atomic_json(overlay/'copy-started.json',{'purpose':'inert copy provenance; never imported'})
+    case.ready['transport_runtime_overlay']={'root':str(overlay),
+        'manifest_sha256':core.digest(overlay/'runtime-manifest.json')}
+    core.atomic_json(case.case/'ready.json',case.ready)
+    monkeypatch.setattr(transport,'RUNTIME_NAMESPACES',(str(namespace),))
+    original=transport.importlib.import_module
+    monkeypatch.setattr(transport.importlib,'import_module',lambda name,*a,**k:modules.get(name) or original(name,*a,**k))
+    distributions=[SimpleNamespace(metadata={'Name':name.replace('_','-')}, version='fixture-version')
+                   for name in transport.RUNTIME_PACKAGES]
+    monkeypatch.setattr(transport.importlib.metadata,'distributions',lambda **kwargs:distributions)
+    for name in list(sys.modules):
+        if name.split('.')[0] in transport.RUNTIME_PACKAGES:
+            monkeypatch.setitem(sys.modules,name,modules[name.split('.')[0]])
+    case.overlay=overlay; case.overlay_manifest=manifest; case.runtime_modules=modules; case.distributions=distributions
+    return case
+
+
+def test_runtime_overlay_is_source_bound_and_explicitly_prefixed_for_worker(overlay_case, monkeypatch):
+    case=overlay_case
+    monkeypatch.setenv('PYTHONPATH',os.pathsep.join([str(case.overlay),'retained-alliance-dependencies',str(case.overlay)]))
+    captured=[]
+    result=transport.launch(case.context,case.case,'runtime-fixture',runner=case.runner,
+        popen=lambda *a,**k: captured.append(k) or SimpleNamespace(pid=777))
+    entries=captured[0]['env']['PYTHONPATH'].split(os.pathsep)
+    assert entries==[str(case.overlay.resolve()),'retained-alliance-dependencies']
+    assert captured[0]['env']['PYTHONDONTWRITEBYTECODE']=='1'
+    assert result['transport_runtime_overlay']==case.ready['transport_runtime_overlay']
+    assert result['fastq_transport_policy']==case.ready['fastq_transport_policy']
+
+
+@pytest.mark.parametrize('fault',['file','manifest','roster','origin','version','submodule','namespace'])
+def test_runtime_overlay_refuses_modified_or_foreign_package_evidence(overlay_case, monkeypatch, fault):
+    case=overlay_case
+    if fault=='file': (case.overlay/'requests/__init__.py').write_bytes(b'changed')
+    if fault=='manifest': (case.overlay/'runtime-manifest.json').write_text('{}')
+    if fault=='roster': (case.overlay/'unrecorded.py').write_text('unrecorded package')
+    if fault=='origin': case.runtime_modules['requests'].__file__=str(case.context.primary/'requests.py')
+    if fault=='version': case.distributions[1].version='other-version'
+    if fault=='submodule': monkeypatch.setitem(sys.modules,'urllib3.foreign_fixture',SimpleNamespace(__file__=str(case.context.primary/'foreign.py')))
+    if fault=='namespace': monkeypatch.setattr(transport,'RUNTIME_NAMESPACES',(str(case.context.primary/'other-namespace'),))
+    with pytest.raises(transport.TransferError):
+        transport.preflight(case.context,case.case,runner=case.runner)
+    assert not list(case.case.glob('restart-*'))
+
+
+@pytest.mark.parametrize('deadline',[None,float('inf'),float('nan'),True])
+def test_https_refuses_an_unbounded_or_ambiguous_global_deadline(tmp_path,deadline):
+    item=source(b'12345'); session=HTTPSSession([])
+    with pytest.raises(ValueError,match='finite global deadline'):
+        transport.download_https_asset(item,tmp_path,HELPERS,session=session,deadline=deadline)
+    assert session.calls==[]
+
+
+def test_https_fresh_response_cannot_truncate_a_concurrently_created_partial(tmp_path):
+    item=source(b'12345'); partial=paths(tmp_path,item)[1]
+    class RacingSession(HTTPSSession):
+        def get(self,url,**kwargs):
+            partial.parent.mkdir(parents=True,exist_ok=True); partial.write_bytes(b'foreign evidence')
+            return super().get(url,**kwargs)
+    session=RacingSession([HTTPSResponse(item,b'12345')])
+    with pytest.raises(acquire.AcquisitionError,match='Transfer failed'):
+        https_download(item,tmp_path,session)
+    assert partial.read_bytes()==b'foreign evidence' and len(session.calls)==1
+    assert not paths(tmp_path,item)[0].exists()
