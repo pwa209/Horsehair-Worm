@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 from pathlib import Path
 from datetime import datetime, timezone
@@ -85,7 +86,7 @@ def test_measured_forecast_does_not_admit_over_budget_or_changed_qc(tmp_path):
     assert result["status"] == "pending" and "QC-passing" in result["reasons"][0]
 
 
-def primary_rna_release_fixture(tmp_path):
+def primary_rna_release_fixture(tmp_path, runtime_dependency=False):
     """Copy actual source into a distinct release; all data/native facts are QA fixtures."""
     from horsehair import core
     root, release = tmp_path/'study', tmp_path/'primary'
@@ -99,6 +100,9 @@ def primary_rna_release_fixture(tmp_path):
     package = release/'src/horsehair';package.mkdir(parents=True)
     for name in ('__init__.py','core.py','admission.py','acquire.py','slurm.py','agents.py','pipeline.py'):
         shutil.copyfile(repository/'src/horsehair'/name, package/name)
+    if runtime_dependency:
+        admission=package/'admission.py'
+        admission.write_text(admission.read_text(encoding='utf8')+'\nimport hhw_runtime_dependency_fixture\n',encoding='utf8')
     identity = source_identity(release)
     atomic_json(release/'release.json', {'release_id':'qa-primary','source_identity':identity,'config_sha256':canonical_hash(config)})
     for path in (root/'state').glob('rna-pilot-*.json'):
@@ -122,7 +126,8 @@ def test_maintenance_context_runs_actual_primary_admission_and_planner_without_s
     # The framework's actual reader correctly refuses primary-bound measurements.
     framework=assess_admission(config,root,'rna-full')['rna-full']
     assert framework['status']=='pending' and 'immutable source release' in framework['reasons'][0]
-    monkeypatch.setenv('PYTHONPATH', str(Path(__file__).resolve().parents[1]/'src'))
+    framework_path=str(Path(__file__).resolve().parents[1]/'src')
+    monkeypatch.setenv('PYTHONPATH', os.pathsep.join(filter(None,[framework_path,os.environ.get('PYTHONPATH','')])))
     result=pipeline._primary_execution(config,root,release,'admission','rna-full')['rna-full']
     assert result['status']=='admitted' and result['source_sha256']==identity['sha256']
     destination=root/'plans/qa-primary-rna-full'
@@ -133,6 +138,19 @@ def test_maintenance_context_runs_actual_primary_admission_and_planner_without_s
     assert str(release) in Path(counts['script']).read_text()
     receipt=json.loads((root/'state/pipeline/qa-primary/primary-context/rna-full-plan.json').read_text())
     assert receipt['module_path']==str(release/'src/horsehair/slurm.py') and receipt['receipt_sha256']==digest(destination/'plan.json')
+
+
+def test_primary_context_preserves_qualified_pythonpath_only_dependency(tmp_path,monkeypatch):
+    from horsehair import pipeline
+    config,root,release,identity=primary_rna_release_fixture(tmp_path,runtime_dependency=True)
+    runtime=tmp_path/'qualified-runtime';runtime.mkdir()
+    (runtime/'hhw_runtime_dependency_fixture.py').write_text('# Generated dependency-path QA fixture\n')
+    framework=str(Path(__file__).resolve().parents[1]/'src')
+    monkeypatch.setenv('PYTHONPATH',os.pathsep.join(filter(None,[framework,str(runtime),os.environ.get('PYTHONPATH','')])))
+    result=pipeline._primary_execution(config,root,release,'admission','rna-full')['rna-full']
+    assert result['status']=='admitted' and result['source_sha256']==identity['sha256']
+    receipt=json.loads((root/'state/pipeline/qa-primary/primary-context/rna-full-admission.json').read_text())
+    assert receipt['module_path']==str(release/'src/horsehair/admission.py')
 
 
 def test_primary_context_preserves_real_agent_benchmark_and_hardware_guards(tmp_path):
