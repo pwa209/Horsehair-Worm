@@ -1,7 +1,7 @@
 """Finite, explicit ENA transport using unchanged primary source checksums.
 
-Run --launch only on the failed worker's narval1 transfer endpoint after native
-preservation. No extraction or scientific analysis runs here. FTP is a transport
+Run --launch only on the native preparation's transfer endpoint after native
+preservation; retained cases default to narval1. No scientific analysis runs here. FTP is a transport
 route: the frozen canonical HTTPS URL and provider checksum remain unchanged.
 New all-FASTQ HTTPS recovery is enabled only by a native source-bound policy;
 retained older cases keep their explicit route and evidence unchanged.
@@ -34,6 +34,9 @@ MAX_ATTEMPTS = 6
 ATTEMPT_SECONDS = 6 * 3600
 BACKOFF_SECONDS = (10, 20, 40, 60, 60)
 ALL_FASTQ_HTTPS_POLICY = 'all-selected-fastq-canonical-https-v1'
+HOST_BOUND_FASTQ_HTTPS_POLICY = 'all-selected-fastq-host-bound-https-v2'
+CURL_FASTQ_HTTPS_POLICY = 'all-selected-fastq-host-bound-system-curl-https-v3'
+TRANSFER_HOSTS = frozenset({'narval1', 'narval3'})
 RUNTIME_NAMESPACES = ('/project/def-ptewarie/pwa209/horsehair-worm/maintenance-runtime',)
 RUNTIME_PACKAGES = ('requests', 'urllib3', 'idna', 'certifi', 'charset_normalizer')
 
@@ -745,7 +748,16 @@ def prepare_resume_case(context, case_dir, worker_proof_path, terminal_wait_job,
     return ready
 
 
-def fastq_https_policy(context, manifest, *, preparation_job_id):
+def transfer_host(ready):
+    """Only an explicit native case may move a worker off the legacy endpoint."""
+    host = ready.get('target_transfer_host', 'narval1')
+    if not isinstance(host, str) or host not in TRANSFER_HOSTS:
+        raise TransferError('Native transfer target must be exactly narval1 or narval3')
+    return host
+
+
+def fastq_https_policy(context, manifest, *, preparation_job_id, target_transfer_host=None,
+                       transport_backend=None, system_curl=None):
     """Exact prospective route admission, written by native case preparation.
 
     This changes only transport for the complete frozen eligible RNA roster.
@@ -753,13 +765,24 @@ def fastq_https_policy(context, manifest, *, preparation_job_id):
     """
     if not re.fullmatch(r'[0-9]+', str(preparation_job_id)):
         raise TransferError('All-FASTQ transport policy requires its native preparation job identity')
+    if target_transfer_host is not None:
+        transfer_host({'target_transfer_host': target_transfer_host})
+    if transport_backend is not None:
+        if (transport_backend != 'system_curl' or target_transfer_host != 'narval3'
+            or not isinstance(system_curl, dict) or set(system_curl) != {'path', 'sha256', 'version'}
+            or system_curl['path'] != '/usr/bin/curl'
+            or not re.fullmatch('[0-9a-f]{64}', str(system_curl['sha256']))
+            or not isinstance(system_curl['version'], str) or not 1 <= len(system_curl['version']) <= 16384):
+            raise TransferError('System curl requires an explicit Narval3 target and exact native executable identity')
+    elif system_curl is not None:
+        raise TransferError('A system curl identity requires its explicit transport backend')
     context.acquire.validate_manifest(manifest)
     selected = [a for a in manifest['assets'] if a['source_id'] in SOURCES
                 and (a.get('kind') != 'fastq' or a.get('eligible'))]
     fastqs = [a for a in selected if a.get('kind') == 'fastq']
     if not fastqs: raise TransferError('All-FASTQ transport policy requires a nonempty frozen FASTQ roster')
     for item in fastqs: ftp_route(item)
-    return {'schema_version': 1, 'name': ALL_FASTQ_HTTPS_POLICY,
+    policy = {'schema_version': 1, 'name': ALL_FASTQ_HTTPS_POLICY,
         'preparation_job_id': str(preparation_job_id),
         'primary_source_sha256': context.identity['source_identity']['sha256'],
         'maintenance_source_sha256': context.maintenance_identity['source_identity']['sha256'],
@@ -772,6 +795,75 @@ def fastq_https_policy(context, manifest, *, preparation_job_id):
         'maximum_transport_attempts_per_asset': MAX_ATTEMPTS,
         'maximum_attempt_seconds': ATTEMPT_SECONDS, 'maximum_worker_seconds': MAX_SECONDS,
         'automatic_quarantine_retries': 0}
+    if target_transfer_host is not None:
+        policy.update(schema_version=2, name=HOST_BOUND_FASTQ_HTTPS_POLICY,
+                      target_transfer_host=target_transfer_host)
+    if transport_backend == 'system_curl':
+        policy.update(schema_version=3, name=CURL_FASTQ_HTTPS_POLICY, transport_backend=transport_backend,
+                      system_curl=dict(system_curl), maximum_integrity_attempts_per_asset=MAX_ATTEMPTS,
+                      maximum_asset_seconds=ATTEMPT_SECONDS, curl_segment_bytes=64 * 1024**2)
+    return policy
+
+
+def _curl_transport(context):
+    """Load only the companion whose bytes belong to the verified framework."""
+    path = ordinary(context.maintenance/'scripts/transfer_rna_curl.py', context.maintenance)
+    expected = context.maintenance_identity['source_identity'].get('files', {}).get('scripts/transfer_rna_curl.py')
+    if not re.fullmatch('[0-9a-f]{64}', str(expected)) or context.core.digest(path) != expected:
+        raise TransferError('System curl companion differs from the verified immutable framework')
+    return _module('_hhw_verified_system_curl_transport', path)
+
+
+def validate_restored_case_asset(context, ready, asset, manifest, *, runner=subprocess.run):
+    """Small native proof checks only; the worker rehashes the final file itself."""
+    if 'restored_case_asset' not in ready:
+        return None
+    if ready.get('transport_backend') != 'system_curl':
+        raise TransferError('A restored case source requires the explicit native system-curl recovery policy')
+    core, root, acquire = context.core, context.root, context.acquire
+    reference = ready['restored_case_asset']
+    if (not isinstance(reference, dict) or set(reference) != {'proof_path', 'proof_sha256'}
+        or not re.fullmatch('[0-9a-f]{64}', str(reference.get('proof_sha256')))):
+        raise TransferError('Restored source requires its exact native proof reference')
+    path = ordinary(reference['proof_path'], root)
+    if not path.resolve().is_relative_to(root/'maintenance') or core.digest(path) != reference['proof_sha256']:
+        raise TransferError('Restored native source proof changed or escaped maintenance')
+    proof = core.read_json(path)
+    target = acquire.safe_destination(root, asset['relative_path'])
+    expected = {'schema_version': 1, 'status': 'verified_restored_case_asset', 'slurm_job_id': ready['slurm_job_id'],
+        'source_sha256': context.identity['source_identity']['sha256'],
+        'maintenance_source_sha256': context.maintenance_identity['source_identity']['sha256'],
+        'script_sha256': core.digest(Path(__file__)), 'config_sha256': context.identity['config_sha256'],
+        'manifest_hash': manifest['manifest_hash'], 'asset_id': asset['asset_id'], 'asset_hash': acquire.canonical_hash(asset),
+        'provider_checksum': asset['provider_checksum'], 'bytes': asset['bytes'],
+        'md5': asset['provider_checksum'].split(':', 1)[1].lower(), 'final_path': str(target),
+        'gzip_valid': True, 'source_definition_unchanged': True}
+    if any(proof.get(key) != value for key, value in expected.items()):
+        raise TransferError('Restored source proof differs from native preparation/source/asset/provider pins')
+    ordinary(target, root)
+    if (_snapshot(target) != proof.get('final_snapshot') or target.stat().st_size != asset['bytes']
+        or not re.fullmatch('[0-9a-f]{64}', str(proof.get('sha256')))
+        or proof.get('candidate_sha256') != proof['sha256']):
+        raise TransferError('Restored source metadata or SHA256 binding changed')
+    candidate_path = ordinary(proof.get('candidate_proof_path', ''), root)
+    if (not candidate_path.resolve().is_relative_to(root/'maintenance')
+        or core.digest(candidate_path) != proof.get('candidate_proof_sha256')):
+        raise TransferError('Restored source candidate proof changed')
+    candidate = core.read_json(candidate_path)
+    if (candidate.get('status') != 'verified_reconstructed_candidate'
+        or str(candidate.get('slurm_job_id')) != str(proof.get('candidate_job_id'))
+        or candidate.get('primary_source_sha256') != context.identity['source_identity']['sha256']
+        or candidate.get('config_sha256') != context.identity['config_sha256']
+        or candidate.get('expected_bytes') != asset['bytes']
+        or candidate.get('provider_md5') != expected['md5'] or candidate.get('provider_md5_matches') is not True
+        or candidate.get('stream_equals_disk') is not True or candidate.get('source_verified_unchanged') is not True
+        or candidate.get('provider_checksum_waived') is not False or candidate.get('candidate_promoted') is not False
+        or candidate.get('gzip_validation', {}).get('status') != 'valid'
+        or candidate.get('independent_disk_digests') != {'md5': expected['md5'], 'sha256': proof['sha256']}
+        or candidate.get('construction', {}).get('stream_digests') != candidate.get('independent_disk_digests')):
+        raise TransferError('Restored source lacks a fully provider-verified immutable native candidate')
+    native_resume_job(proof['candidate_job_id'], completed=True, runner=runner)
+    return proof
 
 
 def _preflight_https_destinations(context, selected):
@@ -879,10 +971,12 @@ def validate_runtime_overlay(context, ready):
 
 def preflight(context, case_dir, *, runner=subprocess.run):
     core, acquire, root = context.core, context.acquire, context.root
-    if socket.gethostname().split('.')[0] != 'narval1': raise TransferError('One worker belongs on actual narval1')
     case_dir = Path(case_dir).resolve()
     if not case_dir.is_relative_to(root / 'maintenance'): raise TransferError('Case escaped personal maintenance namespace')
     ready_path = ordinary(case_dir / 'ready.json', root); ready = core.read_json(ready_path)
+    target_host = transfer_host(ready)
+    if socket.gethostname().split('.')[0] != target_host:
+        raise TransferError('Worker must run on its actual native-bound transfer host: ' + target_host)
     validate_runtime_overlay(context, ready)
     if (ready.get('status') != 'ready_for_transfer' or ready.get('transfer_launched') is not False
         or ready.get('source_definition_unchanged') is not True
@@ -893,13 +987,25 @@ def preflight(context, case_dir, *, runner=subprocess.run):
     case_transport = ready.get('case_transport', 'ftp')
     if case_transport not in {'ftp', 'canonical_https'} or resume and case_transport != 'ftp':
         raise TransferError('Explicit canonical HTTPS is limited to a quarantined case asset')
+    if 'target_transfer_host' in ready and (resume or case_transport != 'canonical_https'
+                                           or 'fastq_transport_policy' not in ready):
+        raise TransferError('An explicit transfer host requires a native host-bound all-FASTQ HTTPS policy')
+    if ('transport_backend' in ready or 'system_curl' in ready) and ready.get('transport_backend') != 'system_curl':
+        raise TransferError('Native transport backend is absent or unsupported')
+    if ready.get('transport_backend') == 'system_curl' and (target_host != 'narval3'
+        or 'target_transfer_host' not in ready or 'fastq_transport_policy' not in ready
+        or resume or case_transport != 'canonical_https'):
+        raise TransferError('System curl requires a native explicit Narval3 all-FASTQ HTTPS policy')
     native = (native_resume_job(ready['prefix_proof_job_id'], completed=True, runner=runner)
               if resume else native_completed(ready['slurm_job_id'], runner))
     old_pid = ready['old_worker_pid']
     if not isinstance(old_pid, int) or old_pid <= 1: raise TransferError('Invalid old worker PID')
-    try: os.kill(old_pid, 0)
-    except ProcessLookupError: pass
-    else: raise TransferError('Old worker PID exists/reused; do not kill it or replay recovery')
+    if target_host == ready['old_worker_host']:
+        try: os.kill(old_pid, 0)
+        except ProcessLookupError: pass
+        else: raise TransferError('Old worker PID exists/reused; do not kill it or replay recovery')
+    # A PID on another host is unrelated. Cross-host recovery instead requires
+    # the unchanged positive absence proof captured on the actual old endpoint.
     guard = root / 'state/.transfer-rna.lock'
     if guard.exists() or guard.is_symlink(): raise TransferError('Preserve an existing transfer guard')
     failed_path = ordinary(root / 'state/transfer-rna.json', root)
@@ -908,6 +1014,7 @@ def preflight(context, case_dir, *, runner=subprocess.run):
     proof_path = ordinary(ready['provider_worker_proof_path'], root); proof = core.read_json(proof_path)
     if (core.digest(proof_path) != ready['provider_proof_sha256'] or proof.get('host') != 'narval1'
         or proof.get('worker_pid') != old_pid or proof.get('worker_absent') is not True
+        or failed.get('host') != ready['old_worker_host'] or failed.get('pid') != old_pid
         or proof.get('transfer_guard_absent') is not True or proof.get('failed_transfer') != failed
         or proof.get('failed_transfer_sha256') != ready['failed_transfer_sha256']
         or proof.get('provider_metadata', {}).get('matches_pinned_asset') is not True
@@ -924,10 +1031,18 @@ def preflight(context, case_dir, *, runner=subprocess.run):
     if 'fastq_transport_policy' in ready:
         if resume or case_transport != 'canonical_https':
             raise TransferError('All-FASTQ HTTPS policy requires a quarantined canonical HTTPS case')
-        expected_policy = fastq_https_policy(context, manifest, preparation_job_id=ready['slurm_job_id'])
+        expected_policy = fastq_https_policy(context, manifest, preparation_job_id=ready['slurm_job_id'],
+            target_transfer_host=target_host if 'target_transfer_host' in ready else None,
+            transport_backend=ready.get('transport_backend'), system_curl=ready.get('system_curl'))
         if ready['fastq_transport_policy'] != expected_policy:
             raise TransferError('All-FASTQ HTTPS policy differs from its native source/configuration/roster identity')
         _preflight_https_destinations(context, selected)
+        if ready.get('transport_backend') == 'system_curl':
+            curl = _curl_transport(context)
+            curl.validate_policy_runtime(expected_policy, runner=runner)
+            for item in selected:
+                if item.get('kind') == 'fastq':
+                    curl.preflight_destination(item, root, context, expected_policy)
     first = [a for a in selected if a['asset_id'] == ready['asset_id']]
     if len(first) != 1 or first[0] != proof['asset']: raise TransferError('Preserved asset does not match frozen source')
     asset = first[0]; ftp_route(asset)
@@ -972,9 +1087,13 @@ def preflight(context, case_dir, *, runner=subprocess.run):
             raise TransferError('Native resume prefix/source/code/sidecar proof changed')
         native_resume_job(ready['terminal_wait_job_id'], runner=runner)
         return SimpleNamespace(case_dir=case_dir, ready=ready, ready_path=ready_path,
-            proof_path=proof_path, failed_path=failed_path, manifest=manifest, selected=selected, asset=asset, native=native)
+            proof_path=proof_path, failed_path=failed_path, manifest=manifest, selected=selected, asset=asset, native=native,
+            target_transfer_host=target_host)
     target = acquire.safe_destination(root, asset['relative_path'])
-    if any(p.exists() or p.is_symlink() for p in [target, target.with_name(target.name+'.part'), target.with_name(target.name+'.part.json')]):
+    restored = validate_restored_case_asset(context, ready, asset, manifest, runner=runner)
+    absent = [target.with_name(target.name+'.part'), target.with_name(target.name+'.part.json')]
+    if restored is None: absent.append(target)
+    if any(p.exists() or p.is_symlink() for p in absent):
         raise TransferError('Case asset requires a fresh original destination after preservation')
     q = ready['quarantine']
     if (q.get('status') != 'quarantined_invalid_partial' or q.get('asset_hash') != acquire.canonical_hash(asset)
@@ -1000,7 +1119,8 @@ def preflight(context, case_dir, *, runner=subprocess.run):
         raise TransferError('Preserved failed bytes/sidecar/journal changed')
     return SimpleNamespace(case_dir=case_dir, ready=ready, ready_path=ready_path,
         proof_path=proof_path, failed_path=failed_path, manifest=manifest, selected=selected, asset=asset, native=native,
-        previous_maintenance_release=previous_case_release)
+        previous_maintenance_release=previous_case_release, target_transfer_host=target_host,
+        restored_case_asset=restored)
 
 
 def _owned_guard(path, owner, action):
@@ -1013,12 +1133,16 @@ def _owned_guard(path, owner, action):
 
 
 def case_native_identity(checked):
+    host_identity = ({'target_transfer_host': checked.target_transfer_host}
+                     if 'target_transfer_host' in checked.ready else {})
+    for name in ('transport_backend', 'system_curl', 'restored_case_asset'):
+        if name in checked.ready: host_identity[name] = checked.ready[name]
     if checked.ready.get('recovery_mode') == 'verified_ftp_prefix_resume':
         return {'recovery_mode': 'verified_ftp_prefix_resume',
             'prefix_proof_job_id': checked.ready['prefix_proof_job_id'],
             'prefix_native_proof': checked.native,
             'previous_maintenance_source_sha256': checked.ready['previous_maintenance_source_sha256'],
-            'previous_transfer_script_sha256': checked.ready['previous_transfer_script_sha256']}
+            'previous_transfer_script_sha256': checked.ready['previous_transfer_script_sha256'], **host_identity}
     return {'recovery_mode': 'quarantined_invalid_partial',
         'case_asset_id': checked.asset['asset_id'], 'case_transport': checked.ready.get('case_transport', 'ftp'),
         'previous_maintenance_release': getattr(checked, 'previous_maintenance_release', None),
@@ -1026,7 +1150,7 @@ def case_native_identity(checked):
         **({'fastq_transport_policy': checked.ready['fastq_transport_policy']}
            if 'fastq_transport_policy' in checked.ready else {}),
         **({'transport_runtime_overlay': checked.ready['transport_runtime_overlay']}
-           if 'transport_runtime_overlay' in checked.ready else {})}
+           if 'transport_runtime_overlay' in checked.ready else {}), **host_identity}
 
 
 def launch(context, case_dir, restart_id, *, runner=subprocess.run, popen=subprocess.Popen):
@@ -1050,7 +1174,7 @@ def launch(context, case_dir, restart_id, *, runner=subprocess.run, popen=subpro
         with (restart/'old-pilot-transfer.json').open('xb') as output:
             output.write(pilot.read_bytes()); output.flush(); os.fsync(output.fileno())
     journal = restart/'launch.json'
-    record = {'status':'starting','restart_id':restart_id,'primary_release':str(context.primary),
+    record = {'status':'starting','restart_id':restart_id,'host':checked.target_transfer_host,'primary_release':str(context.primary),
         'primary_source_sha256':context.identity['source_identity']['sha256'],
         'maintenance_release':str(context.maintenance),'maintenance_source_sha256':context.maintenance_identity['source_identity']['sha256'],
         'config_sha256':context.identity['config_sha256'],'script_sha256':core.digest(Path(__file__)),
@@ -1099,13 +1223,19 @@ def worker(context, case_dir, restart_id):
         raise TransferError('Worker launch source/receipt identity changed')
     if journal.get('fastq_transport_policy') != checked.ready.get('fastq_transport_policy'):
         raise TransferError('Worker launch transport policy differs from native preparation')
+    journal_host = journal.get('host') if 'target_transfer_host' in checked.ready else journal.get('host', 'narval1')
+    if (journal_host != checked.target_transfer_host
+        or journal.get('target_transfer_host') != checked.ready.get('target_transfer_host')):
+        raise TransferError('Worker launch host differs from native preparation')
     if journal.get('transport_runtime_overlay') != checked.ready.get('transport_runtime_overlay'):
         raise TransferError('Worker launch runtime overlay differs from native preparation')
-    owner = json.dumps({'pid':os.getpid(),'host':'narval1','restart_id':restart_id,'created_unix':time.time()},sort_keys=True).encode()
+    if any(journal.get(name) != checked.ready.get(name) for name in ('transport_backend', 'system_curl', 'restored_case_asset')):
+        raise TransferError('Worker launch backend/restored-source proof differs from native preparation')
+    owner = json.dumps({'pid':os.getpid(),'host':checked.target_transfer_host,'restart_id':restart_id,'created_unix':time.time()},sort_keys=True).encode()
     guard = root/'state/.transfer-rna.lock'
     def transfer():
         started=time.monotonic(); deadline=started+MAX_SECONDS
-        record={'status':'running','group':'rna','sources':SOURCES,'pid':os.getpid(),'host':'narval1','started_unix':time.time(),
+        record={'status':'running','group':'rna','sources':SOURCES,'pid':os.getpid(),'host':checked.target_transfer_host,'started_unix':time.time(),
             'config_sha256':context.identity['config_sha256'],'source_identity':context.identity['source_identity']['sha256'],
             'maintenance_source_sha256':context.maintenance_identity['source_identity']['sha256'],
             'transfer_script_sha256':core.digest(Path(__file__)),**case_native_identity(checked),
@@ -1130,7 +1260,14 @@ def worker(context, case_dir, restart_id):
                 raise TransferError('Fixed pilot IDs are not all in the finite frozen RNA roster')
             for item in ordered:
                 if time.monotonic()>=deadline:raise TransferDeadline('Finite data deadline reached before next file')
-                if item.get('kind')=='fastq':
+                if checked.ready.get('transport_backend') == 'system_curl' and item.get('kind') == 'fastq':
+                    result=_curl_transport(context).download_asset(item,root,context,
+                        policy=checked.ready['fastq_transport_policy'],deadline=deadline,attempts=MAX_ATTEMPTS,
+                        attempt_seconds=ATTEMPT_SECONDS,bandwidth=BANDWIDTH)
+                    if item['asset_id'] == checked.asset['asset_id'] and getattr(checked,'restored_case_asset',None) is not None:
+                        if result.get('sha256') != checked.restored_case_asset['sha256']:
+                            raise TransferError('Restored case file independently reverified to another SHA256')
+                elif item.get('kind')=='fastq':
                     if ('fastq_transport_policy' in checked.ready or item['asset_id']==checked.asset['asset_id']
                         and checked.ready.get('case_transport')=='canonical_https'):
                         result=download_https_asset(item,root,context,session=session,deadline=deadline)

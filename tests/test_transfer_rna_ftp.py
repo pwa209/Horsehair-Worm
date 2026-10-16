@@ -907,7 +907,7 @@ def test_https_existing_target_symlink_is_rejected_before_cache_verification(tmp
     assert session.calls == [] and target.read_bytes() == b'12345'
 
 
-def all_https_case(case, extra_assets=()):
+def all_https_case(case, extra_assets=(), *, target_transfer_host=None):
     manifest_path = case.root/'manifests/source_manifest.json'
     manifest = core.read_json(manifest_path)
     manifest['assets'].extend(extra_assets)
@@ -919,9 +919,311 @@ def all_https_case(case, extra_assets=()):
     case.ready.update(manifest_hash=manifest['manifest_hash'],
         provider_proof_sha256=core.digest(case.case/'provider-worker-proof.json'),
         fastq_transport_policy=transport.fastq_https_policy(case.context, manifest,
-            preparation_job_id=case.ready['slurm_job_id']))
+            preparation_job_id=case.ready['slurm_job_id'], target_transfer_host=target_transfer_host))
+    if target_transfer_host is not None:
+        case.ready['target_transfer_host'] = target_transfer_host
     core.atomic_json(case.case/'ready.json', case.ready)
     return case
+
+
+@pytest.mark.parametrize('target_host', ['narval1', 'narval3'])
+def test_explicit_native_target_host_has_a_new_policy_without_changing_canonical_asset_pins(https_case, target_host):
+    case = https_case
+    manifest = core.read_json(case.root/'manifests/source_manifest.json')
+    legacy = transport.fastq_https_policy(case.context, manifest, preparation_job_id=case.ready['slurm_job_id'])
+    policy = transport.fastq_https_policy(case.context, manifest, preparation_job_id=case.ready['slurm_job_id'],
+        target_transfer_host=target_host)
+    assert legacy['name'] == transport.ALL_FASTQ_HTTPS_POLICY and legacy['schema_version'] == 1
+    assert 'target_transfer_host' not in legacy
+    assert policy['name'] == transport.HOST_BOUND_FASTQ_HTTPS_POLICY and policy['schema_version'] == 2
+    assert policy['target_transfer_host'] == target_host
+    assert {k:v for k,v in policy.items() if k not in {'name', 'schema_version', 'target_transfer_host'}} == {
+        k:v for k,v in legacy.items() if k not in {'name', 'schema_version'}}
+    assert core.read_json(case.root/'manifests/source_manifest.json') == manifest
+
+
+@pytest.mark.parametrize('host', ['narval2', 'Narval3', 'narval3.narval.calcul.quebec', '', 3, [], {}])
+def test_host_bound_policy_refuses_unadmitted_or_ambiguous_endpoints(https_case, host):
+    case = https_case; manifest = core.read_json(case.root/'manifests/source_manifest.json')
+    with pytest.raises(transport.TransferError, match='target'):
+        transport.fastq_https_policy(case.context, manifest, preparation_job_id=case.ready['slurm_job_id'],
+            target_transfer_host=host)
+
+
+@pytest.mark.parametrize('target_host', ['narval1', 'narval3'])
+def test_native_host_policy_requires_its_actual_endpoint_and_keeps_old_worker_proof_on_narval1(https_case, monkeypatch, target_host):
+    case = all_https_case(https_case, target_transfer_host=target_host)
+    monkeypatch.setattr(transport.socket, 'gethostname', lambda: target_host+'.narval.calcul.quebec')
+    probes = []
+    def absent(pid, sig):
+        probes.append(pid)
+        raise ProcessLookupError()
+    monkeypatch.setattr(transport.os, 'kill', absent)
+    checked = transport.preflight(case.context, case.case, runner=case.runner)
+    assert checked.target_transfer_host == target_host
+    assert checked.ready['old_worker_host'] == case.proof['host'] == case.failed['host'] == 'narval1'
+    # The same numeric PID on another host is unrelated to the failed worker.
+    assert probes == ([case.ready['old_worker_pid']] if target_host == 'narval1' else [])
+    assert core.read_json(case.root/'state/transfer-rna.json') == case.failed
+
+
+def test_legacy_case_cannot_move_to_another_endpoint_without_a_new_native_policy(https_case, monkeypatch):
+    case = all_https_case(https_case)
+    monkeypatch.setattr(transport.socket, 'gethostname', lambda: 'narval3')
+    with pytest.raises(transport.TransferError, match='actual native-bound transfer host'):
+        transport.preflight(case.context, case.case, runner=case.runner)
+    assert 'target_transfer_host' not in case.ready
+
+
+@pytest.mark.parametrize('fault', ['actual_host', 'ready_target', 'policy_target', 'policy_legacy',
+    'missing_policy', 'invalid_target', 'old_proof_host', 'old_worker_present', 'old_failed_host'])
+def test_host_bound_preflight_refuses_changed_launch_or_old_worker_evidence(https_case, monkeypatch, fault):
+    case = all_https_case(https_case, target_transfer_host='narval3')
+    actual_host = 'narval3'
+    if fault == 'actual_host': actual_host = 'narval1'
+    if fault == 'ready_target':
+        case.ready['target_transfer_host'] = 'narval1'; actual_host = 'narval1'
+    if fault == 'policy_target': case.ready['fastq_transport_policy']['target_transfer_host'] = 'narval1'
+    if fault == 'policy_legacy':
+        case.ready['fastq_transport_policy'].update(name=transport.ALL_FASTQ_HTTPS_POLICY, schema_version=1)
+        case.ready['fastq_transport_policy'].pop('target_transfer_host')
+    if fault == 'missing_policy': case.ready.pop('fastq_transport_policy')
+    if fault == 'invalid_target': case.ready['target_transfer_host'] = None
+    if fault == 'old_proof_host': case.proof['host'] = 'narval3'
+    if fault == 'old_worker_present': case.proof['worker_absent'] = False
+    if fault == 'old_failed_host':
+        case.failed['host'] = 'narval3'
+        core.atomic_json(case.root/'state/transfer-rna.json', case.failed)
+        case.proof.update(failed_transfer=case.failed, failed_transfer_sha256=core.digest(case.root/'state/transfer-rna.json'))
+        case.ready['failed_transfer_sha256'] = case.proof['failed_transfer_sha256']
+    monkeypatch.setattr(transport.socket, 'gethostname', lambda: actual_host)
+    core.atomic_json(case.case/'provider-worker-proof.json', case.proof)
+    case.ready['provider_proof_sha256'] = core.digest(case.case/'provider-worker-proof.json')
+    core.atomic_json(case.case/'ready.json', case.ready)
+    with pytest.raises(transport.TransferError):
+        transport.preflight(case.context, case.case, runner=case.runner)
+    assert not list(case.case.glob('restart-*'))
+
+
+def test_host_bound_worker_journal_guard_and_receipts_record_actual_narval3(https_case, monkeypatch):
+    case = all_https_case(https_case, target_transfer_host='narval3')
+    monkeypatch.setattr(transport.socket, 'gethostname', lambda: 'narval3.narval.calcul.quebec')
+    proof_before = (case.case/'provider-worker-proof.json').read_bytes()
+    run = setup_worker(case, monkeypatch, pilot_ids=[case.item['asset_id']], ftp_body=b'not used')
+    journal = core.read_json(case.case/'restart-worker-fixture/launch.json')
+    assert journal['host'] == journal['target_transfer_host'] == 'narval3'
+    assert journal['fastq_transport_policy']['target_transfer_host'] == 'narval3'
+    def https(item, root, context, **kwargs):
+        guard = core.read_json(case.root/'state/.transfer-rna.lock')
+        state = core.read_json(case.root/'state/transfer-rna.json')
+        assert guard['host'] == state['host'] == state['target_transfer_host'] == 'narval3'
+        assert kwargs['session'] is run.session
+        target = acquire.safe_destination(root, item['relative_path'])
+        with target.open('xb') as output: output.write(b'12345')
+        return acquire.verify_file(target, item)
+    monkeypatch.setattr(transport, 'download_https_asset', https)
+    result = transport.worker(case.context, case.case, 'worker-fixture')
+    assert result['status'] == 'complete' and result['host'] == result['target_transfer_host'] == 'narval3'
+    assert result['fastq_transport_policy'] == case.ready['fastq_transport_policy']
+    assert not (case.root/'state/.transfer-rna.lock').exists() and run.ftp_calls == []
+    assert (case.case/'provider-worker-proof.json').read_bytes() == proof_before
+    assert core.read_json(case.case/'restart-worker-fixture/old-failed-transfer.json')['host'] == 'narval1'
+
+
+@pytest.mark.parametrize('fault', ['journal_host', 'missing_host', 'journal_target', 'missing_target', 'journal_policy'])
+def test_host_bound_worker_refuses_journal_host_or_policy_swap_before_claiming_guard(https_case, monkeypatch, fault):
+    case = all_https_case(https_case, target_transfer_host='narval3')
+    monkeypatch.setattr(transport.socket, 'gethostname', lambda: 'narval3')
+    setup_worker(case, monkeypatch, pilot_ids=[case.item['asset_id']], ftp_body=b'not used')
+    journal_path = case.case/'restart-worker-fixture/launch.json'; journal = core.read_json(journal_path)
+    if fault == 'journal_host': journal['host'] = 'narval1'
+    if fault == 'missing_host': journal.pop('host')
+    if fault == 'journal_target': journal['target_transfer_host'] = 'narval1'
+    if fault == 'missing_target': journal.pop('target_transfer_host')
+    if fault == 'journal_policy': journal['fastq_transport_policy']['target_transfer_host'] = 'narval1'
+    core.atomic_json(journal_path, journal)
+    with pytest.raises(transport.TransferError, match='host differs|policy differs'):
+        transport.worker(case.context, case.case, 'worker-fixture')
+    assert not (case.root/'state/.transfer-rna.lock').exists()
+    assert core.read_json(case.root/'state/transfer-rna.json') == case.failed
+
+
+def test_explicit_narval1_worker_requires_its_new_journal_host_field(https_case, monkeypatch):
+    case = all_https_case(https_case, target_transfer_host='narval1')
+    setup_worker(case, monkeypatch, pilot_ids=[case.item['asset_id']], ftp_body=b'not used')
+    journal_path = case.case/'restart-worker-fixture/launch.json'; journal = core.read_json(journal_path)
+    journal.pop('host'); core.atomic_json(journal_path, journal)
+    with pytest.raises(transport.TransferError, match='host differs'):
+        transport.worker(case.context, case.case, 'worker-fixture')
+    assert not (case.root/'state/.transfer-rna.lock').exists()
+
+
+@pytest.fixture
+def curl_case(https_case, monkeypatch):
+    case = all_https_case(https_case, target_transfer_host='narval3')
+    monkeypatch.setattr(transport.socket, 'gethostname', lambda: 'narval3')
+    manifest = core.read_json(case.root/'manifests/source_manifest.json')
+    case.ready.update(transport_backend='system_curl', system_curl={
+        'path': '/usr/bin/curl', 'sha256': 'c'*64, 'version': 'generated native curl fixture\n'})
+    case.ready['fastq_transport_policy'] = transport.fastq_https_policy(case.context, manifest,
+        preparation_job_id=case.ready['slurm_job_id'], target_transfer_host='narval3',
+        transport_backend='system_curl', system_curl=case.ready['system_curl'])
+    core.atomic_json(case.case/'ready.json', case.ready)
+    case.backend_calls = []
+    backend = SimpleNamespace(
+        validate_policy_runtime=lambda policy, **kwargs: case.backend_calls.append(('runtime', policy)),
+        preflight_destination=lambda item, root, helpers, policy: case.backend_calls.append(('destination', item['asset_id'])))
+    monkeypatch.setattr(transport, '_curl_transport', lambda context: backend)
+    case.curl_backend = backend
+    return case
+
+
+def restored_curl_case(case):
+    target = acquire.safe_destination(case.root, case.item['relative_path']); target.write_bytes(b'12345')
+    sha = core.digest(target); md5 = case.item['provider_checksum'].split(':')[1]
+    candidate_path = case.case/'native-candidate-result.json'
+    candidate = {'status':'verified_reconstructed_candidate', 'slurm_job_id':'777777',
+        'primary_source_sha256':case.context.identity['source_identity']['sha256'],
+        'config_sha256':case.context.identity['config_sha256'], 'expected_bytes':case.item['bytes'],
+        'provider_md5':md5, 'provider_md5_matches':True, 'stream_equals_disk':True,
+        'source_verified_unchanged':True, 'provider_checksum_waived':False, 'candidate_promoted':False,
+        'gzip_validation':{'status':'valid'}, 'independent_disk_digests':{'md5':md5,'sha256':sha},
+        'construction':{'stream_digests':{'md5':md5,'sha256':sha}}}
+    core.atomic_json(candidate_path,candidate)
+    proof = {'schema_version':1, 'status':'verified_restored_case_asset', 'slurm_job_id':case.ready['slurm_job_id'],
+        'source_sha256':case.context.identity['source_identity']['sha256'],
+        'maintenance_source_sha256':case.context.maintenance_identity['source_identity']['sha256'],
+        'script_sha256':core.digest(Path(transport.__file__)), 'config_sha256':case.context.identity['config_sha256'],
+        'manifest_hash':case.ready['manifest_hash'], 'asset_id':case.item['asset_id'],
+        'asset_hash':core.canonical_hash(case.item), 'provider_checksum':case.item['provider_checksum'],
+        'bytes':case.item['bytes'], 'md5':md5, 'sha256':sha, 'final_path':str(target.resolve()),
+        'final_snapshot':transport._snapshot(target), 'gzip_valid':True, 'source_definition_unchanged':True,
+        'candidate_proof_path':str(candidate_path), 'candidate_proof_sha256':core.digest(candidate_path),
+        'candidate_job_id':'777777','candidate_sha256':sha}
+    proof_path=case.case/'restored-case-asset.json';core.atomic_json(proof_path,proof)
+    case.ready['restored_case_asset']={'proof_path':str(proof_path),'proof_sha256':core.digest(proof_path)}
+    core.atomic_json(case.case/'ready.json',case.ready)
+    case.restoration_proof=proof;case.restoration_proof_path=proof_path
+    case.candidate_proof=candidate;case.candidate_proof_path=candidate_path;case.restored_target=target
+    return case
+
+
+def test_v3_policy_is_explicit_and_retains_v1_v2_transport_contracts(curl_case):
+    case=curl_case; policy=case.ready['fastq_transport_policy']
+    assert policy['name']==transport.CURL_FASTQ_HTTPS_POLICY and policy['schema_version']==3
+    assert policy['transport_backend']=='system_curl' and policy['system_curl']==case.ready['system_curl']
+    assert policy['maximum_integrity_attempts_per_asset']==6 and policy['maximum_asset_seconds']==21600
+    assert policy['curl_segment_bytes']==67108864 and policy['ftp_fallback_allowed'] is False
+    checked=transport.preflight(case.context,case.case,runner=case.runner)
+    assert checked.ready['transport_backend']=='system_curl'
+    assert case.backend_calls[0]==('runtime',policy) and case.backend_calls[1]==('destination',case.item['asset_id'])
+
+
+@pytest.mark.parametrize('fault',['backend','target','curl_path','curl_hash','curl_version','missing_curl'])
+def test_v3_policy_refuses_unpinned_backend_or_executable_identity(https_case,fault):
+    case=https_case; manifest=core.read_json(case.root/'manifests/source_manifest.json')
+    backend='system_curl';host='narval3';runtime={'path':'/usr/bin/curl','sha256':'a'*64,'version':'native fixture'}
+    if fault=='backend':backend='requests'
+    if fault=='target':host='narval1'
+    if fault=='curl_path':runtime['path']='/tmp/curl'
+    if fault=='curl_hash':runtime['sha256']='unknown'
+    if fault=='curl_version':runtime['version']=''
+    if fault=='missing_curl':runtime=None
+    with pytest.raises(transport.TransferError,match='System curl'):
+        transport.fastq_https_policy(case.context,manifest,preparation_job_id=case.ready['slurm_job_id'],
+            target_transfer_host=host,transport_backend=backend,system_curl=runtime)
+
+
+@pytest.mark.parametrize('fault',['backend','runtime','policy_backend','missing_target','missing_policy'])
+def test_v3_native_preflight_refuses_backend_policy_drift(curl_case,fault):
+    case=curl_case
+    if fault=='backend':case.ready['transport_backend']='requests'
+    if fault=='runtime':case.ready['system_curl']['sha256']='b'*64
+    if fault=='policy_backend':case.ready['fastq_transport_policy']['transport_backend']='requests'
+    if fault=='missing_target':case.ready.pop('target_transfer_host')
+    if fault=='missing_policy':case.ready.pop('fastq_transport_policy')
+    core.atomic_json(case.case/'ready.json',case.ready)
+    with pytest.raises(transport.TransferError):transport.preflight(case.context,case.case,runner=case.runner)
+    assert not list(case.case.glob('restart-*'))
+
+
+def test_restored_native_case_allows_only_exact_proof_and_metadata_without_bulk_login_reads(curl_case,monkeypatch):
+    case=restored_curl_case(curl_case); real_digest=core.digest
+    def small_only(path):
+        assert Path(path)!=case.restored_target, 'Preflight must not hash GB sources on a login node'
+        return real_digest(path)
+    monkeypatch.setattr(core,'digest',small_only)
+    monkeypatch.setattr(acquire,'file_digests',lambda *_a,**_k:pytest.fail('No bulk reads in preflight'))
+    checked=transport.preflight(case.context,case.case,runner=case.runner)
+    assert checked.restored_case_asset==case.restoration_proof
+    assert Path(case.ready['quarantine']['preserved_partial']).read_bytes()==b'abcde'
+
+
+@pytest.mark.parametrize('fault',['proof_sha','source','asset','provider','snapshot','candidate_sha','candidate_gzip','candidate_native','candidate_digests'])
+def test_restored_case_refuses_changed_source_metadata_candidate_or_native_proof(curl_case,fault):
+    case=restored_curl_case(curl_case);runner=case.runner
+    if fault=='proof_sha':case.ready['restored_case_asset']['proof_sha256']='0'*64
+    if fault=='source':case.restoration_proof['maintenance_source_sha256']='another-source'
+    if fault=='asset':case.restoration_proof['asset_hash']='0'*64
+    if fault=='provider':case.restoration_proof['md5']='0'*32
+    if fault=='snapshot':case.restoration_proof['final_snapshot']['inode']+=1
+    if fault=='candidate_sha':case.restoration_proof['candidate_proof_sha256']='0'*64
+    if fault=='candidate_gzip':case.candidate_proof['gzip_validation']['status']='invalid'
+    if fault=='candidate_digests':case.candidate_proof['independent_disk_digests']['md5']='0'*32
+    if fault=='candidate_native':
+        def runner(command,**kwargs):
+            result=case.runner(command,**kwargs)
+            if command[0]=='sacct' and command[2]=='777777':result.stdout=result.stdout.replace('COMPLETED|0:0','FAILED|1:0')
+            return result
+    if fault!='proof_sha':
+        if fault in {'candidate_gzip','candidate_digests'}:
+            core.atomic_json(case.candidate_proof_path,case.candidate_proof)
+            case.restoration_proof['candidate_proof_sha256']=core.digest(case.candidate_proof_path)
+        core.atomic_json(case.restoration_proof_path,case.restoration_proof)
+        case.ready['restored_case_asset']['proof_sha256']=core.digest(case.restoration_proof_path)
+    core.atomic_json(case.case/'ready.json',case.ready)
+    with pytest.raises(transport.TransferError):transport.preflight(case.context,case.case,runner=runner)
+    assert case.restored_target.read_bytes()==b'12345' and not list(case.case.glob('restart-*'))
+
+
+def test_v3_worker_uses_curl_for_final_and_checks_restored_source_sha(curl_case,monkeypatch):
+    case=restored_curl_case(curl_case)
+    run=setup_worker(case,monkeypatch,pilot_ids=[case.item['asset_id']],ftp_body=b'not used')
+    calls=[]
+    def download(item,root,helpers,**kwargs):
+        calls.append(item['asset_id'])
+        assert kwargs['policy']==case.ready['fastq_transport_policy'] and kwargs['attempts']==6
+        assert core.read_json(case.root/'state/.transfer-rna.lock')['host']=='narval3'
+        return acquire.verify_file(acquire.safe_destination(root,item['relative_path']),item)
+    case.curl_backend.download_asset=download
+    monkeypatch.setattr(transport,'download_https_asset',lambda *_a,**_k:pytest.fail('v3 must use native curl backend'))
+    result=transport.worker(case.context,case.case,'worker-fixture')
+    assert result['status']=='complete' and result['transport_backend']=='system_curl'
+    assert result['system_curl']==case.ready['system_curl'] and result['restored_case_asset']==case.ready['restored_case_asset']
+    assert calls==[case.item['asset_id']] and run.ftp_calls==[]
+
+
+def test_v3_worker_refuses_restored_final_returning_another_independent_sha(curl_case,monkeypatch):
+    case=restored_curl_case(curl_case)
+    setup_worker(case,monkeypatch,pilot_ids=[case.item['asset_id']],ftp_body=b'not used')
+    case.curl_backend.download_asset=lambda *_a,**_k:{'sha256':'0'*64,'status':'verified'}
+    with pytest.raises(transport.TransferError,match='independently reverified'):
+        transport.worker(case.context,case.case,'worker-fixture')
+    state=core.read_json(case.root/'state/transfer-rna.json')
+    assert state['status']=='failed' and state['verified_files']==0
+    assert case.restored_target.read_bytes()==b'12345' and not (case.root/'state/.transfer-rna.lock').exists()
+
+
+@pytest.mark.parametrize('field',['transport_backend','system_curl','restored_case_asset'])
+def test_v3_worker_refuses_journal_backend_or_restoration_proof_swap(curl_case,monkeypatch,field):
+    case=restored_curl_case(curl_case)
+    setup_worker(case,monkeypatch,pilot_ids=[case.item['asset_id']],ftp_body=b'not used')
+    path=case.case/'restart-worker-fixture/launch.json';journal=core.read_json(path)
+    journal[field]='changed';core.atomic_json(path,journal)
+    with pytest.raises(transport.TransferError,match='backend/restored-source'):
+        transport.worker(case.context,case.case,'worker-fixture')
+    assert not (case.root/'state/.transfer-rna.lock').exists()
+    assert core.read_json(case.root/'state/transfer-rna.json')==case.failed
 
 
 def test_explicit_native_all_fastq_policy_routes_entire_roster_without_ftp_fallback(https_case, monkeypatch):

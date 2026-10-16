@@ -195,7 +195,7 @@ def test_primary_child_failure_never_reuses_stale_positive_admission(tmp_path,mo
     original=path.read_bytes()
     def failed(command,**kwargs):
         assert command[:2]==[pipeline.sys.executable,'-s']
-        assert kwargs['cwd']==release and kwargs['timeout']==900
+        assert kwargs['cwd']==release and 0 < kwargs['timeout'] <= 900
         assert kwargs['env']['PYTHONNOUSERSITE']=='1'
         return SimpleNamespace(returncode=1,stdout='',stderr='Generated child failure')
     monkeypatch.setattr(pipeline.subprocess,'run',failed)
@@ -203,3 +203,218 @@ def test_primary_child_failure_never_reuses_stale_positive_admission(tmp_path,mo
         pipeline._primary_execution(config,root,release,'admission','rna-full')
     assert path.read_bytes()==original
     assert not (root/'state/pipeline/qa-primary/primary-context/rna-full-admission.json').exists()
+
+
+def primary_child_fault_injection(monkeypatch, injections):
+    """Run actual isolated interpreters; inject faults only in the generated QA child."""
+    import textwrap
+    from horsehair import pipeline
+    original = pipeline.subprocess.run
+    children, sleeps = [], []
+    def run(command, **kwargs):
+        index = len(children)
+        injection = injections[min(index, len(injections)-1)]
+        altered = list(command)
+        if injection:
+            marker = "    stage='operation'\n"
+            assert altered[-1].count(marker) == 1
+            altered[-1] = altered[-1].replace(marker, marker+textwrap.indent(injection, '    ')+'\n', 1)
+        result = original(altered, **kwargs)
+        children.append(result)
+        return result
+    monkeypatch.setattr(pipeline.subprocess, 'run', run)
+    monkeypatch.setattr(pipeline.time, 'sleep', sleeps.append)
+    return children, sleeps
+
+
+@pytest.mark.parametrize('number', [108, 116])
+def test_primary_filesystem_read_recovers_in_fresh_primary_child_with_durable_evidence(tmp_path, monkeypatch, number):
+    from horsehair import pipeline
+    config, root, release, identity = primary_rna_release_fixture(tmp_path)
+    fault = f"""original_read=module.read_json
+def faulted_read(path):
+    if Path(path).name=='resource-budget.json':
+        raise OSError({number},'Generated transient filesystem read fixture',str(path))
+    return original_read(path)
+module.read_json=faulted_read"""
+    children, sleeps = primary_child_fault_injection(monkeypatch, [fault, None])
+    result = pipeline._primary_execution(config, root, release, 'admission', 'rna-full')['rna-full']
+    assert result['status'] == 'admitted' and result['source_sha256'] == identity['sha256']
+    assert len(children) == 2 and children[0].returncode != 0 and children[1].returncode == 0 and sleeps == [1]
+    assert source_identity(release) == identity
+    context = json.loads((root/'state/pipeline/qa-primary/primary-context/rna-full-admission.json').read_text())
+    proof = context['filesystem_read_recovery']
+    recovery = json.loads(Path(proof['path']).read_text())
+    assert proof['sha256'] == digest(Path(proof['path'])) and proof['failed_attempts'] == 1
+    assert recovery['status'] == 'recovered' and recovery['successful_attempt'] == 2
+    error = recovery['attempts'][0]['error']
+    assert error['errno'] == number and error['filename'] == str(root/'state/resource-budget.json')
+    assert error['mutation_attempted'] is error['process_attempted'] is False
+
+
+def test_primary_read_retry_exhaustion_preserves_stale_admission_and_last_failure(tmp_path, monkeypatch):
+    from horsehair import pipeline
+    config, root, release, identity = primary_rna_release_fixture(tmp_path)
+    stale = root/'state/admission-rna-full.json'
+    atomic_json(stale, {'status':'admitted', 'evidence_class':'generated stale QA receipt'})
+    before = stale.read_bytes()
+    fault = "raise OSError(108,'Generated persistent read outage',str(Path(request['root'])/'state/resource-budget.json'))"
+    children, sleeps = primary_child_fault_injection(monkeypatch, [fault])
+    with pytest.raises(RuntimeError, match='no framework fallback'):
+        pipeline._primary_execution(config, root, release, 'admission', 'rna-full')
+    assert len(children) == 3 and sleeps == [1, 2] and stale.read_bytes() == before
+    reports = list((root/'state/pipeline/qa-primary/primary-context/read-recovery').glob('*.json'))
+    report = json.loads(reports[0].read_text())
+    assert len(reports) == 1 and report['status'] == 'failed' and len(report['attempts']) == 3
+    assert report['attempts'][-1]['retry_scheduled'] is False
+    assert report['attempts'][-1]['error']['errno'] == 108
+    assert not (root/'state/pipeline/qa-primary/primary-context/rna-full-admission.json').exists()
+
+
+@pytest.mark.parametrize('action', ['admission', 'plan'])
+def test_primary_write_failure_or_partial_plan_is_never_replayed(tmp_path, monkeypatch, action):
+    from horsehair import pipeline
+    config, root, release, _ = primary_rna_release_fixture(tmp_path)
+    directory = root/'plans/qa-primary-rna-full'
+    if action == 'plan':
+        mutation = "Path(request['directory']).mkdir()"
+    else:
+        mutation = "(Path(request['root'])/'state/generated-partial-receipt').write_text('retained QA partial')"
+    fault = mutation+"\nraise OSError(108,'Generated read failure after mutation',str(Path(request['root'])/'state/resource-budget.json'))"
+    children, sleeps = primary_child_fault_injection(monkeypatch, [fault])
+    with pytest.raises(RuntimeError, match='no framework fallback'):
+        pipeline._primary_execution(config, root, release, action, 'rna-full', directory if action == 'plan' else None)
+    assert len(children) == 1 and not sleeps
+    report = json.loads(next((root/'state/pipeline/qa-primary/primary-context/read-recovery').glob('*.json')).read_text())
+    assert report['status'] == 'failed' and report['attempts'][0]['error']['mutation_attempted'] is True
+    assert report['attempts'][0]['retry_scheduled'] is False
+    assert directory.is_dir() if action == 'plan' else (root/'state/generated-partial-receipt').is_file()
+
+
+def test_primary_planner_can_retry_read_before_creating_any_output(tmp_path, monkeypatch):
+    from horsehair import pipeline
+    config, root, release, identity = primary_rna_release_fixture(tmp_path)
+    pipeline._primary_execution(config, root, release, 'admission', 'rna-full')
+    destination = root/'plans/qa-primary-rna-full'
+    fault = "raise OSError(108,'Generated planner read outage',str(Path(request['root'])/'state/resource-budget.json'))"
+    children, sleeps = primary_child_fault_injection(monkeypatch, [fault, None])
+    result = pipeline._primary_execution(config, root, release, 'plan', 'rna-full', destination)
+    assert result['release_identity'] == identity and len(children) == 2 and sleeps == [1]
+    assert (destination/'plan.json').is_file()
+    assert not (root/'state/qa-primary-rna-full-submission.json').exists()
+
+
+def test_primary_context_blocks_subprocess_before_any_scheduler_or_external_action(tmp_path, monkeypatch):
+    from horsehair import pipeline
+    config, root, release, _ = primary_rna_release_fixture(tmp_path)
+    sentinel = root/'state/generated-subprocess-sentinel'
+    code = 'from pathlib import Path;Path('+repr(str(sentinel))+').write_text("must never execute")'
+    fault = 'import subprocess\nsubprocess.run([sys.executable,"-c",'+repr(code)+'],check=True)'
+    children, sleeps = primary_child_fault_injection(monkeypatch, [fault])
+    with pytest.raises(RuntimeError, match='cannot execute subprocess or scheduler commands'):
+        pipeline._primary_execution(config, root, release, 'admission', 'rna-full')
+    assert len(children) == 1 and not sleeps and not sentinel.exists()
+
+
+def test_primary_permanent_read_error_does_not_retry(tmp_path, monkeypatch):
+    from horsehair import pipeline
+    config, root, release, _ = primary_rna_release_fixture(tmp_path)
+    fault = "raise PermissionError(13,'Generated permanent permissions error',str(Path(request['root'])/'state/resource-budget.json'))"
+    children, sleeps = primary_child_fault_injection(monkeypatch, [fault])
+    with pytest.raises(RuntimeError, match='no framework fallback'):
+        pipeline._primary_execution(config, root, release, 'admission', 'rna-full')
+    assert len(children) == 1 and not sleeps
+
+
+@pytest.mark.parametrize('fault', ['foreign_nonce', 'foreign_path', 'duplicate_envelope'])
+def test_primary_read_recovery_rejects_unbound_or_ambiguous_error_evidence(tmp_path, monkeypatch, fault):
+    from horsehair import pipeline
+    config, root, release, _ = primary_rna_release_fixture(tmp_path)
+    injection = "filename=str(Path(request['root'])/'state/resource-budget.json')\n"
+    if fault == 'foreign_nonce':
+        injection += "request['nonce']='foreign-fixture-context'\n"
+    elif fault == 'foreign_path':
+        injection += "filename=str(release.parent/'foreign-file.json')\n"
+    else:
+        injection += "print('HHW_PRIMARY_CONTEXT_IO_ERROR {}',flush=True)\n"
+    injection += "raise OSError(108,'Generated unbound failure',filename)"
+    children, sleeps = primary_child_fault_injection(monkeypatch, [injection])
+    with pytest.raises(RuntimeError, match='no framework fallback'):
+        pipeline._primary_execution(config, root, release, 'admission', 'rna-full')
+    assert len(children) == 1 and not sleeps
+    report = json.loads(next((root/'state/pipeline/qa-primary/primary-context/read-recovery').glob('*.json')).read_text())
+    assert report['status'] == 'failed' and report['attempts'][0]['bound_transient_read_failure'] is False
+
+
+def test_primary_read_retry_rechecks_primary_identity_before_new_process(tmp_path, monkeypatch):
+    from horsehair import pipeline
+    config, root, release, _ = primary_rna_release_fixture(tmp_path)
+    fault = "raise OSError(108,'Generated read outage',str(Path(request['root'])/'state/resource-budget.json'))"
+    children, sleeps = primary_child_fault_injection(monkeypatch, [fault])
+    injected = pipeline.subprocess.run
+    def drift(command, **kwargs):
+        response = injected(command, **kwargs)
+        path = release/'src/horsehair/agents.py'
+        path.write_text(path.read_text()+'\n# Generated source-drift QA fixture\n')
+        return response
+    monkeypatch.setattr(pipeline.subprocess, 'run', drift)
+    with pytest.raises(ValueError, match='source/configuration changed during read recovery'):
+        pipeline._primary_execution(config, root, release, 'admission', 'rna-full')
+    assert len(children) == 1 and not sleeps
+    report = json.loads(next((root/'state/pipeline/qa-primary/primary-context/read-recovery').glob('*.json')).read_text())
+    assert report['status'] == 'source_changed' and report['attempts'][0]['retry_scheduled'] is False
+
+
+def test_primary_child_deadline_never_retries_even_with_structured_read_error(tmp_path, monkeypatch):
+    from horsehair import pipeline
+    config, root, release, _ = primary_rna_release_fixture(tmp_path)
+    calls = []
+    def timeout(command, **kwargs):
+        calls.append(command)
+        request = json.loads(kwargs['input'])
+        error = {key:request[key] for key in ('nonce','action','phase','source_identity','config_sha256')}
+        error.update(errno=108, filename=str(root/'state/resource-budget.json'), mutation_attempted=False,
+                     process_attempted=False, stage='operation', error_type='OSError', message='Generated read error')
+        output = ('HHW_PRIMARY_CONTEXT_IO_ERROR '+json.dumps(error)+'\n').encode()
+        raise pipeline.subprocess.TimeoutExpired(command, 900, output=output, stderr=b'Generated timeout')
+    monkeypatch.setattr(pipeline.subprocess, 'run', timeout)
+    monkeypatch.setattr(pipeline.time, 'sleep', lambda _:pytest.fail('A child timeout must not retry'))
+    with pytest.raises(RuntimeError, match='Primary child deadline expired'):
+        pipeline._primary_execution(config, root, release, 'admission', 'rna-full')
+    assert len(calls) == 1
+    report = json.loads(next((root/'state/pipeline/qa-primary/primary-context/read-recovery').glob('*.json')).read_text())
+    assert report['status'] == 'failed' and report['attempts'][0]['timed_out'] is True
+    assert report['attempts'][0]['retry_scheduled'] is False
+
+
+@pytest.mark.parametrize('exhaustion_point', ['revalidation', 'backoff', 'before_spawn'])
+def test_primary_read_recovery_never_spawns_after_deadline(tmp_path, monkeypatch, exhaustion_point):
+    from horsehair import pipeline
+    config, root, release, _ = primary_rna_release_fixture(tmp_path)
+    fault = "raise OSError(108,'Generated read outage',str(Path(request['root'])/'state/resource-budget.json'))"
+    children, _ = primary_child_fault_injection(monkeypatch, [fault])
+    clock = [0.0]
+    monotonic_calls = [0]
+    def monotonic():
+        monotonic_calls[0] += 1
+        if exhaustion_point == 'before_spawn' and monotonic_calls[0] == 2:
+            clock[0] = 901.0
+        return clock[0]
+    monkeypatch.setattr(pipeline.time, 'monotonic', monotonic)
+    original_identity = pipeline.source_identity
+    def identity(path):
+        result = original_identity(path)
+        if exhaustion_point == 'revalidation' and children:
+            clock[0] = 901.0
+        return result
+    monkeypatch.setattr(pipeline, 'source_identity', identity)
+    def sleep(_):
+        if exhaustion_point == 'backoff':
+            clock[0] = 901.0
+    monkeypatch.setattr(pipeline.time, 'sleep', sleep)
+    with pytest.raises(RuntimeError, match='deadline exhausted'):
+        pipeline._primary_execution(config, root, release, 'admission', 'rna-full')
+    assert len(children) == (0 if exhaustion_point == 'before_spawn' else 1)
+    report = json.loads(next((root/'state/pipeline/qa-primary/primary-context/read-recovery').glob('*.json')).read_text())
+    assert report['status'] == 'deadline_exhausted'
+    assert report['attempts'][-1]['retry_scheduled'] is False if children else not report['attempts']

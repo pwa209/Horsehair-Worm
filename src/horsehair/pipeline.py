@@ -36,6 +36,9 @@ NODES = (
 )
 TERMINAL_FAILURE = {'FAILED', 'TIMEOUT', 'OUT_OF_MEMORY', 'CANCELLED', 'NODE_FAIL', 'BOOT_FAIL', 'PREEMPTED', 'DEADLINE', 'REVOKED'}
 STORAGE_REFRESH_SECONDS = 6 * 3600
+PRIMARY_READ_ATTEMPTS = 3
+PRIMARY_READ_BACKOFF_SECONDS = (1, 2)
+PRIMARY_TRANSIENT_READ_ERRNOS = {5, 107, 108, 110, 116}  # EIO, ENOTCONN, ESHUTDOWN, ETIMEDOUT, ESTALE
 
 
 def _cached_storage_snapshot(root, *, now=None):
@@ -398,7 +401,9 @@ def _primary_execution(config, root, release, action, phase, directory=None):
     hash into its admission code would still import framework benchmark helpers
     and its planner would validate against the framework again. An isolated
     interpreter imports the complete verified primary package instead. This
-    operation never submits jobs or changes scientific inputs/receipts.
+    operation never submits jobs or changes scientific inputs/results. Only its
+    declared admission receipts or fresh plan outputs may be written. A failed
+    child is retried only before its first attempted filesystem mutation.
     """
     root, release = Path(root).resolve(), Path(release).resolve()
     identity = read_json(release/'release.json')
@@ -419,47 +424,162 @@ def _primary_execution(config, root, release, action, phase, directory=None):
                'config':config, 'action':action, 'phase':phase, 'nonce':nonce,
                'directory':str(directory) if directory is not None else None}
     program = r'''
-import importlib,json,sys
+import importlib,json,os,platform,sys
 from pathlib import Path
+# Standard-library platform discovery may invoke Windows' read-only version
+# query. Complete it before observing the isolated scientific operation.
+platform.uname()
+platform.processor()
 request=json.load(sys.stdin)
 release=Path(request['release']).resolve()
-sys.path.insert(0,str(release/'src'))
-import horsehair
-from horsehair import core
-if (Path(horsehair.__file__).resolve()!=release/'src/horsehair/__init__.py'
-        or Path(core.__file__).resolve()!=release/'src/horsehair/core.py'):
-    raise ValueError('Primary package/core imported from another release')
-def verify():
-    record=core.read_json(release/'release.json')
-    if (record['source_identity']!=core.source_identity(release) or record['source_identity']!=request['source_identity']
-            or record['config_sha256']!=core.canonical_hash(request['config'])
-            or core.read_json(release/'configs/study.json')!=request['config']
-            or Path(request['config']['paths']['root']).resolve()!=Path(request['root']).resolve()):
-        raise ValueError('Primary child source/configuration/study namespace changed')
-verify()
-module_name={'admission':'admission','plan':'slurm'}[request['action']]
-module=importlib.import_module('horsehair.'+module_name)
-if Path(module.__file__).resolve()!=release/'src/horsehair'/(module_name+'.py'):
-    raise ValueError('Primary operation imported from another release')
-if request['action']=='admission':
-    result=module.assess_admission(request['config'],Path(request['root']),phase=request['phase'])
-else:
-    result=module.plan(request['config'],release,Path(request['directory']),request['phase'])
-verify()
-print('HHW_PRIMARY_CONTEXT_RESULT '+json.dumps({'nonce':request['nonce'],'action':request['action'],
-      'phase':request['phase'],'source_identity':request['source_identity'],
-      'config_sha256':core.canonical_hash(request['config']),'module_path':str(Path(module.__file__).resolve()),
-      'result':result},allow_nan=False),flush=True)
+stage='import';mutation_attempted=False;process_attempted=False
+def observe(event,args):
+    global mutation_attempted,process_attempted
+    if event in {'subprocess.Popen','os.system','os.fork','os.forkpty','os.exec','os.posix_spawn','os.spawn'}:
+        process_attempted=True
+        raise RuntimeError('Primary admission/planning context cannot execute subprocess or scheduler commands')
+    if event=='open':
+        mode,flags=args[1],args[2]
+        if ((isinstance(mode,str) and any(value in mode for value in 'wax+'))
+                or (isinstance(flags,int) and flags & (os.O_WRONLY|os.O_RDWR|os.O_CREAT|os.O_TRUNC|os.O_APPEND))):
+            mutation_attempted=True
+    elif event in {'os.mkdir','os.remove','os.rmdir','os.rename','os.link','os.symlink','os.truncate','os.chmod','os.chown','os.utime'}:
+        mutation_attempted=True
+sys.addaudithook(observe)
+try:
+    sys.path.insert(0,str(release/'src'))
+    import horsehair
+    from horsehair import core
+    if (Path(horsehair.__file__).resolve()!=release/'src/horsehair/__init__.py'
+            or Path(core.__file__).resolve()!=release/'src/horsehair/core.py'):
+        raise ValueError('Primary package/core imported from another release')
+    def verify():
+        record=core.read_json(release/'release.json')
+        if (record['source_identity']!=core.source_identity(release) or record['source_identity']!=request['source_identity']
+                or record['config_sha256']!=core.canonical_hash(request['config'])
+                or core.read_json(release/'configs/study.json')!=request['config']
+                or Path(request['config']['paths']['root']).resolve()!=Path(request['root']).resolve()):
+            raise ValueError('Primary child source/configuration/study namespace changed')
+    stage='verification';verify()
+    stage='import'
+    module_name={'admission':'admission','plan':'slurm'}[request['action']]
+    module=importlib.import_module('horsehair.'+module_name)
+    if Path(module.__file__).resolve()!=release/'src/horsehair'/(module_name+'.py'):
+        raise ValueError('Primary operation imported from another release')
+    stage='operation'
+    if request['action']=='admission':
+        result=module.assess_admission(request['config'],Path(request['root']),phase=request['phase'])
+    else:
+        result=module.plan(request['config'],release,Path(request['directory']),request['phase'])
+    stage='verification';verify()
+    print('HHW_PRIMARY_CONTEXT_RESULT '+json.dumps({'nonce':request['nonce'],'action':request['action'],
+          'phase':request['phase'],'source_identity':request['source_identity'],
+          'config_sha256':core.canonical_hash(request['config']),'module_path':str(Path(module.__file__).resolve()),
+          'result':result},allow_nan=False),flush=True)
+except OSError as error:
+    print('HHW_PRIMARY_CONTEXT_IO_ERROR '+json.dumps({'nonce':request['nonce'],'action':request['action'],
+          'phase':request['phase'],'source_identity':request['source_identity'],
+          'config_sha256':request['config_sha256'],'error_type':type(error).__name__,
+          'errno':error.errno,'filename':os.fsdecode(error.filename) if error.filename is not None else None,
+          'message':str(error),'stage':stage,'mutation_attempted':mutation_attempted,
+          'process_attempted':process_attempted},allow_nan=False),flush=True)
+    raise
 '''
     environment = dict(os.environ)
     # Retain Alliance dependency-module paths (for example Arrow), while the
     # child explicitly prepends/verifies the primary package and excludes user
     # site packages. Do not substitute framework helpers in this process.
     environment['PYTHONNOUSERSITE'] = '1'
-    response = subprocess.run([sys.executable, '-s', '-c', program], input=json.dumps(request, allow_nan=False),
-                              text=True, capture_output=True, cwd=release, env=environment, timeout=900)
-    if response.returncode:
-        raise RuntimeError('Verified primary '+action+' failed; no framework fallback: '+response.stderr[-4000:])
+    environment['PYTHONDONTWRITEBYTECODE'] = '1'
+    request['config_sha256'] = canonical_hash(config)
+    failures = []
+    recovery_path = root/'state/pipeline'/identity['release_id']/'primary-context/read-recovery'/(phase+'-'+action+'-'+nonce+'.json')
+    diagnostic = {'status':'not_started', 'nonce':nonce, 'operation':action, 'phase':phase,
+                  'controller_job_id':native_job_id(), 'primary_release':str(release),
+                  'source_sha256':identity['source_identity']['sha256'], 'config_sha256':canonical_hash(config),
+                  'maximum_attempts':PRIMARY_READ_ATTEMPTS, 'maximum_seconds':900, 'attempts':failures,
+                  'rule':'Fresh verified primary process; retry only a named transient filesystem read before any mutation; never retry scheduler actions or partial plan outputs'}
+    child_input = json.dumps(request, allow_nan=False)
+    deadline = time.monotonic() + 900
+    for attempt in range(1, PRIMARY_READ_ATTEMPTS + 1):
+        remaining = deadline-time.monotonic()
+        if remaining <= 0:
+            if failures:
+                failures[-1]['retry_scheduled'] = False
+            diagnostic.update(status='deadline_exhausted', attempts=failures, deadline_exhausted_unix=time.time())
+            atomic_json(recovery_path, diagnostic)
+            raise RuntimeError('Verified primary '+action+' deadline exhausted before child launch; no framework fallback; preserved diagnostics: '+str(recovery_path))
+        timed_out = False
+        command = [sys.executable, '-s', '-c', program]
+        try:
+            response = subprocess.run(command, input=child_input,
+                                      text=True, capture_output=True, cwd=release, env=environment,
+                                      timeout=remaining)
+        except subprocess.TimeoutExpired as error:
+            # Timeout does not establish a read-only failure or authorize a new
+            # child, even if it printed a structured error before hanging.
+            timed_out = True
+            output = error.stdout.decode(errors='replace') if isinstance(error.stdout, bytes) else error.stdout or ''
+            stderr = error.stderr.decode(errors='replace') if isinstance(error.stderr, bytes) else error.stderr or ''
+            response = subprocess.CompletedProcess(command, -1, output, 'Primary child deadline expired; '+stderr)
+        if not response.returncode:
+            break
+        prefix = 'HHW_PRIMARY_CONTEXT_IO_ERROR '
+        errors = [line[len(prefix):] for line in response.stdout.splitlines() if line.startswith(prefix)]
+        error = None
+        if len(errors) == 1:
+            try:
+                error = json.loads(errors[0])
+            except (ValueError, TypeError):
+                pass
+        bound = (isinstance(error, dict) and all(error.get(key) == request[key]
+                 for key in ('nonce', 'action', 'phase', 'source_identity', 'config_sha256')))
+        filename = error.get('filename') if bound else None
+        contained = False
+        if isinstance(filename, str) and Path(filename).is_absolute():
+            candidate = Path(filename).resolve()
+            contained = candidate.is_relative_to(root) or candidate.is_relative_to(release)
+        transient = (not timed_out and bound and type(error.get('errno')) is int and error['errno'] in PRIMARY_TRANSIENT_READ_ERRNOS
+                     and error.get('mutation_attempted') is False and error.get('process_attempted') is False
+                     and error.get('stage') in {'import', 'verification', 'operation'} and contained)
+        # A plan directory is an immutable output. Its existence refuses replay
+        # even if an incomplete/foreign child claimed that no mutation occurred.
+        untouched = action != 'plan' or not directory.exists()
+        delay = PRIMARY_READ_BACKOFF_SECONDS[attempt-1] if attempt < PRIMARY_READ_ATTEMPTS else 0
+        retry = bool(transient and untouched and attempt < PRIMARY_READ_ATTEMPTS and deadline-time.monotonic() > delay)
+        failures.append({'attempt':attempt, 'returncode':response.returncode, 'error':error,
+                         'timed_out':timed_out,
+                         'bound_transient_read_failure':bool(transient), 'retry_scheduled':retry,
+                         'stderr_tail':response.stderr[-4000:], 'checked_unix':time.time()})
+        diagnostic = {'status':'retrying' if retry else 'failed', 'nonce':nonce, 'operation':action, 'phase':phase,
+                      'controller_job_id':native_job_id(), 'primary_release':str(release),
+                      'source_sha256':identity['source_identity']['sha256'], 'config_sha256':canonical_hash(config),
+                      'maximum_attempts':PRIMARY_READ_ATTEMPTS, 'maximum_seconds':900, 'attempts':failures,
+                      'rule':'Fresh verified primary process; retry only a named transient filesystem read before any mutation; never retry scheduler actions or partial plan outputs'}
+        try:
+            atomic_json(recovery_path, diagnostic)
+        except OSError as preservation_error:
+            raise RuntimeError('Verified primary '+action+' failed; no framework fallback: '+response.stderr[-4000:]
+                               + '; preserving read-failure diagnostics also failed: '+str(preservation_error)) from preservation_error
+        if not retry:
+            raise RuntimeError('Verified primary '+action+' failed; no framework fallback: '+response.stderr[-4000:]
+                               + '; preserved diagnostics: '+str(recovery_path))
+        # Revalidate unchanged primary identity before every fresh process.
+        if (source_identity(release) != identity['source_identity'] or read_json(release/'release.json') != identity
+                or read_json(release/'configs/study.json') != config):
+            failures[-1]['retry_scheduled'] = False
+            diagnostic.update(status='source_changed', attempts=failures)
+            atomic_json(recovery_path, diagnostic)
+            raise ValueError('Primary execution source/configuration changed during read recovery')
+        time.sleep(delay)
+        if time.monotonic() >= deadline:
+            failures[-1]['retry_scheduled'] = False
+            diagnostic.update(status='deadline_exhausted', attempts=failures, deadline_exhausted_unix=time.time())
+            atomic_json(recovery_path, diagnostic)
+            raise RuntimeError('Verified primary '+action+' deadline exhausted after read revalidation/backoff; no framework fallback; preserved diagnostics: '+str(recovery_path))
+    if failures:
+        diagnostic.update(status='awaiting_result_validation', successful_attempt=attempt)
+        atomic_json(recovery_path, diagnostic)
     prefix = 'HHW_PRIMARY_CONTEXT_RESULT '
     envelopes = [json.loads(line[len(prefix):]) for line in response.stdout.splitlines() if line.startswith(prefix)]
     if len(envelopes) != 1:
@@ -481,11 +601,15 @@ print('HHW_PRIMARY_CONTEXT_RESULT '+json.dumps({'nonce':request['nonce'],'action
             or (persisted.get('source_sha256') != identity['source_identity']['sha256'] if action == 'admission'
                 else persisted.get('release_identity') != identity['source_identity'])):
         raise ValueError('Primary execution receipt differs from its returned source-bound result')
+    if failures:
+        diagnostic.update(status='recovered', successful_attempt=attempt, recovered_unix=time.time())
+        atomic_json(recovery_path, diagnostic)
     atomic_json(root/'state/pipeline'/identity['release_id']/'primary-context'/(phase+'-'+action+'.json'), {
         'status':'complete', 'operation':action, 'phase':phase, 'checked_unix':time.time(),
         'controller_job_id':native_job_id(), 'primary_release':str(release),
         'source_sha256':identity['source_identity']['sha256'], 'config_sha256':canonical_hash(config),
         'module_path':str(expected_module), 'receipt_path':str(path), 'receipt_sha256':digest(path),
+        'filesystem_read_recovery':({'path':str(recovery_path), 'sha256':digest(recovery_path), 'failed_attempts':len(failures)} if failures else None),
         'rule':'Original primary admission/planner and their own package helpers execute without scientific overrides; no jobs submitted by this operation'})
     return result
 

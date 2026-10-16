@@ -23,6 +23,8 @@ The required original Dryad polarization and mating files have been recovered an
 
 Large fly and RNA sources are acquired directly on Narval and must be independently verified from their accession/checksum manifests before analysis. A scientific source-code update does not restart an existing transfer. Verified raw files and compatible partial downloads retain their frozen source provenance; changed source definitions require a versioned amendment.
 
+Preserved RNA transfer failures contained application connection-error XML inside otherwise correctly sized compressed files. These copies failed both provider MD5 and gzip CRC validation. A separately staged reconstruction using independently matching official byte ranges passed the complete provider MD5, independent disk hashes and full gzip validation. Detailed immutable forensic, reconstruction and deployment receipts remain in the research records. The v3 transport detects this known error before committing a segment and keeps downstream RNA jobs held until complete acquisition verification; deployment of the revised executable still requires its own qualification and queue receipts.
+
 ## Scientific readiness and interpretation
 
 The processed fly archive supports an author-defined uniform 3Hz recording clock. Primary exposure-modulated H1 additionally requires source-verified exposure offsets. Exposed survivors remain exposed; missing unexposed controls, intervention conditions or original animal/reagent/gene/family mappings remain pending. Independent intervention and molecular-transfer stages require validated shared-control uncertainty and unique biological/gene identities.
