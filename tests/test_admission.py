@@ -208,6 +208,7 @@ def test_primary_child_failure_never_reuses_stale_positive_admission(tmp_path,mo
 def primary_child_fault_injection(monkeypatch, injections):
     """Run actual isolated interpreters; inject faults only in the generated QA child."""
     import textwrap
+    from types import SimpleNamespace
     from horsehair import pipeline
     original = pipeline.subprocess.run
     children, sleeps = [], []
@@ -223,8 +224,35 @@ def primary_child_fault_injection(monkeypatch, injections):
         children.append(result)
         return result
     monkeypatch.setattr(pipeline.subprocess, 'run', run)
-    monkeypatch.setattr(pipeline.time, 'sleep', sleeps.append)
+    # subprocess uses the process-wide time module for POSIX wait polling.
+    # Isolate the controller's clock so only deliberate recovery backoffs are
+    # captured and deadline fixtures cannot change subprocess polling clocks.
+    clock = SimpleNamespace(**vars(pipeline.time))
+    clock.sleep = sleeps.append
+    monkeypatch.setattr(pipeline, 'time', clock)
     return children, sleeps
+
+
+def test_primary_fault_fixture_isolates_backoff_from_subprocess_polling(tmp_path, monkeypatch):
+    import time
+    from horsehair import pipeline
+    config, root, release, _ = primary_rna_release_fixture(tmp_path)
+    real_sleep, real_monotonic = time.sleep, time.monotonic
+    fault = "raise OSError(108,'Generated transient read fixture',str(Path(request['root'])/'state/resource-budget.json'))"
+    children, sleeps = primary_child_fault_injection(monkeypatch, [fault, None])
+    injected = pipeline.subprocess.run
+    polling = []
+    def run(command, **kwargs):
+        # Exercise the shared clock path used by subprocess on Linux even when
+        # this fixture runs on Windows, whose wait implementation differs.
+        time.sleep(.001)
+        polling.append(True)
+        return injected(command, **kwargs)
+    monkeypatch.setattr(pipeline.subprocess, 'run', run)
+    result = pipeline._primary_execution(config, root, release, 'admission', 'rna-full')
+    assert result['rna-full']['status'] == 'admitted' and len(children) == len(polling) == 2
+    assert time.sleep is real_sleep and time.monotonic is real_monotonic
+    assert pipeline.time is not time and sleeps == [1]
 
 
 @pytest.mark.parametrize('number', [108, 116])
@@ -366,6 +394,7 @@ def test_primary_read_retry_rechecks_primary_identity_before_new_process(tmp_pat
 
 
 def test_primary_child_deadline_never_retries_even_with_structured_read_error(tmp_path, monkeypatch):
+    from types import SimpleNamespace
     from horsehair import pipeline
     config, root, release, _ = primary_rna_release_fixture(tmp_path)
     calls = []
@@ -378,7 +407,9 @@ def test_primary_child_deadline_never_retries_even_with_structured_read_error(tm
         output = ('HHW_PRIMARY_CONTEXT_IO_ERROR '+json.dumps(error)+'\n').encode()
         raise pipeline.subprocess.TimeoutExpired(command, 900, output=output, stderr=b'Generated timeout')
     monkeypatch.setattr(pipeline.subprocess, 'run', timeout)
-    monkeypatch.setattr(pipeline.time, 'sleep', lambda _:pytest.fail('A child timeout must not retry'))
+    clock = SimpleNamespace(**vars(pipeline.time))
+    clock.sleep = lambda _:pytest.fail('A child timeout must not retry')
+    monkeypatch.setattr(pipeline, 'time', clock)
     with pytest.raises(RuntimeError, match='Primary child deadline expired'):
         pipeline._primary_execution(config, root, release, 'admission', 'rna-full')
     assert len(calls) == 1
