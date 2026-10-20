@@ -309,6 +309,22 @@ def _placement_options(task):
     return ['--nodelist=' + nodes[0]]
 
 
+def _excluded_nodes(value):
+    """Validate the controller's exclusion setting before making it explicit.
+
+    SBATCH_EXCLUDE is not an sbatch input variable. Keep compatibility with
+    existing maintenance controllers by translating their exported setting to
+    a command option, without modifying the process environment or resources.
+    """
+    if value is None:
+        return []
+    nodes = value.split(',') if isinstance(value, str) else []
+    if (not nodes or len(set(nodes)) != len(nodes)
+            or any(re.fullmatch(r'nc[0-9]{5}', node) is None for node in nodes)):
+        raise ValueError('Exclusions require unique explicit Narval CPU node names')
+    return sorted(nodes)
+
+
 def submit(plan_path,ledger_path,environment_job=None,runner=subprocess.run):
     p=read_json(plan_path)
     if environment_job is not None and not re.fullmatch(r'\d+(?:_\d+)?',str(environment_job)):
@@ -327,11 +343,34 @@ def submit(plan_path,ledger_path,environment_job=None,runner=subprocess.run):
     ledger_path=Path(ledger_path)
     lock=ledger_path.with_suffix('.mutex')
     with exclusive_file_lock(lock):
-        ledger=read_json(ledger_path) if ledger_path.exists() else {'schema_version':2,'plan_sha256':canonical_hash(p),'environment_job':environment_job,
+        existing_ledger=ledger_path.exists()
+        ledger=read_json(ledger_path) if existing_ledger else {'schema_version':2,'plan_sha256':canonical_hash(p),'environment_job':environment_job,
             'source_sha256':p.get('release_identity',{}).get('sha256'),'config_sha256':p.get('config_sha256'),'tasks':{}}
         if ledger['plan_sha256']!=canonical_hash(p):raise ValueError('Submission ledger belongs to another plan')
         if 'environment_job' in ledger and ledger['environment_job']!=environment_job:
             raise ValueError('Submission environment dependency changed after its context was frozen')
+        for task in p['tasks']:
+            existing=ledger['tasks'].get(task['name'])
+            if existing and existing.get('state')!='submitted':
+                raise RuntimeError('Ambiguous/rejected prior submission: inspect native records; do not replay')
+        if existing_ledger and all(ledger['tasks'].get(task['name'],{}).get('state')=='submitted' for task in p['tasks']):
+            return ledger
+        excluded=_excluded_nodes(os.environ.get('SBATCH_EXCLUDE'))
+        if not existing_ledger:
+            ledger['excluded_nodes']=excluded
+        elif 'excluded_nodes' not in ledger:
+            if excluded:
+                raise ValueError('Legacy submission ledger cannot adopt exclusions after submission began')
+        else:
+            frozen=ledger['excluded_nodes']
+            if (type(frozen) is not list or any(not isinstance(node,str) for node in frozen)
+                    or (frozen and _excluded_nodes(','.join(frozen))!=frozen)):
+                raise ValueError('Invalid frozen submission exclusions')
+            if frozen!=excluded:
+                raise ValueError('Submission exclusions changed after their context was frozen')
+        if any(task.get('placement_nodes',[None])[0] in excluded
+               for task in p['tasks'] if 'placement_nodes' in task):
+            raise ValueError('Submission placement host is excluded')
         for task in p['tasks']:
             existing=ledger['tasks'].get(task['name'])
             if existing:
@@ -367,6 +406,7 @@ def submit(plan_path,ledger_path,environment_job=None,runner=subprocess.run):
             dependencies=list(dict.fromkeys(dependencies))
             command=['sbatch','--parsable']
             command += _placement_options(task)
+            if excluded:command += ['--exclude='+','.join(excluded)]
             if dependencies:command += ['--dependency='+kind+':'+':'.join(dependencies)]
             command += [str(script)]
             ledger['tasks'][task['name']]={'state':'submitting','command':command,'script_sha256':task['script_sha256'],
