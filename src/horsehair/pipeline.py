@@ -108,6 +108,62 @@ def _verified_storage_artifact_eof(root, record):
     return dict(descriptor)
 
 
+def _verified_storage_entry_lengths(root, record):
+    """Verify the exact length evidence for every regular census entry.
+
+    One-byte boundary probes establish logical lengths, including sparse-file
+    holes. Their pure validator does not claim a full content hash or perform
+    fresh payload/stat operations while checking a cached census.
+    """
+    from .storage_artifacts import validate_regular_length_measurement
+
+    descriptor = record['exact_entry_measurements']
+    expected_path = root / 'state/storage-entry-sizes.json'
+    if (not isinstance(descriptor, dict) or type(descriptor.get('schema_version')) is not int
+            or descriptor['schema_version'] != 1 or descriptor.get('method') != 'owned_regular_length'
+            or descriptor.get('receipt_path') != str(expected_path)
+            or not isinstance(descriptor.get('receipt_sha256'), str)
+            or re.fullmatch(r'[0-9a-f]{64}', descriptor['receipt_sha256']) is None
+            or type(descriptor.get('count')) is not int or descriptor['count'] <= 0
+            or type(descriptor.get('bytes')) is not int or descriptor['bytes'] < 0
+            or type(record['study_files']) is not int or descriptor['count'] != record['study_files']
+            or type(record['study_bytes']) is not int or descriptor['bytes'] != record['study_bytes']
+            or type(record.get('personal_uid')) is not int or record['personal_uid'] < 0
+            or expected_path.is_symlink() or expected_path.resolve() != expected_path
+            or not expected_path.is_file()):
+        raise ValueError('Exact entry storage descriptor does not cover its complete measured census')
+    raw = expected_path.read_bytes()
+    receipt_hash = hashlib.sha256(raw).hexdigest()
+    if receipt_hash != descriptor['receipt_sha256']:
+        raise ValueError('Exact entry storage evidence changed after measurement')
+    evidence = json.loads(raw)
+    if (not isinstance(evidence, dict) or type(evidence.get('schema_version')) is not int
+            or evidence['schema_version'] != 1 or evidence.get('status') != 'measured'
+            or evidence.get('method') != 'owned_regular_length' or evidence.get('root') != str(root)
+            or type(evidence.get('count')) is not int or evidence['count'] != descriptor['count']
+            or type(evidence.get('bytes')) is not int or evidence['bytes'] != descriptor['bytes']
+            or not isinstance(evidence.get('items'), list) or len(evidence['items']) != descriptor['count']):
+        raise ValueError('Exact entry storage sidecar has another root, method or complete roster')
+    seen, total = set(), 0
+    for item in evidence['items']:
+        if not isinstance(item, dict) or not isinstance(item.get('relative_path'), str):
+            raise ValueError('Exact entry storage row lacks its lexical relative path')
+        relative = PurePosixPath(item['relative_path'])
+        if (not item['relative_path'] or '\\' in item['relative_path'] or '\0' in item['relative_path']
+                or relative.is_absolute() or '..' in relative.parts or relative.as_posix() != item['relative_path']
+                or item['relative_path'] in seen):
+            raise ValueError('Exact entry storage path is unsafe or duplicated')
+        length = validate_regular_length_measurement(item, expected_uid=record['personal_uid'],
+            max_bytes=6_000_000_000_000, root=root, path=root.joinpath(*relative.parts))
+        if type(length) is not int or not 0 <= length <= 6_000_000_000_000:
+            raise ValueError('Exact entry validator did not establish a bounded integer length')
+        seen.add(item['relative_path'])
+        total += length
+    if total != descriptor['bytes'] or digest(expected_path) != receipt_hash:
+        raise ValueError('Exact entry storage totals or sidecar bytes changed during validation')
+    return dict(descriptor)
+
+
 def _cached_storage_snapshot(root, *, now=None):
     """Reuse only recent, root-bound measurements with unchanged quota evidence."""
     root = Path(root).resolve()
@@ -151,6 +207,8 @@ def _cached_storage_snapshot(root, *, now=None):
                 return None
         artifact_evidence = (_verified_storage_artifact_eof(root, record)
                              if 'artifact_eof_measurements' in record else None)
+        entry_evidence = (_verified_storage_entry_lengths(root, record)
+                          if 'exact_entry_measurements' in record else None)
         receipt_hash = hashlib.sha256(raw).hexdigest()
         if digest(path) != receipt_hash:
             return None
@@ -161,6 +219,8 @@ def _cached_storage_snapshot(root, *, now=None):
                 'native_source_hashes': hashes}
         if artifact_evidence is not None:
             result['artifact_eof_measurements'] = artifact_evidence
+        if entry_evidence is not None:
+            result['exact_entry_measurements'] = entry_evidence
         return result
     except (OSError, ValueError, TypeError, AttributeError, OverflowError):
         return None

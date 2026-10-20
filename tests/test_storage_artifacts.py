@@ -4,6 +4,7 @@ import errno
 import hashlib
 import io
 import stat
+from copy import deepcopy
 from types import SimpleNamespace
 
 import pytest
@@ -267,3 +268,276 @@ def test_unsupported_platform_refuses_before_any_io(monkeypatch):
     monkeypatch.setattr(artifacts.sys,'platform','unsupported-platform')
     with pytest.raises(artifacts.StorageArtifactError,match='native Linux'):
         artifacts.measure_regular_eof(ROOT+'/a.txt',1,47,root=ROOT)
+
+
+class LengthKernelFixture(KernelFixture):
+    def __init__(self, monkeypatch, size=3, *, sparse=False):
+        super().__init__(monkeypatch, (b'\0' if sparse else b'x')*min(size, artifacts.ENTRY_PREFIX_CAP))
+        self.logical_size=size; self.preads=[]; self.pread_error=None; self.sparse=sparse
+        monkeypatch.setattr(artifacts.os,'pread',self.pread,raising=False)
+
+    def pread(self,descriptor,length,offset):
+        self.preads.append((descriptor,length,offset))
+        if self.pread_error:raise self.pread_error
+        assert length==1
+        return (b'\0' if self.sparse else b'x') if offset<self.logical_size else b''
+
+
+def measure_length(kernel,cap=6_000_000_000_000):
+    return artifacts.measure_regular_length(ROOT+'/any-owned-entry.dat',cap,root=ROOT)
+
+
+@pytest.mark.parametrize('size,cap',[(0,0),(1,1),(3,100),(65535,65535),
+    (65536,65536),(65537,100000),(1000000,1000000),(6_000_000_000_000,6_000_000_000_000)])
+def test_general_entry_size_is_exact_at_empty_prefix_and_large_boundaries(monkeypatch,size,cap):
+    kernel=LengthKernelFixture(monkeypatch,size)
+    result=measure_length(kernel,cap)
+    assert result['bytes']==size and not kernel.remaining
+    assert result['method']=='owned_regular_length' and result['eof_observed'] is True
+    assert result['prefix_bytes']==min(size,65536)
+    assert len(kernel.preads)<100 and all(row[1]==1 for row in kernel.preads)
+    assert sum(row[1] for row in kernel.reads)<=65537
+    assert artifacts.validate_regular_length_measurement(result,expected_uid=47,max_bytes=cap,root=ROOT)==size
+    if size<65536:
+        assert result['size_proof']['kind']=='prefix_eof'
+        assert result['content_sha256']==hashlib.sha256(b'x'*size).hexdigest()
+    else:
+        assert result['size_proof']['kind']=='pread_first_eof' and 'content_sha256' not in result
+    assert result['size_proof']['probes'][-1]=={'offset':size,'bytes':0}
+    if size:assert result['size_proof']['probes'][-2]=={'offset':size-1,'bytes':1}
+
+
+def test_sparse_holes_count_as_logical_bytes_without_bulk_reading(monkeypatch):
+    kernel=LengthKernelFixture(monkeypatch,2**40,sparse=True)
+    result=measure_length(kernel)
+    assert result['bytes']==2**40
+    assert result['prefix_sha256']==hashlib.sha256(b'\0'*65536).hexdigest()
+    assert len(kernel.preads)<100 and not kernel.remaining
+
+
+def test_general_prefix_short_positive_reads_continue_until_explicit_eof(monkeypatch):
+    kernel=LengthKernelFixture(monkeypatch,9);kernel.chunk_limit=2
+    result=measure_length(kernel)
+    assert result['bytes']==9 and len(kernel.reads)==6 and not kernel.remaining
+
+
+@pytest.mark.parametrize('size,cap',[(1,0),(1000,999),(65537,65536),(6_000_000_000_001,6_000_000_000_000)])
+def test_positive_byte_at_study_ceiling_refuses_instead_of_assuming_ceiling(monkeypatch,size,cap):
+    kernel=LengthKernelFixture(monkeypatch,size)
+    with pytest.raises(artifacts.StorageArtifactError,match='exceeds'):
+        measure_length(kernel,cap)
+    assert not kernel.remaining and len(kernel.preads)<100
+
+
+@pytest.mark.parametrize('mode,status',[(stat.S_IFLNK,'symlink'),(stat.S_IFDIR,'directory'),
+    (stat.S_IFIFO,'special'),(stat.S_IFSOCK,'special')])
+def test_general_nonregular_entries_are_explicitly_uncounted_before_open(monkeypatch,mode,status):
+    kernel=LengthKernelFixture(monkeypatch);kernel.metadata=identity(mode=mode|0o600)
+    result=measure_length(kernel)
+    assert result['status']==status and 'bytes' not in result and 'method' not in result
+    assert not kernel.reads and not kernel.preads and not kernel.remaining
+    assert not any(row[0]=='file' for row in kernel.opened)
+
+
+def test_general_foreign_regular_entry_is_refused_before_payload_open(monkeypatch):
+    kernel=LengthKernelFixture(monkeypatch);kernel.metadata=identity(uid=48)
+    with pytest.raises(artifacts.StorageArtifactError,match='owned regular-file'):
+        measure_length(kernel)
+    assert not kernel.reads and not kernel.preads and not kernel.remaining
+
+
+@pytest.mark.parametrize('failure',[InterruptedError(errno.EINTR,'fixture signal handler interrupted'),
+    OSError(errno.EIO,'fixture pread I/O error'),BlockingIOError(errno.EAGAIN,'fixture unavailable read')])
+def test_general_pread_errors_are_not_eof_and_close_every_descriptor(monkeypatch,failure):
+    kernel=LengthKernelFixture(monkeypatch,65537);kernel.pread_error=failure
+    with pytest.raises(OSError) as caught:measure_length(kernel)
+    assert caught.value is failure and len(kernel.preads)==1 and not kernel.remaining
+
+
+def test_general_prefix_read_error_and_close_error_never_admit_a_size(monkeypatch):
+    kernel=LengthKernelFixture(monkeypatch,3)
+    kernel.read_error=InterruptedError(errno.EINTR,'fixture interrupted prefix')
+    kernel.close_error=OSError(errno.EIO,'fixture close error')
+    with pytest.raises(InterruptedError,match='interrupted prefix'):measure_length(kernel)
+    assert not kernel.preads and not kernel.remaining and len(kernel.closed)==2
+
+
+@pytest.mark.parametrize('cap',[-1,True,1.0,2**63])
+def test_general_invalid_study_ceiling_never_opens_descriptors(monkeypatch,cap):
+    kernel=LengthKernelFixture(monkeypatch)
+    with pytest.raises(artifacts.StorageArtifactError,match='ceiling'):measure_length(kernel,cap)
+    assert not kernel.opened
+
+
+@pytest.mark.parametrize('new_size,error',[(2,'last-byte'),(4,'grew')])
+def test_adjacent_boundary_recheck_rejects_shrink_and_growth_even_without_ctime_change(monkeypatch,new_size,error):
+    kernel=LengthKernelFixture(monkeypatch,3);pread=kernel.pread
+    def changed(fd,length,offset):
+        if (new_size==2 and offset==2) or (new_size==4 and offset==3):kernel.logical_size=new_size
+        return pread(fd,length,offset)
+    monkeypatch.setattr(artifacts.os,'pread',changed)
+    with pytest.raises(artifacts.StorageArtifactError,match=error):measure_length(kernel)
+    assert not kernel.remaining
+
+
+def test_general_identity_change_after_successful_boundary_is_refused(monkeypatch):
+    kernel=LengthKernelFixture(monkeypatch,3);inspect=kernel.inspect
+    def changed(name,fd):
+        value=inspect(name,fd)
+        if len(kernel.snapshots)==3:value['ctime_ns']+=1
+        return value
+    monkeypatch.setattr(artifacts,'_metadata',changed)
+    with pytest.raises(artifacts.StorageArtifactError,match='identity/change'):measure_length(kernel)
+    assert not kernel.remaining
+
+
+@pytest.mark.parametrize('change',[
+    lambda item:item.update(bytes=2),
+    lambda item:item.update(max_bytes=True),
+    lambda item:item.update(prefix_bytes=65536),
+    lambda item:item.update(prefix_sha256='bad'),
+    lambda item:item.update(eof_observed=False),
+    lambda item:item.update(path='/scratch/other/file'),
+    lambda item:item['identity'].update(uid=48),
+    lambda item:item['size_proof']['probes'][0].update(offset=0),
+    lambda item:item['size_proof']['probes'][-1].update(bytes=1),
+    lambda item:item['size_proof']['probes'].append({'offset':3,'bytes':0}),
+],ids=['wrong-size','boolean-cap','false-prefix','bad-prefix-hash','missing-eof','other-root',
+       'foreign-owner','wrong-probe-offset','positive-eof','trailing-probe'])
+def test_pure_validator_rejects_tampered_small_receipts_without_leaf_io(monkeypatch,change):
+    kernel=LengthKernelFixture(monkeypatch,3);item=deepcopy(measure_length(kernel));change(item)
+    with pytest.raises(artifacts.StorageArtifactError):
+        artifacts.validate_regular_length_measurement(item,expected_uid=47,max_bytes=6_000_000_000_000,root=ROOT)
+    assert not kernel.remaining
+
+
+def test_pure_validator_rejects_false_whole_content_hash_and_binary_transcript(monkeypatch):
+    kernel=LengthKernelFixture(monkeypatch,65537);item=measure_length(kernel)
+    wrong_hash=deepcopy(item);wrong_hash['content_sha256']=item['prefix_sha256']
+    with pytest.raises(artifacts.StorageArtifactError,match='whole-content'):
+        artifacts.validate_regular_length_measurement(wrong_hash,expected_uid=47,max_bytes=6_000_000_000_000,root=ROOT)
+    wrong_probe=deepcopy(item);wrong_probe['size_proof']['probes'][2]['offset']+=1
+    with pytest.raises(artifacts.StorageArtifactError,match='algorithm'):
+        artifacts.validate_regular_length_measurement(wrong_probe,expected_uid=47,max_bytes=6_000_000_000_000,root=ROOT)
+    with pytest.raises(artifacts.StorageArtifactError,match='another path'):
+        artifacts.validate_regular_length_measurement(item,expected_uid=47,max_bytes=6_000_000_000_000,
+            root=ROOT,path=ROOT+'/different-file')
+
+
+class TraversalFixture:
+    class Entry:
+        def __init__(self,name):self.name=name
+        def is_dir(self,*args,**kwargs):raise AssertionError('DirEntry.is_dir must never be used')
+        def is_file(self,*args,**kwargs):raise AssertionError('DirEntry.is_file must never be used')
+        def is_symlink(self,*args,**kwargs):raise AssertionError('DirEntry.is_symlink must never be used')
+        def stat(self,*args,**kwargs):raise AssertionError('DirEntry.stat must never be used')
+
+    class Scan:
+        def __init__(self,owner,path):self.owner=owner;self.path=path;self.closed=False
+        def __enter__(self):return self
+        def __exit__(self,*args):self.close()
+        def __iter__(self):
+            if self.owner.scan_error:raise self.owner.scan_error
+            return iter([TraversalFixture.Entry(name) for name in self.owner.tree[self.path]])
+        def close(self):self.closed=True
+
+    def __init__(self,monkeypatch):
+        self.tree={ROOT:['data','link-dir','pipe','root.txt'],ROOT+'/data':['nested','a.fa'],
+                   ROOT+'/data/nested':['b.fa']}
+        self.identities={path:identity(inode=100+index,mode=stat.S_IFDIR|0o700)
+                         for index,path in enumerate(self.tree)}
+        self.opened=[];self.closed=[];self.remaining={};self.scans=[];self.measured=[]
+        self.scan_error=None;self.swap_directory=None;self.open_error=None;self.close_error=None
+        monkeypatch.setattr(artifacts,'_require_linux',lambda:None)
+        monkeypatch.setattr(artifacts,'_open_directory',self.open_directory)
+        monkeypatch.setattr(artifacts,'_metadata',self.metadata)
+        monkeypatch.setattr(artifacts,'measure_regular_length',self.measure)
+        monkeypatch.setattr(artifacts,'os',SimpleNamespace(fspath=lambda p:str(p),geteuid=lambda:47,
+            scandir=self.scandir,close=self.close))
+
+    def open_directory(self,name,dir_fd=None):
+        path=name if dir_fd is None else self.remaining[dir_fd]+'/'+name
+        if self.open_error and path!=ROOT:raise self.open_error
+        assert path in self.tree
+        fd=1000+len(self.opened);self.opened.append((path,dir_fd,fd));self.remaining[fd]=path
+        return fd
+
+    def metadata(self,name,fd):
+        assert name=='';path=self.remaining[fd];value=dict(self.identities[path])
+        if path==self.swap_directory:value['inode']+=1
+        return value
+
+    def scandir(self,fd):
+        assert type(fd) is int and fd in self.remaining
+        scan=self.Scan(self,self.remaining[fd]);self.scans.append(scan);return scan
+
+    def close(self,fd):
+        self.closed.append(fd);del self.remaining[fd]
+        if self.close_error:raise self.close_error
+
+    def measure(self,path,max_bytes,expected_uid=None,*,root):
+        assert not self.remaining and all(scan.closed for scan in self.scans)
+        assert str(root)==ROOT and expected_uid==47
+        path=str(path);self.measured.append(path)
+        if path in self.tree:return {'status':'directory','path':path,'identity':self.identities[path]}
+        if path==ROOT+'/link-dir':return {'status':'symlink','path':path,'identity':identity(mode=stat.S_IFLNK|0o777)}
+        if path==ROOT+'/pipe':return {'status':'special','path':path,'identity':identity(mode=stat.S_IFIFO|0o600)}
+        return {'status':'measured','path':path,'bytes':123}
+
+
+def test_anchored_census_uses_only_entry_names_and_never_follows_symlink_directories(monkeypatch):
+    fixture=TraversalFixture(monkeypatch)
+    results=list(artifacts.iter_regular_lengths(ROOT,6_000_000_000_000))
+    by_path={str(path):row for path,row in results}
+    assert set(by_path)=={ROOT+'/root.txt',ROOT+'/link-dir',ROOT+'/pipe',
+                          ROOT+'/data/a.fa',ROOT+'/data/nested/b.fa'}
+    assert by_path[ROOT+'/link-dir']['status']=='symlink'
+    assert by_path[ROOT+'/pipe']['status']=='special'
+    assert [scan.path for scan in fixture.scans]==[ROOT,ROOT+'/data',ROOT+'/data/nested']
+    assert not fixture.remaining and all(scan.closed for scan in fixture.scans)
+    assert all('link-dir' not in path for path,_,_ in fixture.opened)
+
+
+def test_anchored_census_rejects_directory_replacement_before_queued_traversal(monkeypatch):
+    fixture=TraversalFixture(monkeypatch);fixture.swap_directory=ROOT+'/data'
+    with pytest.raises(artifacts.StorageArtifactError,match='Queued census directory changed'):
+        list(artifacts.iter_regular_lengths(ROOT,6_000_000_000_000))
+    assert not fixture.remaining and all(scan.closed for scan in fixture.scans)
+    assert [scan.path for scan in fixture.scans]==[ROOT]
+
+
+def test_anchored_census_closes_scandir_and_anchor_when_directory_iteration_fails(monkeypatch):
+    fixture=TraversalFixture(monkeypatch);fixture.scan_error=OSError(errno.EIO,'fixture directory iteration error')
+    with pytest.raises(OSError,match='directory iteration error'):
+        list(artifacts.iter_regular_lengths(ROOT,6_000_000_000_000))
+    assert not fixture.remaining and len(fixture.scans)==1 and fixture.scans[0].closed
+
+
+def test_anchored_census_closes_root_when_queued_nofollow_open_refuses_symlink_swap(monkeypatch):
+    fixture=TraversalFixture(monkeypatch);fixture.open_error=OSError(errno.ELOOP,'fixture queued directory symlink')
+    with pytest.raises(OSError,match='queued directory symlink'):
+        list(artifacts.iter_regular_lengths(ROOT,6_000_000_000_000))
+    assert not fixture.remaining and all(scan.closed for scan in fixture.scans)
+
+
+def test_anchored_census_retains_no_descriptors_across_yield_or_generator_close(monkeypatch):
+    fixture=TraversalFixture(monkeypatch);iterator=artifacts.iter_regular_lengths(ROOT,6_000_000_000_000)
+    next(iterator)
+    assert not fixture.remaining and all(scan.closed for scan in fixture.scans)
+    iterator.close()
+    assert not fixture.remaining and all(scan.closed for scan in fixture.scans)
+
+
+def test_anchored_census_does_not_return_measurements_after_anchor_close_failure(monkeypatch):
+    fixture=TraversalFixture(monkeypatch);fixture.close_error=OSError(errno.EIO,'fixture anchor close error')
+    with pytest.raises(OSError,match='anchor close error'):
+        list(artifacts.iter_regular_lengths(ROOT,6_000_000_000_000))
+    assert not fixture.remaining and not fixture.measured and fixture.scans[0].closed
+
+
+@pytest.mark.parametrize('name',['..','bad/name','bad\0name'])
+def test_anchored_census_rejects_unsafe_entry_names_without_measuring_or_leaking(monkeypatch,name):
+    fixture=TraversalFixture(monkeypatch);fixture.tree[ROOT]=[name]
+    with pytest.raises(artifacts.StorageArtifactError,match='unsafe lexical name'):
+        list(artifacts.iter_regular_lengths(ROOT,6_000_000_000_000))
+    assert not fixture.remaining and not fixture.measured and fixture.scans[0].closed

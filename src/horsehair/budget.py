@@ -125,38 +125,58 @@ def require_storage_headroom(root, *, required_files, required_bytes=0,
     return record
 
 
-def storage_snapshot(root,runner=subprocess.run):
+def storage_snapshot(root,runner=subprocess.run,*,exact_sizes=None):
     """Measure this study's occupancy and the user's personal Lustre quota."""
-    from .storage_artifacts import artifact_read_cap, measure_regular_eof
+    from .storage_artifacts import artifact_read_cap, measure_regular_eof, iter_regular_lengths
     root=Path(root).resolve()
     if root!=PERSONAL_STUDY_ROOT.resolve():raise ValueError('Storage snapshot requires the authorized personal study namespace')
+    if exact_sizes is None:
+        # Production Lustre scans must never ask an OST for full getattr merely
+        # to classify or size a leaf. Keep the portable stat path for other
+        # filesystems and legacy audit fixtures; tests can select either mode.
+        exact_sizes=sys.platform.startswith('linux') and root==(Path('/scratch/pwa209/horsehair-worm').resolve())
+    if type(exact_sizes) is not bool:raise ValueError('Exact-size measurement selection must be boolean')
     quota=_measure_personal_quota(runner)
-    sizes=0;count=0;artifact_items=[]
-    for directory,dirs,files in os.walk(root,followlinks=False):
-        for filename in files:
-            path=Path(directory)/filename
-            cap=artifact_read_cap(path,root)
-            if cap is not None:
-                # Full Lustre getattr can stall on an archived empty curl log.
-                # These narrow, small artifact classes are measured through an
-                # owned, no-follow descriptor through actual EOF, rather than
-                # substituting an assumed size or skipping their occupancy.
-                try:measured=measure_regular_eof(path,cap,root=root)
-                except FileNotFoundError:continue
-                if measured['status']=='symlink':continue
-                if measured['status']!='measured' or measured.get('eof_observed') is not True:
-                    raise ValueError('Storage artifact lacks an exact EOF measurement')
-                sizes+=measured['bytes'];count+=1
-                artifact_items.append({'relative_path':str(path.relative_to(root)),**measured})
-                continue
-            if path.is_symlink():continue
-            try:sizes+=path.stat().st_size;count+=1
+    sizes=0;count=0;artifact_items=[];exact_items=[]
+    entries=(iter_regular_lengths(root,6_000_000_000_000) if exact_sizes else
+        ((Path(directory)/filename,None) for directory,dirs,files in os.walk(root,followlinks=False) for filename in files))
+    for path,measured in entries:
+        path=Path(path)
+        if exact_sizes:
+            if measured['status'] in {'symlink','directory','special'}:continue
+            if (measured['status']!='measured' or measured.get('method')!='owned_regular_length'
+                    or measured.get('eof_observed') is not True
+                    or type(measured.get('bytes')) is not int or measured['bytes']<0):
+                raise ValueError('Study entry lacks an exact regular-file length measurement')
+            sizes+=measured['bytes'];count+=1
+            exact_items.append({'relative_path':path.relative_to(root).as_posix(),**measured})
+            continue
+        cap=artifact_read_cap(path,root)
+        if cap is not None:
+            # Legacy narrow receipts retain their original exact EOF format.
+            try:measured=measure_regular_eof(path,cap,root=root)
             except FileNotFoundError:continue
+            if measured['status']=='symlink':continue
+            if measured['status']!='measured' or measured.get('eof_observed') is not True:
+                raise ValueError('Storage artifact lacks an exact EOF measurement')
+            sizes+=measured['bytes'];count+=1
+            artifact_items.append({'relative_path':str(path.relative_to(root)),**measured})
+            continue
+        if path.is_symlink():continue
+        try:sizes+=path.stat().st_size;count+=1
+        except FileNotFoundError:continue
     path=root/'state'/('quota-'+str(time.time_ns())+'.txt')
     path.write_text(quota['native_stdout'],encoding='utf8')
     record={'status':'measured','root':str(root),'measured_unix':time.time(),'captured_utc':datetime.now(timezone.utc).isoformat(),'study_bytes':sizes,'study_files':count,
             **{key:value for key,value in quota.items() if key!='native_stdout'},
             'native_source_paths':[str(path)],'native_source_hashes':{str(path):digest(path)}}
+    if exact_sizes:
+        exact_items.sort(key=lambda item:item['relative_path'])
+        evidence=root/'state/storage-entry-sizes.json'
+        atomic_json(evidence,{'schema_version':1,'status':'measured','root':str(root),'method':'owned_regular_length',
+            'count':len(exact_items),'bytes':sum(item['bytes'] for item in exact_items),'items':exact_items})
+        record['exact_entry_measurements']={'schema_version':1,'method':'owned_regular_length','receipt_path':str(evidence),
+            'receipt_sha256':digest(evidence),'count':len(exact_items),'bytes':sum(item['bytes'] for item in exact_items)}
     if artifact_items:
         artifact_items.sort(key=lambda item:item['relative_path'])
         evidence=root/'state/storage-artifacts.json'
