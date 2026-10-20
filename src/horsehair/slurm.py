@@ -289,6 +289,26 @@ def require_admission(config,root,phase):
     return record
 
 
+def _placement_options(task):
+    """One explicitly frozen CPU maintenance host; never a global environment.
+
+    Multiple --nodelist names request multiple nodes, rather than alternative
+    hosts. Restrict this operational option to one node so the frozen resource
+    contract is unchanged. Ordinary scientific/GPU tasks cannot opt in.
+    """
+    if 'placement_nodes' not in task:
+        return []
+    nodes = task['placement_nodes']
+    name = task.get('name', '')
+    allowed = (re.fullmatch(r'pipeline-controller-[0-3]', name) is not None
+               or re.fullmatch(r'recovery-[a-z0-9][a-z0-9-]{0,63}', name) is not None)
+    if (not allowed or task.get('resources', {}).get('gpu') is not False
+            or type(nodes) is not list or len(nodes) != 1
+            or not isinstance(nodes[0], str) or re.fullmatch(r'nc[0-9]{5}', nodes[0]) is None):
+        raise ValueError('Placement requires one explicit Narval CPU node for a CPU maintenance controller/support task')
+    return ['--nodelist=' + nodes[0]]
+
+
 def submit(plan_path,ledger_path,environment_job=None,runner=subprocess.run):
     p=read_json(plan_path)
     if environment_job is not None and not re.fullmatch(r'\d+(?:_\d+)?',str(environment_job)):
@@ -300,6 +320,7 @@ def submit(plan_path,ledger_path,environment_job=None,runner=subprocess.run):
         known.add(task['name'])
         if task.get('dependency_kind','afterok') not in {'afterok','afterany'}:
             raise ValueError('Invalid dependency kind in frozen submission plan')
+        _placement_options(task)
         script=Path(task['script'])
         if canonical_hash(script.read_text(encoding='utf8'))!=task['script_sha256']:
             raise ValueError('Slurm script changed after plan freeze')
@@ -345,6 +366,7 @@ def submit(plan_path,ledger_path,environment_job=None,runner=subprocess.run):
                 else:completed.append(proof)
             dependencies=list(dict.fromkeys(dependencies))
             command=['sbatch','--parsable']
+            command += _placement_options(task)
             if dependencies:command += ['--dependency='+kind+':'+':'.join(dependencies)]
             command += [str(script)]
             ledger['tasks'][task['name']]={'state':'submitting','command':command,'script_sha256':task['script_sha256'],
