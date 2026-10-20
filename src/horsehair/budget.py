@@ -7,24 +7,129 @@ import sys
 import time
 import re
 import subprocess
+import errno
 from datetime import datetime,timezone
 from contextlib import contextmanager
 from pathlib import Path
 from .core import atomic_json, read_json,digest,exclusive_file_lock,canonical_hash,ReceiptLockTimeout
 
 
+PERSONAL_SCRATCH = '/scratch/pwa209'
+PERSONAL_STUDY_ROOT = Path(PERSONAL_SCRATCH)/'horsehair-worm'
+STORAGE_HEADROOM_RECEIPT_INODES = 5
+
+
+class StorageHeadroomError(ValueError):
+    """A fresh personal quota cannot support the proposed bounded work."""
+    def __init__(self, record):
+        self.record=record
+        super().__init__('Personal scratch storage is pending: '+'; '.join(record['reasons']))
+
+
+def parse_personal_quota(text):
+    """Parse default `lfs quota` units, without inventing unlimited capacity.
+
+    The default block fields are KiB; inode fields are counts. Both positive
+    soft and hard limits apply conservatively: an expiring grace period is not
+    durable capacity for a new job. A zero limit means unlimited, not zero free.
+    """
+    rows=[line.split() for line in text.splitlines() if line.split() and line.split()[0]==str(PERSONAL_SCRATCH)]
+    if len(rows)!=1 or len(rows[0])!=9:
+        raise ValueError('Expected exactly one personal scratch quota row with default KiB/count units')
+    fields=rows[0]
+    values=[]
+    for index in (1,2,3,5,6,7):
+        if not re.fullmatch(r'\d+\*?',fields[index]):
+            raise ValueError('Personal quota requires nonnegative integer default KiB/count units')
+        values.append(int(fields[index].rstrip('*')))
+    result={'quota_filesystem':str(PERSONAL_SCRATCH),'quota_units':'default KiB (1024 bytes) and inode counts',
+            'quota_limit_policy':'minimum positive soft/hard limit; no grace-period capacity assumed'}
+    for kind,offset,multiplier in (('bytes',0,1024),('files',3,1)):
+        used,soft,hard=(value*multiplier for value in values[offset:offset+3])
+        limits=[value for value in (soft,hard) if value>0]
+        limit=min(limits) if limits else None
+        result.update({f'personal_used_{kind}':used,f'personal_soft_limit_{kind}':soft or None,
+                       f'personal_hard_limit_{kind}':hard or None,f'personal_effective_limit_{kind}':limit,
+                       f'personal_available_{kind}':limit-used if limit is not None else None})
+    return result
+
+
+def storage_readiness(quota, *, required_bytes=0, required_files=0, reserve_bytes=0, reserve_files=0):
+    """Assess explicit operational demand/reserve, independently of byte space.
+
+    This is a point-in-time guard, not an inode reservation against other
+    projects. The caller supplies a measured forecast/configured reserve and
+    refreshes again before new write-heavy work; no scientific config changes.
+    """
+    demand={'required_bytes':required_bytes,'required_files':required_files,
+            'reserve_bytes':reserve_bytes,'reserve_files':reserve_files}
+    if any(type(value) is not int or value<0 for value in demand.values()):
+        raise ValueError('Storage demand and reserve must be nonnegative integer byte/inode counts')
+    reasons=[]
+    for kind in ('bytes','files'):
+        available=quota.get(f'personal_available_{kind}')
+        need=demand[f'required_{kind}']+demand[f'reserve_{kind}']
+        if available is None:
+            reasons.append(f'Finite personal {kind} capacity has not been measured; zero quota limits are unlimited')
+        elif type(available) is not int:
+            raise ValueError('Personal available storage must contain integer native counts')
+        elif available<need:
+            label='inode' if kind=='files' else 'byte'
+            reasons.append(f'Personal scratch {label} headroom is insufficient: {available} available, {need} required including reserve')
+    return {'status':'ready' if not reasons else 'pending','ready':not reasons,'reasons':reasons,**demand,
+            'personal_available_bytes':quota.get('personal_available_bytes'),
+            'personal_available_files':quota.get('personal_available_files'),'is_capacity_reservation':False}
+
+
+def _measure_personal_quota(runner):
+    uid=os.getuid()
+    command=['lfs','quota','-u',str(uid),str(PERSONAL_SCRATCH)]
+    response=runner(command,text=True,capture_output=True,timeout=30)
+    if response.returncode:raise RuntimeError('Personal quota measurement failed')
+    return {**parse_personal_quota(response.stdout),'personal_uid':uid,'native_command':command,
+            'native_stdout':response.stdout,'measured_unix':time.time(),
+            'captured_utc':datetime.now(timezone.utc).isoformat()}
+
+
+def require_storage_headroom(root, *, required_files, required_bytes=0,
+                             reserve_bytes=0, reserve_files=0, runner=subprocess.run):
+    """Refresh personal UID quota immediately and keep one durable receipt.
+
+    Five metadata inodes cover the state directory, permanent kernel guard,
+    informational owner record, receipt and one atomic staging file. Repeated
+    checks reuse those paths. Concurrent RNA/controller writers serialize their
+    fresh measurement and receipt. EDQUOT/ENOSPC are raised once, never retried.
+    """
+    root=Path(root).resolve()
+    if root!=PERSONAL_STUDY_ROOT.resolve():raise ValueError('Storage headroom requires the authorized personal study namespace')
+    if any(type(value) is not int or value<0 for value in (required_bytes,required_files,reserve_bytes,reserve_files)):
+        raise ValueError('Storage demand and reserve must be nonnegative integer byte/inode counts')
+    record=None
+    try:
+        with exclusive_file_lock(root/'state/storage-headroom.mutex',timeout=30):
+            quota=_measure_personal_quota(runner)
+            readiness=storage_readiness(quota,required_bytes=required_bytes,
+                required_files=required_files+STORAGE_HEADROOM_RECEIPT_INODES,
+                reserve_bytes=reserve_bytes,reserve_files=reserve_files)
+            record={**quota,**readiness,'root':str(root),'planned_required_files':required_files,
+                    'receipt_file_overhead':STORAGE_HEADROOM_RECEIPT_INODES}
+            record['self_sha256']=canonical_hash(record)
+            atomic_json(root/'state/storage-headroom.json',record)
+    except OSError as error:
+        if error.errno in (errno.EDQUOT,errno.ENOSPC):
+            print(json.dumps({'storage_headroom':'receipt_write_failed','retryable':False,'errno':error.errno,
+                              'message':str(error),'measured_storage':record}),file=sys.stderr,flush=True)
+        raise
+    if not record['ready']:
+        raise StorageHeadroomError(record)
+    return record
+
+
 def storage_snapshot(root,runner=subprocess.run):
     """Measure this study's occupancy and the user's personal Lustre quota."""
     root=Path(root).resolve()
-    if root!=Path('/scratch/pwa209/horsehair-worm'):raise ValueError('Storage snapshot requires the authorized personal study namespace')
-    response=runner(['lfs','quota','-u',str(os.getuid()),'/scratch/pwa209'],text=True,capture_output=True)
-    if response.returncode:raise RuntimeError('Personal quota measurement failed')
-    line=next((x for x in response.stdout.splitlines() if x.strip().startswith('/scratch/pwa209 ')),None)
-    if line is None:raise ValueError('Expected personal scratch quota row missing')
-    fields=line.split()
-    if len(fields)!=9:raise ValueError('Unexpected personal quota format; preserve native output for inspection')
-    used,limit=int(fields[1].rstrip('*')),int(fields[3].rstrip('*'))
-    used_files,limit_files=int(fields[5].rstrip('*')),int(fields[7].rstrip('*'))
+    if root!=PERSONAL_STUDY_ROOT.resolve():raise ValueError('Storage snapshot requires the authorized personal study namespace')
+    quota=_measure_personal_quota(runner)
     sizes=0;count=0
     for directory,dirs,files in os.walk(root,followlinks=False):
         for filename in files:
@@ -33,9 +138,9 @@ def storage_snapshot(root,runner=subprocess.run):
             try:sizes+=path.stat().st_size;count+=1
             except FileNotFoundError:continue
     path=root/'state'/('quota-'+str(time.time_ns())+'.txt')
-    path.write_text(response.stdout,encoding='utf8')
+    path.write_text(quota['native_stdout'],encoding='utf8')
     record={'status':'measured','root':str(root),'measured_unix':time.time(),'captured_utc':datetime.now(timezone.utc).isoformat(),'study_bytes':sizes,'study_files':count,
-            'personal_available_bytes':(limit-used)*1024,'personal_available_files':limit_files-used_files,
+            **{key:value for key,value in quota.items() if key!='native_stdout'},
             'native_source_paths':[str(path)],'native_source_hashes':{str(path):digest(path)}}
     atomic_json(root/'state/storage-budget.json',record)
     return record

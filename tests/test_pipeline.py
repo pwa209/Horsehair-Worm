@@ -130,7 +130,7 @@ def test_native_state_reader_keeps_array_ids_ignores_steps_and_refuses_unavailab
 @pytest.fixture
 def controller_fixture(tmp_path,monkeypatch):
     root,release = tmp_path/"study",tmp_path/"release"
-    config = {"schema_version":1,"paths":{"root":str(root)},"resources":{"cpu_ceiling":8,"gpu_concurrency":1,"cpu_core_hours_cap":20000,"gpu_hours_cap":400},"agents":{}}
+    config = {"schema_version":1,"paths":{"root":str(root)},"resources":{"cpu_ceiling":8,"gpu_concurrency":1,"cpu_core_hours_cap":20000,"gpu_hours_cap":400,"scratch_budget_files":250000,"scratch_reserve_bytes":2000000000000},"agents":{}}
     atomic_json(release/"configs/study.json",config)
     source = release/"src/horsehair/pipeline.py"
     source.parent.mkdir(parents=True)
@@ -298,6 +298,7 @@ def configure_lock_run(fixture,monkeypatch):
     monkeypatch.delenv("SLURM_ARRAY_TASK_ID",raising=False)
     monkeypatch.setattr(budget,"native_accounting",lambda *a:None)
     monkeypatch.setattr(budget,"storage_snapshot",lambda *a:None)
+    monkeypatch.setattr(budget,"require_storage_headroom",lambda *a,**k:{'ready':True,'status':'ready'})
     monkeypatch.setattr(pipeline,"tick",lambda *a,**k:{"status":"complete","phases":{},"initial_tasks":{},"failed_native_stages":[]})
     path = fixture.root/"state/pipeline/qa-release/controller.lock"
     atomic_json(path,{"job_id":"700","segment":0,"started_unix":1.})
@@ -431,6 +432,94 @@ def test_restart_cache_expires_at_original_deadline_without_six_hour_extension(c
     assert calls == [('tick', 0.), ('refresh', 30.), ('tick', 30.)]
 
 
+def inode_shortage():
+    return {'status':'pending','ready':False,'reasons':['Personal scratch inode headroom is insufficient: 560 available'],
+            'personal_available_files':560,'personal_available_bytes':20_000_000_000_000}
+
+
+def test_recent_census_never_bypasses_fresh_personal_inode_guard(controller_fixture,monkeypatch):
+    from horsehair import budget
+    fixture=controller_fixture;lock=configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'_native_states',lambda *a:{'700':state()})
+    cached_storage_fixture(fixture.root)
+    clock=[0.];calls=[]
+    monkeypatch.setattr(pipeline.time,'time',lambda:100060.+clock[0])
+    monkeypatch.setattr(pipeline.time,'monotonic',lambda:clock[0])
+    monkeypatch.setattr(pipeline.time,'sleep',lambda seconds:clock.__setitem__(0,clock[0]+seconds))
+    def guard(root,**demand):
+        calls.append(demand);raise budget.StorageHeadroomError(inode_shortage())
+    monkeypatch.setattr(budget,'require_storage_headroom',guard)
+    monkeypatch.setattr(budget,'native_accounting',lambda *a:pytest.fail('Blocked quota must precede receipt/accounting writes'))
+    monkeypatch.setattr(pipeline,'tick',lambda *a,**k:pytest.fail('Cached headroom must not admit new jobs'))
+    result=pipeline.run(fixture.config,fixture.root,max_seconds=60,interval=30)
+    assert result['status']=='pending_personal_storage' and result['segment_status']=='finite_segment_finished'
+    assert len(calls)==2 and clock[0]==60 and not lock.exists()
+    assert all(demand=={'required_files':0,'required_bytes':0,'reserve_files':250000,'reserve_bytes':2000000000000} for demand in calls)
+    assert result['scheduling_paused'] and not result['scientific_results_complete']
+    assert 'inode headroom' in result['reasons'][0] and not fixture.submitted
+
+
+def test_controller_resumes_only_after_fresh_inode_headroom_returns(controller_fixture,monkeypatch):
+    from horsehair import budget
+    fixture=controller_fixture;lock=configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'_native_states',lambda *a:{'700':state()})
+    clock=[0.];checks=[];ticks=[]
+    monkeypatch.setattr(pipeline.time,'monotonic',lambda:clock[0])
+    monkeypatch.setattr(pipeline.time,'sleep',lambda seconds:clock.__setitem__(0,clock[0]+seconds))
+    def guard(*a,**k):
+        checks.append(clock[0])
+        if len(checks)==1:raise budget.StorageHeadroomError(inode_shortage())
+        return {'status':'ready','ready':True}
+    def tick(*a,**k):
+        ticks.append(clock[0]);assert callable(k['storage_guard'])
+        return {'status':'complete','phases':{},'initial_tasks':{},'failed_native_stages':[]}
+    monkeypatch.setattr(budget,'require_storage_headroom',guard);monkeypatch.setattr(pipeline,'tick',tick)
+    result=pipeline.run(fixture.config,fixture.root,max_seconds=90,interval=30)
+    assert checks==[0.,30.] and ticks==[30.] and result['status']=='complete'
+    assert not lock.exists() and not fixture.submitted
+
+
+def test_storage_loss_during_planning_defers_submission_and_preserves_frozen_plan(controller_fixture):
+    from horsehair import budget
+    fixture=controller_fixture;checks=[]
+    def guard():
+        checks.append('fresh')
+        if len(checks)==2:raise budget.StorageHeadroomError(inode_shortage())
+    with pytest.raises(budget.StorageHeadroomError):
+        fixture.tick({'100':state()},storage_guard=guard)
+    assert len(checks)==2 and fixture.planned==['phase-a'] and not fixture.submitted
+    journal=fixture.root/'state/pipeline/qa-release/phase-a-plan-journal.json'
+    assert read_json(journal)['state']=='plan_frozen'
+    outcome=fixture.tick({'100':state()},storage_guard=lambda:None)
+    assert fixture.planned==['phase-a'] and len(fixture.submitted)==1
+    assert outcome['phases']['phase-a']['status']=='queued'
+
+
+def test_native_storage_guard_rechecks_exact_phase_forecast_before_submission(controller_fixture,monkeypatch):
+    fixture=controller_fixture;checks=[];assessment=[]
+    monkeypatch.setattr(pipeline,'NODES',(('phase-a',('initial:ready',),'rna-full'),))
+    forecast={'status':'admitted','additional_bytes':615855581617,'additional_files':1860}
+    def guard(value=None):checks.append(value)
+    def assessor(*a,**k):
+        assessment.append(len(checks));return {'rna-full':forecast}
+    result=fixture.tick({'100':state()},assessor=assessor,storage_guard=guard)
+    assert assessment==[1] and checks==[None,forecast,forecast]
+    assert result['phases']['phase-a']['status']=='queued' and len(fixture.submitted)==1
+
+
+def test_native_controller_quota_io_failure_is_not_retried_as_receipt_contention(controller_fixture,monkeypatch):
+    import errno
+    from horsehair import budget
+    fixture=controller_fixture;lock=configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'_native_states',lambda *a:{'700':state()})
+    checks=[];error=OSError(errno.EDQUOT,'Native personal file quota reached')
+    def guard(*a,**k):checks.append(1);raise error
+    monkeypatch.setattr(budget,'require_storage_headroom',guard)
+    with pytest.raises(OSError) as caught:
+        pipeline.run(fixture.config,fixture.root,max_seconds=60,interval=30)
+    assert caught.value is error and checks==[1] and not lock.exists() and not fixture.submitted
+
+
 def maintenance_framework_fixture(fixture, monkeypatch):
     framework = fixture.release.with_name('maintenance-framework')
     atomic_json(framework/'configs/study.json', fixture.config)
@@ -450,7 +539,7 @@ def test_maintenance_controller_uses_primary_tick_namespace_and_distinct_framewo
     monkeypatch.setattr(pipeline, '_native_states', lambda *a: {'700': state()})
     framework, framework_identity = maintenance_framework_fixture(fixture, monkeypatch)
     observed = []
-    def tick(config, root, release):
+    def tick(config, root, release, **kwargs):
         observed.append(release)
         return {'status': 'complete', 'phases': {}, 'initial_tasks': {}, 'failed_native_stages': []}
     monkeypatch.setattr(pipeline, 'tick', tick)

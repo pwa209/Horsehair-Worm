@@ -69,6 +69,45 @@ def test_rna_forecast_uses_all60_depths_actual_wall_rss_and_quota(tmp_path):
     assert result["projected_scratch_bytes"] > 10_000_000
 
 
+def test_offline_admission_never_launches_implicit_personal_quota_command(tmp_path,monkeypatch):
+    from horsehair import budget
+    config=measured_rna_fixture(tmp_path)
+    monkeypatch.setattr(budget,'require_storage_headroom',lambda *a,**k:pytest.fail('Offline assessment must use its measured inputs'))
+    assert assess_admission(config,tmp_path,'rna-full')['rna-full']['status']=='admitted'
+
+
+def test_native_admission_refuses_fresh_inode_shortage_despite_abundant_cached_bytes(tmp_path,monkeypatch):
+    from horsehair import budget
+    config=measured_rna_fixture(tmp_path);calls=[]
+    shortage={'status':'pending','ready':False,'reasons':['Personal scratch inode headroom is insufficient: 560 available'],
+              'personal_available_files':560,'personal_available_bytes':20_000_000_000_000}
+    def guard(root,**demand):
+        calls.append((root,demand));raise budget.StorageHeadroomError(shortage)
+    monkeypatch.setattr(budget,'require_storage_headroom',guard)
+    result=assess_admission(config,tmp_path,'rna-full',refresh_personal_quota=True)['rna-full']
+    assert result['status']=='pending' and result['personal_storage_headroom']==shortage
+    assert 'inode headroom' in result['reasons'][0] and 'projected_cpu_core_hours' not in result
+    demand=calls[0][1]
+    assert demand['required_files']==720 and demand['reserve_files']==250000-720
+    assert demand['required_bytes']>0 and demand['reserve_bytes']==config['resources']['scratch_reserve_bytes']
+
+
+def test_native_admission_uses_exact_fresh_capacity_and_embeds_proof_without_shared_receipt_pin(tmp_path,monkeypatch):
+    from horsehair import budget
+    config=measured_rna_fixture(tmp_path)
+    cached=tmp_path/'state/storage-budget.json';value=json.loads(cached.read_text())
+    value.update(personal_available_bytes=1,personal_available_files=1);atomic_json(cached,value)
+    fresh={'status':'ready','ready':True,'reasons':[],'personal_available_files':552905,
+           'personal_available_bytes':17_000_000_000_000,'native_stdout':'Generated native quota fixture',
+           'measured_unix':1.,'self_sha256':'fixture only'}
+    monkeypatch.setattr(budget,'require_storage_headroom',lambda *a,**k:fresh)
+    result=assess_admission(config,tmp_path,'rna-full',refresh_personal_quota=True)['rna-full']
+    assert result['status']=='admitted' and result['personal_storage_headroom']==fresh
+    assert result['projected_scratch_files']==820
+    assert not any('storage-headroom.json' in p for p in result['source_result_paths'])
+    assert json.loads(cached.read_text())==value
+
+
 def test_measured_forecast_does_not_admit_over_budget_or_changed_qc(tmp_path):
     config = measured_rna_fixture(tmp_path)
     config["resources"]["cpu_core_hours_cap"] = .1

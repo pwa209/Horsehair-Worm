@@ -114,7 +114,7 @@ def _ledger(root):
     return cpu, gpu, path
 
 
-def _storage(root, config, forecast_bytes, forecast_files):
+def _storage(root, config, forecast_bytes, forecast_files, personal_headroom=None):
     path = root / "state" / "storage-budget.json"
     if not path.is_file():
         raise AdmissionError("Measured current study occupancy/personal quota is pending: state/storage-budget.json")
@@ -128,9 +128,10 @@ def _storage(root, config, forecast_bytes, forecast_files):
     if not all(p.is_file() and record.get("native_source_hashes", {}).get(str(p.resolve())) == digest(p) for p in source_paths):
         raise AdmissionError("Personal quota source evidence is missing or changed")
     occupied = positive(record["study_bytes"], "study occupied bytes")
-    available = positive(record["personal_available_bytes"], "personal available scratch bytes")
+    capacity = personal_headroom if personal_headroom is not None else record
+    available = positive(capacity["personal_available_bytes"], "personal available scratch bytes")
     files = int(positive(record["study_files"], "study occupied files"))
-    available_files = int(positive(record["personal_available_files"], "personal available files"))
+    available_files = int(positive(capacity["personal_available_files"], "personal available files"))
     resources = config["resources"]
     future = occupied + forecast_bytes
     if future > resources["scratch_budget_bytes"] or forecast_bytes + resources.get("scratch_reserve_bytes", 0) > available:
@@ -357,11 +358,16 @@ def _work_units(config, root, native, identity, safety, phase):
     return {"cpu_hours": cpu_hours, "gpu_hours": 0., "additional_bytes": math.ceil(safety * positive(report["additional_working_bytes"], "full-design output storage")), "additional_files": int(positive(report["additional_working_files"], "full-design output files")), "parameters": parameters, "workload": {"tasks": tasks, "prospective_workload_sha256": report["prospective_workload_sha256"]}, "inputs": [path]}
 
 
-def assess_admission(config, root, phase=None, *, safety_factor=1.5):
-    """Write independent admitted/pending/rejected receipts; never submit jobs."""
+def assess_admission(config, root, phase=None, *, safety_factor=1.5, refresh_personal_quota=False):
+    """Write independent admitted/pending/rejected receipts; never submit jobs.
+
+    Native maintenance callers may explicitly refresh the cheap personal quota
+    ahead of admission. Offline and isolated primary assessments keep their
+    measured-input contract and never launch an implicit native subprocess.
+    """
     root = Path(root)
     phases = [phase] if phase else list(PHASES)
-    if any(value not in PHASES for value in phases) or not math.isfinite(safety_factor) or safety_factor < 1:
+    if any(value not in PHASES for value in phases) or not math.isfinite(safety_factor) or safety_factor < 1 or type(refresh_personal_quota) is not bool:
         raise AdmissionError("Unknown phase or invalid prospective safety factor")
     identity = source_identity(Path(__file__).resolve().parents[2])["sha256"]
     results = {}
@@ -376,7 +382,20 @@ def assess_admission(config, root, phase=None, *, safety_factor=1.5):
                 forecast = _agents(config, root, native, identity, safety_factor, value)
             else:
                 forecast = _work_units(config, root, native, identity, safety_factor, value)
-            storage_bytes, storage_files, storage_paths = _storage(root, config, forecast["additional_bytes"], forecast["additional_files"])
+            headroom=None
+            if refresh_personal_quota:
+                from .budget import require_storage_headroom,StorageHeadroomError
+                try:
+                    headroom=require_storage_headroom(root,required_bytes=forecast['additional_bytes'],
+                        required_files=forecast['additional_files'],reserve_bytes=config['resources'].get('scratch_reserve_bytes',0),
+                        reserve_files=max(0,config['resources']['scratch_budget_files']-forecast['additional_files']))
+                except StorageHeadroomError as error:
+                    record['personal_storage_headroom']=error.record
+                    raise
+                # Embed this exact native measurement: the shared fixed-path
+                # guard may legitimately be refreshed by the next phase.
+                record['personal_storage_headroom']=headroom
+            storage_bytes, storage_files, storage_paths = _storage(root, config, forecast["additional_bytes"], forecast["additional_files"],headroom)
             cpu = spent_cpu + forecast["cpu_hours"]
             gpu = spent_gpu + forecast["gpu_hours"]
             forecast.update(projected_cpu_core_hours=cpu, projected_gpu_hours=gpu, projected_scratch_bytes=storage_bytes, projected_scratch_files=storage_files)
@@ -405,8 +424,10 @@ def main(argv=None):
     parser.add_argument("--root", required=True)
     parser.add_argument("--phase", choices=PHASES)
     parser.add_argument("--safety-factor", type=float, default=1.5)
+    parser.add_argument("--refresh-personal-quota", action="store_true", help="Refresh personal UID byte/inode capacity before native maintenance admission")
     args = parser.parse_args(argv)
-    result = assess_admission(read_json(args.config), args.root, args.phase, safety_factor=args.safety_factor)
+    result = assess_admission(read_json(args.config), args.root, args.phase, safety_factor=args.safety_factor,
+                              refresh_personal_quota=args.refresh_personal_quota)
     print(json.dumps({key: value["status"] for key, value in result.items()}))
     return 0
 

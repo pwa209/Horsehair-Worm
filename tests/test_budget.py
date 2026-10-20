@@ -7,6 +7,163 @@ from horsehair.core import read_json
 from horsehair.core import ReceiptLockTimeout,canonical_hash
 from horsehair import budget
 from contextlib import contextmanager
+import errno
+
+
+def quota_text(*,used='1024',soft='20971520',hard='20971520',used_files='999440',soft_files='1000000',hard_files='1000000'):
+    return ('Disk quotas for usr pwa209 (uid 3164768):\n'
+            'Filesystem kbytes quota limit grace files quota limit grace\n'
+            f'/scratch/pwa209 {used} {soft} {hard} - {used_files} {soft_files} {hard_files} -\n')
+
+
+def test_personal_quota_uses_native_kib_and_both_limits_without_human_unit_guessing():
+    row=budget.parse_personal_quota(quota_text(used='1024*',soft='2048',hard='4096',used_files='900*',soft_files='1000',hard_files='2000'))
+    assert row['personal_used_bytes']==1024**2
+    assert row['personal_hard_limit_bytes']==4096*1024
+    assert row['personal_effective_limit_bytes']==2048*1024
+    assert row['personal_available_bytes']==1024**2
+    assert row['personal_available_files']==100
+    assert row['personal_hard_limit_files']==2000
+
+
+@pytest.mark.parametrize('soft,hard,expected', [('0','1000',1000),('1000','0',1000),('2000','1000',1000),('0','0',None)])
+def test_personal_quota_zero_limit_is_unlimited_and_positive_hard_limit_remains_enforced(soft,hard,expected):
+    row=budget.parse_personal_quota(quota_text(used_files='100',soft_files=soft,hard_files=hard))
+    assert row['personal_effective_limit_files']==expected
+    assert row['personal_available_files']==(expected-100 if expected is not None else None)
+
+
+@pytest.mark.parametrize('text',[
+    '/scratch/pwa209 1G 20T 20T - 1 1000000 1000000 -\n',
+    '/scratch/pwa209 1024 2048 2048 - -1 1000000 1000000 -\n',
+    '/scratch/pwa209 1024 2048 2048 - 1.5 1000000 1000000 -\n',
+    '/scratch/shared 1024 2048 2048 - 1 1000000 1000000 -\n',
+    quota_text()+quota_text(),
+])
+def test_personal_quota_rejects_wrong_namespace_units_and_ambiguous_rows(text):
+    with pytest.raises(ValueError,match='personal|Personal'):
+        budget.parse_personal_quota(text)
+
+
+def test_near_full_personal_inodes_block_forecast_with_ample_byte_capacity():
+    row=budget.parse_personal_quota(quota_text())
+    result=budget.storage_readiness(row,required_bytes=1024,required_files=500,reserve_files=100)
+    assert row['personal_available_bytes']>20_000_000_000
+    assert result['status']=='pending' and not result['ready']
+    assert result['personal_available_files']==560
+    assert result['reasons']==['Personal scratch inode headroom is insufficient: 560 available, 600 required including reserve']
+    assert not result['is_capacity_reservation']
+
+
+def test_headroom_enforces_exact_required_plus_reserve_and_overquota_remains_negative():
+    row=budget.parse_personal_quota(quota_text())
+    assert budget.storage_readiness(row,required_files=500,reserve_files=60)['ready']
+    exhausted=budget.parse_personal_quota(quota_text(used_files='1000001'))
+    assert exhausted['personal_available_files']==-1
+    assert not budget.storage_readiness(exhausted,required_files=0)['ready']
+
+
+def test_unlimited_native_limits_do_not_invent_measured_capacity():
+    row=budget.parse_personal_quota(quota_text(soft='0',hard='0',soft_files='0',hard_files='0'))
+    result=budget.storage_readiness(row,required_bytes=1,required_files=1)
+    assert not result['ready'] and len(result['reasons'])==2
+    assert result['personal_available_bytes'] is None and result['personal_available_files'] is None
+
+
+@pytest.mark.parametrize('kwargs',[{'required_files':True},{'required_files':0.5},{'reserve_files':-1},{'required_bytes':float('nan')}])
+def test_storage_demands_require_explicit_nonnegative_integer_counts(kwargs):
+    with pytest.raises(ValueError,match='nonnegative integer'):
+        budget.storage_readiness(budget.parse_personal_quota(quota_text()),**kwargs)
+
+
+def personal_guard_fixture(tmp_path,monkeypatch,*,native_text=None):
+    monkeypatch.setattr(budget,'PERSONAL_STUDY_ROOT',tmp_path)
+    monkeypatch.setattr(budget.os,'getuid',lambda:3164768,raising=False)
+    calls=[]
+    def runner(command,**kwargs):
+        calls.append((command,kwargs))
+        return SimpleNamespace(returncode=0,stdout=native_text or quota_text())
+    return calls,runner
+
+
+def test_fresh_personal_headroom_guard_persists_refusal_and_does_not_accumulate_receipt_files(tmp_path,monkeypatch):
+    calls,runner=personal_guard_fixture(tmp_path,monkeypatch)
+    for _ in range(2):
+        with pytest.raises(budget.StorageHeadroomError,match='inode headroom') as caught:
+            budget.require_storage_headroom(tmp_path,required_files=500,reserve_files=100,runner=runner)
+        record=read_json(tmp_path/'state/storage-headroom.json')
+        assert caught.value.record==record and record['status']=='pending'
+        assert record['required_files']==505 and record['planned_required_files']==500 and record['receipt_file_overhead']==5
+        assert record['native_stdout']==quota_text() and record['personal_uid']==3164768
+        receipt_hash=record.pop('self_sha256');assert canonical_hash(record)==receipt_hash
+    assert {p.name for p in (tmp_path/'state').iterdir()}=={'storage-headroom.json','storage-headroom.mutex','storage-headroom.mutex.owner.json'}
+    assert len(calls)==2
+    assert calls[0]==(['lfs','quota','-u','3164768','/scratch/pwa209'],{'text':True,'capture_output':True,'timeout':30})
+
+
+def test_fresh_guard_accounts_for_atomic_receipt_inodes_and_refreshes_each_check(tmp_path,monkeypatch):
+    calls,runner=personal_guard_fixture(tmp_path,monkeypatch)
+    record=budget.require_storage_headroom(tmp_path,required_files=555,runner=runner)
+    assert record['ready'] and record['required_files']==560
+    with pytest.raises(budget.StorageHeadroomError,match='561 required'):
+        budget.require_storage_headroom(tmp_path,required_files=556,runner=runner)
+    assert len(calls)==2
+
+
+def test_headroom_never_queries_or_writes_outside_personal_study_root(tmp_path,monkeypatch):
+    calls,runner=personal_guard_fixture(tmp_path,monkeypatch)
+    with pytest.raises(ValueError,match='authorized personal'):
+        budget.require_storage_headroom(tmp_path/'another-project',required_files=100,runner=runner)
+    assert not calls and not (tmp_path/'another-project').exists()
+
+
+def test_concurrent_controller_and_rna_headroom_checks_preserve_both_callers_and_one_receipt(tmp_path,monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    import threading
+    import time
+    _,runner=personal_guard_fixture(tmp_path,monkeypatch)
+    original=budget.atomic_json;counter=threading.Lock();active=[0];peak=[0]
+    def writer(path,record):
+        with counter:active[0]+=1;peak[0]=max(peak[0],active[0])
+        try:
+            time.sleep(.01);original(path,record)
+        finally:
+            with counter:active[0]-=1
+    monkeypatch.setattr(budget,'atomic_json',writer)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results=list(pool.map(lambda n:budget.require_storage_headroom(tmp_path,required_files=n,runner=runner),(10,20)))
+    assert peak[0]==1 and all(item['ready'] for item in results)
+    assert {item['planned_required_files'] for item in results}=={10,20}
+    assert read_json(tmp_path/'state/storage-headroom.json') in results
+    assert len(list((tmp_path/'state').iterdir()))==3
+
+
+@pytest.mark.parametrize('error_number',[errno.EDQUOT,errno.ENOSPC])
+def test_quota_receipt_write_failure_is_never_retried_or_reported_ready(tmp_path,monkeypatch,capsys,error_number):
+    calls,runner=personal_guard_fixture(tmp_path,monkeypatch)
+    writes=[]
+    original=OSError(error_number,'Native quota or free-inode limit reached')
+    def fail(path,record):writes.append(path);raise original
+    monkeypatch.setattr(budget,'atomic_json',fail)
+    with pytest.raises(OSError) as caught:
+        budget.require_storage_headroom(tmp_path,required_files=1000,runner=runner)
+    assert caught.value is original and len(calls)==len(writes)==1
+    message=__import__('json').loads(capsys.readouterr().err)
+    assert message['retryable'] is False and message['errno']==error_number
+    assert message['measured_storage']['status']=='pending'
+
+
+def test_storage_snapshot_keeps_native_evidence_and_uses_conservative_inode_limit(tmp_path,monkeypatch):
+    calls,runner=personal_guard_fixture(tmp_path,monkeypatch,native_text=quota_text(soft_files='1000000',hard_files='2000000'))
+    (tmp_path/'state').mkdir()
+    (tmp_path/'data.txt').write_text('measured study file')
+    record=budget.storage_snapshot(tmp_path,runner=runner)
+    assert record['status']=='measured' and record['personal_available_files']==560
+    assert record['personal_hard_limit_files']==2000000
+    assert len(calls)==1 and record['personal_uid']==3164768
+    assert read_json(tmp_path/'state/storage-budget.json')==record
+    source=__import__('pathlib').Path(record['native_source_paths'][0])
+    assert source.read_text()==quota_text(soft_files='1000000',hard_files='2000000')
 
 
 def test_parallel_gpu_and_resource_budget_enforced(tmp_path):

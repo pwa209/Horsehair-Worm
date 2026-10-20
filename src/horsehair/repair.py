@@ -132,6 +132,61 @@ def _normalized_script(text):
         or line.startswith("#SBATCH --error=")))
 
 
+def _rna_recovery_binding(descriptor, targets, primary, identity, config, root, original, old_ledger):
+    """Bind a qualified count reuse guard without changing numerical execution."""
+    change = descriptor.get('rna_recovery')
+    if change is None:
+        return None
+    required = {'framework_release', 'qualification_path', 'qualification_sha256',
+                'qualification_job_id', 'manifest_path', 'manifest_sha256',
+                'preparation_path', 'preparation_sha256'}
+    if (not isinstance(change, dict) or set(change) != required
+            or descriptor['phase'] != 'rna-full' or 'rna-counts' not in targets
+            or not targets <= {'rna-counts', 'ant-phase', 'ant-score-freeze'}
+            or any(Path(descriptor['execution_releases'][name]).resolve() != primary for name in targets)):
+        raise ValueError('RNA recovery must preserve the primary count and downstream execution releases')
+    controllers = {f'pipeline-controller-{index}' for index in range(4)}
+    framework_change = {key: change[key] for key in ('framework_release', 'qualification_path',
+                                                   'qualification_sha256', 'qualification_job_id')}
+    framework_change['primary_release'] = str(primary)
+    # Reuse the complete source/JUnit qualification contract, without treating
+    # the guard as a new numerical execution release or a controller migration.
+    qualified = _controller_maintenance({'phase': 'managed-initial',
+        'controller_maintenance': framework_change,
+        'execution_releases': {name: change['framework_release'] for name in controllers}},
+        controllers, controllers, primary, identity, config, root)
+    for label in ('manifest', 'preparation'):
+        declared = Path(change[label + '_path'])
+        path = _inside(declared, root / 'maintenance')
+        if (declared.is_symlink() or not path.is_file()
+                or not re.fullmatch('[0-9a-f]{64}', str(change[label + '_sha256']))
+                or digest(path) != change[label + '_sha256']):
+            raise ValueError('RNA recovery ' + label + ' is missing, relocated or changed')
+    from .rna_recovery import validate_registration_manifest
+    context = validate_registration_manifest(change['manifest_path'], change['manifest_sha256'],
+        change['preparation_path'], change['preparation_sha256'])
+    manifest, preparation = context['manifest'], context['preparation']
+    if (Path(manifest['root']).resolve() != root or Path(manifest['primary_release']).resolve() != primary
+            or manifest['primary_source_identity'] != identity
+            or manifest['full_config_sha256'] != canonical_hash(config)
+            or Path(manifest['maintenance_release']).resolve() != Path(qualified['framework_release'])
+            or manifest['maintenance_source_identity'] != qualified['framework_source_identity']
+            or str(manifest['previous_array_job_id']) != str(old_ledger['tasks']['rna-counts']['job_id'])
+            or original['rna-counts']['resources'].get('array') != '0-59%2'):
+        raise ValueError('RNA recovery evidence differs from the frozen count cohort/source/configuration')
+    jobs = {'qualification_job_id': str(change['qualification_job_id']),
+            'capture_job_id': str(manifest['capture_slurm_job_id']),
+            'preparation_job_id': str(preparation['slurm_job_id'])}
+    if any(not re.fullmatch('[0-9]+', job) for job in jobs.values()):
+        raise ValueError('RNA recovery requires exact scalar native maintenance identities')
+    return {**change, **jobs, 'root': str(root),
+            'framework_release': qualified['framework_release'],
+            'framework_source_identity': qualified['framework_source_identity'],
+            'primary_source_identity': identity, 'config_sha256': canonical_hash(config),
+            'manifest_plan_sha256': manifest['plan_sha256'],
+            'reuse_indices': manifest['reuse_indices'], 'rerun_indices': manifest['rerun_indices']}
+
+
 def _runtime_adjustments(descriptor, original, candidates, targets):
     adjustments = descriptor.get("runtime_adjustments", {})
     if not isinstance(adjustments, dict) or set(adjustments) - {"source-audit"} or not set(adjustments) <= targets:
@@ -163,7 +218,31 @@ def _runtime_script_projection(text, hours):
     return "\n".join(line for line in lines if line not in {*time_lines, *lease_lines})
 
 
-def _check_script(task, original, execution, root, runtime=None, controller_primary=None):
+def _rna_recovery_script_projection(text, old_text, recovery):
+    """Project one qualified operational guard onto its exact primary command."""
+    old_commands = [line for line in old_text.splitlines()
+                    if line.startswith('python -m horsehair.cli ')
+                    and 'molecular' in shlex.split(line)[4:]]
+    if len(old_commands) != 1:
+        raise ValueError('RNA recovery requires one original numerical CLI command')
+    original = old_commands[0]
+    argv = shlex.split(original)
+    expected = ['python', '-m', 'horsehair.cli', '--config', 'configs/study.json',
+                '--root', argv[6] if len(argv) == 12 else '', 'molecular', '--stage', 'rna-run',
+                '--task-index', '$SLURM_ARRAY_TASK_ID']
+    if argv != expected or Path(argv[6]).resolve() != Path(recovery['root']).resolve():
+        raise ValueError('RNA recovery changes the frozen primary numerical CLI command')
+    command = ('python ' + shlex.quote(str(Path(recovery['framework_release']) / 'src/horsehair/rna_recovery.py'))
+               + ' run --manifest ' + shlex.quote(recovery['manifest_path'])
+               + ' --index "$SLURM_ARRAY_TASK_ID" --manifest-sha256 ' + recovery['manifest_sha256']
+               + ' --preparation ' + shlex.quote(recovery['preparation_path'])
+               + ' --preparation-sha256 ' + recovery['preparation_sha256'])
+    if text.splitlines().count(command) != 1:
+        raise ValueError('RNA recovery wrapper does not match its exact pinned invocation')
+    return text.replace(command, original, 1)
+
+
+def _check_script(task, original, execution, root, runtime=None, controller_primary=None, rna_recovery=None):
     path = _inside(task["script"], root / "plans")
     text = path.read_text(encoding="utf8")
     if canonical_hash(text) != task.get("script_sha256"):
@@ -182,6 +261,10 @@ def _check_script(task, original, execution, root, runtime=None, controller_prim
     if runtime:
         text = _runtime_script_projection(text, runtime["new_hours"])
         old_text = _runtime_script_projection(old_text, runtime["old_hours"])
+    if rna_recovery is not None:
+        if task.get('name') != 'rna-counts' or runtime or controller_primary is not None:
+            raise ValueError('RNA recovery projection is limited to the primary count array')
+        text = _rna_recovery_script_projection(text, old_text, rna_recovery)
     if controller_primary is not None:
         old_commands = [line for line in old_text.splitlines() if line.startswith('python -m horsehair.cli ')
                         and 'pipeline' in shlex.split(line)[4:]]
@@ -513,6 +596,7 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
         if len(controllers) != 4:
             raise ValueError("The complete four-segment primary controller roster is required")
         controller_maintenance = _controller_maintenance(descriptor, targets, controllers, primary, identity, config, root)
+        rna_recovery = _rna_recovery_binding(descriptor, targets, primary, identity, config, root, original, old_ledger)
         checks = [(name, original[name], old_ledger["tasks"][name]) for name in targets]
         checks += [(name, task, old_ledger["tasks"][name]) for name, task in original.items()] if phase == "rna-full" else []
         checks += [(name, task, controllers_ledger["tasks"][name]) for name, task in controllers.items()]
@@ -521,6 +605,8 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
         releases = {}
         for name in targets:
             candidate = candidates[name]
+            if rna_recovery is not None and candidate.get('depends', []) != original[name].get('depends', []):
+                raise ValueError('RNA recovery must retain every original named scientific dependency')
             if candidate.get("resources") != original[name].get("resources") and name not in runtime_adjustments:
                 raise ValueError("Replacement changed a node's frozen resource/array contract")
             execution, execution_record, execution_identity = _release(descriptor["execution_releases"][name], config)
@@ -533,7 +619,8 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
                 else:
                     raise ValueError("Only source-audit or explicitly qualified primary controllers may use another execution release")
             _check_script(candidate, original[name], execution, root, runtime_adjustments.get(name),
-                          primary if controller_maintenance is not None else None)
+                          primary if controller_maintenance is not None else None,
+                          rna_recovery if name == 'rna-counts' else None)
             record = submitted.get("tasks", {}).get(name, {})
             if (record.get("state") != "submitted" or not re.fullmatch(r"[0-9]+", str(record.get("job_id", "")))
                     or record.get("script_sha256") != candidate["script_sha256"]):
@@ -558,6 +645,17 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
                 if qualifier not in required or len(proofs) != 1 or proofs[0] not in planned_proofs:
                     raise ValueError('Every maintenance controller requires its unchanged positive completed qualification proof')
                 _verify_completed_dependency(root, proofs[0])
+            if rna_recovery is not None and name == 'rna-counts':
+                from .slurm import _verify_completed_dependency
+                for key in ('qualification_job_id', 'preparation_job_id'):
+                    ident = rna_recovery[key]
+                    proofs = [proof for proof in record.get('completed_native_dependencies', [])
+                              if str(proof.get('job_id')) == ident and proof.get('array') is None
+                              and proof.get('dependency_kind', 'afterok') == 'afterok']
+                    if (candidate.get('dependency_kind', 'afterok') != 'afterok' or ident not in required
+                            or len(proofs) != 1 or proofs[0] not in candidate.get('completed_external_dependencies', [])):
+                        raise ValueError('RNA count recovery requires unchanged positive qualification and preservation dependencies')
+                    _verify_completed_dependency(root, proofs[0])
             new_ids.append(str(record["job_id"]))
             releases[name] = {"path": str(execution), "release_id": execution_record["release_id"],
                               "source_identity": execution_identity, "config_sha256": canonical_hash(config)}
@@ -570,15 +668,19 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
             if candidates[name]["resources"].get("array"):rosters[submitted["tasks"][name]["job_id"]] = _array_indices(candidates[name]["resources"]["array"])
         owner, account = os.environ.get("USER"), config.get("paths",{}).get("cpu_account")
         qualification_ids = [str(controller_maintenance['qualification_job_id'])] if controller_maintenance else []
+        if rna_recovery:
+            qualification_ids.extend(rna_recovery[key] for key in
+                                     ('qualification_job_id', 'capture_job_id', 'preparation_job_id'))
+        qualification_ids = list(dict.fromkeys(qualification_ids))
         observed = _repair_native_states(list(dict.fromkeys(jobs + new_ids + qualification_ids)), rosters, owner=owner, account=account) if native is None else native
-        if controller_maintenance:
-            proof = observed.get(qualification_ids[0], {})
+        for qualification_id in qualification_ids:
+            proof = observed.get(qualification_id, {})
             if (proof.get('state') != 'COMPLETED' or proof.get('exit_code') != '0:0'
                     or proof.get('unallocated_metadata') is True
                     or not math.isfinite(float(proof.get('elapsed_seconds', 0)))
                     or not math.isfinite(float(proof.get('cpus', 0)))
                     or float(proof.get('elapsed_seconds', 0)) <= 0 or float(proof.get('cpus', 0)) <= 0):
-                raise ValueError('Controller framework qualification lacks positive allocated native completion')
+                raise ValueError('Repair framework qualification/preservation lacks positive allocated native completion')
         for name, task, record in checks:
             if not _task_terminal(record, observed, task):
                 raise ValueError("A replaced allocation or primary controller is not positively terminal: " + name)
@@ -596,6 +698,10 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
             if name in runtime_adjustments:
                 if "#SBATCH --hold" not in Path(candidate["script"]).read_text(encoding="utf8").splitlines() or observed[record["job_id"]]["state"] != "PENDING":
                     raise ValueError("Runtime-adjusted source audit must remain explicitly held and pending until budget re-admission and registration complete")
+            if rna_recovery is not None and name == 'rna-counts':
+                if ('#SBATCH --hold' not in Path(candidate['script']).read_text(encoding='utf8').splitlines()
+                        or any(observed[ident]['state'] != 'PENDING' for ident in expected)):
+                    raise ValueError('RNA recovery count array must remain explicitly held and pending until registration and re-admission complete')
         runtime_native_proofs = _runtime_native_proofs(runtime_adjustments, original, old_ledger, observed)
         unused_arrays = _unused_terminal_arrays(root,checks,observed)
         amended_plan, amended_ledger = copy.deepcopy(old_plan), copy.deepcopy(old_ledger)
@@ -632,6 +738,8 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
             amendment.update(runtime_adjustments=copy.deepcopy(runtime_adjustments), runtime_native_proofs=runtime_native_proofs)
         if controller_maintenance:
             amendment['controller_maintenance'] = controller_maintenance
+        if rna_recovery:
+            amendment['rna_recovery'] = rna_recovery
         amended_plan.setdefault("dag_amendments", []).append(amendment)
         amended_ledger.setdefault("dag_amendments", []).append(amendment)
         amended_ledger["plan_sha256"] = canonical_hash(amended_plan)
@@ -661,6 +769,9 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
         accounted = accountant(root, accounting_ids)
         if accounted.get("pending_native_records"):
             raise ValueError("Old allocation cost proof remains pending; no registration committed")
+        if rna_recovery is not None:
+            if _rna_recovery_binding(descriptor, targets, primary, identity, config, root, original, old_ledger) != rna_recovery:
+                raise ValueError('RNA recovery binding changed during native registration accounting')
         budget_guard = exclusive_file_lock(root / "state/resource-budget.mutex") if runtime_adjustments else nullcontext()
         with budget_guard:
             if runtime_adjustments:

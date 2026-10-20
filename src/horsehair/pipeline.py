@@ -614,7 +614,7 @@ except OSError as error:
     return result
 
 
-def tick(config, root, release, *, native=None, planner=None, submitter=None, assessor=None, readiness=None):
+def tick(config, root, release, *, native=None, planner=None, submitter=None, assessor=None, readiness=None, storage_guard=None):
     from .admission import assess_admission
     from .slurm import plan, submit
     root, release = Path(root), Path(release)
@@ -684,11 +684,17 @@ def tick(config, root, release, *, native=None, planner=None, submitter=None, as
         if not ready:
             phases[name] = {'status': 'waiting_for_scientific_inputs', 'pending': missing}
             continue
+        if storage_guard is not None:
+            storage_guard()
+        phase_forecast=None
         if admission_phase:
             record = assessor(config, root, phase=admission_phase)[admission_phase]
             if record.get('status') != 'admitted':
                 phases[name] = {'status': 'resource_' + record.get('status', 'pending'), 'reasons': record.get('reasons', [])}
                 continue
+            phase_forecast=record
+            if storage_guard is not None:
+                storage_guard(phase_forecast)
         directory = root/'plans'/(release_id+'-'+name)
         ledger_path = root/'state'/(release_id+'-'+name+'-submission.json')
         journal_path=base/(name+'-plan-journal.json')
@@ -713,6 +719,11 @@ def tick(config, root, release, *, native=None, planner=None, submitter=None, as
         if allocations['cpu_core_hours']>config['resources']['cpu_core_hours_cap'] or allocations['gpu_hours']>config['resources']['gpu_hours_cap']:
             phases[name]={'status':'waiting_for_registered_resource_budget','prospective_registered_budget':allocations}
             continue
+        # Planning/primary admission may take several minutes. The scheduled
+        # controller supplies a fresh check at the actual mutation boundary;
+        # offline callers need no native quota command.
+        if storage_guard is not None:
+            storage_guard(phase_forecast) if phase_forecast is not None else storage_guard()
         atomic_json(journal_path,{'state':'submitting','phase':name,'source_sha256':sha,'plan_sha256':canonical_hash(candidate)})
         ledger = submitter(directory/'plan.json', ledger_path)
         atomic_json(journal_path,{'state':'submitted','phase':name,'source_sha256':sha,'plan_sha256':canonical_hash(candidate),'ledger':str(ledger_path)})
@@ -743,7 +754,7 @@ def tick(config, root, release, *, native=None, planner=None, submitter=None, as
 
 
 def run(config, root, *, segment=0, max_seconds=None, interval=60, primary_release=None):
-    from .budget import native_accounting, storage_snapshot
+    from .budget import native_accounting,storage_snapshot,require_storage_headroom,StorageHeadroomError
     root = Path(root).resolve(); framework = Path(__file__).resolve().parents[2]
     release = framework if primary_release is None else Path(primary_release).resolve()
     if not native_job_id():
@@ -782,6 +793,16 @@ def run(config, root, *, segment=0, max_seconds=None, interval=60, primary_relea
             json.dump({'job_id': native_job_id(), 'segment': segment, 'started_unix': time.time()}, handle)
     owner=lock.read_bytes()
     last_signature = None;last_storage = None;warning_count = 0;last_warning_signature = None
+    storage_warning_signature=None
+    def fresh_storage_guard(forecast=None):
+        # The already configured total study file ceiling is a conservative
+        # personal headroom requirement, separate from the six-hour census.
+        # It changes no numerical method or declared scientific configuration.
+        forecast=forecast or {}
+        files=forecast.get('additional_files',0)
+        return require_storage_headroom(root,required_files=files,required_bytes=forecast.get('additional_bytes',0),
+            reserve_files=max(0,config['resources']['scratch_budget_files']-files),
+            reserve_bytes=config['resources'].get('scratch_reserve_bytes',0))
     try:
         framework_record = {'controller_job_id': native_job_id(), 'segment': segment, 'started_unix': time.time(),
                             'framework_release': str(framework), 'framework_source_identity': framework_identity['source_identity'],
@@ -802,6 +823,7 @@ def run(config, root, *, segment=0, max_seconds=None, interval=60, primary_relea
         record=None
         while time.monotonic() < deadline:
             try:
+                fresh_storage_guard()
                 ids = []
                 for path in (root/'state').glob('*submission*.json'):
                     ledger = read_json(path)
@@ -812,7 +834,25 @@ def run(config, root, *, segment=0, max_seconds=None, interval=60, primary_relea
                     native_accounting(root, ids)
                 if last_storage is None or time.monotonic() - last_storage >= STORAGE_REFRESH_SECONDS:
                     storage_snapshot(root);last_storage = time.monotonic()
-                record = tick(config, root, release)
+                record = tick(config, root, release,storage_guard=fresh_storage_guard)
+            except StorageHeadroomError as exc:
+                # Keep the finite controller alive without scheduling or
+                # repeatedly creating files while another project uses quota.
+                record={**(record or {}),'status':'pending_personal_storage','checked_unix':time.time(),
+                    'controller_job_id':native_job_id(),'segment':segment,'config_sha256':canonical_hash(config),
+                    'source_sha256':identity['source_identity']['sha256'],
+                    'phases':(record or {}).get('phases',{}),'initial_tasks':(record or {}).get('initial_tasks',{}),
+                    'failed_native_stages':(record or {}).get('failed_native_stages',[]),
+                    'scientific_results_complete':False,'publication_ready':False,'scheduling_paused':True,
+                    'personal_storage_headroom':exc.record,'reasons':exc.record['reasons']}
+                atomic_json(directory/'status.json',record)
+                signature=canonical_hash(exc.record['reasons'])
+                if signature!=storage_warning_signature:
+                    print(json.dumps({'status':record['status'],'reasons':record['reasons'],
+                        'personal_available_files':exc.record['personal_available_files']}),flush=True)
+                    storage_warning_signature=signature
+                time.sleep(min(interval,max(0,deadline-time.monotonic())))
+                continue
             except ReceiptLockTimeout as exc:
                 # A live receipt writer retains its kernel lock. Defer this tick
                 # without altering owners, native costs or submission journals.
