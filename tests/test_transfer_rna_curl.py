@@ -258,19 +258,44 @@ def test_stream_disk_disagreement_cannot_promote(tmp_path, setup, monkeypatch):
     def corrupt(path, algorithms):
         value = original(path, algorithms); value['sha256'] = '0' * 64; return value
     monkeypatch.setattr(acquire, 'file_digests', corrupt)
-    with pytest.raises(curl.CurlIntegrityError, match='stream/disk'):
-        run_download(tmp_path, setup, runner, attempts=1)
-    assert not target(tmp_path).exists()
+    with pytest.raises(curl.CurlTransferError, match='stream/disk') as caught:
+        run_download(tmp_path, setup, runner)
+    assert not isinstance(caught.value, curl.CurlIntegrityError)
+    assert len(runner.calls) == 1 and not target(tmp_path).exists()
+    area = curl.staging_directory(item(runner.body), tmp_path, HELPERS)
+    result = core.read_json(area / 'attempts/0001/result.json')
+    assert result['failure_class'] == 'terminal' and result['retryable'] is False
 
 
 def test_candidate_changed_during_disk_read_is_terminal_and_retained(tmp_path, setup, monkeypatch):
     runner = Runner(b'abcd'); original = acquire.file_digests
+    snapshots = []
     def mutate(path, algorithms):
-        Path(path).write_bytes(b'xxxx'); return original(path, algorithms)
+        path = Path(path); before = path.stat()
+        snapshots.append(curl._snapshot(path))
+        path.write_bytes(b'xxxx')
+        # Exercise the actual ambiguity deterministically, including on fast
+        # native filesystems where both writes can share one timestamp tick.
+        # Equal size/mtime/inode must never turn local corruption into a fresh
+        # provider retry. Preserve the same bytes for forensic inspection.
+        os.utime(path, ns=(before.st_atime_ns, before.st_mtime_ns))
+        snapshots.append(curl._snapshot(path))
+        return original(path, algorithms)
     monkeypatch.setattr(acquire, 'file_digests', mutate)
-    with pytest.raises(curl.CurlTransferError, match='changed during independent disk'):
+    with pytest.raises(curl.CurlTransferError, match='changed during independent disk') as caught:
         run_download(tmp_path, setup, runner)
+    assert snapshots[0] == snapshots[1]
+    assert not isinstance(caught.value, curl.CurlIntegrityError)
     assert len(runner.calls) == 1 and not target(tmp_path).exists()
+    area = curl.staging_directory(item(runner.body), tmp_path, HELPERS)
+    assert (area / 'attempts/0001/candidate.private').read_bytes() == b'xxxx'
+    result = core.read_json(area / 'attempts/0001/result.json')
+    assert result['failure_class'] == 'terminal' and result['retryable'] is False
+    assert result['failed_bytes_preserved'] is True
+    assert len(list((area / 'attempts').iterdir())) == 1
+    with pytest.raises(curl.CurlTransferError, match='terminal'):
+        run_download(tmp_path, setup, runner)
+    assert len(runner.calls) == 1
 
 
 @pytest.mark.parametrize('change', ['host', 'binary', 'version', 'policy'])

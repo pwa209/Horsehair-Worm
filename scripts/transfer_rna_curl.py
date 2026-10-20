@@ -376,7 +376,13 @@ def download_asset(item, root, helpers, *, policy, deadline, attempts=MAX_ATTEMP
             require(_snapshot(candidate) == before and before['bytes'] == item['bytes'], 'Curl candidate changed during independent disk verification')
             record.update(stream_digests=stream, independent_disk_digests=disk, stream_equals_disk=stream == disk,
                           independent_disk_verified=True, candidate_snapshot=before)
-            if stream != disk: raise CurlIntegrityError('Curl candidate stream/disk checksums differ')
+            # A provider payload mismatch can be retried from a fresh download,
+            # but disagreement with the bytes this process already appended is
+            # local candidate corruption (or an unreliable independent read).
+            # Metadata cannot prove immutability: a same-size overwrite may
+            # retain mtime on a coarse filesystem clock or restore it explicitly.
+            if stream != disk:
+                raise CurlTransferError('Curl candidate changed during independent disk verification: stream/disk checksums differ')
             if disk['md5'] != item['provider_checksum'].split(':', 1)[1]:
                 raise CurlIntegrityError('Curl candidate provider checksum mismatch')
             verified = helpers.acquire.verify_file(candidate, item, computed_digests=disk)
