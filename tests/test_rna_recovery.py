@@ -350,6 +350,10 @@ def test_primary_environment_preserves_alliance_dependencies_and_excludes_other_
     alliance.mkdir()
     foreign = c.root.parent.parent / "other-release/src"
     (foreign / "horsehair").mkdir(parents=True)
+    # Local qualification may place tmp_path below repository/work. Give this
+    # path-filter fixture a separate synthetic framework root so its fake
+    # Alliance path is outside that root, as /cvmfs is on the cluster.
+    manifest = {**manifest, "maintenance_release": str(c.root.parent.parent / "fixture-framework")}
     maintenance = Path(manifest["maintenance_release"]) / "src"
     c.monkeypatch.setenv("PYTHONPATH", os.pathsep.join([str(maintenance), str(alliance), str(foreign), str(c.primary / "src")]))
     environment = recovery._primary_environment(manifest)
