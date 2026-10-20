@@ -11,11 +11,12 @@ import hashlib
 import math
 import os
 import re
+import stat
 import subprocess
 import sys
 import time
 import uuid
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from datetime import datetime, timezone
 
 from .core import atomic_json, canonical_hash, digest, exclusive_file_lock, native_job_id, read_json, source_identity, ReceiptLockTimeout
@@ -39,6 +40,72 @@ STORAGE_REFRESH_SECONDS = 6 * 3600
 PRIMARY_READ_ATTEMPTS = 3
 PRIMARY_READ_BACKOFF_SECONDS = (1, 2)
 PRIMARY_TRANSIENT_READ_ERRNOS = {5, 107, 108, 110, 116}  # EIO, ENOTCONN, ESHUTDOWN, ETIMEDOUT, ESTALE
+
+
+def _verified_storage_artifact_eof(root, record):
+    """Bind cached artifact totals to the unchanged bounded-read evidence.
+
+    Payloads were measured at the storage receipt's original timestamp. Cache
+    validation reads only its fixed evidence sidecar; it never stats the old
+    artifact leaves whose Lustre size queries may block.
+    """
+    from .storage_artifacts import artifact_read_cap
+
+    descriptor = record['artifact_eof_measurements']
+    expected_path = root / 'state/storage-artifacts.json'
+    if (not isinstance(descriptor, dict) or type(descriptor.get('schema_version')) is not int
+            or descriptor['schema_version'] != 1 or descriptor.get('method') != 'owned_regular_eof'
+            or descriptor.get('receipt_path') != str(expected_path)
+            or not isinstance(descriptor.get('receipt_sha256'), str)
+            or re.fullmatch(r'[0-9a-f]{64}', descriptor['receipt_sha256']) is None
+            or type(descriptor.get('count')) is not int or descriptor['count'] <= 0
+            or type(descriptor.get('bytes')) is not int or descriptor['bytes'] < 0
+            or descriptor['count'] > record['study_files'] or descriptor['bytes'] > record['study_bytes']
+            or type(record.get('personal_uid')) is not int or record['personal_uid'] < 0
+            or expected_path.is_symlink() or expected_path.resolve() != expected_path
+            or not expected_path.is_file()):
+        raise ValueError('Artifact storage cache descriptor is not bound to its measured study evidence')
+    raw = expected_path.read_bytes()
+    receipt_hash = hashlib.sha256(raw).hexdigest()
+    if receipt_hash != descriptor['receipt_sha256']:
+        raise ValueError('Artifact storage evidence changed after measurement')
+    evidence = json.loads(raw)
+    if (not isinstance(evidence, dict) or type(evidence.get('schema_version')) is not int
+            or evidence['schema_version'] != 1 or evidence.get('status') != 'measured'
+            or evidence.get('method') != 'owned_regular_eof' or evidence.get('root') != str(root)
+            or type(evidence.get('count')) is not int or evidence['count'] != descriptor['count']
+            or type(evidence.get('bytes')) is not int or evidence['bytes'] != descriptor['bytes']
+            or not isinstance(evidence.get('items'), list) or len(evidence['items']) != descriptor['count']):
+        raise ValueError('Artifact storage sidecar has another root, method or measured roster')
+    seen, total = set(), 0
+    identity_fields = {'inode', 'uid', 'mode', 'nlink', 'device_major', 'device_minor', 'ctime_ns'}
+    for item in evidence['items']:
+        if not isinstance(item, dict) or not isinstance(item.get('relative_path'), str):
+            raise ValueError('Artifact storage item lacks its lexical relative path')
+        relative = PurePosixPath(item['relative_path'])
+        if (not item['relative_path'] or '\\' in item['relative_path'] or '\0' in item['relative_path']
+                or relative.is_absolute() or '..' in relative.parts or relative.as_posix() != item['relative_path']
+                or item['relative_path'] in seen):
+            raise ValueError('Artifact storage item path is unsafe or duplicated')
+        artifact_path = root.joinpath(*relative.parts)
+        cap = artifact_read_cap(artifact_path, root)
+        identity = item.get('identity')
+        if (type(cap) is not int or cap <= 0 or item.get('path') != str(artifact_path)
+                or item.get('status') != 'measured' or item.get('method') != 'owned_regular_eof'
+                or item.get('eof_observed') is not True or type(item.get('bytes')) is not int
+                or not 0 <= item['bytes'] <= cap or type(item.get('read_cap_bytes')) is not int
+                or item['read_cap_bytes'] != cap or not isinstance(item.get('sha256'), str)
+                or re.fullmatch(r'[0-9a-f]{64}', item['sha256']) is None
+                or not isinstance(identity, dict) or set(identity) != identity_fields
+                or any(type(identity[key]) is not int or identity[key] < 0 for key in identity_fields)
+                or identity['inode'] == 0 or identity['nlink'] == 0
+                or identity['uid'] != record['personal_uid'] or not stat.S_ISREG(identity['mode'])):
+            raise ValueError('Artifact storage item is not a bounded owned regular-file EOF measurement')
+        seen.add(item['relative_path'])
+        total += item['bytes']
+    if total != descriptor['bytes'] or digest(expected_path) != receipt_hash:
+        raise ValueError('Artifact storage evidence totals or bytes changed during validation')
+    return dict(descriptor)
 
 
 def _cached_storage_snapshot(root, *, now=None):
@@ -82,14 +149,19 @@ def _cached_storage_snapshot(root, *, now=None):
                     or not isinstance(hashes[source], str) or not re.fullmatch(r'[0-9a-f]{64}', hashes[source])
                     or digest(native_path) != hashes[source]):
                 return None
+        artifact_evidence = (_verified_storage_artifact_eof(root, record)
+                             if 'artifact_eof_measurements' in record else None)
         receipt_hash = hashlib.sha256(raw).hexdigest()
         if digest(path) != receipt_hash:
             return None
-        return {'basis': 'Verified measured storage receipt reused until its original six-hour deadline',
+        result = {'basis': 'Verified measured storage receipt reused until its original six-hour deadline',
                 'receipt_path': str(path), 'receipt_sha256': receipt_hash,
                 'measured_unix': measured, 'captured_utc': record['captured_utc'],
                 'age_seconds': current - measured, 'refresh_due_unix': measured + STORAGE_REFRESH_SECONDS,
                 'native_source_hashes': hashes}
+        if artifact_evidence is not None:
+            result['artifact_eof_measurements'] = artifact_evidence
+        return result
     except (OSError, ValueError, TypeError, AttributeError, OverflowError):
         return None
 

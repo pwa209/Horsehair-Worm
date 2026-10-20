@@ -127,13 +127,28 @@ def require_storage_headroom(root, *, required_files, required_bytes=0,
 
 def storage_snapshot(root,runner=subprocess.run):
     """Measure this study's occupancy and the user's personal Lustre quota."""
+    from .storage_artifacts import artifact_read_cap, measure_regular_eof
     root=Path(root).resolve()
     if root!=PERSONAL_STUDY_ROOT.resolve():raise ValueError('Storage snapshot requires the authorized personal study namespace')
     quota=_measure_personal_quota(runner)
-    sizes=0;count=0
+    sizes=0;count=0;artifact_items=[]
     for directory,dirs,files in os.walk(root,followlinks=False):
         for filename in files:
             path=Path(directory)/filename
+            cap=artifact_read_cap(path,root)
+            if cap is not None:
+                # Full Lustre getattr can stall on an archived empty curl log.
+                # These narrow, small artifact classes are measured through an
+                # owned, no-follow descriptor through actual EOF, rather than
+                # substituting an assumed size or skipping their occupancy.
+                try:measured=measure_regular_eof(path,cap,root=root)
+                except FileNotFoundError:continue
+                if measured['status']=='symlink':continue
+                if measured['status']!='measured' or measured.get('eof_observed') is not True:
+                    raise ValueError('Storage artifact lacks an exact EOF measurement')
+                sizes+=measured['bytes'];count+=1
+                artifact_items.append({'relative_path':str(path.relative_to(root)),**measured})
+                continue
             if path.is_symlink():continue
             try:sizes+=path.stat().st_size;count+=1
             except FileNotFoundError:continue
@@ -142,6 +157,14 @@ def storage_snapshot(root,runner=subprocess.run):
     record={'status':'measured','root':str(root),'measured_unix':time.time(),'captured_utc':datetime.now(timezone.utc).isoformat(),'study_bytes':sizes,'study_files':count,
             **{key:value for key,value in quota.items() if key!='native_stdout'},
             'native_source_paths':[str(path)],'native_source_hashes':{str(path):digest(path)}}
+    if artifact_items:
+        artifact_items.sort(key=lambda item:item['relative_path'])
+        evidence=root/'state/storage-artifacts.json'
+        artifact_bytes=sum(item['bytes'] for item in artifact_items)
+        atomic_json(evidence,{'schema_version':1,'status':'measured','root':str(root),'method':'owned_regular_eof',
+            'count':len(artifact_items),'bytes':artifact_bytes,'items':artifact_items})
+        record['artifact_eof_measurements']={'schema_version':1,'method':'owned_regular_eof','receipt_path':str(evidence),
+            'receipt_sha256':digest(evidence),'count':len(artifact_items),'bytes':artifact_bytes}
     atomic_json(root/'state/storage-budget.json',record)
     return record
 
