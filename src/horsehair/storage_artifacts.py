@@ -16,6 +16,8 @@ import stat
 import sys
 from functools import lru_cache
 from pathlib import PurePath, PurePosixPath
+from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 
 
 CURL_READ_CAP = 64 * 1024**2
@@ -367,7 +369,33 @@ def measure_regular_length(path, max_bytes, expected_uid=None, *, root):
             raise close_error
 
 
-def iter_regular_lengths(root, max_bytes, expected_uid=None):
+def _parallel_lengths(paths, root, max_bytes, uid, executor, workers):
+    """Finish one directory with a bounded sliding window of owned reads."""
+    source = iter(paths); pending = deque(); results = []
+    def submit_one():
+        try:
+            path = next(source)
+        except StopIteration:
+            return False
+        pending.append((path, executor.submit(measure_regular_length, path, max_bytes, uid, root=root)))
+        return True
+    try:
+        for _ in range(workers * 2):
+            if not submit_one():
+                break
+        while pending:
+            path, future = pending.popleft()
+            results.append((path, future.result()))
+            submit_one()
+        return results
+    finally:
+        # Running native I/O cannot be killed by a Future. The caller's
+        # scheduled allocation deadline still bounds the whole census process.
+        for _, future in pending:
+            future.cancel()
+
+
+def iter_regular_lengths(root, max_bytes, expected_uid=None, *, workers=1):
     """Yield ``(path, measurement)`` for every non-directory entry below root.
 
     Directory discovery uses only names from scandir on an anchored directory
@@ -378,6 +406,10 @@ def iter_regular_lengths(root, max_bytes, expected_uid=None):
     lexical parts and identity, not open descriptors. Names are collected and
     all directory descriptors closed before yielding or visiting another path.
     A queued directory replacement or observable change refuses the census.
+    Optional parallel reads use at most 16 threads and twice that many pending
+    futures. Each directory finishes before yielding, so no measured-file FD
+    survives across a yield. Threads cannot cancel a native D-state I/O call;
+    the caller retains its scheduled allocation/process deadline.
     """
     _require_linux()
     raw_root = os.fspath(root)
@@ -386,42 +418,52 @@ def iter_regular_lengths(root, max_bytes, expected_uid=None):
     _, root, _ = _relative_parts(root / '__entry_anchor__', root)
     uid = os.geteuid() if expected_uid is None else expected_uid
     _length_arguments(max_bytes, uid)
+    if type(workers) is not int or not 1 <= workers <= 16:
+        raise StorageArtifactError('Entry census workers must be an integer within 1..16')
     pending = [((), None)]
-    while pending:
-        parts, expected = pending.pop()
-        descriptors = []; failed = False
-        try:
-            parent = _open_directory(os.fspath(root)); descriptors.append(parent)
-            for name in parts:
-                parent = _open_directory(name, parent); descriptors.append(parent)
-            observed = _metadata('', parent)
-            if not stat.S_ISDIR(observed['mode']):
-                raise StorageArtifactError('Entry census anchor is not a directory')
-            if expected is not None and observed != expected:
-                raise StorageArtifactError('Queued census directory changed before anchored traversal')
-            with os.scandir(parent) as entries:
-                names = [entry.name for entry in entries]
-        except BaseException:
-            failed = True
-            raise
-        finally:
-            close_error = None
-            for descriptor in reversed(descriptors):
-                try:
-                    os.close(descriptor)
-                except OSError as error:
-                    if close_error is None:
-                        close_error = error
-            if close_error is not None and not failed:
-                raise close_error
-        for name in names:
-            if (not isinstance(name, str) or name in ('', '.', '..')
-                    or '/' in name or '\x00' in name
-                    or (flavor is not PurePosixPath and '\\' in name)):
-                raise StorageArtifactError('Native directory entry has an unsafe lexical name')
-            path = root.joinpath(*parts, name)
-            measured = measure_regular_length(path, max_bytes, uid, root=root)
-            if measured['status'] == 'directory':
-                pending.append(((*parts, name), measured['identity']))
-            else:
-                yield path, measured
+    executor = ThreadPoolExecutor(max_workers=workers, thread_name_prefix='storage-size') if workers > 1 else None
+    try:
+        while pending:
+            parts, expected = pending.pop()
+            descriptors = []; failed = False
+            try:
+                parent = _open_directory(os.fspath(root)); descriptors.append(parent)
+                for name in parts:
+                    parent = _open_directory(name, parent); descriptors.append(parent)
+                observed = _metadata('', parent)
+                if not stat.S_ISDIR(observed['mode']):
+                    raise StorageArtifactError('Entry census anchor is not a directory')
+                if expected is not None and observed != expected:
+                    raise StorageArtifactError('Queued census directory changed before anchored traversal')
+                with os.scandir(parent) as entries:
+                    names = [entry.name for entry in entries]
+            except BaseException:
+                failed = True
+                raise
+            finally:
+                close_error = None
+                for descriptor in reversed(descriptors):
+                    try:
+                        os.close(descriptor)
+                    except OSError as error:
+                        if close_error is None:
+                            close_error = error
+                if close_error is not None and not failed:
+                    raise close_error
+            paths = []
+            for name in names:
+                if (not isinstance(name, str) or name in ('', '.', '..')
+                        or '/' in name or '\x00' in name
+                        or (flavor is not PurePosixPath and '\\' in name)):
+                    raise StorageArtifactError('Native directory entry has an unsafe lexical name')
+                paths.append(root.joinpath(*parts, name))
+            measurements = (_parallel_lengths(paths, root, max_bytes, uid, executor, workers) if executor
+                            else ((path, measure_regular_length(path, max_bytes, uid, root=root)) for path in paths))
+            for path, measured in measurements:
+                if measured['status'] == 'directory':
+                    pending.append(((*parts, path.name), measured['identity']))
+                else:
+                    yield path, measured
+    finally:
+        if executor is not None:
+            executor.shutdown(wait=True, cancel_futures=True)

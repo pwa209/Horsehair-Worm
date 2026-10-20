@@ -23,7 +23,8 @@ def setup_census(tmp_path, monkeypatch):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
         return path
-    def fixture_entries(root, maximum):
+    def fixture_entries(root, maximum, *, workers=1):
+        assert 1 <= workers <= 16
         for directory, dirs, files in os.walk(root, followlinks=False):
             for filename in files:
                 path = Path(directory) / filename

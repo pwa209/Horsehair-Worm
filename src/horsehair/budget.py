@@ -137,8 +137,11 @@ def storage_snapshot(root,runner=subprocess.run,*,exact_sizes=None):
         exact_sizes=sys.platform.startswith('linux') and root==(Path('/scratch/pwa209/horsehair-worm').resolve())
     if type(exact_sizes) is not bool:raise ValueError('Exact-size measurement selection must be boolean')
     quota=_measure_personal_quota(runner)
-    sizes=0;count=0;artifact_items=[];exact_items=[]
-    entries=(iter_regular_lengths(root,6_000_000_000_000) if exact_sizes else
+    sizes=0;count=0;artifact_items=[];exact_items=[];scan_started=time.monotonic()
+    # Offset reads are dominated by remote I/O latency. Bound outstanding work
+    # while the allocation's CPU/memory/time limits still govern this process.
+    workers=min(16,max(4,4*int(os.environ.get('SLURM_CPUS_PER_TASK','1')))) if exact_sizes else 1
+    entries=(iter_regular_lengths(root,6_000_000_000_000,workers=workers) if exact_sizes else
         ((Path(directory)/filename,None) for directory,dirs,files in os.walk(root,followlinks=False) for filename in files))
     for path,measured in entries:
         path=Path(path)
@@ -150,6 +153,10 @@ def storage_snapshot(root,runner=subprocess.run,*,exact_sizes=None):
                 raise ValueError('Study entry lacks an exact regular-file length measurement')
             sizes+=measured['bytes'];count+=1
             exact_items.append({'relative_path':path.relative_to(root).as_posix(),**measured})
+            if count%1000==0:
+                print('STORAGE_CENSUS_PROGRESS '+json.dumps({'files':count,'bytes':sizes,
+                    'elapsed_seconds':time.monotonic()-scan_started,'io_workers':workers,
+                    'method':'owned_regular_length'},sort_keys=True),flush=True)
             continue
         cap=artifact_read_cap(path,root)
         if cap is not None:

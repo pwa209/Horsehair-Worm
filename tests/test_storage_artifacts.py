@@ -5,6 +5,7 @@ import hashlib
 import io
 import stat
 from copy import deepcopy
+import threading
 from types import SimpleNamespace
 
 import pytest
@@ -541,3 +542,80 @@ def test_anchored_census_rejects_unsafe_entry_names_without_measuring_or_leaking
     with pytest.raises(artifacts.StorageArtifactError,match='unsafe lexical name'):
         list(artifacts.iter_regular_lengths(ROOT,6_000_000_000_000))
     assert not fixture.remaining and not fixture.measured and fixture.scans[0].closed
+
+
+def test_parallel_census_has_complete_ordered_coverage_without_direntry_type_queries(monkeypatch):
+    fixture=TraversalFixture(monkeypatch)
+    rows=list(artifacts.iter_regular_lengths(ROOT,6_000_000_000_000,workers=4))
+    assert [str(path) for path,_ in rows]==[ROOT+'/link-dir',ROOT+'/pipe',ROOT+'/root.txt',
+                                         ROOT+'/data/a.fa',ROOT+'/data/nested/b.fa']
+    assert len(fixture.measured)==7 and not fixture.remaining
+    assert all(scan.closed for scan in fixture.scans)
+
+
+def test_parallel_measurements_overlap_but_finish_and_close_before_yield(monkeypatch):
+    fixture=TraversalFixture(monkeypatch);fixture.tree={ROOT:['a.txt','b.txt','c.txt']}
+    original=fixture.measure;barrier=threading.Barrier(3);lock=threading.Lock()
+    active=0;peak=0
+    def simultaneous(*args,**kwargs):
+        nonlocal active,peak
+        with lock:active+=1;peak=max(peak,active)
+        try:
+            barrier.wait(timeout=3)
+            return original(*args,**kwargs)
+        finally:
+            with lock:active-=1
+    monkeypatch.setattr(artifacts,'measure_regular_length',simultaneous)
+    iterator=artifacts.iter_regular_lengths(ROOT,6_000_000_000_000,workers=3)
+    next(iterator)
+    assert peak==3 and active==0 and not fixture.remaining
+    iterator.close()
+    assert all(scan.closed for scan in fixture.scans)
+
+
+def test_parallel_worker_failure_joins_running_workers_and_closes_directory_handles(monkeypatch):
+    fixture=TraversalFixture(monkeypatch);fixture.tree={ROOT:['bad.txt','b.txt','c.txt']}
+    original=fixture.measure;barrier=threading.Barrier(3);lock=threading.Lock();active=0
+    def failing(path,*args,**kwargs):
+        nonlocal active
+        with lock:active+=1
+        try:
+            barrier.wait(timeout=3)
+            if path.name=='bad.txt':raise OSError(errno.EIO,'fixture parallel read error')
+            return original(path,*args,**kwargs)
+        finally:
+            with lock:active-=1
+    monkeypatch.setattr(artifacts,'measure_regular_length',failing)
+    with pytest.raises(OSError,match='parallel read error'):
+        list(artifacts.iter_regular_lengths(ROOT,6_000_000_000_000,workers=3))
+    assert active==0 and not fixture.remaining and all(scan.closed for scan in fixture.scans)
+
+
+def test_parallel_census_bounds_future_window_in_a_large_directory(monkeypatch):
+    fixture=TraversalFixture(monkeypatch);fixture.tree={ROOT:[f'{n}.txt' for n in range(100)]}
+    counters={'outstanding':0,'peak':0,'shutdown':False}
+    class Future:
+        def __init__(self,function,args,kwargs):self.function=function;self.args=args;self.kwargs=kwargs
+        def result(self):
+            try:return self.function(*self.args,**self.kwargs)
+            finally:counters['outstanding']-=1
+        def cancel(self):counters['outstanding']-=1
+    class Executor:
+        def __init__(self,*,max_workers,thread_name_prefix):assert max_workers==4
+        def submit(self,function,*args,**kwargs):
+            counters['outstanding']+=1;counters['peak']=max(counters['peak'],counters['outstanding'])
+            return Future(function,args,kwargs)
+        def shutdown(self,*,wait,cancel_futures):
+            assert wait and cancel_futures;counters['shutdown']=True
+    monkeypatch.setattr(artifacts,'ThreadPoolExecutor',Executor)
+    rows=list(artifacts.iter_regular_lengths(ROOT,6_000_000_000_000,workers=4))
+    assert len(rows)==100 and counters=={'outstanding':0,'peak':8,'shutdown':True}
+    assert not fixture.remaining and all(scan.closed for scan in fixture.scans)
+
+
+@pytest.mark.parametrize('workers',[0,17,True,1.0])
+def test_invalid_parallel_worker_count_is_refused_before_opening_descriptors(monkeypatch,workers):
+    fixture=TraversalFixture(monkeypatch)
+    with pytest.raises(artifacts.StorageArtifactError,match='workers'):
+        list(artifacts.iter_regular_lengths(ROOT,6_000_000_000_000,workers=workers))
+    assert not fixture.opened
