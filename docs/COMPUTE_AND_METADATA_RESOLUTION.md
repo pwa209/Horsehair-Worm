@@ -36,8 +36,11 @@ tables. After a cooldown, the ordinary official route served the remaining
 372 originals. All **875 workbooks (21,143,827 provider bytes)** were verified
 against provider size and MD5 and staged in personal Narval scratch. The
 complete native checksum/cell audit completed in 93 seconds in job 6658785, with
-zero unresolved originals. Subsequent bounded annotation discovery is registered
-separately as job 6659341. Source acquisition completion does
+zero unresolved originals. Bounded annotation discovery then completed all 875
+files in job 6659341, scanning 4,184,749 cells. Its 300,000-record candidate export
+limit was reached; complete original-cell files remain available. Detailed row
+reviews cover 42 provider workbooks and the two separate archive originals.
+Source acquisition and candidate scanning do
 not establish a validated biological crosswalk.
 An independent ZIP metadata audit also recovered two author-referenced recipient
 workbooks from the already verified Zenodo archive; these are separate original
@@ -57,6 +60,21 @@ attached to the affected original records. One original key explicitly says
 blank treatment cells can contain dummy flies; blank cells cannot become
 unexposed controls. Source-code replication does not settle these ambiguities.
 No complete H1, H2 or H3 metadata gate was cleared by the review.
+
+Additional source rows recover literal stock/genotype, sex and treatment-field
+entries. The 20 newly reviewed workbooks contain 362 literal `Rx=Uninfected`
+entries and 1,782 blank Rx entries. These counts refer to original ROI records,
+including empty or annotated rows; independence and eligibility remain unvalidated. The
+literal `Uninfected` token still requires original exposure-semantic validation.
+Three reviewed “96 hour” directory labels supply no validated exposure event or
+offset in their original sheets; two disagree with the row genotype labels.
+
+Original file 6826794 explicitly calls its board information a placeholder.
+Files 6820288 and 6820589 have identical parsed cell matrices despite different
+dates, directory labels and workbook hashes. The complete 875-file parsed-hash
+check found this one duplicate-annotation pair. It establishes neither animal
+identity nor independent controls. Those source conflicts remain attached to
+the affected records.
 
 The private source review retains an explicit interpretation correction for
 24 February's Outcome formulas: 30 reference ROIs 65–94 outside the author's
