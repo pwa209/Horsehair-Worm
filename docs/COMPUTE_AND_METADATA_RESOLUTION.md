@@ -177,6 +177,24 @@ guard passed 28 focused tests; the qualified numerical source remains unchanged.
 Recovery deployment 6668893 completed successfully and released array 6669092
 for only indices 18–19, sequentially. Fresh aggregate 6669095 depends on both
 the original 39-cell array and the retry array. It writes a separate summary;
-the original aggregate and submission ledger were not changed. First retry
-6669092_18 was running at 14:29 UTC. This is operational recovery in progress,
-not completed behavioural workload coverage or scientific admission.
+the original aggregate and submission ledger were not changed. Both retry
+cells completed successfully with native exit code 0:0.
+
+The 15:09 UTC completion check found no active or queued benchmark jobs. Both
+behavioural aggregators, 6657889 and 6669095, completed successfully and retained
+all 39 source-bound receipts. Coverage is **38 of 39 complete cells**, or
+**463 of 468 required operations**. The five-second AR cell 6657821_5 reached
+its 6,300-second worker deadline during the 0.001 learning-rate LBFGS probe.
+Its receipt preserves 7 of 12 required operations; the 0.001 LBFGS iteration and
+all four 0.003-rate operations remain unmeasured. The supervisor's native
+COMPLETED/0:0 status does not replace the explicit `bounded_deadline_reached`
+numerical receipt.
+
+Both summaries report `measured_partial_projection_exceeds_cap`: approximately
+91.21 billion CPU core-hours under the conservative frozen maximum-work
+optimizer extrapolation, against the 20,000 CPU-core-hour study cap. This is
+neither actual expenditure nor a mathematical lower bound on a converged fit.
+Full optimizer paths, Hessian/MALA, recovery, Mantis, H2 and full-fit output
+storage are still unmeasured. Workload and cost assumptions require review
+before further expensive probes or scientific admission. Source data, frozen
+analysis rules and all scientific/admission gates remain unchanged.

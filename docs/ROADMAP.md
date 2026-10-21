@@ -8,6 +8,8 @@ The [metadata and compute resolution extension](COMPUTE_AND_METADATA_RESOLUTION.
 
 Verified milestone, 21 October 2026: the 12-cell agent CPU cost pack and its native aggregation are complete. Stage B still requires behavioural workload measurements and complete resource admission. Stage F2 remains gated by the frozen scientific completion rules and the uncovered final training/analysis costs.
 
+At the 15:09 UTC check, both behavioural quota retries and both aggregations were complete. Behavioural operator coverage is 38/39 cells: the five-second AR probe reached its bounded worker deadline. The conservative partial optimizer projection exceeds the CPU cap, so Stage B requires a workload/cost review before advancement. No benchmark jobs remain active or queued at that timestamp.
+
 | Stage | Work | Evidence required to advance | Principal artifacts |
 |---|---|---|---|
 | 0. Release and qualification | Freeze source/configuration; qualify Python, CUDA, R, OrthoFinder and TransDecoder on allocated hardware | Successful native jobs and verified software fixtures/files | Release identity, qualification receipts, native accounting |
