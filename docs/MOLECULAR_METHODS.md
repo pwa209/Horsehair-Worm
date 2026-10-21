@@ -318,6 +318,10 @@ parameters alone cannot identify them.
 
 ## Measured prospective resource admission
 
+For independent Mantis corroboration, the full deposited SuperTranscript/GFF reference and the measured count roster have different scopes: 195,386 reference genes and 28,499 counted genes. A complete native identifier audit found every counted ID in the reference, exact agreement between deposited and derived count rosters, and one explicit same-named GFF gene for every reference sequence. Original Trinity transcript annotations are retained separately. The reason that other reference genes are absent from the count matrix is unknown; their absence is not a zero-expression observation.
+
+The explicit input adapter retains all original sequences and uses the frozen primary `orf_plan`, `transdecoder_gene_map` and `select_representative_proteins` functions: minimum 100 amino acids, one best ORF per transcript, then longest representative per explicit gene with lexicographic protein-ID ties. Full-reference and measured-gene coverage are reported separately. The frozen kernel's legacy `source_counted_genes` field denotes all supplied mapped reference genes in this adapter and is labelled accordingly. The adapter has its own source identity; unchanged primary numerical functions and the independent three-species orthology execution retain separate source proofs. Orthology is interpreted within the available SuperTranscript reference, without a claim of genome completeness. This procedure follows the [deposited assembly/count provenance](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM7596576) and retains the reference scope relevant to [OrthoFinder's complete-proteome guidance](https://davidemms.github.io/orthofinder_tutorials/orthofinder-best-practices.html).
+
 `horsehair.admission.assess_admission(config, root, phase=None,
 safety_factor=1.5)` writes independent `admission-rna-full`,
 `admission-agents-development`, `admission-agents-final`, `admission-behaviour`

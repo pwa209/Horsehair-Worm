@@ -24,6 +24,27 @@ def state(value="COMPLETED", exit_code="0:0"):
     return {"state":value,"exit_code":exit_code}
 
 
+@pytest.mark.parametrize('proof_valid',[True,False])
+def test_mantis_amendment_requires_validated_adapter_and_consumed_proteome(tmp_path,monkeypatch,proof_valid):
+    from horsehair import mantis_recovery
+    root=tmp_path/'study';config={'paths':{'root':str(root)}};identity='a'*64
+    guard={'manifest_path':'reviewed-manifest','manifest_sha256':'b'*64}
+    atomic_json(root/'plans/primary-molecular-corroboration/plan.json',
+        {'dag_amendments':[{'mantis_reference_recovery':guard}]})
+    path=root/'data/molecular/orthology_mantis/gene_orthology.tsv'
+    path.parent.mkdir(parents=True);path.write_text('fixture only\n')
+    monkeypatch.setattr(pipeline,'_check_result',lambda *args,**kwargs:(True,'verified fixture'))
+    calls=[]
+    def validate(*args):
+        calls.append(args)
+        if not proof_valid:raise ValueError('Consumed mantis proteome differs from registered adapter')
+        return {'status':'validated'}
+    monkeypatch.setattr(mantis_recovery,'validate_completed_phase',validate)
+    valid,reason=pipeline._phase_outputs('molecular-corroboration',config,root,identity,'primary')
+    assert valid is proof_valid and calls==[(guard,config,root,identity)]
+    if not proof_valid:assert 'Consumed mantis proteome' in reason
+
+
 def task(name, cpus=2, gpu=False, array=None, depends=(), external=()):
     resources = {"cpus":cpus,"gpu":gpu}
     if array is not None:
@@ -294,6 +315,9 @@ def configure_lock_run(fixture,monkeypatch):
     from horsehair import budget
     monkeypatch.setattr(pipeline,"__file__",str(fixture.release/"src/horsehair/pipeline.py"))
     monkeypatch.setenv("SLURM_JOB_ID","800")
+    # The generated controller allocation has no relation to the host's own
+    # Slurm end time when this fixture runs inside native qualification.
+    monkeypatch.delenv("SLURM_JOB_END_TIME",raising=False)
     monkeypatch.delenv("SLURM_ARRAY_JOB_ID",raising=False)
     monkeypatch.delenv("SLURM_ARRAY_TASK_ID",raising=False)
     monkeypatch.setattr(budget,"native_accounting",lambda *a:None)
@@ -303,6 +327,31 @@ def configure_lock_run(fixture,monkeypatch):
     path = fixture.root/"state/pipeline/qa-release/controller.lock"
     atomic_json(path,{"job_id":"700","segment":0,"started_unix":1.})
     return path
+
+
+def test_controller_runtime_limit_keeps_original_bound_and_explicit_short_runs():
+    assert pipeline._controller_runtime_limit(None)==140*3600
+    assert pipeline._controller_runtime_limit(180*3600)==140*3600
+    assert pipeline._controller_runtime_limit(60)==60
+
+
+def test_backfilled_controller_preserves_four_hour_finalization_margin():
+    now=1000.
+    assert pipeline._controller_runtime_limit(None,allocation_end=now+143*3600,now=now)==139*3600
+    assert pipeline._controller_runtime_limit(None,allocation_end=now+142*3600,now=now)==138*3600
+    assert pipeline._controller_runtime_limit(None,allocation_end=now+144*3600,now=now)==140*3600
+    assert pipeline._controller_runtime_limit(60,allocation_end=now+142*3600,now=now)==60
+
+
+@pytest.mark.parametrize('end',[float('nan'),float('inf'),'invalid',1000.,1000.+4*3600+29])
+def test_invalid_or_exhausted_native_controller_window_admits_no_loop(end):
+    with pytest.raises(ValueError):
+        pipeline._controller_runtime_limit(None,allocation_end=end,now=1000.)
+
+
+@pytest.mark.parametrize('requested',[float('nan'),float('inf'),0,-1,29])
+def test_invalid_controller_runtime_request_is_rejected_before_allocation(requested):
+    with pytest.raises(ValueError):pipeline._controller_runtime_limit(requested)
 
 
 def cached_storage_fixture(root, measured=100000.):

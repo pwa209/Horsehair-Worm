@@ -211,6 +211,65 @@ def _rna_recovery_binding(descriptor, targets, primary, identity, config, root, 
     return result
 
 
+def _mantis_recovery_binding(descriptor, targets, primary, identity, config, root, original, old_ledger):
+    """Bind one explicit reference-map adapter to unchanged primary ORF kernels.
+
+    This exception belongs only to the two auxiliary Mantis nodes. The parent
+    phase and orthology execution retain the primary identity; the independently
+    qualified adapter has its own truthful source identity in the amendment.
+    """
+    change = descriptor.get('mantis_reference_recovery')
+    if change is None:
+        return None
+    required = {'framework_release', 'qualification_path', 'qualification_sha256',
+                'qualification_job_id', 'manifest_path', 'manifest_sha256',
+                'preparation_path', 'preparation_sha256'}
+    names = {'mantis-orfs', 'mantis-orthology'}
+    if (not isinstance(change, dict) or set(change) != required
+            or descriptor['phase'] != 'molecular-corroboration' or targets != names
+            or any(descriptor.get(key) is not None for key in ('rna_recovery', 'rna_followup', 'controller_maintenance'))
+            or any(Path(descriptor['execution_releases'][name]).resolve() != primary for name in names)):
+        raise ValueError('Mantis reference recovery must replace exactly both auxiliary nodes in the unchanged primary context')
+    controllers = {f'pipeline-controller-{index}' for index in range(4)}
+    framework_change = {key: change[key] for key in ('framework_release', 'qualification_path',
+                                                   'qualification_sha256', 'qualification_job_id')}
+    framework_change['primary_release'] = str(primary)
+    qualified = _controller_maintenance({'phase': 'managed-initial',
+        'controller_maintenance': framework_change,
+        'execution_releases': {name: change['framework_release'] for name in controllers}},
+        controllers, controllers, primary, identity, config, root)
+    for label in ('manifest', 'preparation'):
+        declared = Path(change[label + '_path'])
+        path = _inside(declared, root / 'maintenance')
+        if (declared.is_symlink() or not path.is_file()
+                or not re.fullmatch('[0-9a-f]{64}', str(change[label + '_sha256']))
+                or digest(path) != change[label + '_sha256']):
+            raise ValueError('Mantis reference recovery ' + label + ' is missing, relocated or changed')
+    from .mantis_recovery import ORF_RECIPE, validate_registration_manifest
+    context = validate_registration_manifest(change['manifest_path'], change['manifest_sha256'],
+        change['preparation_path'], change['preparation_sha256'])
+    manifest, preparation = context['manifest'], context['preparation']
+    previous = {name: str(old_ledger['tasks'][name]['job_id']) for name in names}
+    if (Path(manifest['root']).resolve() != root or Path(manifest['primary_release']).resolve() != primary
+            or manifest['primary_source_identity'] != identity
+            or manifest['full_config_sha256'] != canonical_hash(config)
+            or Path(manifest['maintenance_release']).resolve() != Path(qualified['framework_release'])
+            or manifest['maintenance_source_identity'] != qualified['framework_source_identity']
+            or manifest.get('previous_job_ids') != previous or manifest.get('orf_recipe') != ORF_RECIPE
+            or any(original[name].get('resources', {}).get('array') is not None for name in names)):
+        raise ValueError('Mantis reference recovery differs from the frozen primary source, configuration, recipe or prior nodes')
+    jobs = {'qualification_job_id': str(change['qualification_job_id']),
+            'capture_job_id': str(manifest['capture_slurm_job_id']),
+            'preparation_job_id': str(preparation['slurm_job_id'])}
+    if any(not re.fullmatch('[0-9]+', job) for job in jobs.values()):
+        raise ValueError('Mantis reference recovery requires exact scalar native maintenance identities')
+    return {**change, **jobs, 'root': str(root), 'primary_release': str(primary),
+            'framework_release': qualified['framework_release'],
+            'framework_source_identity': qualified['framework_source_identity'],
+            'primary_source_identity': identity, 'config_sha256': canonical_hash(config),
+            'previous_job_ids': previous, 'orf_recipe': copy.deepcopy(ORF_RECIPE)}
+
+
 def _runtime_adjustments(descriptor, original, candidates, targets):
     adjustments = descriptor.get("runtime_adjustments", {})
     if not isinstance(adjustments, dict) or set(adjustments) - {"source-audit"} or not set(adjustments) <= targets:
@@ -286,7 +345,30 @@ def _rna_followup_prior_projection(text, recovery):
     return text.replace(command, original, 1)
 
 
-def _check_script(task, original, execution, root, runtime=None, controller_primary=None, rna_recovery=None):
+def _mantis_recovery_script_projection(text, old_text, recovery):
+    """Permit one qualified input adapter, preserving the frozen primary shell."""
+    commands = [line for line in old_text.splitlines()
+                if line.startswith('python -m horsehair.cli ')
+                and 'molecular-pipeline' in shlex.split(line)[4:]]
+    if len(commands) != 1:
+        raise ValueError('Mantis reference recovery requires one exact original ORF CLI command')
+    original = commands[0]
+    argv = shlex.split(original)
+    expected = ['python', '-m', 'horsehair.cli', '--config', 'configs/study.json',
+                '--root', argv[6] if len(argv) == 10 else '', 'molecular-pipeline', '--stage', 'mantis-orfs']
+    if argv != expected or Path(argv[6]).resolve() != Path(recovery['root']).resolve():
+        raise ValueError('Mantis reference recovery changes the frozen primary ORF CLI command')
+    command = ('python ' + shlex.quote(str(Path(recovery['framework_release']) / 'src/horsehair/mantis_recovery.py'))
+               + ' run --manifest ' + shlex.quote(recovery['manifest_path'])
+               + ' --manifest-sha256 ' + recovery['manifest_sha256']
+               + ' --preparation ' + shlex.quote(recovery['preparation_path'])
+               + ' --preparation-sha256 ' + recovery['preparation_sha256'])
+    if text.splitlines().count(command) != 1:
+        raise ValueError('Mantis reference adapter does not match its exact qualified invocation')
+    return text.replace(command, original, 1)
+
+
+def _check_script(task, original, execution, root, runtime=None, controller_primary=None, rna_recovery=None, mantis_recovery=None):
     path = _inside(task["script"], root / "plans")
     text = path.read_text(encoding="utf8")
     if canonical_hash(text) != task.get("script_sha256"):
@@ -311,6 +393,10 @@ def _check_script(task, original, execution, root, runtime=None, controller_prim
         if rna_recovery.get('guard_module') == 'rna_followup':
             old_text = _rna_followup_prior_projection(old_text, rna_recovery)
         text = _rna_recovery_script_projection(text, old_text, rna_recovery)
+    if mantis_recovery is not None:
+        if task.get('name') != 'mantis-orfs' or runtime or controller_primary is not None or rna_recovery is not None:
+            raise ValueError('Mantis reference adapter projection is limited to the primary auxiliary ORF node')
+        text = _mantis_recovery_script_projection(text, old_text, mantis_recovery)
     if controller_primary is not None:
         old_commands = [line for line in old_text.splitlines() if line.startswith('python -m horsehair.cli ')
                         and 'pipeline' in shlex.split(line)[4:]]
@@ -572,7 +658,7 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
     root = Path(descriptor["root"]).resolve()
     _inside(descriptor_path, root / "plans")
     ident, phase = descriptor["amendment_id"], descriptor["phase"]
-    if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", ident) or phase not in {"managed-initial", "rna-full"}:
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", ident) or phase not in {"managed-initial", "rna-full", "molecular-corroboration"}:
         raise ValueError("Unsupported scoped DAG amendment identity/phase")
     if not descriptor.get("reason"):
         raise ValueError("An explicit repair reason is required")
@@ -630,6 +716,9 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
             raise ValueError("Replacement tasks do not match original named nodes")
         if phase == "managed-initial" and not targets <= INITIAL_TARGETS:
             raise ValueError("Initial repair may replace only failed preprocessing and controller nodes")
+        if phase == 'molecular-corroboration' and (targets != {'mantis-orfs', 'mantis-orthology'}
+                or descriptor.get('mantis_reference_recovery') is None):
+            raise ValueError('Mantis corroboration repair requires its explicit qualified reference adapter and both auxiliary nodes')
         runtime_adjustments = _runtime_adjustments(descriptor, original, candidates, targets)
         for name in set(candidates) - targets:
             if candidates[name] != original.get(name) or submitted.get("tasks", {}).get(name) != old_ledger.get("tasks", {}).get(name):
@@ -643,6 +732,7 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
             raise ValueError("The complete four-segment primary controller roster is required")
         controller_maintenance = _controller_maintenance(descriptor, targets, controllers, primary, identity, config, root)
         rna_recovery = _rna_recovery_binding(descriptor, targets, primary, identity, config, root, original, old_ledger)
+        mantis_recovery = _mantis_recovery_binding(descriptor, targets, primary, identity, config, root, original, old_ledger)
         checks = [(name, original[name], old_ledger["tasks"][name]) for name in targets]
         checks += [(name, task, old_ledger["tasks"][name]) for name, task in original.items()] if phase == "rna-full" else []
         checks += [(name, task, controllers_ledger["tasks"][name]) for name, task in controllers.items()]
@@ -653,6 +743,11 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
             candidate = candidates[name]
             if rna_recovery is not None and candidate.get('depends', []) != original[name].get('depends', []):
                 raise ValueError('RNA recovery must retain every original named scientific dependency')
+            if mantis_recovery is not None and candidate.get('depends', []) != original[name].get('depends', []):
+                raise ValueError('Mantis reference recovery must retain every original named scientific dependency')
+            if mantis_recovery is not None and any(candidate.get(key, []) != original[name].get(key, [])
+                    for key in ('external_dependencies', 'external_dependency_specs')):
+                raise ValueError('Mantis reference recovery must retain the original external scientific dependencies')
             if candidate.get("resources") != original[name].get("resources") and name not in runtime_adjustments:
                 raise ValueError("Replacement changed a node's frozen resource/array contract")
             execution, execution_record, execution_identity = _release(descriptor["execution_releases"][name], config)
@@ -666,7 +761,8 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
                     raise ValueError("Only source-audit or explicitly qualified primary controllers may use another execution release")
             _check_script(candidate, original[name], execution, root, runtime_adjustments.get(name),
                           primary if controller_maintenance is not None else None,
-                          rna_recovery if name == 'rna-counts' else None)
+                          rna_recovery if name == 'rna-counts' else None,
+                          mantis_recovery if name == 'mantis-orfs' else None)
             record = submitted.get("tasks", {}).get(name, {})
             if (record.get("state") != "submitted" or not re.fullmatch(r"[0-9]+", str(record.get("job_id", "")))
                     or record.get("script_sha256") != candidate["script_sha256"]):
@@ -702,6 +798,23 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
                             or len(proofs) != 1 or proofs[0] not in candidate.get('completed_external_dependencies', [])):
                         raise ValueError('RNA count recovery requires unchanged positive qualification and preservation dependencies')
                     _verify_completed_dependency(root, proofs[0])
+            if mantis_recovery is not None and name == 'mantis-orfs':
+                from .slurm import _verify_completed_dependency
+                for key in ('qualification_job_id', 'preparation_job_id'):
+                    dependency_id = mantis_recovery[key]
+                    proofs = [proof for proof in record.get('completed_native_dependencies', [])
+                              if str(proof.get('job_id')) == dependency_id and proof.get('array') is None
+                              and proof.get('dependency_kind', 'afterok') == 'afterok']
+                    if (candidate.get('dependency_kind', 'afterok') != 'afterok' or dependency_id not in required
+                            or len(proofs) != 1 or proofs[0] not in candidate.get('completed_external_dependencies', [])):
+                        raise ValueError('Mantis ORF recovery requires unchanged positive qualification and preservation dependencies')
+                    _verify_completed_dependency(root, proofs[0])
+            if mantis_recovery is not None and name == 'mantis-orthology':
+                parent = str(submitted['tasks']['mantis-orfs'].get('job_id', ''))
+                if (candidate.get('depends', []) != ['mantis-orfs']
+                        or candidate.get('dependency_kind', 'afterok') != 'afterok'
+                        or parent not in set(map(str, record.get('issued_native_dependencies', [])))):
+                    raise ValueError('Mantis orthology requires its unchanged afterok dependency on the new held ORF adapter')
             new_ids.append(str(record["job_id"]))
             releases[name] = {"path": str(execution), "release_id": execution_record["release_id"],
                               "source_identity": execution_identity, "config_sha256": canonical_hash(config)}
@@ -716,6 +829,9 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
         qualification_ids = [str(controller_maintenance['qualification_job_id'])] if controller_maintenance else []
         if rna_recovery:
             qualification_ids.extend(rna_recovery[key] for key in
+                                     ('qualification_job_id', 'capture_job_id', 'preparation_job_id'))
+        if mantis_recovery:
+            qualification_ids.extend(mantis_recovery[key] for key in
                                      ('qualification_job_id', 'capture_job_id', 'preparation_job_id'))
         qualification_ids = list(dict.fromkeys(qualification_ids))
         observed = _repair_native_states(list(dict.fromkeys(jobs + new_ids + qualification_ids)), rosters, owner=owner, account=account) if native is None else native
@@ -748,6 +864,11 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
                 if ('#SBATCH --hold' not in Path(candidate['script']).read_text(encoding='utf8').splitlines()
                         or any(observed[ident]['state'] != 'PENDING' for ident in expected)):
                     raise ValueError('RNA recovery count array must remain explicitly held and pending until registration and re-admission complete')
+            if mantis_recovery is not None and name == 'mantis-orfs':
+                if ('#SBATCH --hold' not in Path(candidate['script']).read_text(encoding='utf8').splitlines()
+                        or candidate.get('resources', {}).get('array') is not None
+                        or any(observed[ident]['state'] != 'PENDING' for ident in expected)):
+                    raise ValueError('Mantis ORF adapter must remain explicitly held and pending until canonical registration completes')
         runtime_native_proofs = _runtime_native_proofs(runtime_adjustments, original, old_ledger, observed)
         unused_arrays = _unused_terminal_arrays(root,checks,observed)
         amended_plan, amended_ledger = copy.deepcopy(old_plan), copy.deepcopy(old_ledger)
@@ -786,6 +907,8 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
             amendment['controller_maintenance'] = controller_maintenance
         if rna_recovery:
             amendment['rna_followup' if rna_recovery.get('guard_module') == 'rna_followup' else 'rna_recovery'] = rna_recovery
+        if mantis_recovery:
+            amendment['mantis_reference_recovery'] = mantis_recovery
         amended_plan.setdefault("dag_amendments", []).append(amendment)
         amended_ledger.setdefault("dag_amendments", []).append(amendment)
         amended_ledger["plan_sha256"] = canonical_hash(amended_plan)
@@ -818,6 +941,9 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
         if rna_recovery is not None:
             if _rna_recovery_binding(descriptor, targets, primary, identity, config, root, original, old_ledger) != rna_recovery:
                 raise ValueError('RNA recovery binding changed during native registration accounting')
+        if mantis_recovery is not None:
+            if _mantis_recovery_binding(descriptor, targets, primary, identity, config, root, original, old_ledger) != mantis_recovery:
+                raise ValueError('Mantis reference recovery binding changed during native registration accounting')
         budget_guard = exclusive_file_lock(root / "state/resource-budget.mutex") if runtime_adjustments else nullcontext()
         with budget_guard:
             if runtime_adjustments:

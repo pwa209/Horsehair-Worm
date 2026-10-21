@@ -474,6 +474,17 @@ def _phase_outputs(phase, config, root, identity, release_id=None):
             return valid, reason
         if not (root/'data/molecular/orthology_mantis/gene_orthology.tsv').is_file():
             return False, 'Actual three-species orthology output is pending'
+        if release_id:
+            path=root/'plans'/(release_id+'-molecular-corroboration')/'plan.json'
+            plan=read_json(path) if path.is_file() else {}
+            repairs=[item['mantis_reference_recovery'] for item in plan.get('dag_amendments', [])
+                     if item.get('mantis_reference_recovery') is not None]
+            if repairs:
+                from .mantis_recovery import validate_completed_phase
+                try:
+                    validate_completed_phase(repairs[-1],config,root,identity)
+                except (ValueError,FileNotFoundError,KeyError,TypeError) as error:
+                    return False, 'Audited mantis reference and consumed proteome proof is pending: '+str(error)
     if phase == 'synthesis':
         path=root/'results/report/report.json'
         valid, reason=_check_result(path,config,identity)
@@ -886,6 +897,26 @@ def tick(config, root, release, *, native=None, planner=None, submitter=None, as
     return record
 
 
+def _controller_runtime_limit(max_seconds, *, allocation_end=None, now=None):
+    """Retain the original four-hour finalization margin after native backfill.
+
+    The declared maximum remains 140 hours. A shorter scheduler allocation
+    reduces only this orchestration loop; scientific job numerics are separate.
+    """
+    requested=float(140*3600 if max_seconds is None else max_seconds)
+    if not math.isfinite(requested) or requested<30:
+        raise ValueError('Controller lifetime must be at least30seconds and bounded')
+    limit=min(requested,140*3600)
+    if allocation_end is not None:
+        end=float(allocation_end);current=time.time() if now is None else float(now)
+        if not math.isfinite(end) or not math.isfinite(current):
+            raise ValueError('Invalid native controller allocation end time')
+        limit=min(limit,end-current-4*3600)
+        if limit<30:
+            raise ValueError('Native controller allocation lacks its four-hour finalization margin')
+    return limit
+
+
 def run(config, root, *, segment=0, max_seconds=None, interval=60, primary_release=None):
     from .budget import native_accounting,storage_snapshot,require_storage_headroom,StorageHeadroomError
     from .storage_artifacts import StorageArtifactRace
@@ -895,9 +926,9 @@ def run(config, root, *, segment=0, max_seconds=None, interval=60, primary_relea
         raise RuntimeError('The sustained pipeline controller belongs in Slurm')
     if segment not in range(4) or interval < 30:
         raise ValueError('Invalid finite controller segment')
-    limit = min(float(140*3600 if max_seconds is None else max_seconds), 140*3600)
-    if not math.isfinite(limit) or limit < 30:
-        raise ValueError('Controller lifetime must be at least30seconds and bounded')
+    native_end=os.environ.get('SLURM_JOB_END_TIME')
+    runtime_started=time.time()
+    limit=_controller_runtime_limit(max_seconds,allocation_end=native_end,now=runtime_started)
     deadline = time.monotonic() + limit
     framework_identity = read_json(framework/'release.json')
     identity = read_json(release/'release.json')
@@ -943,6 +974,9 @@ def run(config, root, *, segment=0, max_seconds=None, interval=60, primary_relea
                             'framework_release': str(framework), 'framework_source_identity': framework_identity['source_identity'],
                             'primary_release': str(release), 'primary_source_identity': identity['source_identity'],
                             'config_sha256': canonical_hash(config),
+                            'native_allocation_end_unix':float(native_end) if native_end is not None else None,
+                            'controller_runtime_limit_seconds':limit,'planned_loop_end_unix':runtime_started+limit,
+                            'native_finalization_margin_seconds':4*3600 if native_end is not None else None,
                             'provenance_rule': 'Controller framework executes from its own verified source; primary plans, numeric jobs and scientific result validation retain the verified primary release'}
         atomic_json(directory / ('controller-framework-' + str(native_job_id()) + '.json'), framework_record)
         print(json.dumps({'controller_framework': framework_record}), flush=True)
