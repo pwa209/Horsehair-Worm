@@ -4,6 +4,8 @@ The study tests whether parasite-associated behavioural redirection is better ex
 
 This document describes the durable study stages. The private deployment receipt and pipeline status record contain current native job identities, timestamps and queue states. Deployment, queue registration, completed computation and scientific support are separate milestones.
 
+The user's subsequent [A–F execution amendment](EXECUTION_AMENDMENT_AF.md) authorizes removal of cumulative CPU/GPU caps through an explicit source-bound operational policy, initially allowing 256 concurrent CPUs and four one-GPU jobs. Historical fixed-budget statements below describe the original configuration. Scientific gates, storage limits and completed primary evidence remain separately preserved. The amendment also records whole-cohort profiling, a prospective float64 agent evaluator and additional public-data acquisition routes.
+
 The [metadata and compute resolution extension](COMPUTE_AND_METADATA_RESOLUTION.md) documents the original-workbook audit and bounded behavioural/agent CPU measurements. Technical probe completion does not clear missing biological provenance or final scientific admission.
 
 Verified milestone, 21 October 2026: the 12-cell agent CPU cost pack and its native aggregation are complete. Stage B still requires behavioural workload measurements and complete resource admission. Stage F2 remains gated by the frozen scientific completion rules and the uncovered final training/analysis costs.
@@ -51,7 +53,7 @@ flowchart TD
 
 The managed initial plan registers qualification, source checks, bounded native pilots/benchmarks and four sequential finite Slurm controller segments. The controller window is approximately 24 days. It records stage status, reconciles native accounting, refreshes personal scratch measurements, and submits later finite phases when dependencies, source readiness and measured resource admission are satisfied. Failed or ambiguous submissions remain preserved for repair and are never blindly replayed.
 
-Fixed study limits are 64 concurrent CPUs, one A100 40GB GPU, 20,000 CPU core-hours, 400 GPU-hours and 6TB of study scratch with a 2TB personal reserve. Admitted phases use measured allocations. The controller checks combined prospective concurrency across existing jobs and new plans, and reserves allocation bounds for every unfinished registered job member, including pending arrays. Forecasts above a limit require a documented resource or work-splitting amendment.
+The original configuration specifies 64 concurrent CPUs, one A100 40GB GPU, 20,000 CPU core-hours, 400 GPU-hours and 6TB of study scratch with a 2TB personal reserve. The explicit operational policy in the A–F amendment supersedes its CPU/GPU caps only for policy-bound callers. Admitted phases use measured allocations. Admission checks combined prospective concurrency across existing jobs and new plans, and reserves allocation bounds for every unfinished registered job member, including pending arrays.
 
 Source transfers and Slurm waits are separate processes. A release update does not restart the RNA download. Previously transferred raw files are consumed only against the same frozen source manifest and independent integrity checks.
 

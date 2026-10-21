@@ -314,14 +314,23 @@ def native_accounting(root, job_ids, runner=subprocess.run):
 
 
 @contextmanager
-def resource_lease(root, config, *, cpus, gpus, max_hours, job_id):
+def resource_lease(root, config, *, cpus, gpus, max_hours, job_id, resource_policy=None):
     root=Path(root)
     path=root/'state/resource-budget.json'
     path.parent.mkdir(parents=True,exist_ok=True)
     job_id=str(job_id)
     if not re.fullmatch(r'\d+(?:_\d+)?',job_id):raise ValueError('Invalid native resource lease identity')
+    if resource_policy is not None and (type(cpus) is not int or cpus<1
+            or type(gpus) is not int or gpus not in (0,1)
+            or isinstance(max_hours,bool) or not isinstance(max_hours,(int,float))
+            or not math.isfinite(max_hours) or not 0<max_hours<=168):
+        raise ValueError('Operational resource policy requires finite native integer CPU/GPU allocations within 168 hours')
     if cpus<1 or gpus not in (0,1) or not math.isfinite(max_hours) or max_hours<=0:
         raise ValueError('Invalid bounded resource allocation')
+    policy=None
+    if resource_policy is not None:
+        from .execution_resources import resolve_resource_policy
+        policy=resolve_resource_policy(resource_policy,root=root,config=config)
     def update(callback,timeout=30):
         with exclusive_file_lock(path.with_suffix('.mutex'),timeout=timeout):
             record=read_json(path) if path.exists() else {'spent_cpu_core_hours':0.,'spent_gpu_hours':0.,'leases':{}}
@@ -344,15 +353,22 @@ def resource_lease(root, config, *, cpus, gpus, max_hours, job_id):
     def reserve(r):
         if time.time()>=deadline:raise ValueError('Native allocation ended before the resource reservation')
         if job_id in r['leases']:raise ValueError('Existing resource lease; reconcile native accounting without replaying')
+        current_policy=None
+        if policy is not None:
+            # Recheck bytes, approval and source/config bindings under the same
+            # durable accounting guard as admission. A cached object is not authority.
+            current_policy=resolve_resource_policy(policy,root=root,config=config)
+        limits=current_policy.receipt()['limits'] if current_policy is not None else dict(config['resources'],gpu_concurrency=1)
         active=[v for v in r['leases'].values() if v['state']=='running']
-        if sum(v['cpus'] for v in active)+cpus>config['resources']['cpu_ceiling'] or sum(v['gpus'] for v in active)+gpus>1:
+        if sum(v['cpus'] for v in active)+cpus>limits['cpu_ceiling'] or sum(v['gpus'] for v in active)+gpus>limits['gpu_concurrency']:
             raise ValueError('Study concurrency ceiling reached')
-        if r['spent_cpu_core_hours']+sum(v['cpus']*v['max_hours'] for v in active)+cpus*max_hours>config['resources']['cpu_core_hours_cap']:
+        if limits['cpu_core_hours_cap'] is not None and r['spent_cpu_core_hours']+sum(v['cpus']*v['max_hours'] for v in active)+cpus*max_hours>limits['cpu_core_hours_cap']:
             raise ValueError('Insufficient remaining CPU-hour budget')
-        if r['spent_gpu_hours']+sum(v['gpus']*v['max_hours'] for v in active)+gpus*max_hours>config['resources']['gpu_hours_cap']:
+        if limits['gpu_hours_cap'] is not None and r['spent_gpu_hours']+sum(v['gpus']*v['max_hours'] for v in active)+gpus*max_hours>limits['gpu_hours_cap']:
             raise ValueError('Insufficient remaining GPU-hour budget')
         r['leases'][job_id]={'state':'running','started_unix':start,'cpus':cpus,'gpus':gpus,'max_hours':max_hours,
             'reservation_attempts':reservation_attempts,'reservation_acquisition_wait_seconds':max(0.,time.monotonic()-started_monotonic)}
+        if current_policy is not None:r['leases'][job_id]['resource_policy']=current_policy.receipt()
     for attempt in range(10):
         remaining=max(0.,reservation_deadline-time.monotonic())
         reservation_attempts+=1
@@ -369,8 +385,10 @@ def resource_lease(root, config, *, cpus, gpus, max_hours, job_id):
     command_exception=None
     try:
         if time.time()>=deadline:raise ValueError('Native allocation ended before the reserved command could begin')
-        yield {'deadline_unix':deadline,'job_id':job_id,'reservation_attempts':reservation_attempts,
-               'reservation_wait_seconds':reservation_wait}
+        lease_receipt={'deadline_unix':deadline,'job_id':job_id,'reservation_attempts':reservation_attempts,
+                       'reservation_wait_seconds':reservation_wait}
+        if policy is not None:lease_receipt['resource_policy']=policy.receipt()
+        yield lease_receipt
     except BaseException as exc:
         command_exception=exc
         raise
@@ -388,6 +406,7 @@ def resource_lease(root, config, *, cpus, gpus, max_hours, job_id):
                  'command_exception':({'type':type(command_exception).__name__,'module':type(command_exception).__module__,
                                        'message':str(command_exception)} if command_exception is not None else None),
                  'reservation_release_rule':'positive terminal sacct proof in resource-budget.json; this journal never releases a lease or charges hours'}
+        if policy is not None:journal['resource_policy']=policy.receipt()
         journal_error=None;cleanup_error=None;last_timeout=None
         def persist_journal():
             nonlocal journal_error
