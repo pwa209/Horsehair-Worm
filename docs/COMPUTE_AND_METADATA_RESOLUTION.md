@@ -10,8 +10,9 @@ and technical cost evidence; it does not change H1–H4 or waive their gates.
 ## Original metadata
 
 `scripts/audit_dataverse_metadata.py` inventories the complete 875-workbook
-roster in [Dataverse V1.0](https://doi.org/10.7910/DVN/LTMCFR). Downloads go
-directly to the user's personal Narval scratch. Every workbook must match its
+roster in [Dataverse V1.0](https://doi.org/10.7910/DVN/LTMCFR). Direct downloads
+target the user's personal Narval scratch. The user approved a metadata-only
+local relay when the provider refused the Narval routes. Every workbook must match its
 provider byte count and MD5, and its original dataset directory must be bound
 to the same file identity. Original bytes, cell coordinates, literal values and
 formulas are retained. Formulas are not executed. Two workers use finite
@@ -29,12 +30,19 @@ and [BDSC25836 as a different reagent](https://flybase.org/reports/FBsf000008606
 Catalog identity resolves a stock lookup; contradictory published study labels
 remain unresolved until original experiment assignments establish the used stock.
 
-The 21 October source review parsed 503 checksum-verified Dataverse workbooks,
+The initial 21 October source review parsed 503 checksum-verified Dataverse workbooks,
 including all 15 primary classifier workbooks and both transfusion identity
-tables. The other 372 workbooks remained unavailable after provider refusals.
+tables. After a cooldown, the ordinary official route served the remaining
+372 originals. All **875 workbooks (21,143,827 provider bytes)** were verified
+against provider size and MD5 and staged in personal Narval scratch. The
+complete native checksum/cell audit completed in 93 seconds in job 6658785, with
+zero unresolved originals. Subsequent bounded annotation discovery is registered
+separately as job 6659341. Source acquisition completion does
+not establish a validated biological crosswalk.
 An independent ZIP metadata audit also recovered two author-referenced recipient
 workbooks from the already verified Zenodo archive; these are separate original
-sources, without invented Dataverse identities.
+sources, outside the 875-file roster. All six recipient cohorts named by the
+author's transfusion loaders now have original workbooks available.
 
 Every primary workbook has 128 recording-local ROI rows. All 1,920 original
 `Sheet1!G2:G129` treatment (`Rx`) cells are blank. Those sheets supply no labelled
@@ -49,6 +57,12 @@ attached to the affected original records. One original key explicitly says
 blank treatment cells can contain dummy flies; blank cells cannot become
 unexposed controls. Source-code replication does not settle these ambiguities.
 No complete H1, H2 or H3 metadata gate was cleared by the review.
+
+The private source review retains an explicit interpretation correction for
+24 February's Outcome formulas: 30 reference ROIs 65–94 outside the author's
+loaded ROIs 1–64. The original formulas and previous literal-cell records remain
+unchanged. A separately verified 32-row rotation in donor-status values does
+not establish the formula-reference pattern or authorize a source correction.
 
 ## Behavioural costs
 
@@ -104,3 +118,17 @@ Preparations, finite probes and aggregations run with registered plans and
 ledgers, resource leases and fresh personal storage checks. Failed historical
 jobs and evidence remain available. Technical completion, scientific readiness
 and downstream admission are reported separately in the roadmap.
+
+The qualified extension passed **1,444 tests** in native job 6649674. Actual-input
+preflight job 6656526 then validated all 24 existing agent policies and all 39
+behavioural cells. The released arrays are 6657914 (12 agent cells) and 6657821
+(39 behavioural cells), with aggregators 6657916 and 6657889. Their current
+receipts and native accounting determine completion; queue submission and
+partial operation logs are not complete benchmark results.
+
+Native wrappers retain strict owner, account, source and resource validation.
+They preserve raw scheduler evidence and make only finite fresh retries of
+timed-out read-only status requests or strictly validated live-record conflicts.
+Scheduler mutation commands are never automatically retried. Frozen primary
+interpreters retain qualified Alliance vendor libraries while verifying the
+primary scientific package identity.
