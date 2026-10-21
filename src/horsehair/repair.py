@@ -503,6 +503,18 @@ def _repair_native_states(ids, array_rosters, *, runner=subprocess.run, owner=No
     ids = list(dict.fromkeys(map(str, ids)))
     if any(not re.fullmatch(r"[0-9]+(?:_[0-9]+)?", ident) for ident in ids):
         raise ValueError("Invalid repair native query identity")
+    # --array already expands every member selected by a requested parent.
+    # Asking sacct for that parent AND a live leased member can emit the same
+    # allocation twice at different elapsed times. Validate all child requests
+    # against the immutable roster before removing this query overlap; never
+    # resolve conflicting returned records by choosing a later/favourable row.
+    parents = set(ids)
+    for ident in ids:
+        match = re.fullmatch(r"([0-9]+)_([0-9]+)", ident)
+        if match and (match.group(1) not in array_rosters
+                      or int(match.group(2)) not in array_rosters[match.group(1)]):
+            raise ValueError("Requested native array member lies outside the frozen task roster")
+    ids = [ident for ident in ids if "_" not in ident or ident.split("_", 1)[0] not in parents]
     response = runner(["sacct","--array","-j",",".join(ids),"--format="+REPAIR_NATIVE_FORMAT,
                        "--units=K","--noheader","--parsable2"],text=True,capture_output=True)
     if response.returncode:
