@@ -1,0 +1,85 @@
+# Metadata recovery and native compute feasibility
+
+This extension preserves the frozen primary scientific source
+`0e2b1ebce8bffe10799470b3ac20828e621f1415f3a18bca8cd67d502f1e8630`
+and full configuration
+`446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35`.
+Its software release has a separate source identity. It produces source audits
+and technical cost evidence; it does not change H1–H4 or waive their gates.
+
+## Original metadata
+
+`scripts/audit_dataverse_metadata.py` inventories the complete 875-workbook
+roster in [Dataverse V1.0](https://doi.org/10.7910/DVN/LTMCFR). Downloads go
+directly to the user's personal Narval scratch. Every workbook must match its
+provider byte count and MD5, and its original dataset directory must be bound
+to the same file identity. Original bytes, cell coordinates, literal values and
+formulas are retained. Formulas are not executed. Two workers use finite
+retries and a total deadline; verified per-file checkpoints permit an explicit
+same-roster continuation without discarding failed attempts.
+
+Inventory completion is distinct from a validated biological crosswalk.
+Treatment, exposure clocks, donor/recipient links, animal reuse, gene/reagent
+assignments and family labels require explicit original evidence. A blank Rx
+is unknown. Survival and filenames do not establish exposure. Donor-to-well
+tables alone do not establish recipient-to-tracking-ROI identity.
+
+Official catalog records identify [BDSC25936 as an Lkr reagent](https://flybase.org/reports/FBsf0000086139.html)
+and [BDSC25836 as a different reagent](https://flybase.org/reports/FBsf0000086060.html).
+Catalog identity resolves a stock lookup; contradictory published study labels
+remain unresolved until original experiment assignments establish the used stock.
+
+## Behavioural costs
+
+`horsehair.behaviour_feasibility` prospectively binds all original development
+rosters and the 39 structural model/bin-width combinations. Each cell uses the
+longest complete native recording clock, chosen by length then identity,
+and retains full-roster parameter dimensions. An isolated interpreter imports
+the unchanged primary numerical package.
+
+At each declared learning rate, the technical pack measures one Adam epoch,
+one original strong-Wolfe LBFGS iteration (including its objective/gradient
+closures), unseen-group scoring and causal full-clock simulation. It forecasts
+the original multiplicities, including requested starts, 500 Adam epochs and
+200 LBFGS iterations. It does not claim that one iteration measures convergence.
+Recording-relative time is explicitly technical; it supplies no missing exposure
+timestamp or biological fit. A supervisor preserves completed operations and
+partial progress before the native allocation ends.
+
+Even complete coverage of this pack leaves full-cohort optimizer stopping,
+Hessian/MALA, recovery fits and intervals, Mantis validation and source-validated
+H2 workloads unmeasured. `complete_declared_workload` and `admission_authority`
+remain false. Forecasts are empirical projections, not observed expenditure or
+mathematical lower bounds. An over-budget projection does not authorize a
+smaller scientific experiment or new numerical approximations.
+
+## Agent CPU costs
+
+`horsehair.agent_cost_envelope` measures all 12 task/architecture cells and both
+fixed benchmark seeds with the existing trained checkpoints. Separate, finite
+synthetic operator fixtures measure production batch shapes (64 evaluation,
+32 calibration) for 200 steps, all declared mechanisms/ranks/strengths and
+matching/restoration operations. They produce no replacement episode outcomes.
+Environment, restoration and production-row storage costs are also measured.
+
+The complete frozen per-policy workload is charged: 300 grid points, 2,404
+evaluation calls, one captured calibration evaluation, 1,550 KL calls and 300
+restoration checks. No unavailable episode receives an early-failure discount.
+Aggregation requires the complete native cell roster, source and configuration
+bindings, original input hashes and successful native accounting. Empirical
+costs include a safety factor of at least 1.5; they are not a duration guarantee.
+
+Original numerical-null rows and diagnostics remain unchanged. The frozen H4
+completion check explicitly rejects such rows. Any change to that scientific
+completion rule requires a declared analysis amendment. A cost envelope never
+writes resource admission or final scientific results. Final execution still
+requires a separate valid admission, combined accounting, CPU/GPU ceilings,
+fresh personal quota and the original 20,000 CPU-core-hour cap.
+
+## Native execution and evidence
+
+New code must pass the complete immutable test suite in a Slurm allocation.
+Preparations, finite probes and aggregations run with registered plans and
+ledgers, resource leases and fresh personal storage checks. Failed historical
+jobs and evidence remain available. Technical completion, scientific readiness
+and downstream admission are reported separately in the roadmap.

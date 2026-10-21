@@ -4,6 +4,8 @@ The study tests whether parasite-associated behavioural redirection is better ex
 
 This document describes the durable study stages. The private deployment receipt and pipeline status record contain current native job identities, timestamps and queue states. Deployment, queue registration, completed computation and scientific support are separate milestones.
 
+The [metadata and compute resolution extension](COMPUTE_AND_METADATA_RESOLUTION.md) documents the original-workbook audit and bounded behavioural/agent CPU measurements. Technical probe completion does not clear missing biological provenance or final scientific admission.
+
 | Stage | Work | Evidence required to advance | Principal artifacts |
 |---|---|---|---|
 | 0. Release and qualification | Freeze source/configuration; qualify Python, CUDA, R, OrthoFinder and TransDecoder on allocated hardware | Successful native jobs and verified software fixtures/files | Release identity, qualification receipts, native accounting |
