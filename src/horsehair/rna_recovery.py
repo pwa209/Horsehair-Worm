@@ -68,16 +68,16 @@ def _plain_file(path: Path) -> Path:
 def _binding(path: Path) -> dict:
     """Bind a regular file without mistaking one unsettled stat for corruption.
 
-    Keep every previous metadata check. After an unstable read, all observed
-    hashes must agree and two consecutive reads must have an identical stable
-    identity. A changing digest or replacement inode is never retried into
-    acceptance. Four attempts bound both metadata traffic and total rereads.
+    Keep every previous metadata check and always require two consecutive reads
+    with an identical stable identity and hash. Metadata can retain the same
+    value during a same-size overwrite, so an apparently stable first read is
+    never sufficient. A changing digest or replacement inode is never retried
+    into acceptance. Four attempts bound metadata traffic and total rereads.
     """
     path = Path(path)
     observed_hash = None
     inode = None
     previous_stable = None
-    unstable = False
     for attempt in range(BINDING_ATTEMPTS):
         path = _plain_file(path)
         before = path.stat()
@@ -93,11 +93,13 @@ def _binding(path: Path) -> dict:
         fields = lambda stat: (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
         identity = fields(after)
         stable = fields(before) == identity
-        if stable and (not unstable or previous_stable == identity):
+        if stable and previous_stable == identity:
             return {"path": str(path.resolve()), "bytes": after.st_size, "sha256": sha256}
-        unstable = True
         previous_stable = identity if stable else None
-        if attempt + 1 < BINDING_ATTEMPTS:
+        # A stable first pass needs a second full read, not a waiting period.
+        # Back off only when metadata actually moved; delaying every immutable
+        # source/output binding would multiply qualification and cohort latency.
+        if not stable and attempt + 1 < BINDING_ATTEMPTS:
             time.sleep(BINDING_RETRY_SECONDS)
     raise RNARecoveryError("File did not stabilize while hashing: " + str(path))
 

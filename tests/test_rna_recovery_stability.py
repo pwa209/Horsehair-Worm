@@ -13,7 +13,7 @@ def no_retry_delay(monkeypatch):
     monkeypatch.setattr(recovery.time, "sleep", lambda seconds: None)
 
 
-def test_stable_binding_retains_one_strict_read(tmp_path, monkeypatch):
+def test_stable_binding_requires_two_matching_strict_reads(tmp_path, monkeypatch):
     path = tmp_path / "counts.txt"
     path.write_bytes(b"stable original counts")
     reads = []
@@ -22,7 +22,7 @@ def test_stable_binding_retains_one_strict_read(tmp_path, monkeypatch):
         return digest(p)
     monkeypatch.setattr(recovery, "digest", observed)
     assert recovery._binding(path) == {"path": str(path.resolve()), "bytes": 22, "sha256": digest(path)}
-    assert reads == [path]
+    assert reads == [path, path]
 
 
 def test_one_metadata_change_requires_two_matching_stable_rereads(tmp_path, monkeypatch):
@@ -55,6 +55,30 @@ def test_content_change_is_never_retried_into_acceptance(tmp_path, monkeypatch):
     with pytest.raises(recovery.RNARecoveryError, match="content changed"):
         recovery._binding(path)
     assert len(reads) == 2
+
+
+def test_same_size_content_change_with_constant_metadata_is_rejected(tmp_path, monkeypatch):
+    path = tmp_path / "counts.txt"
+    path.write_bytes(b"old counts")
+    frozen = path.stat()
+    original_stat = Path.stat
+    # A coarse filesystem timestamp or cached metadata may report precisely the
+    # same tuple across a completed same-size overwrite. Make that case explicit
+    # and portable instead of depending on the native fixture clock resolution.
+    def cached_stat(p, *args, **kwargs):
+        return frozen if p == path else original_stat(p, *args, **kwargs)
+    monkeypatch.setattr(Path, "stat", cached_stat)
+    reads = []
+    def changed(p):
+        value = digest(p)
+        reads.append(value)
+        if len(reads) == 1:
+            p.write_bytes(b"new counts")
+        return value
+    monkeypatch.setattr(recovery, "digest", changed)
+    with pytest.raises(recovery.RNARecoveryError, match="content changed"):
+        recovery._binding(path)
+    assert len(reads) == 2 and reads[0] != reads[1]
 
 
 def test_repeated_metadata_changes_exhaust_a_finite_bound(tmp_path, monkeypatch):

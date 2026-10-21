@@ -9,6 +9,13 @@ from horsehair.core import atomic_json, canonical_hash, read_json
 from horsehair.slurm import submit
 
 
+@pytest.fixture(autouse=True)
+def baseline_submission_environment(monkeypatch):
+    # These tests isolate task-local placement. A controller's legitimate
+    # inherited exclusions are covered separately in test_slurm_exclusions.py.
+    monkeypatch.delenv('SBATCH_EXCLUDE', raising=False)
+
+
 def fixture(tmp_path, name='pipeline-controller-0', gpu=False):
     script = tmp_path / 'job.sbatch'
     text = '#!/bin/bash\n#SBATCH --cpus-per-task=1\n#SBATCH --hold\ntrue\n'
