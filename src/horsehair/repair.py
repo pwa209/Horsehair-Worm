@@ -134,7 +134,10 @@ def _normalized_script(text):
 
 def _rna_recovery_binding(descriptor, targets, primary, identity, config, root, original, old_ledger):
     """Bind a qualified count reuse guard without changing numerical execution."""
-    change = descriptor.get('rna_recovery')
+    if descriptor.get('rna_recovery') is not None and descriptor.get('rna_followup') is not None:
+        raise ValueError('A repair cannot declare two RNA guard kinds')
+    guard_module = 'rna_followup' if descriptor.get('rna_followup') is not None else 'rna_recovery'
+    change = descriptor.get(guard_module)
     if change is None:
         return None
     required = {'framework_release', 'qualification_path', 'qualification_sha256',
@@ -162,7 +165,10 @@ def _rna_recovery_binding(descriptor, targets, primary, identity, config, root, 
                 or not re.fullmatch('[0-9a-f]{64}', str(change[label + '_sha256']))
                 or digest(path) != change[label + '_sha256']):
             raise ValueError('RNA recovery ' + label + ' is missing, relocated or changed')
-    from .rna_recovery import validate_registration_manifest
+    if guard_module == 'rna_followup':
+        from .rna_followup import validate_registration_manifest
+    else:
+        from .rna_recovery import validate_registration_manifest
     context = validate_registration_manifest(change['manifest_path'], change['manifest_sha256'],
         change['preparation_path'], change['preparation_sha256'])
     manifest, preparation = context['manifest'], context['preparation']
@@ -179,12 +185,30 @@ def _rna_recovery_binding(descriptor, targets, primary, identity, config, root, 
             'preparation_job_id': str(preparation['slurm_job_id'])}
     if any(not re.fullmatch('[0-9]+', job) for job in jobs.values()):
         raise ValueError('RNA recovery requires exact scalar native maintenance identities')
-    return {**change, **jobs, 'root': str(root),
+    previous_guard = None
+    if guard_module == 'rna_followup':
+        # A second guard must explain the exact first guard it supersedes. The
+        # canonical amendment is retained; no old raw CLI command is invented.
+        previous = [item.get('rna_recovery') for item in old_ledger.get('dag_amendments', [])
+                    if item.get('rna_recovery') is not None and 'rna-counts' in item.get('replaced_tasks', [])]
+        if not previous:
+            raise ValueError('RNA follow-up lacks its canonical first-recovery amendment')
+        previous_guard = previous[-1]
+        original_manifest, original_preparation = manifest['original_manifest'], manifest['original_preparation']
+        if (previous_guard.get('manifest_path') != original_manifest['path']
+                or previous_guard.get('manifest_sha256') != original_manifest['sha256']
+                or previous_guard.get('preparation_path') != original_preparation['path']
+                or previous_guard.get('preparation_sha256') != original_preparation['sha256']):
+            raise ValueError('RNA follow-up does not extend the unchanged canonical first-recovery evidence')
+    result = {**change, **jobs, 'root': str(root),
             'framework_release': qualified['framework_release'],
             'framework_source_identity': qualified['framework_source_identity'],
             'primary_source_identity': identity, 'config_sha256': canonical_hash(config),
             'manifest_plan_sha256': manifest['plan_sha256'],
             'reuse_indices': manifest['reuse_indices'], 'rerun_indices': manifest['rerun_indices']}
+    if guard_module == 'rna_followup':
+        result.update(guard_module=guard_module, previous_guard=previous_guard)
+    return result
 
 
 def _runtime_adjustments(descriptor, original, candidates, targets):
@@ -232,13 +256,33 @@ def _rna_recovery_script_projection(text, old_text, recovery):
                 '--task-index', '$SLURM_ARRAY_TASK_ID']
     if argv != expected or Path(argv[6]).resolve() != Path(recovery['root']).resolve():
         raise ValueError('RNA recovery changes the frozen primary numerical CLI command')
-    command = ('python ' + shlex.quote(str(Path(recovery['framework_release']) / 'src/horsehair/rna_recovery.py'))
+    guard_module = recovery.get('guard_module', 'rna_recovery')
+    if guard_module not in {'rna_recovery', 'rna_followup'}:
+        raise ValueError('Unknown qualified RNA operational guard')
+    command = ('python ' + shlex.quote(str(Path(recovery['framework_release']) / ('src/horsehair/' + guard_module + '.py')))
                + ' run --manifest ' + shlex.quote(recovery['manifest_path'])
                + ' --index "$SLURM_ARRAY_TASK_ID" --manifest-sha256 ' + recovery['manifest_sha256']
                + ' --preparation ' + shlex.quote(recovery['preparation_path'])
                + ' --preparation-sha256 ' + recovery['preparation_sha256'])
     if text.splitlines().count(command) != 1:
         raise ValueError('RNA recovery wrapper does not match its exact pinned invocation')
+    return text.replace(command, original, 1)
+
+
+def _rna_followup_prior_projection(text, recovery):
+    """Explain a bound prior wrapper using its preserved first amendment."""
+    prior = recovery.get('previous_guard')
+    if not isinstance(prior, dict):
+        raise ValueError('RNA follow-up requires the canonical prior guard')
+    command = ('python ' + shlex.quote(str(Path(prior['framework_release']) / 'src/horsehair/rna_recovery.py'))
+               + ' run --manifest ' + shlex.quote(prior['manifest_path'])
+               + ' --index "$SLURM_ARRAY_TASK_ID" --manifest-sha256 ' + prior['manifest_sha256']
+               + ' --preparation ' + shlex.quote(prior['preparation_path'])
+               + ' --preparation-sha256 ' + prior['preparation_sha256'])
+    if text.splitlines().count(command) != 1:
+        raise ValueError('Canonical prior RNA script differs from its preserved qualified wrapper')
+    original = ('python -m horsehair.cli --config configs/study.json --root ' + shlex.quote(recovery['root'])
+                + ' molecular --stage rna-run --task-index "$SLURM_ARRAY_TASK_ID"')
     return text.replace(command, original, 1)
 
 
@@ -264,6 +308,8 @@ def _check_script(task, original, execution, root, runtime=None, controller_prim
     if rna_recovery is not None:
         if task.get('name') != 'rna-counts' or runtime or controller_primary is not None:
             raise ValueError('RNA recovery projection is limited to the primary count array')
+        if rna_recovery.get('guard_module') == 'rna_followup':
+            old_text = _rna_followup_prior_projection(old_text, rna_recovery)
         text = _rna_recovery_script_projection(text, old_text, rna_recovery)
     if controller_primary is not None:
         old_commands = [line for line in old_text.splitlines() if line.startswith('python -m horsehair.cli ')
@@ -739,7 +785,7 @@ def register_amendment(descriptor_path, *, native=None, accountant=None):
         if controller_maintenance:
             amendment['controller_maintenance'] = controller_maintenance
         if rna_recovery:
-            amendment['rna_recovery'] = rna_recovery
+            amendment['rna_followup' if rna_recovery.get('guard_module') == 'rna_followup' else 'rna_recovery'] = rna_recovery
         amended_plan.setdefault("dag_amendments", []).append(amendment)
         amended_ledger.setdefault("dag_amendments", []).append(amendment)
         amended_ledger["plan_sha256"] = canonical_hash(amended_plan)

@@ -393,3 +393,149 @@ def test_direct_entrypoint_does_not_require_maintenance_pythonpath():
     result = subprocess.run([os.sys.executable, "-I", str(path), "--help"], capture_output=True, text=True)
     assert result.returncode == 0
     assert "prepare" in result.stdout and "run" in result.stdout
+
+
+@pytest.fixture
+def finished_wrapper_failure(cohort, monkeypatch):
+    """Model primary success followed solely by the old output binding failure."""
+    import shutil
+    c = cohort
+    manifest, path, sha = capture(c)
+    prep, prep_sha = preserve_failed(c, manifest, sha)
+    index, failed = 27, "9001_27"
+    task = manifest["tasks"][str(index)]
+    output = Path(task["job"]["output"])
+    shutil.copytree(Path(c.jobs[0]["output"]), output)
+    scientific = json.loads((c.root / "state/rna-full-0.json").read_text())
+    qc = {**scientific["qc"], "biological_id": task["biological_id"]}
+    scientific.update(biological_id=task["biological_id"], slurm_job_id=failed,
+                      cohort=task["job"]["cohort"], qc=qc)
+    write_json(output / "qc.json", qc)
+    write_json(c.root / "state/rna-full-27.json", scientific)
+    preparation = recovery._binding(prep)
+    started = {"schema_version": 1, "status": "execution_intent", "index": index,
+               "biological_id": task["biological_id"], "manifest_sha256": sha,
+               "primary_source_sha256": recovery.PRIMARY_SOURCE_SHA256,
+               "full_config_sha256": recovery.PRIMARY_CONFIG_SHA256,
+               "plan_sha256": manifest["plan_sha256"], "recovery_slurm_job_id": failed,
+               "previous_slurm_job_id": recovery.PREVIOUS_ARRAY_JOB_ID + "_27",
+               "preparation": preparation,
+               "command": [os.sys.executable, "-s", "-c", recovery.PRIMARY_BOOTSTRAP,
+                           str(c.primary), str(c.root), recovery.PRIMARY_SOURCE_SHA256,
+                           recovery.PRIMARY_CONFIG_SHA256, "27"]}
+    started_path = c.case / "receipts/task-27.started.json"
+    write_json(started_path, started)
+    c.records[failed] = native(failed, "FAILED", "1:0")
+    write_json(c.root / "state/resource-budget.json", {"native_jobs": c.records})
+    log = c.root / "logs" / ("rna-counts-" + failed + ".log")
+    log.parent.mkdir()
+    log.write_text('File "rna_recovery.py", line 425, in _scientific_outputs\n' +
+                   "RNARecoveryError: File changed while hashing: " + str(output / "counts.txt") + "\n")
+    monkeypatch.setenv("SLURM_JOB_ID", "9003")
+    monkeypatch.delenv("SLURM_ARRAY_JOB_ID", raising=False)
+    monkeypatch.delenv("SLURM_ARRAY_TASK_ID", raising=False)
+    monkeypatch.setattr(recovery, "load_frozen_recovery_manifest", lambda *args: manifest)
+    monkeypatch.setattr(recovery.time, "sleep", lambda seconds: None)
+    case = c.root / "maintenance/verify-finished-fixture"
+    kwargs = {"manifest_path": path, "expected_manifest_sha256": sha, "index": index,
+              "preparation_path": prep, "preparation_sha256": prep_sha, "failed_native_job_id": failed,
+              "expected_maintenance_source_sha256": manifest["maintenance_source_identity"]["sha256"],
+              "verification_case_directory": case, "failure_log_path": log, "failure_log_sha256": digest(log)}
+    return SimpleNamespace(c=c, manifest=manifest, kwargs=kwargs, case=case, log=log,
+                           scientific_path=c.root / "state/rna-full-27.json", started_path=started_path, output=output)
+
+
+def test_finished_wrapper_verification_preserves_native_failure_and_all_originals(finished_wrapper_failure, monkeypatch):
+    f = finished_wrapper_failure
+    before = {str(path): digest(path) for path in (f.scientific_path, f.started_path, f.log, f.output / "counts.txt")}
+    monkeypatch.setattr(recovery.subprocess, "run", lambda *a, **k: pytest.fail("verification must not execute scientific tools"))
+    receipt = recovery.verify_finished_recovery_task(**f.kwargs)
+    assert receipt["status"] == "verified_after_wrapper_failure"
+    assert receipt["failed_native_record"]["state"] == "FAILED"
+    assert receipt["failed_native_record"]["job_id"] == "9001_27"
+    assert receipt["verification_slurm_job_id"] == "9003"
+    assert receipt["scientific_receipt"]["path"] == str(f.scientific_path)
+    assert len(receipt["outputs"]) == 21
+    assert receipt["verifier_source_identity"]["sha256"]
+    assert (f.case / "receipt.json").is_file()
+    assert before == {path: digest(Path(path)) for path in before}
+    assert not (f.c.case / "receipts/task-27.json").exists()
+    with pytest.raises(recovery.RNARecoveryError, match="new personal-study"):
+        recovery.verify_finished_recovery_task(**f.kwargs)
+
+
+@pytest.mark.parametrize("mutation", ["running", "success", "wrong_exit", "wrong_cpus", "no_elapsed",
+                                     "wrong_index", "wrong_brain", "wrong_source", "changed_intent",
+                                     "changed_command", "final_exists", "log_wrong_failure", "bad_qc", "bad_marker"])
+def test_finished_wrapper_verification_refuses_unproven_outcomes(finished_wrapper_failure, mutation):
+    f = finished_wrapper_failure
+    if mutation in {"running", "success", "wrong_exit", "wrong_cpus", "no_elapsed"}:
+        record = f.c.records["9001_27"]
+        key, value = {"running": ("state", "RUNNING"), "success": ("state", "COMPLETED"),
+                      "wrong_exit": ("exit_code", "9:0"), "wrong_cpus": ("cpus", 4),
+                      "no_elapsed": ("elapsed_seconds", 0)}[mutation]
+        record[key] = value
+        write_json(f.c.root / "state/resource-budget.json", {"native_jobs": f.c.records})
+    elif mutation == "wrong_index":
+        f.kwargs["index"] = 28
+    elif mutation in {"wrong_brain", "wrong_source"}:
+        receipt = json.loads(f.scientific_path.read_text())
+        receipt["biological_id" if mutation == "wrong_brain" else "source_sha256"] = "foreign"
+        write_json(f.scientific_path, receipt)
+    elif mutation in {"changed_intent", "changed_command"}:
+        intent = json.loads(f.started_path.read_text())
+        if mutation == "changed_intent":
+            intent["recovery_slurm_job_id"] = "9001_28"
+        else:
+            intent["command"][3] = "import malicious_or_different_science"
+        write_json(f.started_path, intent)
+    elif mutation == "final_exists":
+        write_json(f.c.case / "receipts/task-27.json", {"status": "primary_failed"})
+    elif mutation == "log_wrong_failure":
+        f.log.write_text("The primary tool failed for another reason\n")
+        f.kwargs["failure_log_sha256"] = digest(f.log)
+    elif mutation == "bad_qc":
+        write_json(f.output / "qc.json", {"status": "failed"})
+    else:
+        (f.output / ".processing_complete").write_text("partial\n")
+    with pytest.raises(recovery.RNARecoveryError):
+        recovery.verify_finished_recovery_task(**f.kwargs)
+    assert not f.case.exists()
+
+
+def test_finished_wrapper_verification_refuses_outputs_changing_between_passes(finished_wrapper_failure, monkeypatch):
+    f = finished_wrapper_failure
+    original = recovery._scientific_outputs
+    calls = []
+    def changing(*args):
+        calls.append(None)
+        result = original(*args)
+        if len(calls) == 1:
+            with (f.output / "counts.txt").open("a") as handle:
+                handle.write("changed between independent passes\n")
+        return result
+    monkeypatch.setattr(recovery, "_scientific_outputs", changing)
+    with pytest.raises(recovery.RNARecoveryError, match="between independent verification"):
+        recovery.verify_finished_recovery_task(**f.kwargs)
+    assert not f.case.exists()
+
+
+def test_frozen_manifest_validation_uses_isolated_source_and_refuses_wrong_child_proof(cohort, monkeypatch):
+    c = cohort
+    manifest, path, sha = capture(c)
+    seen = []
+    def validate(command, **kwargs):
+        seen.append((command, kwargs))
+        return SimpleNamespace(returncode=0, stdout=json.dumps({"manifest_sha256": canonical_hash(manifest),
+                               "maintenance_source_identity": manifest["maintenance_source_identity"]}), stderr="")
+    monkeypatch.setattr(recovery.subprocess, "run", validate)
+    source_sha = manifest["maintenance_source_identity"]["sha256"]
+    assert recovery.load_frozen_recovery_manifest(path, sha, source_sha) == manifest
+    command, options = seen[0]
+    assert command[1:4] == ["-s", "-c", recovery.FROZEN_MANIFEST_BOOTSTRAP]
+    assert command[4:] == [manifest["maintenance_release"], str(path), sha, source_sha]
+    assert options["timeout"] == 180 and options["capture_output"] is True
+    assert options["env"]["PYTHONPATH"].split(os.pathsep)[0] == str(Path(manifest["maintenance_release"]) / "src")
+    monkeypatch.setattr(recovery.subprocess, "run", lambda *a, **kw: SimpleNamespace(returncode=0, stdout="{}", stderr=""))
+    with pytest.raises(recovery.RNARecoveryError, match="proof differs"):
+        recovery.load_frozen_recovery_manifest(path, sha, source_sha)

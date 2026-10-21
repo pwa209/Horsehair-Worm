@@ -619,3 +619,86 @@ def test_invalid_parallel_worker_count_is_refused_before_opening_descriptors(mon
     with pytest.raises(artifacts.StorageArtifactError,match='workers'):
         list(artifacts.iter_regular_lengths(ROOT,6_000_000_000_000,workers=workers))
     assert not fixture.opened
+
+
+def test_census_reopens_after_lustre_change_metadata_synchronizes(monkeypatch):
+    """An initial read can invalidate cached metadata; its proof stays refused."""
+    kernel=LengthKernelFixture(monkeypatch,3);inspect=kernel.inspect;open_leaf=kernel.open_leaf
+    def synchronized(name,fd):
+        value=inspect(name,fd)
+        if len(kernel.snapshots)>=3:value['ctime_ns']+=1
+        return value
+    def reopen(name,parent):
+        kernel.stream.seek(0)
+        return open_leaf(name,parent)
+    delays=[]
+    monkeypatch.setattr(artifacts,'_metadata',synchronized)
+    monkeypatch.setattr(artifacts,'_open_leaf',reopen)
+    monkeypatch.setattr(artifacts.time,'sleep',delays.append)
+    result=artifacts._stable_regular_length(ROOT+'/data.txt',100,47,root=ROOT)
+    assert result['bytes']==3 and result['identity']['ctime_ns']==identity()['ctime_ns']+1
+    assert delays==[0.05] and len([row for row in kernel.opened if row[0]=='file'])==2
+    assert not kernel.remaining
+
+
+def test_own_census_log_append_is_remeasured_instead_of_omitted(monkeypatch):
+    kernel=LengthKernelFixture(monkeypatch,3);pread=kernel.pread;open_leaf=kernel.open_leaf
+    appended=[];delays=[]
+    def grows(descriptor,length,offset):
+        if offset==3 and not appended:
+            appended.append(True);kernel.logical_size=4;kernel.metadata['ctime_ns']+=1
+            kernel.stream=io.BytesIO(b'xxxx')
+        return pread(descriptor,length,offset)
+    def reopen(name,parent):
+        kernel.stream.seek(0)
+        return open_leaf(name,parent)
+    monkeypatch.setattr(artifacts.os,'pread',grows)
+    monkeypatch.setattr(artifacts,'_open_leaf',reopen)
+    monkeypatch.setattr(artifacts.time,'sleep',delays.append)
+    result=artifacts._stable_regular_length(ROOT+'/logs/controller.log',100,47,root=ROOT)
+    assert result['bytes']==4 and result['content_sha256']==hashlib.sha256(b'xxxx').hexdigest()
+    assert delays==[0.05] and not kernel.remaining
+    assert artifacts.validate_regular_length_measurement(result,expected_uid=47,max_bytes=100,root=ROOT)==4
+
+
+@pytest.mark.parametrize('failure_kind',['metadata','missing'])
+def test_persistent_live_entry_races_stop_after_three_attempts_with_path_diagnostics(monkeypatch,failure_kind):
+    calls=[];delays=[];path=ROOT+'/data/active.tmp'
+    def changes(*args,**kwargs):
+        calls.append(args)
+        if failure_kind=='missing':raise FileNotFoundError(errno.ENOENT,'atomic replacement',path)
+        raise artifacts.StorageArtifactRace(path,'Entry identity/change metadata changed during size measurement')
+    monkeypatch.setattr(artifacts,'measure_regular_length',changes)
+    monkeypatch.setattr(artifacts.time,'sleep',delays.append)
+    with pytest.raises(artifacts.StorageArtifactRace) as caught:
+        artifacts._stable_regular_length(path,100,47,root=ROOT)
+    assert len(calls)==3 and delays==[0.05,0.1]
+    assert caught.value.diagnostics['path']==path and caught.value.diagnostics['attempts']==3
+    assert caught.value.diagnostics['size_admitted'] is False
+    assert path in str(caught.value)
+
+
+@pytest.mark.parametrize('failure',[OSError(errno.EIO,'storage I/O failure'),
+    artifacts.StorageArtifactError('Entry exceeds the measured study byte ceiling'),
+    artifacts.StorageArtifactError('Entry size requires an owned regular-file identity')])
+def test_invalid_or_unreadable_entries_are_not_retried_or_relabelled_as_live_races(monkeypatch,failure):
+    calls=[]
+    def refuses(*args,**kwargs):calls.append(args);raise failure
+    monkeypatch.setattr(artifacts,'measure_regular_length',refuses)
+    monkeypatch.setattr(artifacts.time,'sleep',lambda *a:pytest.fail('Nonrace refusal must not be retried'))
+    with pytest.raises(type(failure)) as caught:
+        artifacts._stable_regular_length(ROOT+'/data.txt',100,47,root=ROOT)
+    assert caught.value is failure and len(calls)==1
+
+
+def test_queued_directory_child_writes_do_not_invalidate_anchored_identity(monkeypatch):
+    fixture=TraversalFixture(monkeypatch);metadata=fixture.metadata
+    def child_written(name,fd):
+        value=metadata(name,fd)
+        if fixture.remaining[fd]==ROOT+'/data':
+            value['ctime_ns']+=100;value['nlink']+=1
+        return value
+    monkeypatch.setattr(artifacts,'_metadata',child_written)
+    rows=list(artifacts.iter_regular_lengths(ROOT,1000))
+    assert ROOT+'/data/a.fa' in {str(path) for path,_ in rows}
+    assert not fixture.remaining and all(scan.closed for scan in fixture.scans)

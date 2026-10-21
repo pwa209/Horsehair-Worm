@@ -44,6 +44,8 @@ REQUIRED_OUTPUTS = (
     "flagstat.txt", "reference_manifest_hash.txt", "STAR.version.txt",
     "samtools.version.txt", "featureCounts.version.txt", "fastqc.version.txt",
 )
+BINDING_ATTEMPTS = 4
+BINDING_RETRY_SECONDS = 0.25
 
 
 class RNARecoveryError(RuntimeError):
@@ -64,13 +66,40 @@ def _plain_file(path: Path) -> Path:
 
 
 def _binding(path: Path) -> dict:
-    path = _plain_file(path)
-    before = path.stat()
-    value = {"path": str(path.resolve()), "bytes": before.st_size, "sha256": digest(path)}
-    after = path.stat()
-    _require((before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns) ==
-             (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns), "File changed while hashing: " + str(path))
-    return value
+    """Bind a regular file without mistaking one unsettled stat for corruption.
+
+    Keep every previous metadata check. After an unstable read, all observed
+    hashes must agree and two consecutive reads must have an identical stable
+    identity. A changing digest or replacement inode is never retried into
+    acceptance. Four attempts bound both metadata traffic and total rereads.
+    """
+    path = Path(path)
+    observed_hash = None
+    inode = None
+    previous_stable = None
+    unstable = False
+    for attempt in range(BINDING_ATTEMPTS):
+        path = _plain_file(path)
+        before = path.stat()
+        current_inode = (before.st_dev, before.st_ino)
+        _require(inode is None or current_inode == inode, "File replaced while hashing: " + str(path))
+        inode = current_inode
+        sha256 = digest(path)
+        path = _plain_file(path)
+        after = path.stat()
+        _require((after.st_dev, after.st_ino) == inode, "File replaced while hashing: " + str(path))
+        _require(observed_hash is None or observed_hash == sha256, "File content changed while hashing: " + str(path))
+        observed_hash = sha256
+        fields = lambda stat: (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+        identity = fields(after)
+        stable = fields(before) == identity
+        if stable and (not unstable or previous_stable == identity):
+            return {"path": str(path.resolve()), "bytes": after.st_size, "sha256": sha256}
+        unstable = True
+        previous_stable = identity if stable else None
+        if attempt + 1 < BINDING_ATTEMPTS:
+            time.sleep(BINDING_RETRY_SECONDS)
+    raise RNARecoveryError("File did not stabilize while hashing: " + str(path))
 
 
 def _unchanged(binding: dict):
@@ -169,6 +198,11 @@ def _scientific_outputs(plan: dict, job: dict, receipt: dict) -> dict:
             if name.endswith(("_fastqc.zip", "_fastqc.html")):
                 bindings[area + "/" + name] = _binding(folder / name)
     return bindings
+
+
+def validate_scientific_outputs(plan: dict, job: dict, receipt: dict) -> dict:
+    """Read and bind original completed artifacts with the frozen QC criteria."""
+    return _scientific_outputs(plan, job, receipt)
 
 
 def _completed_task(root: Path, plan: dict, index: int) -> dict:
@@ -424,6 +458,154 @@ def execute_recovery_task(manifest_path: str | Path, expected_manifest_sha256: s
     _require(all(value.get(k) == v for k, v in expected.items()), "New primary receipt does not prove the current frozen/native/brain identity")
     receipt.update(status="processed", scientific_receipt=_binding(scientific), outputs=_scientific_outputs(read_json(Path(manifest["plan"]["path"])), task["job"], value))
     _exclusive_json(case / "receipts" / ("task-" + str(index) + ".json"), receipt)
+    return receipt
+
+
+FROZEN_MANIFEST_BOOTSTRAP = """import json,sys
+from pathlib import Path
+release,path,sha,source_sha=sys.argv[1:]
+release=Path(release).resolve()
+sys.path.insert(0,str(release/'src'))
+import horsehair.rna_recovery as recovery
+recovery._require(Path(recovery.__file__).resolve()==release/'src/horsehair/rna_recovery.py','Frozen recovery import differs from release')
+manifest=recovery._load_manifest(Path(path),sha)
+recovery._require(manifest['maintenance_source_identity']['sha256']==source_sha,'Frozen maintenance source differs from qualified identity')
+print(json.dumps({'manifest_sha256':recovery.canonical_hash(manifest),'maintenance_source_identity':manifest['maintenance_source_identity']},sort_keys=True))
+"""
+
+
+def load_frozen_recovery_manifest(manifest_path: str | Path, expected_manifest_sha256: str,
+                                  expected_maintenance_source_sha256: str) -> dict:
+    """Validate an old manifest in its exact source context, without execution.
+
+    The child imports only its frozen operational helpers. It never enters the
+    scientific CLI or changes prior state; the current helper checks the child
+    result against the byte-bound parent manifest before using any of it.
+    """
+    path = _plain_file(Path(manifest_path)).resolve()
+    binding = _binding(path)
+    _require(binding["sha256"] == expected_manifest_sha256, "Recovery manifest bytes changed")
+    _require(re.fullmatch(r"[0-9a-f]{64}", expected_maintenance_source_sha256) is not None,
+             "Invalid expected frozen maintenance identity")
+    manifest = read_json(path)
+    release = Path(manifest["maintenance_release"]).resolve()
+    _require(manifest.get("maintenance_source_identity", {}).get("sha256") == expected_maintenance_source_sha256,
+             "Frozen maintenance identity differs from the qualified release")
+    environment = _primary_environment({**manifest, "primary_release": str(release)})
+    command = [sys.executable, "-s", "-c", FROZEN_MANIFEST_BOOTSTRAP, str(release), str(path),
+               expected_manifest_sha256, expected_maintenance_source_sha256]
+    result = subprocess.run(command, cwd=str(release), env=environment, capture_output=True,
+                            text=True, timeout=180, check=False)
+    _require(result.returncode == 0, "Frozen recovery context validation failed: " + result.stderr[-2000:])
+    try:
+        proof = json.loads(result.stdout)
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise RNARecoveryError("Frozen recovery context returned invalid proof") from exc
+    _require(proof == {"manifest_sha256": canonical_hash(manifest),
+                       "maintenance_source_identity": manifest["maintenance_source_identity"]},
+             "Frozen recovery context proof differs from the bound manifest")
+    _unchanged(binding)
+    return manifest
+
+
+def verify_finished_recovery_task(manifest_path: str | Path, expected_manifest_sha256: str, index: int,
+                                  preparation_path: str | Path, preparation_sha256: str,
+                                  failed_native_job_id: str, expected_maintenance_source_sha256: str,
+                                  verification_case_directory: str | Path,
+                                  failure_log_path: str | Path, failure_log_sha256: str) -> dict:
+    """Verify an already processed brain after only its wrapper hash failed.
+
+    This creates a separate operational verification receipt. The failed native
+    allocation and its scientific receipt are retained unchanged; no numerical
+    tool is run and no failed allocation is relabelled as successful. Admission
+    of the new proof additionally requires final native success of this verifier.
+    """
+    _require(type(index) is int and index in RERUN_INDICES, "Verification index is outside the fixed rerun roster")
+    current = native_job_id()
+    _require(current is not None and re.fullmatch(r"\d+", current) is not None,
+             "Verification requires its own scalar native allocation")
+    _require(re.fullmatch(r"\d+_" + str(index), failed_native_job_id) is not None and current != failed_native_job_id.split("_")[0],
+             "Verification requires the exact prior failed native array member")
+    manifest_path, preparation_path, failure_log_path = map(
+        lambda p: _plain_file(Path(p)).resolve(), (manifest_path, preparation_path, failure_log_path))
+    case = Path(verification_case_directory).resolve()
+    manifest = load_frozen_recovery_manifest(manifest_path, expected_manifest_sha256, expected_maintenance_source_sha256)
+    root = Path(manifest["root"])
+    task = manifest["tasks"][str(index)]
+    _require(task["action"] == "rerun" and case.is_relative_to(root / "maintenance") and not case.exists(),
+             "Verification requires a new personal-study maintenance case")
+    failed_native = _native_record(root, failed_native_job_id)
+    _require(failed_native["state"] == "FAILED" and failed_native["exit_code"] == "1:0" and
+             failed_native["cpus"] == task["job"]["threads"] and failed_native["elapsed_seconds"] > 0,
+             "Verification lacks the exact allocated wrapper failure")
+    _native_record(root, str(manifest["capture_slurm_job_id"]), completed=True)
+    preparation = _binding(preparation_path)
+    _require(preparation_path == Path(manifest["case_directory"]) / "preparation.json" and
+             preparation["sha256"] == preparation_sha256, "Verification preparation bytes or location changed")
+    prepared = read_json(preparation_path)
+    _require(prepared.get("schema_version") == 1 and prepared.get("status") == "prepared" and
+             prepared.get("manifest_sha256") == expected_manifest_sha256 and
+             prepared.get("primary_source_sha256") == PRIMARY_SOURCE_SHA256 and
+             prepared.get("full_config_sha256") == PRIMARY_CONFIG_SHA256 and
+             prepared.get("plan_sha256") == manifest["plan_sha256"] and
+             set(prepared.get("tasks", {})) == {str(i) for i in RERUN_INDICES},
+             "Verification preparation identity or roster changed")
+    _native_record(root, str(prepared.get("slurm_job_id", "")), completed=True)
+    old_case = Path(manifest["case_directory"])
+    final = old_case / "receipts" / ("task-" + str(index) + ".json")
+    _require(not final.exists() and not final.is_symlink(), "Original recovery already has a final outcome; inspect it instead")
+    started_path = old_case / "receipts" / ("task-" + str(index) + ".started.json")
+    started_binding = _binding(started_path)
+    started = read_json(started_path)
+    expected_started = {"schema_version": 1, "status": "execution_intent", "index": index,
+                        "biological_id": task["biological_id"], "manifest_sha256": expected_manifest_sha256,
+                        "primary_source_sha256": PRIMARY_SOURCE_SHA256, "full_config_sha256": PRIMARY_CONFIG_SHA256,
+                        "plan_sha256": manifest["plan_sha256"], "recovery_slurm_job_id": failed_native_job_id,
+                        "previous_slurm_job_id": PREVIOUS_ARRAY_JOB_ID + "_" + str(index), "preparation": preparation}
+    _require(all(started.get(k) == v for k, v in expected_started.items()), "Original execution intent identity changed")
+    command = started.get("command", [])
+    _require(isinstance(command, list) and len(command) == 9 and command[1:] ==
+             ["-s", "-c", PRIMARY_BOOTSTRAP, manifest["primary_release"], str(root), PRIMARY_SOURCE_SHA256, PRIMARY_CONFIG_SHA256, str(index)],
+             "Original intent does not bind the unchanged primary command")
+    _require(failure_log_path.is_relative_to(root / "logs") and failed_native_job_id in failure_log_path.name,
+             "Wrapper failure log does not belong to this study/native member")
+    failure_log = _binding(failure_log_path)
+    _require(failure_log["sha256"] == failure_log_sha256, "Wrapper failure log bytes changed")
+    log = failure_log_path.read_text(errors="replace")
+    failure = "RNARecoveryError: File changed while hashing: " + str(Path(task["job"]["output"]) / "counts.txt")
+    _require(failure in log and "_scientific_outputs" in log and "rna_recovery.py" in log,
+             "Native log does not prove the reviewed post-processing hash failure")
+    scientific_path = root / "state" / ("rna-full-" + str(index) + ".json")
+    scientific_binding = _binding(scientific_path)
+    scientific = read_json(scientific_path)
+    expected = {"status": "processed", "slurm_job_id": failed_native_job_id, "native_execution": True,
+                "source_sha256": PRIMARY_SOURCE_SHA256, "config_sha256": PRIMARY_CONFIG_SHA256,
+                "full_config_sha256": PRIMARY_CONFIG_SHA256, "plan_hash": manifest["plan_sha256"],
+                "biological_id": task["biological_id"], "cohort": task["job"]["cohort"], "allocated_cpus": task["job"]["threads"]}
+    _require(all(scientific.get(k) == v for k, v in expected.items()),
+             "Original primary receipt does not prove the exact failed-native/brain/source/config/plan mapping")
+    _unchanged(manifest["plan"])
+    _, _, plan = _validate_inputs(root, Path(manifest["primary_release"]), Path(manifest["plan"]["path"]), manifest["plan_sha256"])
+    first = _scientific_outputs(plan, task["job"], scientific)
+    time.sleep(BINDING_RETRY_SECONDS)
+    _require(_scientific_outputs(plan, task["job"], scientific) == first,
+             "Scientific outputs changed between independent verification passes")
+    for binding in (started_binding, preparation, scientific_binding, failure_log, manifest["plan"]):
+        _unchanged(binding)
+    _require(_native_record(root, failed_native_job_id) == failed_native and not final.exists() and not final.is_symlink(),
+             "Original native outcome or final recovery evidence changed during verification")
+    receipt = {"schema_version": 1, "status": "verified_after_wrapper_failure", "index": index,
+               "biological_id": task["biological_id"], "kind": "Verification only; no scientific recomputation or native outcome relabelling",
+               "verification_slurm_job_id": current, "failed_native_record": failed_native,
+               "recovery_manifest": _binding(manifest_path), "original_execution_intent": started_binding,
+               "preparation": preparation, "failure_log": failure_log, "scientific_receipt": scientific_binding,
+               "outputs": first, "primary_source_sha256": PRIMARY_SOURCE_SHA256,
+               "full_config_sha256": PRIMARY_CONFIG_SHA256, "plan_sha256": manifest["plan_sha256"],
+               "original_maintenance_source_sha256": expected_maintenance_source_sha256,
+               "verifier_source_identity": source_identity(Path(__file__).resolve().parents[2]),
+               "verified_unix": time.time()}
+    case.mkdir(parents=True, exist_ok=False)
+    _exclusive_json(case / "receipt.json", receipt)
     return receipt
 
 

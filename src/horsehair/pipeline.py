@@ -37,6 +37,7 @@ NODES = (
 )
 TERMINAL_FAILURE = {'FAILED', 'TIMEOUT', 'OUT_OF_MEMORY', 'CANCELLED', 'NODE_FAIL', 'BOOT_FAIL', 'PREEMPTED', 'DEADLINE', 'REVOKED'}
 STORAGE_REFRESH_SECONDS = 6 * 3600
+STORAGE_CENSUS_RETRY_MAX_SECONDS = 15 * 60
 PRIMARY_READ_ATTEMPTS = 3
 PRIMARY_READ_BACKOFF_SECONDS = (1, 2)
 PRIMARY_TRANSIENT_READ_ERRNOS = {5, 107, 108, 110, 116}  # EIO, ENOTCONN, ESHUTDOWN, ETIMEDOUT, ESTALE
@@ -887,6 +888,7 @@ def tick(config, root, release, *, native=None, planner=None, submitter=None, as
 
 def run(config, root, *, segment=0, max_seconds=None, interval=60, primary_release=None):
     from .budget import native_accounting,storage_snapshot,require_storage_headroom,StorageHeadroomError
+    from .storage_artifacts import StorageArtifactRace
     root = Path(root).resolve(); framework = Path(__file__).resolve().parents[2]
     release = framework if primary_release is None else Path(primary_release).resolve()
     if not native_job_id():
@@ -925,7 +927,8 @@ def run(config, root, *, segment=0, max_seconds=None, interval=60, primary_relea
             json.dump({'job_id': native_job_id(), 'segment': segment, 'started_unix': time.time()}, handle)
     owner=lock.read_bytes()
     last_signature = None;last_storage = None;warning_count = 0;last_warning_signature = None
-    storage_warning_signature=None
+    storage_warning_signature=None; storage_census_warning_signature=None; storage_census_warning_count=0
+    storage_census_failures=0
     def fresh_storage_guard(forecast=None):
         # The already configured total study file ceiling is a conservative
         # personal headroom requirement, separate from the six-hour census.
@@ -965,8 +968,37 @@ def run(config, root, *, segment=0, max_seconds=None, interval=60, primary_relea
                 if ids:
                     native_accounting(root, ids)
                 if last_storage is None or time.monotonic() - last_storage >= STORAGE_REFRESH_SECONDS:
-                    storage_snapshot(root);last_storage = time.monotonic()
+                    storage_snapshot(root);last_storage = time.monotonic();storage_census_failures=0
                 record = tick(config, root, release,storage_guard=fresh_storage_guard)
+            except StorageArtifactRace as exc:
+                # A live append/atomic replacement or delayed Lustre metadata
+                # synchronization does not establish corruption. The bounded
+                # entry retries admitted no size and storage_snapshot published
+                # no partial census. Preserve the old evidence and keep this
+                # finite controller alive, with ALL new submissions paused
+                # until a complete fresh measurement succeeds.
+                storage_census_warning_count += 1
+                storage_census_failures += 1
+                retry_after=min(STORAGE_CENSUS_RETRY_MAX_SECONDS,interval*2**min(storage_census_failures-1,10))
+                record={**(record or {}),'status':'pending_storage_census','checked_unix':time.time(),
+                    'controller_job_id':native_job_id(),'segment':segment,'config_sha256':canonical_hash(config),
+                    'source_sha256':identity['source_identity']['sha256'],
+                    'controller_framework_source_sha256':framework_identity['source_identity']['sha256'],
+                    'phases':(record or {}).get('phases',{}),'initial_tasks':(record or {}).get('initial_tasks',{}),
+                    'failed_native_stages':(record or {}).get('failed_native_stages',[]),
+                    'scientific_results_complete':False,'publication_ready':False,'scheduling_paused':True,
+                    'storage_census_warning_count':storage_census_warning_count,
+                    'storage_census_consecutive_failures':storage_census_failures,'retry_after_seconds':retry_after,
+                    'storage_census_race':exc.diagnostics,
+                    'reasons':['An entry changed during the bounded exact census; no partial storage measurement admits work']}
+                atomic_json(directory/'status.json',record)
+                signature=canonical_hash(exc.diagnostics)
+                if signature!=storage_census_warning_signature:
+                    print(json.dumps({'status':record['status'],'storage_census_race':exc.diagnostics,
+                        'scheduling_paused':True}),flush=True)
+                    storage_census_warning_signature=signature
+                time.sleep(min(retry_after,max(0,deadline-time.monotonic())))
+                continue
             except StorageHeadroomError as exc:
                 # Keep the finite controller alive without scheduling or
                 # repeatedly creating files while another project uses quota.
@@ -1010,7 +1042,9 @@ def run(config, root, *, segment=0, max_seconds=None, interval=60, primary_relea
             record={'status':'waiting_for_receipt_guard','scientific_results_complete':False,'publication_ready':False,
                     'phases':{},'initial_tasks':{},'failed_native_stages':[], 'config_sha256':canonical_hash(config),
                     'source_sha256':identity['source_identity']['sha256']}
-        record.update(segment=segment,receipt_guard_warning_count=warning_count,segment_status='finite_segment_finished', continuation='next prequeued controller segment' if segment < 3 else 'four-segment window exhausted; preserve state for reviewed continuation')
+        record.update(segment=segment,receipt_guard_warning_count=warning_count,
+            storage_census_warning_count=storage_census_warning_count,segment_status='finite_segment_finished',
+            continuation='next prequeued controller segment' if segment < 3 else 'four-segment window exhausted; preserve state for reviewed continuation')
         atomic_json(directory/'status.json', record)
         return record
     finally:

@@ -432,6 +432,69 @@ def test_restart_cache_expires_at_original_deadline_without_six_hour_extension(c
     assert calls == [('tick', 0.), ('refresh', 30.), ('tick', 30.)]
 
 
+def test_live_census_races_pause_submission_and_resume_after_complete_measurement(controller_fixture,monkeypatch):
+    from horsehair import budget
+    from horsehair.storage_artifacts import StorageArtifactRace
+    fixture=controller_fixture;lock=configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'_native_states',lambda *a:{'700':state()})
+    clock=[0.];scans=[];ticks=[];pauses=[]
+    monkeypatch.setattr(pipeline.time,'monotonic',lambda:clock[0])
+    def sleep(seconds):
+        pauses.append(read_json(lock.parent/'status.json'))
+        clock[0]+=seconds
+    monkeypatch.setattr(pipeline.time,'sleep',sleep)
+    def measure(*args):
+        scans.append(clock[0])
+        if len(scans)<3:
+            raise StorageArtifactRace(fixture.root/'logs/controller.log','Entry grew beyond its observed EOF boundary',attempts=3)
+    def tick(*args,**kwargs):
+        ticks.append(clock[0])
+        return {'status':'complete','phases':{},'initial_tasks':{},'failed_native_stages':[]}
+    monkeypatch.setattr(budget,'storage_snapshot',measure)
+    monkeypatch.setattr(pipeline,'tick',tick)
+    result=pipeline.run(fixture.config,fixture.root,max_seconds=300,interval=30)
+    assert scans==[0.,30.,90.] and ticks==[90.] and result['status']=='complete'
+    assert [item['retry_after_seconds'] for item in pauses]==[30,60]
+    assert all(item['status']=='pending_storage_census' and item['scheduling_paused'] for item in pauses)
+    assert all(not item['scientific_results_complete'] for item in pauses)
+    assert all(item['storage_census_race']['size_admitted'] is False for item in pauses)
+    assert not lock.exists() and not fixture.submitted
+
+
+def test_persistent_census_races_back_off_with_cap_and_finite_deadline(controller_fixture,monkeypatch):
+    from horsehair import budget
+    from horsehair.storage_artifacts import StorageArtifactRace
+    fixture=controller_fixture;lock=configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'_native_states',lambda *a:{'700':state()})
+    clock=[0.];delays=[];scans=[]
+    monkeypatch.setattr(pipeline.time,'monotonic',lambda:clock[0])
+    def sleep(seconds):delays.append(seconds);clock[0]+=seconds
+    monkeypatch.setattr(pipeline.time,'sleep',sleep)
+    def measure(*args):
+        scans.append(clock[0]);raise StorageArtifactRace(fixture.root/'active.tmp','Entry changed',attempts=3)
+    monkeypatch.setattr(budget,'storage_snapshot',measure)
+    monkeypatch.setattr(pipeline,'tick',lambda *a,**k:pytest.fail('Incomplete census must never dispatch work'))
+    result=pipeline.run(fixture.config,fixture.root,max_seconds=4000,interval=60)
+    assert delays==[60,120,240,480,900,900,900,400]
+    assert max(delays)==pipeline.STORAGE_CENSUS_RETRY_MAX_SECONDS and clock[0]==4000
+    assert result['status']=='pending_storage_census' and result['segment_status']=='finite_segment_finished'
+    assert result['storage_census_warning_count']==len(scans)==8
+    assert result['scheduling_paused'] and not lock.exists()
+
+
+@pytest.mark.parametrize('failure',[OSError('native storage I/O failed'),ValueError('invalid storage proof')])
+def test_controller_does_not_hide_nonrace_storage_failures(controller_fixture,monkeypatch,failure):
+    from horsehair import budget
+    fixture=controller_fixture;lock=configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'_native_states',lambda *a:{'700':state()})
+    def measure(*args):raise failure
+    monkeypatch.setattr(budget,'storage_snapshot',measure)
+    monkeypatch.setattr(pipeline.time,'sleep',lambda *a:pytest.fail('A nonrace failure must not be retried'))
+    with pytest.raises(type(failure)) as caught:
+        pipeline.run(fixture.config,fixture.root,max_seconds=60,interval=30)
+    assert caught.value is failure and not lock.exists()
+
+
 def inode_shortage():
     return {'status':'pending','ready':False,'reasons':['Personal scratch inode headroom is insufficient: 560 available'],
             'personal_available_files':560,'personal_available_bytes':20_000_000_000_000}

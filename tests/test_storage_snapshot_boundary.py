@@ -103,3 +103,18 @@ def test_measurement_mode_does_not_accept_truthy_nonbooleans(tmp_path, monkeypat
     runner, put = setup_census(tmp_path, monkeypatch)
     with pytest.raises(ValueError, match='boolean'):
         budget.storage_snapshot(tmp_path, runner=runner, exact_sizes=selection)
+
+
+def test_persistent_census_race_preserves_complete_previous_evidence(tmp_path,monkeypatch):
+    runner,put=setup_census(tmp_path,monkeypatch)
+    previous=put('state/storage-budget.json',b'{"previous":"complete"}')
+    sidecar=put('state/storage-entry-sizes.json',b'{"previous":"all rows"}')
+    active=put('logs/controller.log')
+    def changes(*args,**kwargs):
+        raise storage_artifacts.StorageArtifactRace(active,'Entry changed during exact measurement',attempts=3)
+    monkeypatch.setattr(storage_artifacts,'measure_regular_length',changes)
+    with pytest.raises(storage_artifacts.StorageArtifactRace):
+        budget.storage_snapshot(tmp_path,runner=runner,exact_sizes=True)
+    assert previous.read_bytes()==b'{"previous":"complete"}'
+    assert sidecar.read_bytes()==b'{"previous":"all rows"}'
+    assert not list((tmp_path/'state').glob('quota-*.txt'))

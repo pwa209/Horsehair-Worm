@@ -14,6 +14,7 @@ import os
 import re
 import stat
 import sys
+import time
 from functools import lru_cache
 from pathlib import PurePath, PurePosixPath
 from collections import deque
@@ -28,6 +29,8 @@ STATX_IDENTITY_MASK = 0x19f  # TYPE, MODE, NLINK, UID, GID, INO, CTIME only
 AT_SYMLINK_NOFOLLOW = 0x100
 AT_EMPTY_PATH = 0x1000
 AT_STATX_FORCE_SYNC = 0x2000
+LENGTH_MEASUREMENT_ATTEMPTS = 3
+LENGTH_RETRY_DELAYS = (0.05, 0.1)
 _CURL_ARTIFACT = re.compile(
     r'raw/ant_rna/SRR[0-9]+_[12]\.fastq\.gz\.curl-v3/attempts/[0-9]{4}/'
     r'segment-[0-9]{6}\.(?:stdout|stderr)\.private\Z')
@@ -36,6 +39,26 @@ _FIXTURE_ARTIFACT = re.compile(r'tests/qualification-[0-9]+/(?:[^/]+/)*[^/]+\.tx
 
 class StorageArtifactError(ValueError):
     """No trustworthy exact size was measured; never substitute an estimate."""
+
+
+class StorageArtifactRace(StorageArtifactError):
+    """A live entry could not be measured stably; no size was admitted.
+
+    Unlike an ownership, I/O or proof refusal, this is safe to retry in a later
+    finite controller tick. It never authorizes omitting the entry or using its
+    previous length. Keep the path in diagnostics so a persistent writer can be
+    distinguished from a general filesystem failure.
+    """
+    def __init__(self, path, reason, *, attempts=1):
+        self.path = os.fspath(path)
+        self.reason = reason
+        self.attempts = attempts
+        super().__init__(f'{reason}: {self.path} (attempts={attempts})')
+
+    @property
+    def diagnostics(self):
+        return {'path': self.path, 'reason': self.reason, 'attempts': self.attempts,
+                'size_admitted': False}
 
 
 class _Stamp(ctypes.Structure):
@@ -319,7 +342,7 @@ def measure_regular_length(path, max_bytes, expected_uid=None, *, root):
         _regular_identity(before, uid)
         descriptor = _open_leaf(name, parent); descriptors.append(descriptor)
         if _metadata('', descriptor) != before:
-            raise StorageArtifactError('Entry changed between pathname inspection and open')
+            raise StorageArtifactRace(path, 'Entry changed between pathname inspection and open')
         prefix = 0; checksum = hashlib.sha256(); prefix_eof = False
         prefix_limit = min(ENTRY_PREFIX_CAP, max_bytes + 1)
         while prefix < prefix_limit:
@@ -340,11 +363,11 @@ def measure_regular_length(path, max_bytes, expected_uid=None, *, root):
             return len(value)
         size = prefix if prefix_eof else _boundary_length(prefix, max_bytes, probe)
         if size and probe(size - 1) != 1:
-            raise StorageArtifactError('Entry changed at its last-byte boundary')
+            raise StorageArtifactRace(path, 'Entry changed at its last-byte boundary')
         if probe(size) != 0:
-            raise StorageArtifactError('Entry grew beyond its observed EOF boundary')
+            raise StorageArtifactRace(path, 'Entry grew beyond its observed EOF boundary')
         if _metadata('', descriptor) != before or _metadata(name, parent) != before:
-            raise StorageArtifactError('Entry identity/change metadata changed during size measurement')
+            raise StorageArtifactRace(path, 'Entry identity/change metadata changed during size measurement')
         result = {'schema_version': 1, 'status': 'measured', 'method': 'owned_regular_length',
                   'path': os.fspath(path), 'bytes': size, 'max_bytes': max_bytes,
                   'prefix_cap_bytes': ENTRY_PREFIX_CAP, 'prefix_bytes': prefix,
@@ -369,6 +392,32 @@ def measure_regular_length(path, max_bytes, expected_uid=None, *, root):
             raise close_error
 
 
+def _stable_regular_length(path, max_bytes, expected_uid, *, root):
+    """Retry only observable live-entry races, always from a newly opened FD.
+
+    A read can cause Lustre to synchronize previously cached metadata. It can
+    also overlap a real append, truncate or atomic replacement. Neither case
+    permits accepting a failed proof: a new attempt must independently pass
+    every no-follow, ownership, identity, change-time and EOF-boundary check.
+    I/O errors and invalid proofs are never relabelled as ordinary contention.
+    """
+    for attempt in range(1, LENGTH_MEASUREMENT_ATTEMPTS + 1):
+        try:
+            return measure_regular_length(path, max_bytes, expected_uid, root=root)
+        except (StorageArtifactRace, FileNotFoundError) as error:
+            if attempt == LENGTH_MEASUREMENT_ATTEMPTS:
+                reason = error.reason if isinstance(error, StorageArtifactRace) else 'Entry disappeared during census'
+                raise StorageArtifactRace(path, reason, attempts=attempt) from error
+            time.sleep(LENGTH_RETRY_DELAYS[attempt - 1])
+
+
+def _directory_identity(identity):
+    # Child creation/removal legitimately changes directory ctime and nlink.
+    # Neither field is directory identity. Keep the device, inode, owner,
+    # mode and type checks: replacement or changed access still refuses entry.
+    return {key: value for key, value in identity.items() if key not in {'ctime_ns', 'nlink'}}
+
+
 def _parallel_lengths(paths, root, max_bytes, uid, executor, workers):
     """Finish one directory with a bounded sliding window of owned reads."""
     source = iter(paths); pending = deque(); results = []
@@ -377,7 +426,7 @@ def _parallel_lengths(paths, root, max_bytes, uid, executor, workers):
             path = next(source)
         except StopIteration:
             return False
-        pending.append((path, executor.submit(measure_regular_length, path, max_bytes, uid, root=root)))
+        pending.append((path, executor.submit(_stable_regular_length, path, max_bytes, uid, root=root)))
         return True
     try:
         for _ in range(workers * 2):
@@ -405,7 +454,10 @@ def iter_regular_lengths(root, max_bytes, expected_uid=None, *, workers=1):
     never traversed or counted as regular files. Queued directories retain
     lexical parts and identity, not open descriptors. Names are collected and
     all directory descriptors closed before yielding or visiting another path.
-    A queued directory replacement or observable change refuses the census.
+    A queued directory replacement refuses the census. Directory child writes
+    may change ctime/link count without changing its anchored identity. Regular
+    entries retain all change-time checks, with three bounded fresh-open
+    attempts; persistent races refuse the whole census rather than skip data.
     Optional parallel reads use at most 16 threads and twice that many pending
     futures. Each directory finishes before yielding, so no measured-file FD
     survives across a yield. Threads cannot cancel a native D-state I/O call;
@@ -433,8 +485,8 @@ def iter_regular_lengths(root, max_bytes, expected_uid=None, *, workers=1):
                 observed = _metadata('', parent)
                 if not stat.S_ISDIR(observed['mode']):
                     raise StorageArtifactError('Entry census anchor is not a directory')
-                if expected is not None and observed != expected:
-                    raise StorageArtifactError('Queued census directory changed before anchored traversal')
+                if expected is not None and _directory_identity(observed) != _directory_identity(expected):
+                    raise StorageArtifactRace(root.joinpath(*parts), 'Queued census directory changed before anchored traversal')
                 with os.scandir(parent) as entries:
                     names = [entry.name for entry in entries]
             except BaseException:
@@ -458,7 +510,7 @@ def iter_regular_lengths(root, max_bytes, expected_uid=None, *, workers=1):
                     raise StorageArtifactError('Native directory entry has an unsafe lexical name')
                 paths.append(root.joinpath(*parts, name))
             measurements = (_parallel_lengths(paths, root, max_bytes, uid, executor, workers) if executor
-                            else ((path, measure_regular_length(path, max_bytes, uid, root=root)) for path in paths))
+                            else ((path, _stable_regular_length(path, max_bytes, uid, root=root)) for path in paths))
             for path, measured in measurements:
                 if measured['status'] == 'directory':
                     pending.append(((*parts, path.name), measured['identity']))
