@@ -32,6 +32,117 @@ MISSING_CATEGORIES = (
     "Source-validated H2 contrasts, calibration and shared-control uncertainty",
 )
 OPERATIONS = ("adam_epoch", "lbfgs_iteration", "unseen_group_score", "causal_full_clock_simulation")
+NUMERICAL_VALIDATION_VERSION = 1
+
+
+def _validate_model_finite(model: Any, *, gradients: bool = False) -> dict[str, Any]:
+    """Inspect tensors without changing parameters, gradients or random state."""
+    import torch
+    parameters, gradient_tensors, absent_gradients, dtypes = 0, 0, [], set()
+    for name, parameter in model.named_parameters():
+        parameters += parameter.numel()
+        dtypes.add(str(parameter.dtype))
+        if not bool(torch.isfinite(parameter.detach()).all()):
+            raise FloatingPointError(f"Nonfinite behavioural parameter: {name}")
+        if gradients and parameter.requires_grad:
+            if parameter.grad is None:
+                # Some original model parameters are intentionally unused for
+                # particular dimensions/structures; do not invent a gradient.
+                absent_gradients.append(name)
+            else:
+                if not bool(torch.isfinite(parameter.grad.detach()).all()):
+                    raise FloatingPointError(f"Nonfinite behavioural gradient: {name}")
+                gradient_tensors += 1
+    if gradients and not gradient_tensors:
+        raise FloatingPointError("No behavioural objective gradients were available to validate")
+    return {"parameters_finite": True, "parameter_elements": parameters, "parameter_dtypes": sorted(dtypes),
+            "gradients_checked": gradients, "finite_gradient_tensors": gradient_tensors,
+            "trainable_parameters_without_gradient": absent_gradients}
+
+
+def _validate_objective_finite(value: Any) -> dict[str, Any]:
+    import numpy as np
+    import torch
+    if isinstance(value, torch.Tensor):
+        if value.numel() != 1 or value.dtype == torch.bool or value.is_complex():
+            raise ValueError("A measured behavioural objective must be scalar")
+        scalar = float(value.detach().cpu())
+    else:
+        array = np.asarray(value)
+        if array.size != 1 or array.dtype.kind not in "fiu":
+            raise ValueError("A measured behavioural objective must be a numeric scalar")
+        scalar = float(array.reshape(-1)[0])
+    if not math.isfinite(scalar):
+        raise FloatingPointError("Nonfinite measured behavioural objective")
+    return {"objective_finite": True, "objective_value": scalar}
+
+
+def _validate_score_finite(value: Any, sequence: Any, warmup_seconds: float) -> dict[str, Any]:
+    import numpy as np
+    if not isinstance(value, dict):
+        raise ValueError("A measured held-out score must retain the original score record")
+    count = value.get("n_scored")
+    expected = int(np.count_nonzero(sequence.observed &
+        (sequence.times - sequence.times[0] >= warmup_seconds)))
+    if isinstance(count, bool) or not isinstance(count, (int, np.integer)) or count != expected or count <= 0:
+        raise ValueError("Measured held-out score changed the observed prediction window")
+    evidence = _validate_objective_finite(value.get("log_score"))
+    for name in ("max_tail_probability", "marginal_90pct_coverage", "calibration_error"):
+        if name in value and not np.isfinite(np.asarray(value[name], dtype=float)).all():
+            raise FloatingPointError(f"Nonfinite held-out score diagnostic: {name}")
+    return {"log_score_finite": evidence["objective_finite"], "log_score": evidence["objective_value"],
+            "n_scored": int(count), "expected_n_scored": expected, "observed_window_preserved": True}
+
+
+def _validate_simulation_finite(value: Any, template: Any) -> dict[str, Any]:
+    import numpy as np
+    # The original movement simulator also returns its latent-state path.
+    sequence = value[0] if isinstance(value, tuple) and len(value) == 2 else value
+    observed = np.asarray(sequence.observed)
+    original_mask = np.asarray(template.observed)
+    observations = np.asarray(sequence.observations)
+    if (observed.dtype.kind != "b" or observed.shape != original_mask.shape or
+            not np.array_equal(observed, original_mask) or
+            observations.shape != np.asarray(template.observations).shape or
+            not np.array_equal(np.asarray(sequence.times), np.asarray(template.times))):
+        raise ValueError("Measured simulation changed its full clock, dimensions or observed mask")
+    if not np.isfinite(observations[observed]).all():
+        raise FloatingPointError("Nonfinite observed simulated displacement")
+    return {"observed_simulation_finite": True, "observed_rows": int(observed.sum()),
+            "masked_rows": int((~observed).sum()), "native_clock_bins": len(observed),
+            "clock_and_mask_preserved": True, "masked_values_excluded_from_finite_check": True}
+
+
+def _validate_operation_finite(name: str, value: Any, model: Any,
+                               sequence: Any, warmup_seconds: float) -> dict[str, Any]:
+    gradients = name in {"adam_epoch", "lbfgs_closure", "lbfgs_iteration"}
+    evidence = {"version": NUMERICAL_VALIDATION_VERSION, "status": "passed",
+                "model": _validate_model_finite(model, gradients=gradients)}
+    if gradients:
+        evidence["result"] = _validate_objective_finite(value)
+        evidence["result"]["objective_scope"] = {
+            "adam_epoch": "Last original objective evaluated before its Adam update; comparator epochs use minibatches",
+            "lbfgs_closure": "Original objective at this line-search trial",
+            "lbfgs_iteration": "Original LBFGS return value at the initial point, not the final refined objective",
+        }[name]
+    elif name == "unseen_group_score":
+        evidence["result"] = _validate_score_finite(value, sequence, warmup_seconds)
+    elif name == "causal_full_clock_simulation":
+        evidence["result"] = _validate_simulation_finite(value, sequence)
+    else:
+        raise ValueError("Unknown behavioural operation cannot receive finite-output validation")
+    return evidence
+
+
+def _runtime_metadata() -> dict[str, Any]:
+    import torch
+    return {"torch_version": str(torch.__version__), "torch_num_threads": torch.get_num_threads(),
+            "torch_num_interop_threads": torch.get_num_interop_threads(),
+            "torch_default_dtype": str(torch.get_default_dtype()),
+            "thread_environment": {key: os.environ[key] for key in
+                ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "SLURM_CPUS_PER_TASK")
+                if key in os.environ},
+            "process_cpu_clock": "time.process_time: process user plus system CPU across its threads"}
 
 
 def structural_cells(config: dict[str, Any]) -> list[dict[str, Any]]:
@@ -247,6 +358,8 @@ def _worker(plan_path: Path, index: int, attempt: Path) -> None:
         "framework_source_sha256": plan["framework_source_sha256"], "framework_module_sha256": plan["framework_module_sha256"],
         "full_roster_animals": len(roster), "full_roster_experiments": len({row["experiment_id"] for row in roster}),
         "native_clock_bins": len(sequence.times), "native_input_sha256": plan["source_result_hashes"][str(path)],
+        "runtime": _runtime_metadata(), "numerical_validation_version": NUMERICAL_VALIDATION_VERSION,
+        "operation_timing_scope": "elapsed_seconds measures the original callback wall time; post-operation validation is recorded separately. An outer LBFGS iteration also includes its nested closure instrumentation.",
         "optimizer_measurement_scope": {"executed_starts_per_rate": 1, "adam_epochs_per_rate": 1,
             "lbfgs_iterations_per_rate": min(1, int(settings.get("lbfgs_iterations", 200))),
             "frozen_requested_starts": settings.get("starts", 5),
@@ -262,12 +375,18 @@ def _worker(plan_path: Path, index: int, attempt: Path) -> None:
     def operation(name, rate, callback):
         state["active_operation"] = {"name": name, "learning_rate": rate, "started_unix": time.time()}
         persist()
-        started = time.perf_counter()
+        started, cpu_started = time.perf_counter(), time.process_time()
         value = callback()
-        elapsed = time.perf_counter() - started
+        elapsed, process_cpu = time.perf_counter() - started, time.process_time() - cpu_started
+        validation_started = time.perf_counter()
+        validation = _validate_operation_finite(name, value, model, sequence, settings.get("warmup_seconds", 600))
+        validation_elapsed = time.perf_counter() - validation_started
         state["operations"].append({"name": name, "learning_rate": rate, "elapsed_seconds": elapsed,
             "measured_work_units": 1, "native_clock_bins": len(sequence.times),
-            "uses_full_primary_numerics": True})
+            "uses_full_primary_numerics": True, "process_cpu_seconds": process_cpu,
+            "average_process_cpu_cores": process_cpu / elapsed,
+            "torch_num_threads": torch.get_num_threads(),
+            "post_operation_validation_seconds": validation_elapsed, "numerical_validation": validation})
         state.pop("active_operation", None)
         persist()
         return value
@@ -313,6 +432,7 @@ def _worker(plan_path: Path, index: int, attempt: Path) -> None:
                         loss.backward()
                         torch.nn.utils.clip_grad_norm_(model.parameters(), 5)
                         optimizer.step()
+                    return loss.detach()
             else:
                 model = s.MovementModel("MX" if cell["model"] == "HMM" else cell["model"],
                     len(scaler.mean), len(scaler.modulation_mean), sequence.observations.shape[1],
@@ -339,9 +459,10 @@ def _worker(plan_path: Path, index: int, attempt: Path) -> None:
                     return prior.detach() + loss.detach()
                 def adam_epoch():
                     optimizer = torch.optim.Adam(model.parameters(), lr=float(rate))
-                    closure()
+                    objective = closure()
                     torch.nn.utils.clip_grad_norm_(model.parameters(), float(settings.get("gradient_clip", 5)))
                     optimizer.step()
+                    return objective
             state["model_parameter_count"] = sum(p.numel() for p in model.parameters())
             operation("adam_epoch", rate, adam_epoch)
             # Measure score/simulation before refinement so an expensive native
@@ -506,6 +627,12 @@ def aggregate(plan_path: Path, output: Path) -> dict[str, Any]:
     refinement_projected = sum(row["cpu_core_hours"] for row in refinement_projections)
     optimizer_projected = projected + refinement_projected
     cap = float(plan["config"]["resources"]["cpu_core_hours_cap"])
+    timed_operations = [operation for entry in records
+        for operation in (entry["receipt"].get("progress") or {}).get("operations", [])
+        if not operation.get("not_requested")]
+    validated_operations = [operation for operation in timed_operations
+        if operation.get("numerical_validation", {}).get("version") == NUMERICAL_VALIDATION_VERSION
+        and operation["numerical_validation"].get("status") == "passed"]
     result = {"status": "measured_partial_projection_exceeds_cap" if optimizer_projected > cap else "pending_full_workload_measurements",
         "plan_sha256": plan_hash, "primary_scientific_kernel_source_sha256": PRIMARY_SOURCE_SHA256,
         "framework_source_sha256": plan["framework_source_sha256"], "full_config_sha256": plan["full_config_sha256"],
@@ -515,6 +642,11 @@ def aggregate(plan_path: Path, output: Path) -> dict[str, Any]:
         "partial_adam_only_forecast_cpu_core_hours": projected, "cpu_core_hours_cap": cap,
         "partial_lbfgs_only_forecast_cpu_core_hours": refinement_projected,
         "partial_optimizer_forecast_cpu_core_hours": optimizer_projected,
+        "numerical_validation": {"version": NUMERICAL_VALIDATION_VERSION,
+            "timed_operation_records": len(timed_operations), "explicitly_validated_records": len(validated_operations),
+            "legacy_or_unvalidated_records": len(timed_operations) - len(validated_operations),
+            "all_recorded_outputs_explicitly_validated": bool(timed_operations) and len(validated_operations) == len(timed_operations),
+            "historical_receipts_are_not_retroactively_validated": True},
         "receipt_bindings": [{key: row[key] for key in ("path", "sha256")} for row in records],
         "native_completion_proofs": [row["native_completion_proof"] for row in records],
         "no_stopping_claim": "One optimizer epoch and a native line-search probe do not measure convergence of a full-cohort fit.",
