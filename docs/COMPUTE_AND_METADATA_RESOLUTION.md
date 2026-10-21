@@ -198,3 +198,111 @@ Full optimizer paths, Hessian/MALA, recovery, Mantis, H2 and full-fit output
 storage are still unmeasured. Workload and cost assumptions require review
 before further expensive probes or scientific admission. Source data, frozen
 analysis rules and all scientific/admission gates remain unchanged.
+
+## Autoregressive repair and cost review, 21 October
+
+The five-second AR outlier used eight Torch threads, whereas the frozen primary
+fit defaults to one. Its 0.001-rate held-out score took 3,771.82 seconds, compared
+with 0.76 seconds at 0.0003; Adam and simulation remained about 1–4 seconds.
+The subsequent first LBFGS closure exhausted the bounded worker window. This
+identifies a runtime outlier, not demonstrated statistical nonconvergence. The
+precise cause remains unresolved. A separately registered one-CPU retry restores
+the primary thread setting while retaining the full 15,120-bin clock, original
+data, seed, rates, numerical precision and optimizer arguments. Historical files
+remain unchanged. The repair graph reserves at most five CPU core-hours including
+its supervisor and fresh aggregation, and retains fresh storage, combined
+accounting and native allocation checks.
+
+Source update `3d939128151e` adds finite objective, parameter, available-gradient,
+held-out-score and observed-simulation validation, plus process CPU and thread
+metadata for future probes. It changes no scientific kernel or optimizer update.
+All 84 focused tests pass locally. Native job 6675953 passed the complete
+1,504-test suite with zero failures, errors or skips and native COMPLETED/0:0
+in 380 seconds. Its qualification receipt SHA is
+`b3fbcdf65791833f4f59da3323674a1cb23ad06872ff98f7aa52b3168f55ec50`.
+Old timings have not retrospectively acquired finite output validation. The
+one-CPU retry uses the already qualified historical worker to complete that
+original operator pack.
+
+AR retry 6678131 completed with native COMPLETED/0:0 in 175 seconds. Its worker
+completed all 12 required operation/rate pairs in about 64 seconds, including
+all three learning rates on the full 15,120-bin clock. The previously stalled
+0.001-rate score took 0.375 seconds and its LBFGS probe 2.51 seconds. The old
+attempt remains unchanged. One thread plus a different node resolved this
+observed runtime failure; their separate causal contributions are untested.
+Aggregation 6678132 completed with native COMPLETED/0:0 in 84 seconds and confirms
+39 of 39 cells and 468 of 468 required operator/rate pairs. Its summary SHA is
+`9a6f4055fe574cc61c4cc80a387bd31bda601fa9d682a2ab09d27c01008728bd`.
+
+The arithmetic review independently replays the old forecast and preserves all
+original durations. It pairs each duration with its own allocated CPU count,
+excludes only recording-local ROIs that the primary implementation already
+rejects as entirely unobserved, and charges the selected worst-cost outer/freeze
+structure once while retaining every inner candidate fit. ROIs with at least one
+observed displacement number 1,575, 1,561 and 1,551 at 5, 10 and 20 seconds
+respectively. Presence alone does not establish finite targets or a usable
+post-warmup scoring window. These differing rosters do not establish animal
+independence or biological treatment assignments.
+
+The exact installed Torch 2.6 LBFGS source supports a whole-step bound of 275
+closures for the frozen 200 iterations, replacing the historical loose bound of
+5,201. This changes cost accounting only. The independently reproduced historical
+timing scenario is approximately **7.732 billion CPU core-hours**, compared with
+the original **91.210 billion** partial optimizer projection. Both use empirical
+maximum operator durations and requested workload bounds; neither is observed
+expenditure, a mathematical lower bound, or a guaranteed full-fit runtime. All
+outliers remain available and no eightfold CPU discount is assumed.
+
+Native audit 6677905 completed with COMPLETED/0:0 in 81 seconds and reproduced
+the reviewed 7.732-billion-hour scenario directly from all 39 historical receipts,
+their positive native completion proofs, exact bin hashes and installed Torch
+source. Its reviewed document SHA is
+`98e4bb4db5c1d0d298a37eb8b3ac369209397f37bee15099ca3fc4b242378bd4`.
+This base review covers the historical 463 of 468 operations. Final audit 6678315
+then completed with native COMPLETED/0:0 in 100 seconds. It verifies the new
+same-plan aggregate and all 468 operations while retaining the historical outlier
+and every original binding. The corrected scenario remains 7.732 billion CPU
+core-hours. The final review SHA is
+`191be9d79902b67c87e8e2ee3dce379c784b7e7a0b9ce39dde6e355ee8a906e3`.
+Full declared-workload, scientific-fit and admission-authority flags remain false:
+operator coverage is complete, but whole-study cost coverage is incomplete.
+
+Within that reviewed scenario, Adam contributes 4.021 billion and LBFGS 3.711
+billion CPU core-hours. Recovery refits contribute 77.00% of the total, while AR
+contributes 0.40%. Completing the AR retry therefore closes an operation-coverage
+gap but does not resolve the budget projection.
+
+At 15:39:06 UTC, verified native spending was 992.82 CPU core-hours. Spending plus
+full reservations for unfinished registered work was 1,570.82 CPU core-hours and
+34.36 GPU-hours, leaving 18,429.18 CPU core-hours before the new qualification and
+audit allocations. Subtracting the separate 10,725.24-hour agent evaluation
+forecast would leave only 7,703.94 CPU core-hours for every other unfinished CPU
+category. That subtraction is a planning illustration, not admission: the agent
+estimate excludes final GPU training and H4 inference and preserves its numerical
+null completion gate.
+
+At the 16:23 UTC closing check, recorded spending was 993.82 CPU core-hours and
+34.36 GPU-hours. The final audit's preceding conservative combined admission
+check recorded 1,570.79 CPU core-hours including unfinished allocation bounds,
+leaving 18,429.21 below the cap at that check. This includes a full one-hour
+reservation for the final audit itself; its subsequent successful completion
+does not increase that upper bound. Subtracting the separate agent evaluation
+forecast leaves 7,703.97 hours for all other unfinished CPU categories, before
+their missing cost estimates. This remains a planning illustration, not full
+study admission.
+
+The behavioural recovery multiplicity is part of the frozen design: 1,600 truth
+datasets, grouped folds, five starts and up to 500 Adam epochs. It cannot be removed
+as a duplicate count. Conversely, single-clock timings include some full-cohort
+prior and optimizer overhead, which must be separated and measured at actual fold
+dimensions before applying any discount. Full optimizer stopping paths,
+Hessian/MALA work, interval/recovery inference, Mantis and H2 workloads, allocation
+overhead and full-fit output storage remain incompletely measured.
+
+Stage B remains open. Only bounded, registered diagnosis proceeds; the full
+scientific analysis has not been admitted within 20,000 CPU core-hours. A new
+performance implementation requires prospective source qualification, numerical
+regression and representative full-work measurements. Changes to models, folds,
+clocks, starts, recovery replications, final seeds/ranks or scientific completion
+rules require an explicit prospective scientific amendment and a fresh combined
+budget. Budget limits and missing-provenance gates remain in force.

@@ -10,6 +10,10 @@ Verified milestone, 21 October 2026: the 12-cell agent CPU cost pack and its nat
 
 At the 15:09 UTC check, both behavioural quota retries and both aggregations were complete. Behavioural operator coverage is 38/39 cells: the five-second AR probe reached its bounded worker deadline. The conservative partial optimizer projection exceeds the CPU cap, so Stage B requires a workload/cost review before advancement. No benchmark jobs remain active or queued at that timestamp.
 
+The subsequent [AR repair and cost review](COMPUTE_AND_METADATA_RESOLUTION.md#autoregressive-repair-and-cost-review-21-october) restores the primary one-thread runtime setting for a separately registered AR retry and independently audits workload arithmetic. The corrected historical scenario remains far above 20,000 CPU core-hours; it is not observed expenditure or a guaranteed full-fit runtime. Stage B remains open, and complete scientific analysis is not admitted. Finite repair, software qualification and cost-audit jobs preserve the fixed cap and all scientific gates.
+
+At the 16:23 UTC closing check, AR retry 6678131, aggregation 6678132 and final cost audit 6678315 were all COMPLETED/0:0. The technical operator pack is now complete: **39/39 cells and 468/468 operations**. New software qualification 6675953 passed **1,504 tests** with zero failures, errors or skips. The reviewed historical optimizer scenario remains approximately 7.732 billion CPU core-hours, with full optimizer/inference/output work still incompletely measured. Resolving this benchmark gap therefore does not close Stage B's whole-study budget admission or the scientific provenance gates.
+
 | Stage | Work | Evidence required to advance | Principal artifacts |
 |---|---|---|---|
 | 0. Release and qualification | Freeze source/configuration; qualify Python, CUDA, R, OrthoFinder and TransDecoder on allocated hardware | Successful native jobs and verified software fixtures/files | Release identity, qualification receipts, native accounting |
