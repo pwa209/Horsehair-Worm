@@ -8,12 +8,15 @@ from __future__ import annotations
 
 import copy
 from contextlib import contextmanager, nullcontext
+from dataclasses import dataclass
 import hashlib
 import importlib.util
 import io
 import json
 from pathlib import Path
 import re
+import math
+import subprocess
 import time
 
 from . import agents, agent_analysis as original, agent_execution_v2 as evaluation
@@ -38,6 +41,7 @@ ARCHIVE_PACK_QUALIFICATION_PATH = 'maintenance/study-af-execution-support-v1-202
 ARCHIVE_PACK_QUALIFICATION_JOB = '6684484'
 ARCHIVE_CELL_KEYS = {'evaluation_case', 'policy_inputs', 'archive_directory', 'index_sha256', 'archive_sha256',
                      'pack_intent', 'roundtrip', 'pack_receipt', 'pack_producer'}
+ARCHIVE_NATIVE_REPAIR_SHA256 = 'f189d515acdcba105fda56dd8d52c08044db736c8de9176fa5488931d428e7aa'
 
 
 def _require(value, message):
@@ -128,7 +132,7 @@ def _archive_metadata(root, helper, binding):
     return helper.strict_json(raw)
 
 
-def _archive_context(root, binding, cells):
+def _archive_context(root, binding, cells, *, native_deadline=None):
     """Load only an explicitly pinned operational reader; no data-supplied code."""
     if binding is None:
         return None
@@ -153,14 +157,21 @@ def _archive_context(root, binding, cells):
     _require(isinstance(roster, dict) and all(isinstance(k, str) and k in {str(i) for i in range(240)} for k in roster),
              'Archive cells must use exact canonical decimal policy indices')
     by_index = {cell['index']: cell for cell in cells}
+    # One fresh terminal owner read for this complete in-memory context. Each
+    # policy still checks the selected cost row and exact Q/JUnit bytes. This
+    # object is never loaded from metadata, written, cached globally or reused
+    # by another _archive_context call.
+    pack_qualification = (_pack_qualification(root, {'path': str(root / ARCHIVE_PACK_QUALIFICATION_PATH),
+        'sha256': ARCHIVE_PACK_QUALIFICATION_SHA256}, native_deadline=native_deadline) if roster else None)
     for key, descriptor in roster.items():
         _require(int(key) in by_index, 'Archive cell is absent from the original campaign')
-        _archive_descriptor(root, helper, descriptor, by_index[int(key)])
+        _archive_descriptor(root, helper, descriptor, by_index[int(key)], pack_qualification=pack_qualification)
     _bound(root, registry['archive_helper'], json_file=False); _bound(root, binding, json_file=False)
-    return {'binding': copy.deepcopy(binding), 'registry': registry, 'helper': helper}
+    return {'binding': copy.deepcopy(binding), 'registry': registry, 'helper': helper,
+            'pack_qualification': pack_qualification}
 
 
-def _archive_descriptor(root, helper, descriptor, cell):
+def _archive_descriptor(root, helper, descriptor, cell, *, pack_qualification=None):
     """Metadata/native provenance, independently of endpoint reads."""
     _require(isinstance(descriptor, dict) and set(descriptor) == ARCHIVE_CELL_KEYS,
              'Exact immutable policy archive descriptor required')
@@ -201,7 +212,7 @@ def _archive_descriptor(root, helper, descriptor, cell):
              and roundtrip.get('bytes') == index.get('source_content_bytes'), 'Exact verified pack/roundtrip receipt required')
     producer = descriptor['pack_producer']
     _require(isinstance(producer, dict) and set(producer) == {'native', 'result', 'qualification'}, 'Separate pack-producer native proof and qualification required')
-    _pack_qualification(root, producer['qualification'])
+    _pack_qualification(root, producer['qualification'], observation=pack_qualification)
     job, _ = helper.verify_native(producer['native'], root, completed=True)
     result = _archive_metadata(root, helper, producer['result'])
     expected = {'schema_version': 1, 'status': 'complete_verified_policy_archive_pack', 'native_job_id': job,
@@ -216,7 +227,14 @@ def _archive_descriptor(root, helper, descriptor, cell):
     return index
 
 
-def _pack_qualification(root, locator):
+@dataclass(frozen=True)
+class _PackQualificationObservation:
+    root: str
+    job_id: str
+    allocation_json: bytes
+
+
+def _pack_qualification(root, locator, *, observation=None, native_deadline=None):
     """The initial pack transport supports only the already qualified4f frame.
 
     This does not claim the private pack wrapper belongs to the public1694-test
@@ -230,25 +248,99 @@ def _pack_qualification(root, locator):
              and q.get('source_sha256') == ARCHIVE_PACK_FRAMEWORK_SHA256 and q.get('config_sha256') == BASE_CONFIG_SHA256
              and q.get('source_verified_unchanged') is True and q.get('slurm_job_id') == ARCHIVE_PACK_QUALIFICATION_JOB
              and q.get('test_counts') == counts, 'Full pinned1694-test pack framework qualification required')
-    proof = completed_native_dependency(root, ARCHIVE_PACK_QUALIFICATION_JOB)
-    _require(proof is not None, 'Pack framework native qualification completion is missing')
-    record = proof['native_records'][ARCHIVE_PACK_QUALIFICATION_JOB]
-    _require(record.get('state') == 'COMPLETED' and record.get('user') == 'pwa209'
-             and record.get('account') == 'def-ptewarie_cpu' and record.get('job_id_raw') == ARCHIVE_PACK_QUALIFICATION_JOB
-             and record.get('unallocated_metadata') is False and record.get('cpus') == 4
-             and type(record.get('elapsed_seconds')) is int and 0 < record['elapsed_seconds'] <= 3600
-             and 'gpu' not in record.get('alloc_tres', '').lower(), 'Owned four-CPU native pack qualification proof required')
+    if observation is None:
+        joined = _owned_completed_cpu_qualification(root, ARCHIVE_PACK_QUALIFICATION_JOB, deadline=native_deadline)
+        observation = _PackQualificationObservation(str(Path(root).resolve()), ARCHIVE_PACK_QUALIFICATION_JOB,
+            json.dumps(joined, sort_keys=True, separators=(',', ':'), allow_nan=False).encode())
+    else:
+        _require(type(observation) is _PackQualificationObservation
+                 and observation.root == str(Path(root).resolve()) and observation.job_id == ARCHIVE_PACK_QUALIFICATION_JOB,
+                 'Only this context-scoped pack qualification observation is reusable')
+        joined = json.loads(observation.allocation_json)
+        current = completed_native_dependency(root, ARCHIVE_PACK_QUALIFICATION_JOB)
+        _require(current is not None and current['native_records_sha256'] == joined['completion']['native_records_sha256'],
+                 'Selected qualification allocation changed within this archive context')
     artifact = q.get('artifacts', {}).get('junit', {})
     junit = _bound(root, {'path': artifact.get('path'), 'sha256': artifact.get('sha256')}, json_file=False)
     from .cli import _qualification_junit
     _require(junit.is_relative_to(root / 'state/qualification-evidence') and junit.stat().st_size == artifact.get('bytes')
              and _qualification_junit(junit) == counts, 'Actual pinned1694-test native JUnit bytes required')
+    return observation
+
+
+def _owned_completed_cpu_qualification(root, job, *, deadline=None):
+    """Join fresh strict owner metadata to the unchanged positive cost proof.
+
+    Resource-budget native rows contain allocation costs, not owner/account or
+    allocation-template fields. Those are independently read through the
+    strict native parser, then joined on the complete scalar allocation.
+    Neither row is enriched, fabricated, substituted or written here.
+    """
+    _require(type(job) is str and re.fullmatch('[1-9][0-9]*', job), 'Exact scalar native qualification job required')
+    proof = completed_native_dependency(root, job)
+    _require(proof is not None and set(proof.get('native_records', {})) == {job},
+             'Positive persisted native qualification completion is missing')
+    cost = proof['native_records'][job]
+    _require(cost.get('state') == 'COMPLETED' and cost.get('exit_code') == '0:0'
+             and cost.get('job_id') == cost.get('job_id_raw') == job
+             and type(cost.get('cpus')) is int and cost['cpus'] == 4
+             and type(cost.get('gpus')) is int and cost['gpus'] == 0
+             and type(cost.get('elapsed_seconds')) is int and 0 < cost['elapsed_seconds'] <= 3600,
+             'Positive scalar four-CPU cost-ledger qualification proof required')
+    # Import at call time so the launcher's reviewed read guard remains in
+    # force. No scheduler mutation or retry of a scientific operation occurs.
+    from . import repair
+    _require(digest(Path(repair.__file__)) == ARCHIVE_NATIVE_REPAIR_SHA256,
+             'Qualification owner read requires the exact source-checked thirteen-field native parser')
+    now = time.monotonic()
+    deadline = now + 60 if deadline is None else deadline
+    _require(type(deadline) in (int, float) and math.isfinite(deadline) and now < deadline,
+             'Finite native qualification query deadline required')
+    deadline = min(deadline, now + 60)
+    def bounded_runner(command, **kwargs):
+        expected = ['sacct', '--array', '-j', job, '--format=' + repair.REPAIR_NATIVE_FORMAT,
+                    '--units=K', '--noheader', '--parsable2']
+        _require(command == expected and kwargs == {'text': True, 'capture_output': True},
+                 'Only the exact read-only thirteen-field native qualification query is supported')
+        remaining = deadline - time.monotonic()
+        _require(0 < remaining <= 60, 'Native qualification query deadline exhausted')
+        response = subprocess.run(command, **kwargs, timeout=remaining)
+        _require(type(response.returncode) is int and isinstance(response.stdout, str) and isinstance(response.stderr, str)
+                 and len(response.stdout.encode()) <= 1_000_000 and len(response.stderr.encode()) <= 1_000_000,
+                 'Bounded native qualification response required')
+        return response
+    records = repair._repair_native_states([job], {}, runner=bounded_runner, owner='pwa209', account='def-ptewarie_cpu')
+    _require(time.monotonic() < deadline, 'Native qualification owner read exceeded its deadline')
+    _require(digest(Path(repair.__file__)) == ARCHIVE_NATIVE_REPAIR_SHA256,
+             'Strict qualification native parser changed during the read')
+    _require(set(records) == {job}, 'Exactly one fresh owned native qualification allocation required')
+    native = records[job]
+    tres = native.get('alloc_tres', '')
+    parts = tres.split(',') if type(tres) is str and tres else []
+    _require(parts and all(part.count('=') == 1 and all(part.split('=', 1)) for part in parts),
+             'Nonempty explicit native qualification allocation TRES required')
+    resources = dict(part.split('=', 1) for part in parts)
+    _require(len(resources) == len(parts) and resources.get('cpu') == str(cost['cpus'])
+             and 'gpu' not in tres.lower(), 'Unambiguous CPU-only native qualification TRES must match its cost row')
+    _require(native.get('user') == 'pwa209' and native.get('account') == 'def-ptewarie_cpu'
+             and native.get('unallocated_metadata') is False
+             and all(native.get(key) == cost[key] for key in ('state', 'exit_code', 'job_id_raw', 'cpus', 'elapsed_seconds'))
+             and type(native.get('cpus')) is int and type(native.get('elapsed_seconds')) is int
+             and native.get('node_list') not in {None, '', 'None assigned', 'None', 'Unknown'}
+             and native.get('start') not in {None, '', 'None', 'Unknown'}
+             and native.get('end') not in {None, '', 'None', 'Unknown'},
+             'Fresh owned native qualification differs from its positive persisted allocation')
+    current = completed_native_dependency(root, job)
+    _require(current is not None and current['native_records_sha256'] == proof['native_records_sha256'],
+             'Selected positive native qualification cost row changed during the owner query')
+    return {'completion': proof, 'native': native}
 
 
 @contextmanager
 def _archived_conditions(root, context, descriptor, cell, value, assembly):
     """One verified reader, every original raw packet; never a partial fallback."""
-    helper = context['helper']; index = _archive_descriptor(root, helper, descriptor, cell)
+    helper = context['helper']; index = _archive_descriptor(root, helper, descriptor, cell,
+        pack_qualification=context['pack_qualification'])
     source = Path(cell['evaluation_case']).resolve()
     _, _, native_result = helper.verify_authority(index['authority'], source, root, policy=True)
     _require(native_result.get('result') == assembly
@@ -285,7 +377,7 @@ def _archived_conditions(root, context, descriptor, cell, value, assembly):
         yield reader, committed
     # Recheck the pathname too: a replaced archive must not hide behind an open fd.
     _bound(root, {'path': str(Path(descriptor['archive_directory']) / 'evidence.tar'), 'sha256': descriptor['archive_sha256']}, json_file=False)
-    _archive_descriptor(root, helper, descriptor, cell)
+    _archive_descriptor(root, helper, descriptor, cell, pack_qualification=context['pack_qualification'])
 
 
 def _campaign(config, protocol, plan, root):

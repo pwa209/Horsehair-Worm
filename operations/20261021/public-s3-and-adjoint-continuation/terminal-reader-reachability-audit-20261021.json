@@ -1,0 +1,385 @@
+{
+  "actual_recoverable_bytes": null,
+  "actual_recoverable_regular_files": null,
+  "admission_authority": false,
+  "date": "2026-10-21",
+  "entrypoint_edges": [
+    {
+      "caveat": "Cost rows have no user/account/unallocated_metadata/alloc_tres; separate fresh strict13-field repair metadata is required for ownership. The mutable ledger must remain unpacked; unrelated updates are allowed only if selected final rows remain equal.",
+      "does_not_reopen": [
+        "358 per-call query/stdout/stderr/result files"
+      ],
+      "entrypoint": "4f slurm.completed_native_dependency / _verify_completed_dependency",
+      "retains": [
+        "selected final cost records and hashes inside returned proof",
+        "native_records_sha256",
+        "source_path",
+        "source_file_sha256_at_capture"
+      ],
+      "runtime_reads": [
+        "state/resource-budget.json"
+      ]
+    },
+    {
+      "caveat": "This statement is confined to inspected source, not a complete transitive graph of every historical external receipt.",
+      "does_not_reopen": [
+        "earlier358 raw read files",
+        "earlier scoped-registry diagnostic result files"
+      ],
+      "entrypoint": "4f campaign.combined_admission",
+      "retains": [
+        "native_observed inline in each admission receipt",
+        "native_accounting cost rows inline",
+        "registered pair hashes and unique allocation bindings"
+      ],
+      "runtime_reads": [
+        "all source/config-bound plan+submission-ledger pairs via pinned49815 registry reader",
+        "state/resource-budget.json",
+        "fresh strict sacct ownership/allocation query",
+        "fresh cost-accounting query"
+      ]
+    },
+    {
+      "caveat": "Worker receipt embeds original allocation fields; this is not permission to alter or archive that canonical worker receipt.",
+      "does_not_reopen": [
+        "358 historical call directories",
+        "100d prior scontrol raw responses",
+        "5004 earlier quota diagnostics"
+      ],
+      "entrypoint": "475a controller source_guard / collect_packets / dispatch._state",
+      "retains": [
+        "normalized job/state/exit/cpus/gpus/elapsed/end/user/account in state.native_proof",
+        "raw worker receipt SHA and receipt value"
+      ],
+      "runtime_reads": [
+        "descriptor and stable worker descriptor files+SHA",
+        "qualified source/protocol/private Q/JUnit/test-source files",
+        "canonical campaign plan/state binding/gzip state",
+        "worker receipt+SHA, checkpoint and training summary",
+        "evaluation plan/binding and condition snapshots",
+        "current fresh parsed native values"
+      ]
+    },
+    {
+      "caveat": "These directly referenced proof files remain unpacked unless a newly qualified resolver explicitly covers their consumers; they are not merely expendable raw diagnostics.",
+      "entrypoint": "045d verify_native / verify_authority / archive proof consumers",
+      "retains": [
+        "all explicit source locators and unchanged raw bytes"
+      ],
+      "runtime_reads": [
+        "separate completion locator path+SHA",
+        "separate owner locator path+SHA",
+        "state/resource-budget.json selected row",
+        "canonical authoritative worker/assembly result receipt path+SHA"
+      ]
+    },
+    {
+      "caveat": "Preserve a whole closed call bundle and its internal locators byte for byte; do not rewrite paths in original receipts. Registry referenced plans/ledgers themselves remain unpacked.",
+      "entrypoint": "358 /100d /5004 /2583 historical read diagnostics",
+      "internal_edges": [
+        "358 result/response record stdout/stderr digests inside same immutable call directory",
+        "100d response/exception records store exact stdout/stderr path+bytes+SHA locators",
+        "5004 result stores exact attempt-after path+bytes+SHA locator",
+        "2583 result actual_reads list original canonical plan/ledger path+canonical SHA"
+      ],
+      "runtime_reads": [
+        "new native queries or new original registry reads only"
+      ]
+    }
+  ],
+  "existing_045d_domain": {
+    "allowed_prefixes": [
+      "accounting-reads",
+      "scheduler-reads",
+      "quota-reads",
+      "held-reads"
+    ],
+    "does_not_support_new_batch_or_controller_domain_without_new_qualification": true,
+    "future_removal_minimum_additional_regular_files": [
+      "removal.mutex",
+      "removal.mutex.owner.json",
+      "removal-journal.json"
+    ],
+    "not_supported": [
+      "registered-snapshot-reads",
+      "registration-lock-* / lock-attempt diagnostics",
+      "terminal controller segment area domains",
+      "arbitrary proof/qualification/plan/ledger/source files"
+    ],
+    "pack_persistent_names": [
+      "pack-intent.json",
+      "evidence.tar",
+      "index.json",
+      "roundtrip.json",
+      "pack-receipt.json"
+    ],
+    "pack_persistent_regular_files": 5,
+    "roundtrip_peak_additional_regular_files_formula": "member_count + 12, before any original removal; native wrapper/authority/registry files additional.",
+    "supports": "Only terminal native-JOB worker cases, source-bound by separate final cost and owner proofs plus unchanged authoritative result."
+  },
+  "file_math": {
+    "100d_scontrol_files": {
+      "formula": "1 intent +4 per attempt +1 final result",
+      "one_read_success": 6,
+      "three_reads_max": 14
+    },
+    "2583_registry_files": {
+      "controller_lock_max_with_exhaustion": 31,
+      "installation_once_per_process": 1,
+      "one_read_success": 2,
+      "three_attempts_max": 6,
+      "worker_lock_max_with_exhaustion": 121
+    },
+    "358_sacct_files": {
+      "formula": "1 intent +4 per executed query +1 per prior/error verdict +1 final result",
+      "one_read_success": 6,
+      "third_read_success": 16,
+      "three_read_failure_max": 17
+    },
+    "5004_quota_files": {
+      "five_calls_max": 12,
+      "formula": "1 intent +2 per attempt +1 final result",
+      "one_call_success": 4
+    },
+    "actual_16600_target_demonstrated": false,
+    "count_basis": "Study census counts owned regular files, not directories; personal Lustre inode quota also counts directories. Empty source directories are not removed or credited here.",
+    "forecast_status": "not_admitted_actual_roster_not_measured",
+    "future_net_savings_formula": "M_verified_original_regular_files_actually_removed -5*archive_buckets -new_authority_registry_proof_files -new_native_wrapper_or_resolver_files -removal_journal_mutex_overhead. Requires separately reviewed removal and fresh census; currently NOT authorized or measured.",
+    "no_delete_phase": "Net inode change is positive: all original M remain, plus five pack outputs per bucket + authority/registry/native wrapper evidence; roundtrip temporarily adds up to M+12 under existing045d. Credited savings exactly0.",
+    "ordinary_f00d_worker_existing_prefix_diagnostics": {
+      "basis": "Two successful first-attempt358 calls for combined admission (12), one100d scheduler read(6), one5004 quota call(4). This is a source-derived ordinary path, not a measured universal minimum or forecast.",
+      "regular_files": 22
+    },
+    "required_native_measurement_fields": [
+      "source census path/SHA/start/end",
+      "producer job/source/plan/script/ledger proof locators",
+      "exact regular-file count M and byte sum",
+      "protected and unresolved counts+reasons",
+      "number of archive buckets B and exact new output closure H",
+      "peak additional Lustre files/bytes and personal inode reserve",
+      "fresh cost and ownership packet schemas",
+      "no-delete net current and hypothetical post-removal projections separately"
+    ],
+    "target_16600_sensitivity_only": {
+      "caveat": "Additional authority/native/removal files reduce savings further. Terminal controller batches may contain many more files, but actual count unknown; do not credit this scenario.",
+      "per_worker_archive_optimistic_net_upper_bound": 17,
+      "worker_cases_required_if_each_has22_files_and_only5_archive_outputs": 977
+    }
+  },
+  "kind": "source_only_terminal_reader_reachability_and_archive_design_v1",
+  "next_actions": [
+    "Root supplies or schedules a finite read-only classifier using the exact fresh storage-entry-sizes.json pair and canonical proof entrypoints; no full hashing/deletion on login.",
+    "Measure terminal worker versus terminal controller versus unknown producer families and internal/transitive locators before selecting a bucket.",
+    "Implement a new explicit no-delete bucket archive/resolver canary only after domain and peak budget review; keep existing archive helper sources immutable.",
+    "Qualify every affected consumer against realistic separate cost/ownership schemas and missing-original refusal before any future removal consideration."
+  ],
+  "original_files_removed": false,
+  "proposed_no_delete_resolver": {
+    "implemented": false,
+    "kind": "prospective_original_path_sha_archive_resolver_v1",
+    "peak_mitigation_proposal": "A newly qualified independent roundtrip on node-local storage or one exact member at a time can bound Lustre peak inode demand. Existing045d unpacks all members and must retain its member_count+12 bound; do not silently lower that bound.",
+    "preferred_batching": "New separately qualified bucket domain across many closed producers, with exact per-producer authority and global member paths. Avoid one archive per six-file call; metadata overhead otherwise defeats inode savings.",
+    "read_api": "read_original_bytes(original_absolute_path, expected_raw_sha256, maximum_bytes, pinned_registry_locator) -> original bytes plus resolved provenance",
+    "registry_member_fields": [
+      "original_absolute_path",
+      "producer_job_id",
+      "source_case",
+      "reader_family",
+      "source_bytes",
+      "source_sha256",
+      "archive_path",
+      "archive_sha256",
+      "index_sha256",
+      "member_path",
+      "producer_authority_packet_sha256",
+      "consumer_scope"
+    ],
+    "rules": [
+      "Preserve every original raw receipt/path/digest unchanged. Resolver is an explicit consumer API, never a global Path/open monkeypatch or symlink replacement.",
+      "Original present: require exact raw SHA. Archive present: validate whole archive/index/authority and exact original-path-to-member mapping. Both present: require both bytes identical; disagreement refuses, with no favourable fallback.",
+      "Original absent is a refusal until a separately qualified consumer migration and explicit removal/reconciliation proof permit archive resolution. Initial pack-and-resolve phase requires originals retained.",
+      "One fresh strict ownership query and separately unchanged final cost proofs retain their distinct schemas. Bind both original domains in one finite producer-authority packet; do not enrich cost rows synthetically.",
+      "Return exact raw bytes, then use the original parser. Relative internal locators resolve using their original absolute path; never silently rebase paths into an archive.",
+      "Immutable registry+plan binding and state/descriptor CAS install; no automatic replay, no archive cache standing in for a fresh native ownership/accounting check.",
+      "Whole-package/public-source and private consumer qualification, synthetic corrupt/missing/mixed-domain/active-producer tests and independent native roundtrip are prerequisites. Existing045d/4f sources remain unchanged."
+    ]
+  },
+  "protected_unpacked_roots_and_files": [
+    "state/resource-budget.json",
+    "state/native-accounting.tsv",
+    "all permanent kernel mutex inodes and owner files",
+    "all source/config-bound plans, scripts and submission ledgers",
+    "canonical worker receipts, descriptors, qualified source trees and source identity files",
+    "qualification/JUnit/test-source and canary evidence used by live verifiers",
+    "campaign state/binding, frozen protocol, original checkpoint, assembly/evaluation summaries",
+    "completion/owner authority locator targets unless every reader is separately migrated"
+  ],
+  "safe_candidate_scope": [
+    "Begin with a bounded native read-only measured roster of regular files under explicit producer-owned native/terminal controller areas. Join exact producer ID to source-bound plan/ledger/script and fresh strict owner record plus unchanged final cost proof.",
+    "Producer must be terminal and not current job or any active controller; requested jobs appearing in an old query may remain live, because producer closure, not queried-job state, determines whether these historical bytes can still be written.",
+    "Never infer a producer from an arbitrary path substring, PID, modified time or requested_ids. Unresolved producer or transitive reader is ineligible.",
+    "Whitelist whole closed reader bundles and exact leaf grammar; reject .partial files, active locks, symlinks/hardlinks, foreign owner, duplicates, unbounded rows or source changes.",
+    "No claim of globally unreachable files can be made from code inspection alone. Inventory exact explicit path/SHA edges from current canonical descriptors, source-bound receipts and archive registry entrypoints before a future migration."
+  ],
+  "schema_version": 1,
+  "scientific_result": false,
+  "scope": "Static review of frozen4f commit6ed201653dfa and exact private F2/read guards; no native filesystem inventory, archive, resolver, deletion or credit executed.",
+  "source_pins": {
+    "src/horsehair/budget.py": {
+      "anchors": {
+        "native_accounting": {
+          "first_line": 199,
+          "last_line": 313
+        }
+      },
+      "bytes": 30999,
+      "git_commit": "6ed201653dfa",
+      "sha256": "49509a7fc9484d9c0859ce1ef7501e4a0b57b4d29864496dc599fa76d18e269c"
+    },
+    "src/horsehair/campaign.py": {
+      "anchors": {
+        "combined_admission": {
+          "first_line": 69,
+          "last_line": 114
+        }
+      },
+      "bytes": 7135,
+      "git_commit": "6ed201653dfa",
+      "sha256": "7d494d4bb619063fb3dca4e557250949ae3617b5ab35794153dc2a4a4406462d"
+    },
+    "src/horsehair/slurm.py": {
+      "anchors": {
+        "_verify_completed_dependency": {
+          "first_line": 61,
+          "last_line": 69
+        },
+        "completed_native_dependency": {
+          "first_line": 23,
+          "last_line": 58
+        }
+      },
+      "bytes": 30479,
+      "git_commit": "6ed201653dfa",
+      "sha256": "19473528d9684bbbc9a241a621283b105beb8bfa1352f168bf21e628327e8d37"
+    },
+    "tests/fixtures/evidence_archive/verified-evidence-archive-20261021.py": {
+      "anchors": {
+        "_create_pack": {
+          "first_line": 610,
+          "last_line": 649
+        },
+        "pack_terminal_readers": {
+          "first_line": 684,
+          "last_line": 687
+        },
+        "reader_evidence_name": {
+          "first_line": 141,
+          "last_line": 156
+        },
+        "reader_roster": {
+          "first_line": 324,
+          "last_line": 343
+        },
+        "verify_authority": {
+          "first_line": 254,
+          "last_line": 268
+        },
+        "verify_native": {
+          "first_line": 218,
+          "last_line": 251
+        }
+      },
+      "bytes": 55510,
+      "git_commit": null,
+      "sha256": "045d8650db62c0fa52d7f56bb7bdb2669729509c23ecfbbc847e73cbbff8d42a"
+    },
+    "work/native-accounting-read-guard-20261021.py": {
+      "anchors": {
+        "install": {
+          "first_line": 84,
+          "last_line": 165
+        }
+      },
+      "bytes": 8746,
+      "git_commit": null,
+      "sha256": "358145f195ee70d485fa1c7547fb8d593323bdaaaf7e7e905ce195a79dfcea91"
+    },
+    "work/native_quota_read_wait_20261021.py": {
+      "anchors": {
+        "require_storage_headroom_with_wait": {
+          "first_line": 78,
+          "last_line": 209
+        }
+      },
+      "bytes": 11259,
+      "git_commit": null,
+      "sha256": "5004a100b930691709357f4f3e7baaee57ebd11fae2c39fd26413c3bf94d9045"
+    },
+    "work/native_scheduler_read_20261021.py": {
+      "anchors": {
+        "run_scontrol_job": {
+          "first_line": 40,
+          "last_line": 107
+        }
+      },
+      "bytes": 5682,
+      "git_commit": null,
+      "sha256": "100d21a32b95a621740f13d6a4afd502ea91ec6a0d129de54c7f6be99342f8b3"
+    },
+    "work/registered-snapshot-read-guard-v3-20261021.py": {
+      "anchors": {
+        "guarded_reader": {
+          "first_line": 107,
+          "last_line": 195
+        },
+        "install": {
+          "first_line": 216,
+          "last_line": 256
+        },
+        "registration_lock": {
+          "first_line": 67,
+          "last_line": 104
+        }
+      },
+      "bytes": 15419,
+      "git_commit": null,
+      "sha256": "2583776f764f4738dd0285f7885709bc9dc45044cfea52c44909c4723f0d64b6"
+    },
+    "work/run-af-agent-controller-registry-v4-20261021.py": {
+      "anchors": {
+        "collect_packets": {
+          "first_line": 613,
+          "last_line": 657
+        },
+        "normalized_native": {
+          "first_line": 117,
+          "last_line": 122
+        },
+        "read_evidence": {
+          "first_line": 315,
+          "last_line": 319
+        },
+        "source_guard": {
+          "first_line": 322,
+          "last_line": 335
+        },
+        "storage_reservation": {
+          "first_line": 353,
+          "last_line": 389
+        },
+        "tick": {
+          "first_line": 764,
+          "last_line": 806
+        },
+        "verify_held": {
+          "first_line": 709,
+          "last_line": 720
+        }
+      },
+      "bytes": 57986,
+      "git_commit": null,
+      "sha256": "475a170aab2d158cfd17adb250707e1d0767086d4c50b95516c360f2222560f8"
+    }
+  },
+  "storage_credit_authorized": false
+}

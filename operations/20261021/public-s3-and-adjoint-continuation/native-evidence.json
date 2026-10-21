@@ -1,0 +1,66 @@
+{
+  "adjoint": {
+    "local_independent_tests": 72,
+    "native_job_id": "6701246",
+    "native_prerequisite": "afterok:6699432",
+    "numerical_kernel_unchanged": true,
+    "prefix_receipt_digest": "Observed only at native runtime, then strict positive producer/source/32-case/stage-one proof required",
+    "state_at_last_check": "PENDING",
+    "whole_cohort_qualified": false
+  },
+  "admission_authority": false,
+  "archive_status": {
+    "credited_inode_savings": 0,
+    "older_076b_private_readers": "Integration withheld after actual cost-ledger schema mismatch found; corrected public source requires separate new full qualification",
+    "production_originals_removed": false,
+    "terminal_reader_roster": "Static reachability proposal only; actual eligible producers and file savings unresolved"
+  },
+  "author_contact": false,
+  "census": {
+    "bytes": 1138317866984,
+    "elapsed_seconds": 2085,
+    "exit_code": "0:0",
+    "files": 94984,
+    "freshness_clock": "Original quota capture before sweep; unchanged",
+    "native_job_id": "6699739",
+    "native_state": "COMPLETED",
+    "receipt_sha256": "cf46c12d778cc9941a8f37904badf664fdc927ce83537279819bc54fdd2935cc",
+    "sweep_sha256": "b6934b42d31f8f8bf4fdc884e11363f22f78cedcf0c81ed4e4713ad99163b6b5"
+  },
+  "manufacturer_format": {
+    "bytes": 342024,
+    "exact_count_accumulation_intervals_qualified": false,
+    "sha256": "69a5f68c39f4afe9a51a491fc08130896a25d18cd0fefd1ca25e0274800d58dc",
+    "sha256_basis": "first_complete_acquisition_not_provider_checksum",
+    "url": "https://trikinetics.com/Downloads/DAMSystem3%20Software%20Data%20Sheet.pdf"
+  },
+  "new_local_raw_data_relay": false,
+  "observed_utc": "2026-10-21T21:42:00Z",
+  "schema_version": 1,
+  "scientific_result": false,
+  "vtl_schema": {
+    "actual_private_tests": {
+      "acquisition": 68,
+      "parser": 40,
+      "wrapper": 45
+    },
+    "elapsed_seconds": 135,
+    "exit_code": "0:0",
+    "inventory_sha256": "018026975cb57ead1a3312b44fceacc2a9445a72dd4c4c2d25f5fd3cbbb11be4",
+    "native_job_id": "6700647",
+    "native_state": "COMPLETED",
+    "scientific_gates_cleared": false,
+    "wrapper_receipt_sha256": "d08c0e300ca99c425b6673c62b5c7e13b08c26fe9d65316e525114cd550e28fc"
+  },
+  "vtl_stock_workbook": {
+    "bytes": 267375,
+    "gene_control_edges_qualified": false,
+    "provider_json_sha256": "91bde60e247081cd5afef1a1a121bda8577308bb9a78ab81d13f8f03625dfee1",
+    "provider_md5": "38192352700c09694811a8e8e43e8097",
+    "provider_md5_verified": true,
+    "receipt_sha256": "70da14b0c60ad281352f478d2cb2b7c93344944112217e8acf549877858f23be",
+    "sha256": "f8fb6db82687d2dad58215df15283a8d8640acec6c722d0966d9f6f5ca183cb8",
+    "url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC11063160.1/41467_2024_48005_MOESM8_ESM.xlsx",
+    "workbook_values_inspected": false
+  }
+}

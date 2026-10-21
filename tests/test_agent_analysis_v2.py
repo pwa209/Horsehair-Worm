@@ -366,7 +366,8 @@ def archive_native(root, job):
     record={'state':'COMPLETED','exit_code':'0:0','elapsed_seconds':12,'cpus':1,'gpus':0,
         'job_id':job,'job_id_raw':job,'cpu_core_hours':12/3600,'gpu_hours':0.,'basis':'sacct final allocated wall time'}
     ledger=root/'state/resource-budget.json'
-    value=read_json(ledger) if ledger.exists() else {'native_jobs':{}}
+    value=read_json(ledger) if ledger.exists() else {'native_jobs':{},'leases':{},
+        'spent_cpu_core_hours':0.,'spent_gpu_hours':0.}
     value['native_jobs'][job]=record;atomic_json(ledger,value)
     proof={'job_id':job,'array':None,'dependency_kind':'afterok','source_path':str(ledger),
         'source_file_sha256_at_capture':digest(ledger),'native_records':{job:record},
@@ -384,11 +385,26 @@ def archive_native(root, job):
 
 def archive_frame_qualification(root, monkeypatch):
     import xml.etree.ElementTree as ET
-    qjob=bridge.ARCHIVE_PACK_QUALIFICATION_JOB;archive_native(root,qjob)
-    ledger_path=root/'state/resource-budget.json';ledger=read_json(ledger_path)
-    ledger['native_jobs'][qjob].update(cpus=4,cpu_core_hours=48/3600,user='pwa209',account='def-ptewarie_cpu',
-        unallocated_metadata=False,alloc_tres='billing=4,cpu=4,mem=16G,node=1')
-    atomic_json(ledger_path,ledger)
+    import subprocess
+    from horsehair import budget,repair
+    qjob=bridge.ARCHIVE_PACK_QUALIFICATION_JOB
+    # Run the real accounting parser. Its persisted cost rows intentionally
+    # have no owner/account/template/TRES fields; source ownership comes from
+    # an independent strict native allocation read, never invented enrichment.
+    def accounting_runner(command,**kwargs):
+        assert command[0]=='sacct' and command[command.index('-j')+1]==qjob
+        return subprocess.CompletedProcess(command,0,
+            qjob+'|'+qjob+'|COMPLETED|12|4|billing=4,cpu=4,mem=16G,node=1|0:0|1024K\n','')
+    budget.native_accounting(root,[qjob],runner=accounting_runner)
+    native_path=root/'maintenance/archive-frame-native.txt';native_path.parent.mkdir(parents=True,exist_ok=True)
+    native_path.write_text(qjob+'|'+qjob+'|COMPLETED|0:0|12|4|billing=4,cpu=4,mem=16G,node=1|nc10000|'
+        '2026-10-21T10:00:00|2026-10-21T10:00:12|pwa209|def-ptewarie_cpu|1024K\n')
+    def native_query(command,**kwargs):
+        assert command==['sacct','--array','-j',qjob,'--format='+repair.REPAIR_NATIVE_FORMAT,
+            '--units=K','--noheader','--parsable2']
+        assert kwargs['text'] is True and kwargs['capture_output'] is True and 0<kwargs['timeout']<=60
+        return subprocess.CompletedProcess(command,0,native_path.read_text(),'')
+    monkeypatch.setattr(bridge.subprocess,'run',native_query)
     suite=ET.Element('testsuite',tests='1694',failures='0',errors='0',skipped='0')
     for i in range(1694):ET.SubElement(suite,'testcase',classname='synthetic_complete_framework',name=f'case_{i}')
     junit=root/'state/qualification-evidence/archive-frame.xml';junit.parent.mkdir(parents=True,exist_ok=True);junit.write_bytes(ET.tostring(suite))
@@ -481,10 +497,11 @@ def test_pack_framework_qualification_is_independent_full_and_positive(context,m
         artifact=q['artifacts']['junit'];junit=Path(artifact['path'])
         junit.write_text('<testsuite tests="1694"><testcase name="one"/></testsuite>')
         artifact.update(sha256=digest(junit),bytes=junit.stat().st_size)
-    elif change in {'failed_native','foreign_owner','zero_seconds','wrong_cpus'}:
+    elif change=='foreign_owner':
+        p=root/'maintenance/archive-frame-native.txt';p.write_text(p.read_text().replace('|pwa209|','|other|'))
+    elif change in {'failed_native','zero_seconds','wrong_cpus'}:
         ledger_path=root/'state/resource-budget.json';ledger=read_json(ledger_path);record=ledger['native_jobs'][bridge.ARCHIVE_PACK_QUALIFICATION_JOB]
         if change=='failed_native':record.update(state='FAILED',exit_code='1:0')
-        elif change=='foreign_owner':record['user']='other'
         elif change=='zero_seconds':record['elapsed_seconds']=0
         else:record['cpus']=1
         atomic_json(ledger_path,ledger)
@@ -496,6 +513,136 @@ def test_pack_framework_qualification_is_independent_full_and_positive(context,m
     if change=='none':bridge._pack_qualification(root,locator)
     else:
         with pytest.raises(ValueError):bridge._pack_qualification(root,locator)
+
+
+def test_native_owner_join_uses_actual_cost_only_accounting_and_strict_parser(context,monkeypatch):
+    root,*_=context;archive_frame_qualification(root,monkeypatch)
+    path=root/'state/resource-budget.json';before=path.read_bytes()
+    row=read_json(path)['native_jobs'][bridge.ARCHIVE_PACK_QUALIFICATION_JOB]
+    assert not {'user','account','unallocated_metadata','alloc_tres'} & set(row)
+    joined=bridge._owned_completed_cpu_qualification(root,bridge.ARCHIVE_PACK_QUALIFICATION_JOB)
+    assert joined['completion']['native_records'][bridge.ARCHIVE_PACK_QUALIFICATION_JOB]==row
+    assert joined['native']['user']=='pwa209' and joined['native']['account']=='def-ptewarie_cpu'
+    assert joined['native']['unallocated_metadata'] is False and path.read_bytes()==before
+
+
+@pytest.mark.parametrize('change',['native_missing','native_running','native_nonzero','native_cpus','native_elapsed',
+    'native_rawid','native_gpu','native_no_node','native_no_start','native_no_end','native_account','native_duplicate',
+    'native_empty_tres','native_tres_cpus','native_tres_duplicate','native_tres_missing_cpu',
+    'cost_bool_cpus','cost_bool_gpus','cost_gpu','cost_missing'])
+def test_native_owner_and_cost_projections_must_independently_agree(context,monkeypatch,change):
+    root,*_=context;archive_frame_qualification(root,monkeypatch);job=bridge.ARCHIVE_PACK_QUALIFICATION_JOB
+    native_path=root/'maintenance/archive-frame-native.txt';fields=native_path.read_text().strip().split('|')
+    if change.startswith('native_'):
+        position={'native_running':2,'native_nonzero':3,'native_cpus':5,'native_elapsed':4,'native_rawid':1,
+            'native_gpu':6,'native_no_node':7,'native_no_start':8,'native_no_end':9,'native_account':11,
+            'native_empty_tres':6,'native_tres_cpus':6,'native_tres_duplicate':6,'native_tres_missing_cpu':6}
+        value={'native_running':'RUNNING','native_nonzero':'1:0','native_cpus':'1','native_elapsed':'13','native_rawid':'999',
+            'native_gpu':'cpu=4,gres/gpu=1','native_no_node':'None assigned','native_no_start':'Unknown',
+            'native_no_end':'Unknown','native_account':'def-other_cpu','native_empty_tres':'',
+            'native_tres_cpus':'cpu=1,node=1','native_tres_duplicate':'cpu=4,cpu=4,node=1','native_tres_missing_cpu':'node=1,mem=16G'}
+        if change=='native_missing':native_path.write_text('')
+        elif change=='native_duplicate':
+            duplicate=fields.copy();duplicate[4]='13';native_path.write_text('|'.join(fields)+'\n'+'|'.join(duplicate)+'\n')
+        else:
+            fields[position[change]]=value[change];native_path.write_text('|'.join(fields)+'\n')
+    else:
+        ledger_path=root/'state/resource-budget.json';ledger=read_json(ledger_path);cost=ledger['native_jobs'][job]
+        if change=='cost_bool_cpus':cost['cpus']=True
+        elif change=='cost_bool_gpus':cost['gpus']=False
+        elif change=='cost_gpu':cost['gpus']=1
+        else:del ledger['native_jobs'][job]
+        atomic_json(ledger_path,ledger)
+    with pytest.raises(ValueError):bridge._owned_completed_cpu_qualification(root,job)
+
+
+def test_native_owner_read_cannot_hide_selected_cost_row_change(context,monkeypatch):
+    from horsehair import repair
+    root,*_=context;archive_frame_qualification(root,monkeypatch);job=bridge.ARCHIVE_PACK_QUALIFICATION_JOB
+    query=repair._repair_native_states
+    def changing_query(*args,**kwargs):
+        records=query(*args,**kwargs);path=root/'state/resource-budget.json';ledger=read_json(path)
+        ledger['native_jobs'][job]['elapsed_seconds']=13;atomic_json(path,ledger);return records
+    monkeypatch.setattr(repair,'_repair_native_states',changing_query)
+    with pytest.raises(ValueError,match='changed during'):bridge._owned_completed_cpu_qualification(root,job)
+
+
+def test_owner_observation_is_scoped_to_one_context_with_cost_and_junit_rechecks(context,monkeypatch):
+    root,*_=context;locator=archive_frame_qualification(root,monkeypatch);calls=[];query=bridge.subprocess.run
+    def counted(*args,**kwargs):calls.append(args[0]);return query(*args,**kwargs)
+    monkeypatch.setattr(bridge.subprocess,'run',counted)
+    observation=bridge._pack_qualification(root,locator)
+    assert len(calls)==1
+    assert bridge._pack_qualification(root,locator,observation=observation) is observation and len(calls)==1
+    bridge._pack_qualification(root,locator)
+    assert len(calls)==2  # A new context always performs a fresh strict read.
+    with pytest.raises(ValueError,match='context-scoped'):
+        bridge._pack_qualification(root,locator,observation={'allocation_json':observation.allocation_json})
+    assert len(calls)==2
+    path=root/'state/resource-budget.json';ledger=read_json(path)
+    ledger['native_jobs'][bridge.ARCHIVE_PACK_QUALIFICATION_JOB]['elapsed_seconds']=13;atomic_json(path,ledger)
+    with pytest.raises(ValueError,match='within this archive context'):
+        bridge._pack_qualification(root,locator,observation=observation)
+    assert len(calls)==2
+
+
+def test_context_scoped_owner_observation_never_skips_q_or_junit_bindings(context,monkeypatch):
+    root,*_=context;locator=archive_frame_qualification(root,monkeypatch)
+    observation=bridge._pack_qualification(root,locator)
+    q=read_json(Path(locator['path']));junit=Path(q['artifacts']['junit']['path']);junit.write_text('<testsuite/>')
+    with pytest.raises(ValueError):bridge._pack_qualification(root,locator,observation=observation)
+
+
+@pytest.mark.parametrize('change',['expired','nan','bool','timeout','nonzero','bool_return','oversized','over_deadline','parser_source'])
+def test_native_owner_query_has_one_exact_bounded_source_checked_read(context,monkeypatch,change):
+    import subprocess
+    root,*_=context;archive_frame_qualification(root,monkeypatch);job=bridge.ARCHIVE_PACK_QUALIFICATION_JOB
+    original=bridge.subprocess.run;calls=[];clock=[100.]
+    monkeypatch.setattr(bridge.time,'monotonic',lambda:clock[0])
+    def query(command,**kwargs):
+        calls.append(command)
+        if change=='timeout':raise subprocess.TimeoutExpired(command,kwargs['timeout'])
+        response=original(command,**kwargs)
+        if change=='nonzero':response.returncode=1
+        if change=='bool_return':response.returncode=False
+        if change=='oversized':response.stdout='x'*1_000_001
+        if change=='over_deadline':clock[0]+=61
+        return response
+    monkeypatch.setattr(bridge.subprocess,'run',query)
+    if change=='parser_source':monkeypatch.setattr(bridge,'ARCHIVE_NATIVE_REPAIR_SHA256','f'*64)
+    deadline={'expired':99.,'nan':float('nan'),'bool':True}.get(change,160.)
+    with pytest.raises((ValueError,RuntimeError,subprocess.TimeoutExpired)):
+        bridge._owned_completed_cpu_qualification(root,job,deadline=deadline)
+    assert len(calls)==(0 if change in {'expired','nan','bool','parser_source'} else 1)
+
+
+@pytest.mark.parametrize('outcome',['complete','timeout'])
+def test_bounded_owner_query_composes_with_exact358_native_read_guard(context,monkeypatch,outcome):
+    import runpy
+    import subprocess
+    from horsehair import repair
+    root,*_=context;archive_frame_qualification(root,monkeypatch);job=bridge.ARCHIVE_PACK_QUALIFICATION_JOB
+    source=Path(__file__).parent/'fixtures/evidence_archive/native-accounting-read-guard-20261021.py.txt'
+    assert digest(source)=='358145f195ee70d485fa1c7547fb8d593323bdaaaf7e7e905ce195a79dfcea91'
+    original=repair._repair_native_states;transport=bridge.subprocess.run;calls=[]
+    def query(command,**kwargs):
+        calls.append(command);assert 0<kwargs['timeout']<=60
+        if outcome=='timeout':raise subprocess.TimeoutExpired(command,kwargs['timeout'])
+        return transport(command,**kwargs)
+    monkeypatch.setattr(bridge.subprocess,'run',query)
+    evidence=root/'maintenance/guard-composition';before=(root/'state/resource-budget.json').read_bytes()
+    try:
+        runpy.run_path(str(source),run_name='synthetic358_composition_only')['install'](evidence)
+        if outcome=='complete':
+            joined=bridge._owned_completed_cpu_qualification(root,job);assert joined['native']['user']=='pwa209'
+        else:
+            with pytest.raises(subprocess.TimeoutExpired):bridge._owned_completed_cpu_qualification(root,job)
+    finally:repair._repair_native_states=original
+    assert len(calls)==1 and (root/'state/resource-budget.json').read_bytes()==before
+    reads=list(evidence.glob('read-*'));assert len(reads)==1
+    result=read_json(reads[0]/'result.json')
+    assert result['status']==('strict_fresh_query_passed' if outcome=='complete' else 'strict_read_failed')
+    assert result['complete_reads_attempted']==1
 
 
 def test_real600_member_archive_is_identical_after_original_parts_are_absent(context,complete_policy,archive_support,monkeypatch):

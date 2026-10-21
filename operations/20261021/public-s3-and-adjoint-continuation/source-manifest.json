@@ -1,0 +1,73 @@
+{
+  "admission_authority": false,
+  "files": {
+    "README.md": {
+      "bytes": 861,
+      "role": "Time-stamped review evidence or scope statement",
+      "sha256": "a3b025451a63db586ac2d4fd2fa3aebe75fc498464d52c4d70607bfd6c46e8e1"
+    },
+    "build-adjoint-stage-309.py": {
+      "bytes": 5047,
+      "role": "Reviewed operational source; native execution evidence is separate",
+      "sha256": "6b8a0d181fa3fa5a617ab4b5bb7683a7d96bcb694aa43b45ef81588455bae450"
+    },
+    "hhw-af-dam-format-document-20261021-310.sh": {
+      "bytes": 2214,
+      "role": "Reviewed operational source; native execution evidence is separate",
+      "sha256": "59afd6bd5cda299e657526189116cc970697efa7ba64b178cedcb382711271b5"
+    },
+    "hhw-af-dam-format-document-20261021-312.sh": {
+      "bytes": 2261,
+      "role": "Reviewed operational source; native execution evidence is separate",
+      "sha256": "390c4a4d6d92ab24d4e34108a20e4d1937ad89ce3e77cf4c75043f28f3f32c11"
+    },
+    "hhw-af-vtl-oa-package-metadata-20261021-316.sh": {
+      "bytes": 2253,
+      "role": "Reviewed operational source; native execution evidence is separate",
+      "sha256": "2072bfe0ebe3430b69592c55c5ca906b864bf085ae0d012efadf52c6f7b826b6"
+    },
+    "hhw-af-vtl-s3-metadata-20261021-318.sh": {
+      "bytes": 2918,
+      "role": "Reviewed operational source; native execution evidence is separate",
+      "sha256": "4812640994abd15a934aa1735e3f6857838f85cc2d1484f92876e2d1df871e52"
+    },
+    "hhw-af-vtl-stock-workbook-20261021-319.sh": {
+      "bytes": 3425,
+      "role": "Reviewed operational source; native execution evidence is separate",
+      "sha256": "1a45ae76ea949aac552aa67b386dcf34d0d7570a0bb4b11b889da7895b230a00"
+    },
+    "native-evidence.json": {
+      "bytes": 2825,
+      "role": "Time-stamped review evidence or scope statement",
+      "sha256": "4cb671052e98bc3bf5691f9c0b7d7f7b9924091f166acb0f9f3967cbd00f23b7"
+    },
+    "run-full-cohort-prefix-v3-20261021.py": {
+      "bytes": 42308,
+      "role": "Reviewed operational source; native execution evidence is separate",
+      "sha256": "b131d6317858eae3c43c2ae7337f46e3173ab64355693980af2e7e489af46d3d"
+    },
+    "run-full-cohort-profile-v2-20261021.py": {
+      "bytes": 14309,
+      "role": "Reviewed operational source; native execution evidence is separate",
+      "sha256": "396e0ec6f9cf5936884fdd08d23e5e3d6e92f9bb06c654d747d04b2b27338787"
+    },
+    "run-full-record-adjoint-v3-20261021.py": {
+      "bytes": 50478,
+      "role": "Reviewed operational source; native execution evidence is separate",
+      "sha256": "120d3ec88267748ad0f36d03527702f7b5f163ce2f4c5b0aa0e455e6a1b3abca"
+    },
+    "terminal-reader-reachability-audit-20261021.json": {
+      "bytes": 18053,
+      "role": "Reviewed operational source; native execution evidence is separate",
+      "sha256": "d6f2a9d2039764457e577e17f6351c6fc9fe19a58df120b148c3d53576e7c0dc"
+    },
+    "test_full_record_adjoint_v3_20261021.py": {
+      "bytes": 40541,
+      "role": "Reviewed operational source; native execution evidence is separate",
+      "sha256": "fce4ba75f80dc25d52a301719531eb742080f3f38df632cd654c38c486d8fdd5"
+    }
+  },
+  "schema_version": 1,
+  "scientific_result": false,
+  "scope": "Reviewed source and time-stamped metadata evidence only"
+}
