@@ -1,0 +1,133 @@
+{
+  "execution_source_sha256": "4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1",
+  "generated_transport_envelopes_included": false,
+  "native_qualification_is_separate": true,
+  "operational_sources": [
+    {
+      "bytes": 7902,
+      "path": "acquire-af-zenodo-extension-20261021.py",
+      "sha256": "349183bb33fa3b5a13789e606e4a936884a9ed0c8b0bb675029d1995e1a7132e"
+    },
+    {
+      "bytes": 13042,
+      "path": "activate-af-execution-v2-20261021.py",
+      "sha256": "d4665603e04dad0d928af69558e2297ad15615cecf6808702b7251d3ccb32af1"
+    },
+    {
+      "bytes": 39617,
+      "path": "audit-secondary-evidence-20261021.py",
+      "sha256": "c1f1bbbec20889ef8500da77108063fc2acc36b9d3a812fd996525ba9ee8a701"
+    },
+    {
+      "bytes": 26857,
+      "path": "continuation-v2/continue-af-execution-v2-20261021.py",
+      "sha256": "3a74d7bc6b4dfd710b14c8a6a923d46fab769f735af1ed4a34f3d486a91075d5"
+    },
+    {
+      "bytes": 45352,
+      "path": "continuation-v2/run-af-agent-controller-v1-20261021.py",
+      "sha256": "3e30441d026706d1a10749ae6f4d892821defb9f0bf99070aec6a5a487710577"
+    },
+    {
+      "bytes": 28907,
+      "path": "continuation-v2/test_af_agent_controller_v1_20261021.py",
+      "sha256": "e3e32966662db6526455ea61a5b4bb1c220b52dde1e4e07c9b72d37c6e6d727c"
+    },
+    {
+      "bytes": 18096,
+      "path": "continuation-v2/test_continue_af_execution_v2_20261021.py",
+      "sha256": "ca7f57a4ecc1dfac3ff621ab40dbe0de76e4e4b4b2906ccaea3ee991dedbe788"
+    },
+    {
+      "bytes": 22429,
+      "path": "continue-af-execution-v1-20261021.py",
+      "sha256": "504aefed5a701eec8aa17e774d3191a5d323f8414f8be02c7590200c1b77e634"
+    },
+    {
+      "bytes": 8746,
+      "path": "native-accounting-read-guard-20261021.py",
+      "sha256": "358145f195ee70d485fa1c7547fb8d593323bdaaaf7e7e905ce195a79dfcea91"
+    },
+    {
+      "bytes": 11259,
+      "path": "native_quota_read_wait_20261021.py",
+      "sha256": "5004a100b930691709357f4f3e7baaee57ebd11fae2c39fd26413c3bf94d9045"
+    },
+    {
+      "bytes": 5682,
+      "path": "native_scheduler_read_20261021.py",
+      "sha256": "100d21a32b95a621740f13d6a4afd502ea91ec6a0d129de54c7f6be99342f8b3"
+    },
+    {
+      "bytes": 8822,
+      "path": "reconcile-af-initial-held-20261021.py",
+      "sha256": "c935f975e150bb162a8b6d77f0318dffe79318ff1133f52c23cccd36374bc0e2"
+    },
+    {
+      "bytes": 9729,
+      "path": "reconcile-af-initial-held-v2-20261021.py",
+      "sha256": "acd0edbd46e05cf0e37b4727e88afb8b023f3120c0a656d995ff5171d4b49599"
+    },
+    {
+      "bytes": 45352,
+      "path": "run-af-agent-controller-v1-20261021.py",
+      "sha256": "3e30441d026706d1a10749ae6f4d892821defb9f0bf99070aec6a5a487710577"
+    },
+    {
+      "bytes": 17404,
+      "path": "run-af-native-work-v1-20261021.py",
+      "sha256": "f00d4265a68a3ace5faa47da4fe2701fff3fe86d9132b09ea748e9f12471e4fd"
+    },
+    {
+      "bytes": 1494,
+      "path": "test_acquire_af_zenodo_extension_20261021.py",
+      "sha256": "f22948db1d8a36d0753a44838d9bf4f7ef9f5314a8231f068f08981d327144f7"
+    },
+    {
+      "bytes": 27941,
+      "path": "test_af_agent_controller_v1_20261021.py",
+      "sha256": "6ad8f396b98a3ac6104ab0a298849f4403ef332a8bd871ed30e9279dd813b9cf"
+    },
+    {
+      "bytes": 19051,
+      "path": "test_audit_secondary_evidence_20261021.py",
+      "sha256": "445a5efb612e76c2a0658aee8063da71d8569c5cc490985353ec576e2a41a716"
+    },
+    {
+      "bytes": 13889,
+      "path": "test_continue_af_execution_v1_20261021.py",
+      "sha256": "1c04c4e0bc5d39cdf2f8e9add36e549eb2552f1dc66ad095aa1021357ce1f2bb"
+    },
+    {
+      "bytes": 7014,
+      "path": "test_native_accounting_read_guard_20261021.py",
+      "sha256": "014261fc63c788c8a6fad02f40ed0bb4b56ec13132a0a519e9c6561fd2ffeb18"
+    },
+    {
+      "bytes": 13369,
+      "path": "test_native_quota_read_wait_20261021.py",
+      "sha256": "65c5e95f78257d72dacacd249475d24c4e60e6d1ddc9072dee91571361d6b481"
+    },
+    {
+      "bytes": 5074,
+      "path": "test_native_scheduler_read_20261021.py",
+      "sha256": "c7eaf4e8644bf2619e55020338e75e6f24a73f847248e70757c3921eb73d8d12"
+    },
+    {
+      "bytes": 1267,
+      "path": "test_reconcile_af_initial_held_20261021.py",
+      "sha256": "9234124c3ada7c83dae8a941c62e2bc4e35f1a52959c653b67267a9b15bf721c"
+    },
+    {
+      "bytes": 1270,
+      "path": "test_reconcile_af_initial_held_v2_20261021.py",
+      "sha256": "ceabb8d472f623878a14dafa50ba292a14113af10ba7294d84d5cea103c9ff94"
+    },
+    {
+      "bytes": 20476,
+      "path": "test_run_af_native_work_v1_20261021.py",
+      "sha256": "697468a79b09e1fdfb0f8a679486ef79d777eab1d2d9cbb0f867024c7dee3668"
+    }
+  ],
+  "schema_version": 1
+}

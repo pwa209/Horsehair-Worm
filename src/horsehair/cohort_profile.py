@@ -104,6 +104,33 @@ def recording_roster(metadata) -> list[dict[str, Any]]:
     return roster
 
 
+class ProgressWriter:
+    """Persist a bounded heartbeat; retain every timing update in memory.
+
+    Lustre fsync latency belongs to end-to-end profiling overhead. Persisting
+    every tiny operation can prevent a bounded profile reaching the optimizer.
+    Stage/start/epoch boundaries and final receipts remain immediate.
+    """
+    FORCE_EVENTS = {'training_preprocessing_complete', 'start_initialized',
+                    'epoch_complete', 'start_complete'}
+
+    def __init__(self, path, *, interval_seconds=30., clock=time.monotonic):
+        require(math.isfinite(interval_seconds) and interval_seconds > 0,
+                'Positive finite progress persistence interval required')
+        self.path, self.interval, self.clock = Path(path), interval_seconds, clock
+        self.last_saved = None
+
+    def __call__(self, progress, event):
+        now = self.clock()
+        require(math.isfinite(now), 'Finite monotonic progress clock required')
+        if (self.last_saved is None or now-self.last_saved >= self.interval
+                or event.get('event') in self.FORCE_EVENTS):
+            atomic_json(self.path, progress)
+            self.last_saved = now
+            return True
+        return False
+
+
 class Timings:
     """Synchronize devices and keep wall/CPU totals separate from allocated cost."""
     def __init__(self, emit=None, device="cpu"):
@@ -276,7 +303,10 @@ def _worker(config_path: Path, root: Path, primary: Path, output: Path, kind: st
         "allocated_cpus":int(os.environ['SLURM_CPUS_PER_TASK']),"device":device,"model":kind,"learning_rate":rate,
         'torch_version':str(torch.__version__),'python_version':sys.version,'frozen_optimizer_settings':settings,
         "scientific_result":False,"scientific_fit":False,"complete_declared_workload":False,"admission_authority":False,
-        "pending":PENDING,"biological_time_interpretation":"Technical recording-relative time only; no exposure clock inferred"}
+        "pending":PENDING,"biological_time_interpretation":"Technical recording-relative time only; no exposure clock inferred",
+        "progress_persistence":{"minimum_heartbeat_interval_seconds":30,
+            "immediate_events":sorted(ProgressWriter.FORCE_EVENTS),"all_timing_updates_retained_in_memory":True}}
+    persist = ProgressWriter(output/'progress.json')
     def emit(event):
         progress['last_event']=event;progress['updated_unix']=time.time();progress['process_peak_ram_bytes']=_process_peak_ram_bytes()
         progress['process_cpu_seconds']=time.process_time()
@@ -285,7 +315,7 @@ def _worker(config_path: Path, root: Path, primary: Path, output: Path, kind: st
         if event['event']=='start_initialized':progress['current_start']=event
         if event['event']=='epoch_complete':progress['last_completed_epoch']=event
         if event['event']=='start_complete':progress.setdefault('completed_starts',[]).append(event['record'])
-        atomic_json(output/'progress.json',progress)
+        persist(progress,event)
     timer=Timings(emit)
     path=root/'results/behaviour/fly_bins_10s.parquet';proof_path=root/'results/behaviour/streaming_bin_provenance.json'
     proof=json.loads(proof_path.read_text());input_sha=timer.call('input_hash',lambda:digest(path))
