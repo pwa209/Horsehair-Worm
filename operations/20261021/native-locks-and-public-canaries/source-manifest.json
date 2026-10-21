@@ -1,0 +1,279 @@
+{
+  "admission_authority": false,
+  "files": {
+    ".gitattributes": {
+      "bytes": 50,
+      "role": "Exact-byte Git storage for all frozen inputs",
+      "sha256": "915070591fa575ea2154d4cb9ed43afa50f66d4a80438e9fa086481aa207d24c"
+    },
+    "F2_LOCK_HANDOFF_AND_ACTIVATION_V2_API_20261021.md": {
+      "bytes": 6369,
+      "role": "review-time manifest or staging interface; subsequent native evidence is separate",
+      "sha256": "fdce47aab10cbb0ec636e55285ae72b1a26cfe1e611449db03364961cb004967"
+    },
+    "F2_V4_STAGING_FIXTURE_REPAIR_API_20261021.md": {
+      "bytes": 7523,
+      "role": "review-time manifest or staging interface; subsequent native evidence is separate",
+      "sha256": "c3828862a162cadc0477e00676ba1e23b1da1e4d4333bac465e43e1c2eb67438"
+    },
+    "FRESH_STORAGE_CENSUS_API_20261021.md": {
+      "bytes": 4572,
+      "role": "review-time manifest or staging interface; subsequent native evidence is separate",
+      "sha256": "570193958857e69018cee6b1155fb4a88e4c4973bdaa917687cd7425e7d28a0d"
+    },
+    "README.md": {
+      "bytes": 3428,
+      "role": "Snapshot scope and interpretation",
+      "sha256": "f0927b35dd8a5d43926cb3d293a7d7d5fac4387e47b6f18829314a5db960ce04"
+    },
+    "VTL_TRACK_STRUCTURAL_AUDIT_API_20261021.md": {
+      "bytes": 8980,
+      "role": "review-time manifest or staging interface; subsequent native evidence is separate",
+      "sha256": "85e8bc4b74fe16653cfaeb6da920adeccb721ecd8306deeb2a514de47c885559"
+    },
+    "acquire-vtl-track-canary-20261021.py": {
+      "bytes": 21638,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "2a866bb7842111b7fdcb7a56e05cf77e8ce6a866277f4b808d7f761a6f7a8ae1"
+    },
+    "activate-f2-registry-repair-v2-20261021.py": {
+      "bytes": 34377,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "302d50517dfa40d26be982a0143dd8f45d77d0435a40f4569ce7d8878dc681d4"
+    },
+    "activate-f2-registry-repair-v3-20261021.py": {
+      "bytes": 34377,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "04b9b43f1aebf2bb700597bbec2f42cb9c1a0b85239ff84d1dd6fa6dc08c448c"
+    },
+    "audit-ethoscope-sqlite-schema-v2-20261021.py": {
+      "bytes": 22901,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "fec8396ee185d1751320761ef80666f73ea97ffe7f957faea24c51414d00de94"
+    },
+    "audit-vtl-track-schema-20261021.py": {
+      "bytes": 21701,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "3da5b6a05436aa82d9ed94e9fcecdc9032ed04ecf890944313f384db3b572c1c"
+    },
+    "build-activation-stage-291.py": {
+      "bytes": 7563,
+      "role": "reviewed root staging or explicit scheduler prerequisite amendment",
+      "sha256": "e4885b03e6a354b44620fe14abb4dc11da84e687c65d2c50ea7064fb68456252"
+    },
+    "build-census-stage-295.py": {
+      "bytes": 5119,
+      "role": "reviewed root staging or explicit scheduler prerequisite amendment",
+      "sha256": "2665447ae5ddf10001d04deb5d3d78f242dc6194eee38df46fa2c605ab0bef20"
+    },
+    "build-f2-q-stage-290.py": {
+      "bytes": 2698,
+      "role": "Root staging of the complete eight-file operational/migration native qualification closure",
+      "sha256": "ffc12acf43f31000fb4159e41384d7a0405ef26129d4d9c5476d4d28ade5c856"
+    },
+    "build-native-stage-20261021.py": {
+      "bytes": 9947,
+      "role": "Unchanged exclusive source-bound maintenance-envelope builder",
+      "sha256": "bfc456e17a0e1a2f1c1d4639d2e05b478b988be7e4010cc56265504082644d8b"
+    },
+    "build-prefix-stage-284.py": {
+      "bytes": 3474,
+      "role": "reviewed root staging or explicit scheduler prerequisite amendment",
+      "sha256": "228c740142a6feffe67842263304daaa136aff2ba5935f57826a7e1ed01d926b"
+    },
+    "build-vtl-audit-stage-305.py": {
+      "bytes": 5847,
+      "role": "reviewed root staging or explicit scheduler prerequisite amendment",
+      "sha256": "a3b92b3ac69c44ca8462cf122527c71a28fa156b4f674834dcfe2c239fe2562c"
+    },
+    "f2-lock-handoff-v3-candidate-20261021.json": {
+      "bytes": 2623,
+      "role": "review-time manifest or staging interface; subsequent native evidence is separate",
+      "sha256": "7c6deb90ba3ca67d474291617926ab23dabfe42a16e10685940bdf7d465c576f"
+    },
+    "f2-v4-staging-fixture-repair-candidate-20261021.json": {
+      "bytes": 2859,
+      "role": "review-time manifest or staging interface; subsequent native evidence is separate",
+      "sha256": "e38cf40e4296f5c36bc407a5aef45769663d3b90bbc32ad82c5f49cb13e611ad"
+    },
+    "hhw-af-prefix-census-dependency-20261021-301.sh": {
+      "bytes": 6448,
+      "role": "reviewed root staging or explicit scheduler prerequisite amendment",
+      "sha256": "f70858a9c2befa0256d977f1fe560d8d877caa4196cbcb8cd772328f45bc62cc"
+    },
+    "native-evidence.json": {
+      "bytes": 5963,
+      "role": "Subsequent source-bound native observations; no scientific admission",
+      "sha256": "0ad8c7b84d1b752a60413cf3eb7d6fb5fe8b9dee92ccfc13c0a5db2d6f3afd93"
+    },
+    "patch-af-stage-expanded-20261021.py": {
+      "bytes": 3193,
+      "role": "Explicit qualified4f/f444 expanded-policy envelope patch",
+      "sha256": "c12faedc1ae6dbdba1220d8721a900b34bf06995d731169d37740fbaed5b5980"
+    },
+    "qualify-af-execution-v3-20261021.py": {
+      "bytes": 15422,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "f5ae3ed8aebb6ca0a15b4f2023e37265ef7dc1b499c4100d48ea988d11842464"
+    },
+    "qualify-f2-registry-repair-v3-20261021.py": {
+      "bytes": 15584,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "88814b738f37fb8470072e65027b4844a69794c720cd1ce98749904f5ce97d52"
+    },
+    "qualify-f2-registry-repair-v4-20261021.py": {
+      "bytes": 15587,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "7fd2348c3370811cb5ca2933357a007447b18c2ea57be1cef502fdd035fdda51"
+    },
+    "recover-f2-training0000-state-20261021.py": {
+      "bytes": 23907,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "504eb2764073a5b614d986827ccacad3189ea4be5988313ead47ab41805fe26a"
+    },
+    "registered-snapshot-read-guard-v3-20261021.py": {
+      "bytes": 15419,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "2583776f764f4738dd0285f7885709bc9dc45044cfea52c44909c4723f0d64b6"
+    },
+    "run-af-agent-controller-registry-v3-20261021.py": {
+      "bytes": 57985,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "f749e42aae5c842eed64e22960d91fe9a96c5c6fc4acffa15c92ba509a4582ac"
+    },
+    "run-af-agent-controller-registry-v4-20261021.py": {
+      "bytes": 57986,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "475a170aab2d158cfd17adb250707e1d0767086d4c50b95516c360f2222560f8"
+    },
+    "run-af-native-work-v1-20261021.py": {
+      "bytes": 17404,
+      "role": "Preserved original stable native numerical worker; the registry overlay leaves these bytes unchanged",
+      "sha256": "f00d4265a68a3ace5faa47da4fe2701fff3fe86d9132b09ea748e9f12471e4fd"
+    },
+    "run-ethoscope-sqlite-audit-v3-20261021.py": {
+      "bytes": 36290,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "81f4dcc425c9e7b242ba96223c20ecd3b3711360fc389827e81eaf13df8af274"
+    },
+    "run-f00d-worker-registry-overlay-20261021.py": {
+      "bytes": 4062,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "dd39905ce44f89f7f8bbdd325d1a0f1d5ec7950dd89d0e3bb267f6fdfe77a09a"
+    },
+    "run-fresh-storage-census-v1-20261021.py": {
+      "bytes": 22494,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "084651bd0accb1127f1e41ce94bb763bbe308755819642d365c9eff9f78d02ce"
+    },
+    "run-full-cohort-prefix-v3-20261021.py": {
+      "bytes": 42308,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "b131d6317858eae3c43c2ae7337f46e3173ab64355693980af2e7e489af46d3d"
+    },
+    "run-full-cohort-profile-v2-20261021.py": {
+      "bytes": 14309,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "396e0ec6f9cf5936884fdd08d23e5e3d6e92f9bb06c654d747d04b2b27338787"
+    },
+    "run-vtl-track-schema-audit-v2-20261021.py": {
+      "bytes": 38675,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "284b082a04eccebe707378a6e8f26836a4467846e3b213c3e9ff9b4325a86ff1"
+    },
+    "test_acquire_vtl_track_canary_20261021.py": {
+      "bytes": 18768,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "a1c38e14262a243ad5c90fe217e8a44a413c01f0b2cfdc73a6ba067a95cc1ca4"
+    },
+    "test_activate_f2_registry_repair_v2_20261021.py": {
+      "bytes": 18815,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "0ce05501eb6767c501bbd1d59a4732e7ca852801367540998a95ddd1f9ce804c"
+    },
+    "test_activate_f2_registry_repair_v3_20261021.py": {
+      "bytes": 18815,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "937e40e09b70e8797b245c0105401f853bd214abcdbc75ead854dc4a246fe62c"
+    },
+    "test_af_agent_controller_registry_v3_20261021.py": {
+      "bytes": 39503,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "54e863c2cc564999e8ceea452cbc7c0e76247b4e4f19b7c81a2818cd7e1df70d"
+    },
+    "test_af_agent_controller_registry_v4_20261021.py": {
+      "bytes": 41350,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "f4113c4a8a17bc12e89241361a679415cdbc4e61363d28a55a8bd74788433a97"
+    },
+    "test_audit_ethoscope_sqlite_schema_v2_20261021.py": {
+      "bytes": 18918,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "92d19d1cc020d3160dae20834e07ab4195bbbc0b389d98c980b44d9a06242f5d"
+    },
+    "test_audit_vtl_track_schema_20261021.py": {
+      "bytes": 14468,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "63471f8706ccacd801de27314c37c30072d9806a8302df3f9cc7772807d0e930"
+    },
+    "test_f00d_worker_registry_overlay_20261021.py": {
+      "bytes": 4064,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "2fdcf83a1abc796f82e86d3d3014fd785d195bf7ca4dc6457f2d6dd5db9b3968"
+    },
+    "test_full_cohort_prefix_v3_20261021.py": {
+      "bytes": 18619,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "01b50175e001a44db682befdfd2728602d4ad467b5b8345092e5d3fa6d9ed80c"
+    },
+    "test_qualify_af_execution_v3_20261021.py": {
+      "bytes": 16329,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "b2501af10e95b38001282c753d946afafb8ba0ea449a4dc630982cb1b569607d"
+    },
+    "test_qualify_f2_registry_repair_v3_20261021.py": {
+      "bytes": 7373,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "1201a55463fae604a689fc682ba4260de50b47d73c772cb473cca6c94853bf96"
+    },
+    "test_qualify_f2_registry_repair_v4_20261021.py": {
+      "bytes": 7375,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "b68357505bad44e0f765571ab1fe149733b7036cd090af7ad95aaa4ec09b3e6d"
+    },
+    "test_recover_f2_training0000_state_20261021.py": {
+      "bytes": 19478,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "6cb7fdcc55f12164d81666f70e545b6efd610a1299baef66e483a271fbbe1673"
+    },
+    "test_registered_snapshot_read_guard_v3_20261021.py": {
+      "bytes": 15071,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "93006f90776dac4eb42f876afa5b3a9e91361b950dff42769c660594471dad2c"
+    },
+    "test_run_ethoscope_sqlite_audit_v3_20261021.py": {
+      "bytes": 24197,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "d2d48d45f25fd244a82b585bd9719f245d37532e7d841591a660b268f80938de"
+    },
+    "test_run_fresh_storage_census_v1_20261021.py": {
+      "bytes": 10695,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "808d0521d586d6523bbcc5f184b96e406c5c681a3f052e9af56924917f18f2d4"
+    },
+    "test_run_vtl_track_schema_audit_v2_20261021.py": {
+      "bytes": 15791,
+      "role": "frozen reviewed source or test; native acceptance is separate",
+      "sha256": "b03824ab1135d5dbd45a1d52623461822a15b278cf2bfd66da8a5286298d84b3"
+    },
+    "vtl-track-schema-candidate-v2-20261021.json": {
+      "bytes": 3706,
+      "role": "review-time manifest or staging interface; subsequent native evidence is separate",
+      "sha256": "23835400aae068b5e0be30c5909ea334ef5bca2b2a86809b4fd59bf58f250446"
+    }
+  },
+  "schema_version": 1,
+  "scientific_result": false,
+  "scientific_source_unchanged": "076b04bd419b801c108641eb8f9f8948aa42aad1cc2dfb9a01cb97c4dddfef1d",
+  "scope": "Reviewable operational source snapshots; no scientific data, SSH credentials, or author communications"
+}

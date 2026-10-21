@@ -1,0 +1,63 @@
+{
+  "admission_authority": false,
+  "files": {
+    "activate-f2-registry-repair-v2-20261021.py": {
+      "bytes": 34377,
+      "sha256": "302d50517dfa40d26be982a0143dd8f45d77d0435a40f4569ce7d8878dc681d4"
+    },
+    "qualify-f2-registry-repair-v3-20261021.py": {
+      "bytes": 15584,
+      "sha256": "88814b738f37fb8470072e65027b4844a69794c720cd1ce98749904f5ce97d52"
+    },
+    "recover-f2-training0000-state-20261021.py": {
+      "bytes": 23907,
+      "sha256": "504eb2764073a5b614d986827ccacad3189ea4be5988313ead47ab41805fe26a"
+    },
+    "registered-snapshot-read-guard-v3-20261021.py": {
+      "bytes": 15419,
+      "sha256": "2583776f764f4738dd0285f7885709bc9dc45044cfea52c44909c4723f0d64b6"
+    },
+    "run-af-agent-controller-registry-v3-20261021.py": {
+      "bytes": 57985,
+      "sha256": "f749e42aae5c842eed64e22960d91fe9a96c5c6fc4acffa15c92ba509a4582ac"
+    },
+    "run-f00d-worker-registry-overlay-20261021.py": {
+      "bytes": 4062,
+      "sha256": "dd39905ce44f89f7f8bbdd325d1a0f1d5ec7950dd89d0e3bb267f6fdfe77a09a"
+    },
+    "test_activate_f2_registry_repair_v2_20261021.py": {
+      "bytes": 18815,
+      "sha256": "0ce05501eb6767c501bbd1d59a4732e7ca852801367540998a95ddd1f9ce804c"
+    },
+    "test_af_agent_controller_registry_v3_20261021.py": {
+      "bytes": 39503,
+      "sha256": "54e863c2cc564999e8ceea452cbc7c0e76247b4e4f19b7c81a2818cd7e1df70d"
+    },
+    "test_f00d_worker_registry_overlay_20261021.py": {
+      "bytes": 4064,
+      "sha256": "2fdcf83a1abc796f82e86d3d3014fd785d195bf7ca4dc6457f2d6dd5db9b3968"
+    },
+    "test_qualify_f2_registry_repair_v3_20261021.py": {
+      "bytes": 7373,
+      "sha256": "1201a55463fae604a689fc682ba4260de50b47d73c772cb473cca6c94853bf96"
+    },
+    "test_recover_f2_training0000_state_20261021.py": {
+      "bytes": 19478,
+      "sha256": "6cb7fdcc55f12164d81666f70e545b6efd610a1299baef66e483a271fbbe1673"
+    },
+    "test_registered_snapshot_read_guard_v3_20261021.py": {
+      "bytes": 15071,
+      "sha256": "93006f90776dac4eb42f876afa5b3a9e91361b950dff42769c660594471dad2c"
+    }
+  },
+  "frozen_prior_helpers_modified": false,
+  "kind": "private_f2_lock_handoff_v3_and_pristine_activation_v2_candidate",
+  "migration_roster_sha256": "60eb41a79c2a23b9c29460b8022eb81149db3455c3b200ba1700512f273844f0",
+  "migration_test_count": 42,
+  "native_activation_completed": false,
+  "native_qualification_completed": false,
+  "overlay_roster_sha256": "41700e49a9bf4f124ef2ed6f70891aef07991fa1ed8b316d2331f0ccb59797c6",
+  "overlay_test_count": 99,
+  "schema_version": 1,
+  "scientific_result": false
+}

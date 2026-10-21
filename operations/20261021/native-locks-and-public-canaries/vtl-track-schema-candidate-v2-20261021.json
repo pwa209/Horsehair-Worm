@@ -1,0 +1,102 @@
+{
+  "admission_authority": false,
+  "files": {
+    "VTL_TRACK_STRUCTURAL_AUDIT_API_20261021.md": {
+      "bytes": 8980,
+      "sha256": "85e8bc4b74fe16653cfaeb6da920adeccb721ecd8306deeb2a514de47c885559"
+    },
+    "acquire-vtl-track-canary-20261021.py": {
+      "bytes": 21638,
+      "sha256": "2a866bb7842111b7fdcb7a56e05cf77e8ce6a866277f4b808d7f761a6f7a8ae1"
+    },
+    "audit-vtl-track-schema-20261021.py": {
+      "bytes": 21701,
+      "sha256": "3da5b6a05436aa82d9ed94e9fcecdc9032ed04ecf890944313f384db3b572c1c"
+    },
+    "run-vtl-track-schema-audit-v2-20261021.py": {
+      "bytes": 38675,
+      "sha256": "284b082a04eccebe707378a6e8f26836a4467846e3b213c3e9ff9b4325a86ff1"
+    },
+    "test_acquire_vtl_track_canary_20261021.py": {
+      "bytes": 18768,
+      "sha256": "a1c38e14262a243ad5c90fe217e8a44a413c01f0b2cfdc73a6ba067a95cc1ca4"
+    },
+    "test_audit_vtl_track_schema_20261021.py": {
+      "bytes": 14468,
+      "sha256": "63471f8706ccacd801de27314c37c30072d9806a8302df3f9cc7772807d0e930"
+    },
+    "test_run_vtl_track_schema_audit_v2_20261021.py": {
+      "bytes": 15791,
+      "sha256": "b03824ab1135d5dbd45a1d52623461822a15b278cf2bfd66da8a5286298d84b3"
+    }
+  },
+  "independent_review": {
+    "schema": "approved_agent_cpu_bench_source3da5_test63471",
+    "wrapper": {
+      "errors": 0,
+      "failures": 0,
+      "seconds": 3.84,
+      "skipped": 0,
+      "status": "approved_read_only_agent_cpu_bench",
+      "tests": 45
+    }
+  },
+  "mandatory_native_synthetic_roster": {
+    "acquisition": 68,
+    "before_first_actual_track_byte_read": true,
+    "schema": 40,
+    "zero_failures_errors_skips_required": true
+  },
+  "official_documentation": {
+    "VTL-1.vtl.py": {
+      "bytes": 7622,
+      "local_source": "work\\public-cohort-metadata-20261021\\VTL-1.vtl.py",
+      "sha256": "d83e7431c258977ba07e78b9f7430fe3e8a5dfb5b7569a5cfb9740e643f8d114"
+    },
+    "VTL-2.dataorder.py": {
+      "bytes": 3173,
+      "local_source": "work\\public-cohort-metadata-20261021\\VTL-2.dataorder.py",
+      "sha256": "ff011406d399640da05b82c37256ea9d4a6f69f8b48e8c1ef93927ce43a3fe64"
+    }
+  },
+  "preserved_unsubmitted_v1": {
+    "tests": "fef9633a25111cc12194a5cf2c744209711bd2290a963a4d421dadbfb48eac85",
+    "wrapper": "f88aa8517c3bcebf2a437bc7a3a3a3bd133506bdf937d6d6c629a68da81c42fb"
+  },
+  "provider_scientific_data_downloaded_or_read_locally": false,
+  "qualification_staging_roster": [
+    "audit-vtl-track-schema-20261021.py",
+    "test_audit_vtl_track_schema_20261021.py",
+    "acquire-vtl-track-canary-20261021.py",
+    "test_acquire_vtl_track_canary_20261021.py",
+    "run-vtl-track-schema-audit-v2-20261021.py",
+    "test_run_vtl_track_schema_audit_v2_20261021.py",
+    "VTL-1.vtl.py",
+    "VTL-2.dataorder.py"
+  ],
+  "registry_qualification": {
+    "guard_sha256": "2583776f764f4738dd0285f7885709bc9dc45044cfea52c44909c4723f0d64b6",
+    "job_id": "6699561",
+    "maximum_worker_registration_lock_wait_seconds": 3600,
+    "operational_tests": 100,
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json",
+    "sha256": "1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca"
+  },
+  "schema_tests": {
+    "errors": 0,
+    "failures": 0,
+    "junit": "work/vtl-schema-auditor-v4.xml",
+    "skipped": 0,
+    "tests": 40
+  },
+  "schema_version": 1,
+  "scientific_result": false,
+  "status": "prospective_v2_local_tests_positive_native_pending",
+  "wrapper_tests": {
+    "errors": 0,
+    "failures": 0,
+    "junit": "work/vtl-schema-wrapper-v2-20261021-1.xml",
+    "skipped": 0,
+    "tests": 45
+  }
+}

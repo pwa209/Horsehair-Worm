@@ -1,0 +1,66 @@
+{
+  "admission_authority": false,
+  "controller_operational_AST_sha256": "5102788feeaee35fbb1f35ef175513f8041066d44ad6d620f98997eb86b82b1a",
+  "controller_operational_AST_unchanged_from_frozen_v3": true,
+  "files": {
+    "activate-f2-registry-repair-v3-20261021.py": {
+      "bytes": 34377,
+      "sha256": "04b9b43f1aebf2bb700597bbec2f42cb9c1a0b85239ff84d1dd6fa6dc08c448c"
+    },
+    "qualify-f2-registry-repair-v4-20261021.py": {
+      "bytes": 15587,
+      "sha256": "7fd2348c3370811cb5ca2933357a007447b18c2ea57be1cef502fdd035fdda51"
+    },
+    "recover-f2-training0000-state-20261021.py": {
+      "bytes": 23907,
+      "sha256": "504eb2764073a5b614d986827ccacad3189ea4be5988313ead47ab41805fe26a"
+    },
+    "registered-snapshot-read-guard-v3-20261021.py": {
+      "bytes": 15419,
+      "sha256": "2583776f764f4738dd0285f7885709bc9dc45044cfea52c44909c4723f0d64b6"
+    },
+    "run-af-agent-controller-registry-v4-20261021.py": {
+      "bytes": 57986,
+      "sha256": "475a170aab2d158cfd17adb250707e1d0767086d4c50b95516c360f2222560f8"
+    },
+    "run-f00d-worker-registry-overlay-20261021.py": {
+      "bytes": 4062,
+      "sha256": "dd39905ce44f89f7f8bbdd325d1a0f1d5ec7950dd89d0e3bb267f6fdfe77a09a"
+    },
+    "test_activate_f2_registry_repair_v3_20261021.py": {
+      "bytes": 18815,
+      "sha256": "937e40e09b70e8797b245c0105401f853bd214abcdbc75ead854dc4a246fe62c"
+    },
+    "test_af_agent_controller_registry_v4_20261021.py": {
+      "bytes": 41350,
+      "sha256": "f4113c4a8a17bc12e89241361a679415cdbc4e61363d28a55a8bd74788433a97"
+    },
+    "test_f00d_worker_registry_overlay_20261021.py": {
+      "bytes": 4064,
+      "sha256": "2fdcf83a1abc796f82e86d3d3014fd785d195bf7ca4dc6457f2d6dd5db9b3968"
+    },
+    "test_qualify_f2_registry_repair_v4_20261021.py": {
+      "bytes": 7375,
+      "sha256": "b68357505bad44e0f765571ab1fe149733b7036cd090af7ad95aaa4ec09b3e6d"
+    },
+    "test_recover_f2_training0000_state_20261021.py": {
+      "bytes": 19478,
+      "sha256": "6cb7fdcc55f12164d81666f70e545b6efd610a1299baef66e483a271fbbe1673"
+    },
+    "test_registered_snapshot_read_guard_v3_20261021.py": {
+      "bytes": 15071,
+      "sha256": "93006f90776dac4eb42f876afa5b3a9e91361b950dff42769c660594471dad2c"
+    }
+  },
+  "frozen_prior_helpers_modified": false,
+  "kind": "private_f2_v4_staging_fixture_repair_and_activation_v3_candidate",
+  "migration_roster_sha256": "60eb41a79c2a23b9c29460b8022eb81149db3455c3b200ba1700512f273844f0",
+  "migration_test_count": 42,
+  "native_activation_completed": false,
+  "native_qualification_completed": false,
+  "overlay_roster_sha256": "d9e5612b5f48f531f1518c5e1ba6529cea0e6b748d5498124aa73c979a1c47d6",
+  "overlay_test_count": 100,
+  "preserved_native_failed_qualification_job_id": "6699150",
+  "schema_version": 1,
+  "scientific_result": false
+}

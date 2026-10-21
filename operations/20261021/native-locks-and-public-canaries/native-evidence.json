@@ -1,0 +1,137 @@
+{
+  "accounting_as_observed": "6699432|PENDING|0:0|0|0\n6699739|RUNNING|0:0|762|4\n6699819|PENDING|0:0|0|0\n6700647|PENDING|0:0|0|0\n",
+  "admission_authority": false,
+  "all_ABCDEF_completed": false,
+  "author_contact_permitted": false,
+  "author_message_sent": false,
+  "census_started": {
+    "exact_sizes": true,
+    "original_function": "horsehair.budget.storage_snapshot",
+    "original_function_modified": false,
+    "registration_mutex_held": false,
+    "started_monotonic": 2878514.246624386,
+    "started_unix": 1792616487.3533022,
+    "started_utc": "2026-10-21T21:01:27.353302+00:00"
+  },
+  "ethoscope": {
+    "activity_or_position_values_read": false,
+    "database": {
+      "bytes": 13594624,
+      "md5": "e261acc31375cb122164c92ed957206e",
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-ethoscope-db-canary-v1-20261021/2022-04-22_11-21-12_15517bc8ec75403fb282ef8e166d150a.db",
+      "sha256": "adede032bab1bda988072af5200983bc4037993b78aa807acb398c05e7fd9cc3"
+    },
+    "exposure_times_and_physical_units_qualified": false,
+    "inventory": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-ethoscope-sqlite-audit-v2-20261021/schema-and-clock-inventory.json",
+      "sha256": "ce2ba0d16b1ca85380192c8ba2fa3fa680ec21535ffa94df29acae1200a4a021"
+    },
+    "job_id": "6699089",
+    "native_completion": "COMPLETED/0:0",
+    "prerequisite_tests": {
+      "acquisition": 39,
+      "errors": 0,
+      "failures": 0,
+      "schema": 57,
+      "skipped": 0
+    },
+    "receipt_sha256": "42694b391fc89ff35f842e574d67faa374de54f85cefcbae6204039e85f4460f"
+  },
+  "full_config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+  "full_source_qualification": {
+    "job_id": "6698489",
+    "junit": {
+      "bytes": 269873,
+      "path": "/scratch/pwa209/horsehair-worm/state/qualification-evidence/6698489-3b27217dffa746538035130cfa1b849d/junit.xml",
+      "sha256": "4186ddb0a92b159a2ca476581473db7d28e8879c6a9d96999102264ea293819a"
+    },
+    "native_completion": "COMPLETED/0:0",
+    "receipt_sha256": "69c02e815fed22de436a3b289f6e31bbaa691c6dab9833ae51591e83d858b546",
+    "source_sha256": "076b04bd419b801c108641eb8f9f8948aa42aad1cc2dfb9a01cb97c4dddfef1d",
+    "tests": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 1826
+    }
+  },
+  "known_preserved_failed_native_jobs": {
+    "6691343": "Original full-fold score undefined for zero post-warmup observation window",
+    "6697557": "Path validation refused primary project config before any state amendment",
+    "6699150": "Three operational test fixtures failed; new isolated source closure corrected",
+    "6699504": "One missing AST-reference fixture failed before census execution"
+  },
+  "new_raw_scientific_local_downloads": false,
+  "observed_utc": "2026-10-21T21:13:00.558631+00:00",
+  "original_H1_H2_H3_gates_cleared": false,
+  "prefix_prerequisite_amendment": {
+    "bytes": 538,
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-prefix-census-dependency-amendment-v1-20261021/receipt.json",
+    "record": {
+      "actual_native_dependency": "afterok:6699739(unfulfilled)",
+      "automatic_replay_permitted": false,
+      "checked_utc": "2026-10-21T21:04:39.373476+00:00",
+      "frozen_submission_dependency_evidence_preserved": true,
+      "no_hold_cancel_restart_or_numerical_source_change": true,
+      "original_plan_ledger_script_unchanged": true,
+      "producer_job": "6699739",
+      "scientific_result": false,
+      "status": "confirmed_owned_pending_prefix_waits_for_exact_census",
+      "supplemental_scheduler_prerequisite_amendment": true,
+      "target_job": "6699432"
+    },
+    "sha256": "becd4444a57153f4dbee5f905568af9ad109751fe3c3e92d3f0a56e6711fadac"
+  },
+  "primary_source_sha256": "0e2b1ebce8bffe10799470b3ac20828e621f1415f3a18bca8cd67d502f1e8630",
+  "production_condition_files_removed": false,
+  "queue_as_observed": "6699739|RUNNING|None|(null)|2026-10-21T21:00:18|12:42\n6699432|PENDING|Dependency|afterok:6699739(unfulfilled)|N/A|0:00\n6699819|PENDING|Dependency|afterok:6699739(unfulfilled)|N/A|0:00\n6700647|PENDING|Dependency|afterok:6699739(unfulfilled)|N/A|0:00\n",
+  "registry_qualification": {
+    "controller_sha256": "475a170aab2d158cfd17adb250707e1d0767086d4c50b95516c360f2222560f8",
+    "guard_sha256": "2583776f764f4738dd0285f7885709bc9dc45044cfea52c44909c4723f0d64b6",
+    "job_id": "6699561",
+    "migration_tests": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 42
+    },
+    "native_completion": "COMPLETED/0:0",
+    "operational_tests": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 100
+    },
+    "receipt_sha256": "1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca"
+  },
+  "schema_version": 1,
+  "scientific_result": false,
+  "vtl_acquisition": {
+    "deposited_zip_crc32": "abefabb9",
+    "member": "2019-11-10_2_11-order.txt",
+    "outcome_values_inspected": false,
+    "raw_bytes": 30121971,
+    "receipt_sha256": "0c91c8a596402cc3ee7dc7abc4e8fe38d51e3453654fb3224b24e63b6d771808",
+    "requested_range_bytes": 5326525,
+    "sha256": "6587355772ae4d730bf9839ef2c1b60b9dbddbe852a4a7f24e611e39b0336996",
+    "sha256_basis": "first_complete_acquisition_not_provider_checksum",
+    "source": "https://vtl.biocuckoo.cn/static/data/dataset1.zip"
+  },
+  "vtl_issued_submission": {
+    "command": [
+      "sbatch",
+      "--parsable",
+      "--dependency=afterok:6699739",
+      "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-305/recovery-305.sbatch"
+    ],
+    "completed_native_dependencies": [],
+    "dependency_kind": "afterok",
+    "dependency_resolution_sha256": "bf0f187f46b96a1cee21cb764d2051d4f61500e893c89c436a4d999823e245b1",
+    "issued_native_dependencies": [
+      "6699739"
+    ],
+    "job_id": "6700647",
+    "script_sha256": "1c4dd84e859136fd687747fac930df625a970ff6f52bc37d04e181d62065a209",
+    "state": "submitted"
+  }
+}
