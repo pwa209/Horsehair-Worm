@@ -392,6 +392,7 @@ module._worker(pathlib.Path(plan), int(index), pathlib.Path(attempt))
 
 
 def run_cell(plan_path: Path, index: int, max_seconds: float = 3000) -> dict[str, Any]:
+    from .rna_recovery import _primary_environment
     plan_path = Path(plan_path).resolve()
     plan, identity = _load_plan(plan_path), _native_identity()
     if not 0 <= index < len(plan["cells"]):
@@ -408,11 +409,14 @@ def run_cell(plan_path: Path, index: int, max_seconds: float = 3000) -> dict[str
         "maximum_worker_seconds": seconds, "plan_sha256": digest(plan_path), "scientific_fit": False,
         "complete_declared_workload": False, "admission_authority": False}
     atomic_json(attempt / "started.json", record)
-    command = [sys.executable, "-c", _CHILD, plan["primary_release"], str(Path(__file__).resolve()),
+    environment = _primary_environment({"primary_release": plan["primary_release"],
+        "maintenance_release": str(Path(__file__).resolve().parents[2]), "root": plan["root"]})
+    command = [sys.executable, "-s", "-c", _CHILD, plan["primary_release"], str(Path(__file__).resolve()),
                str(plan_path), str(index), str(attempt)]
     timed_out = False
     with (attempt / "stdout.log").open("w", encoding="utf8") as stdout, (attempt / "stderr.log").open("w", encoding="utf8") as stderr:
-        process = subprocess.Popen(command, stdout=stdout, stderr=stderr, start_new_session=os.name != "nt")
+        process = subprocess.Popen(command, stdout=stdout, stderr=stderr, env=environment,
+                                   cwd=plan["primary_release"], start_new_session=os.name != "nt")
         try:
             code = process.wait(timeout=seconds)
         except subprocess.TimeoutExpired:

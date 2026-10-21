@@ -1,12 +1,16 @@
 import copy
 import json
+import os
 from pathlib import Path
+import shutil
+import subprocess
+import sys
 
 import pytest
 
 from horsehair import agent_cost_envelope as envelope
 from horsehair import agents
-from horsehair.core import canonical_hash
+from horsehair.core import canonical_hash, source_identity, digest
 
 
 def primary_config():
@@ -292,3 +296,60 @@ def test_exact_original_input_roster_cannot_be_omitted_or_redirected(change):
         receipt["inputs"].append({"path": "another.json", "sha256": "c" * 64, "bytes": 100})
     with pytest.raises(ValueError):
         forecast(receipt, config, native)
+
+
+@pytest.fixture
+def primary_launch_fixture(tmp_path, monkeypatch):
+    from horsehair import core
+    primary, framework, root, vendor, foreign = [tmp_path / name for name in
+        ("primary", "maintenance", "scratch", "alliance-vendor", "foreign")]
+    package = primary / "src/horsehair"
+    package.mkdir(parents=True)
+    (package / "__init__.py").write_text("")
+    shutil.copyfile(core.__file__, package / "core.py")
+    (primary / "configs").mkdir()
+    config = {"technical_launch_fixture": True}
+    (primary / "configs/study.json").write_text(json.dumps(config))
+    module = framework / "src/horsehair/agent_cost_envelope.py"
+    module.parent.mkdir(parents=True)
+    module.write_text('''def _measure_cell(primary, framework, root, case, index):
+    import fixture_alliance_vendor, json, sys
+    from pathlib import Path
+    Path(case).write_text(json.dumps({"vendor": fixture_alliance_vendor.VALUE, "no_user_site": sys.flags.no_user_site, "index": index}))
+''')
+    vendor.mkdir()
+    (vendor / "fixture_alliance_vendor.py").write_text('VALUE="qualified-vendor-dependency"')
+    (foreign / "horsehair").mkdir(parents=True)
+    (foreign / "horsehair/__init__.py").write_text('raise AssertionError("Foreign horsehair imported")')
+    for release in (primary, framework):
+        (release / "release.json").write_text(json.dumps({"source_identity": source_identity(release)}))
+    monkeypatch.setenv("PYTHONPATH", os.pathsep.join(map(str, [framework / "src", vendor, foreign, root, primary / "src"])))
+    monkeypatch.setenv("PYTHONHOME", "invalid-home-must-not-be-inherited")
+    monkeypatch.setenv("PYTHONSTARTUP", "invalid-startup")
+    monkeypatch.setenv("PYTHONINSPECT", "1")
+    environment = envelope._primary_worker_environment(primary, framework, root)
+    arguments = [str(primary), str(framework), str(root), str(tmp_path / "worker-output.json"), "7",
+                 source_identity(primary)["sha256"], canonical_hash(config), source_identity(framework)["sha256"], digest(module)]
+    return primary, framework, root, vendor, environment, arguments
+
+
+def test_real_vendor_pythonpath_survives_source_isolation_and_disables_user_site(primary_launch_fixture):
+    primary, framework, root, vendor, environment, arguments = primary_launch_fixture
+    assert environment["PYTHONPATH"].split(os.pathsep) == [str((primary / "src").resolve()), str(vendor.resolve())]
+    assert environment["PYTHONNOUSERSITE"] == "1"
+    assert all(key not in environment for key in ("PYTHONHOME", "PYTHONSTARTUP", "PYTHONINSPECT"))
+    result = subprocess.run([sys.executable, "-s", "-c", envelope.PRIMARY_COST_BOOTSTRAP, *arguments],
+                            cwd=primary, env=environment, capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    observed = json.loads(Path(arguments[3]).read_text())
+    assert observed == {"vendor": "qualified-vendor-dependency", "no_user_site": 1, "index": 7}
+
+
+@pytest.mark.parametrize("argument_index", [5, 6, 7, 8])
+def test_real_worker_rejects_wrong_primary_config_framework_or_module_source_hash(primary_launch_fixture, argument_index):
+    primary, framework, root, vendor, environment, arguments = primary_launch_fixture
+    arguments[argument_index] = "0" * 64
+    result = subprocess.run([sys.executable, "-s", "-c", envelope.PRIMARY_COST_BOOTSTRAP, *arguments],
+                            cwd=primary, env=environment, capture_output=True, text=True, timeout=30)
+    assert result.returncode != 0
+    assert not Path(arguments[3]).exists()

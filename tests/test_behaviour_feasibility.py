@@ -151,8 +151,9 @@ def test_run_timeout_preserves_completed_operations_and_only_terminates_its_chil
         attempt = Path(command[-1])
         atomic_json(attempt / "progress.json", {"status": "running", "operations": [{"name": "adam_epoch",
             "learning_rate": .001, "elapsed_seconds": 4.2, "uses_full_primary_numerics": True}]})
-        assert "import horsehair" in command[2]
-        assert command[3] == plan["primary_release"]
+        assert command[1:3] == ["-s", "-c"] and "import horsehair" in command[3]
+        assert command[4] == plan["primary_release"]
+        assert kwargs["env"]["PYTHONNOUSERSITE"] == "1"
         return Child()
     monkeypatch.setattr(feasibility.subprocess, "Popen", start)
     if feasibility.os.name != "nt": monkeypatch.setattr(feasibility.os, "killpg", lambda pid, sig: killed.append(pid))
@@ -162,6 +163,46 @@ def test_run_timeout_preserves_completed_operations_and_only_terminates_its_chil
     assert result["complete_declared_workload"] is False
     assert killed == [999999]
     with pytest.raises(FileExistsError): feasibility.run_cell(path, 0, 60)
+
+
+def test_real_child_imports_vendor_dependency_without_foreign_horsehair_or_user_site(tmp_path, monkeypatch):
+    native(monkeypatch)
+    path, plan = plan_fixture(tmp_path)
+    primary = tmp_path / "primary"
+    package = primary / "src/horsehair"
+    package.mkdir(parents=True)
+    (package / "__init__.py").write_text("MARKER = 'frozen-primary'\n")
+    framework = tmp_path / "qualified-framework"
+    wrapper = framework / "src/horsehair/behaviour_feasibility.py"
+    wrapper.parent.mkdir(parents=True)
+    wrapper.write_text("# Qualified wrapper identity fixture\n")
+    vendor = tmp_path / "alliance-module-site-packages"
+    vendor.mkdir()
+    (vendor / "alliance_dependency_fixture.py").write_text("MARKER = 'approved-vendor'\n")
+    foreign = tmp_path / "unapproved-release/src"
+    (foreign / "horsehair").mkdir(parents=True)
+    (foreign / "horsehair/__init__.py").write_text("raise RuntimeError('Wrong scientific package')\n")
+    plan.update(primary_release=str(primary), root=str(tmp_path / "personal-study"),
+                framework_module_sha256=digest(wrapper))
+    atomic_json(path, plan)
+    monkeypatch.setattr(feasibility, "__file__", str(wrapper))
+    monkeypatch.setattr(feasibility, "source_identity", lambda *args: {"sha256": "new-wrapper-source"})
+    monkeypatch.setenv("PYTHONPATH", feasibility.os.pathsep.join([str(foreign), str(vendor), str(framework / "src")]))
+    monkeypatch.setattr(feasibility, "_CHILD", """import json, pathlib, site, sys
+import alliance_dependency_fixture, horsehair
+assert horsehair.MARKER == 'frozen-primary'
+assert alliance_dependency_fixture.MARKER == 'approved-vendor'
+assert site.ENABLE_USER_SITE is False
+pathlib.Path(sys.argv[-1], 'progress.json').write_text(json.dumps({
+    'status': 'vendor_import_verified', 'package_origin': horsehair.__file__,
+    'dependency_origin': alliance_dependency_fixture.__file__, 'user_site': site.ENABLE_USER_SITE}))
+""")
+    result = feasibility.run_cell(path, 0, 60)
+    assert result["worker_returncode"] == 0
+    assert result["progress"]["status"] == "vendor_import_verified"
+    assert Path(result["progress"]["package_origin"]).is_relative_to(primary)
+    assert Path(result["progress"]["dependency_origin"]).is_relative_to(vendor)
+    assert result["progress"]["user_site"] is False
 
 
 def test_aggregation_retains_missing_families_even_when_each_operation_has_receipt(tmp_path, monkeypatch):

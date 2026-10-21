@@ -29,6 +29,27 @@ and [BDSC25836 as a different reagent](https://flybase.org/reports/FBsf000008606
 Catalog identity resolves a stock lookup; contradictory published study labels
 remain unresolved until original experiment assignments establish the used stock.
 
+The 21 October source review parsed 503 checksum-verified Dataverse workbooks,
+including all 15 primary classifier workbooks and both transfusion identity
+tables. The other 372 workbooks remained unavailable after provider refusals.
+An independent ZIP metadata audit also recovered two author-referenced recipient
+workbooks from the already verified Zenodo archive; these are separate original
+sources, without invented Dataverse identities.
+
+Every primary workbook has 128 recording-local ROI rows. All 1,920 original
+`Sheet1!G2:G129` treatment (`Rx`) cells are blank. Those sheets supply no labelled
+exposure-start or elapsed-exposure-at-recording-start field. Repeated board/ROI
+labels on adjacent recording days leave possible animal reuse unresolved.
+These are observed source limitations, independent of computational capacity.
+
+Explicit donor/well/recipient joins can be recovered for parts of the transfusion
+experiments. Physical placement ambiguities, incompatible donor classifications,
+outcome-derived formulas, lost recipients and blank treatment cells remain
+attached to the affected original records. One original key explicitly says
+blank treatment cells can contain dummy flies; blank cells cannot become
+unexposed controls. Source-code replication does not settle these ambiguities.
+No complete H1, H2 or H3 metadata gate was cleared by the review.
+
 ## Behavioural costs
 
 `horsehair.behaviour_feasibility` prospectively binds all original development

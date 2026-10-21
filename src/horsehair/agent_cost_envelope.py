@@ -538,34 +538,63 @@ def aggregate(case, config, native, *, safety=1.5, framework_source_sha256=None,
             "required_next_gate": "separate prospective resource-admission amendment plus full native accounting and quota/budget checks"}
 
 
+def _primary_worker_environment(primary, framework, root):
+    """Keep qualified Alliance vendor packages while isolating horsehair."""
+    from horsehair.rna_recovery import _primary_environment
+    environment = _primary_environment({"primary_release": str(primary),
+        "maintenance_release": str(framework), "root": str(root)})
+    for key in ("PYTHONHOME", "PYTHONSTARTUP", "PYTHONINSPECT"):
+        environment.pop(key, None)
+    return environment
+
+
+PRIMARY_COST_BOOTSTRAP = """
+import importlib.util,sys
+from pathlib import Path
+primary,framework,root,case,index,primary_sha,config_sha,framework_sha,module_sha=sys.argv[1:]
+primary,framework=Path(primary).resolve(),Path(framework).resolve()
+assert sys.flags.no_user_site==1
+sys.path.insert(0,str(primary/'src'))
+import horsehair
+from horsehair import core
+assert Path(horsehair.__file__).resolve()==primary/'src/horsehair/__init__.py'
+assert Path(core.__file__).resolve()==primary/'src/horsehair/core.py'
+science=core.read_json(primary/'release.json');identity=core.read_json(framework/'release.json')
+assert core.source_identity(primary)==science['source_identity'] and science['source_identity']['sha256']==primary_sha
+assert core.canonical_hash(core.read_json(primary/'configs/study.json'))==config_sha
+assert core.source_identity(framework)==identity['source_identity'] and identity['source_identity']['sha256']==framework_sha
+module_path=framework/'src/horsehair/agent_cost_envelope.py'
+assert core.digest(module_path)==module_sha==identity['source_identity']['files']['src/horsehair/agent_cost_envelope.py']
+spec=importlib.util.spec_from_file_location('qualified_agent_cost_envelope',module_path)
+module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+module._measure_cell(primary,framework,root,case,int(index))
+assert core.source_identity(primary)==science['source_identity']
+assert core.source_identity(framework)==identity['source_identity']
+"""
+
+
 def run(primary, root, case, task_index):
-    """Launch an isolated primary interpreter; never register or submit jobs."""
+    """Launch verified primary code with Alliance dependencies and no user site."""
     from horsehair.budget import resource_lease
     framework = Path(__file__).resolve().parents[2]
     primary, root, case = map(lambda x: Path(x).resolve(), (primary, root, case))
     identity = read_json(framework / "release.json")
+    science = read_json(primary / "release.json")
     config = read_json(primary / "configs/study.json")
     require(os.environ.get("SLURM_CPUS_PER_TASK") == "4" and os.environ.get("HHW_GPU_COUNT", "0") == "0",
             "Envelope requires exactly four native CPUs and no GPU")
     require(source_identity(framework) == identity["source_identity"], "Qualified framework source changed")
+    require(source_identity(primary) == science["source_identity"]
+            and science["source_identity"]["sha256"] == PRIMARY_SOURCE_SHA256,
+            "Frozen primary source changed")
     require(canonical_hash(config) == FULL_CONFIG_SHA256 and case.is_relative_to(root / "maintenance")
             and Path(config["paths"]["root"]).resolve() == root, "Wrong study/configuration/output namespace")
     require(task_index in range(12), "Exactly twelve task/architecture cells are required")
-    program = """
-import importlib.util,sys
-from pathlib import Path
-primary,framework,root,case,index=sys.argv[1:]
-sys.path.insert(0,str(Path(primary)/'src'))
-spec=importlib.util.spec_from_file_location('qualified_agent_cost_envelope',Path(framework)/'src/horsehair/agent_cost_envelope.py')
-module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
-module._measure_cell(primary,framework,root,case,int(index))
-"""
-    environment = dict(os.environ)
-    for key in ("PYTHONPATH", "PYTHONHOME", "PYTHONSTARTUP", "PYTHONINSPECT"):
-        environment.pop(key, None)
-    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    environment = _primary_worker_environment(primary, framework, root)
     with resource_lease(root, config, cpus=4, gpus=0, max_hours=8, job_id=native_job_id()):
-        subprocess.run([sys.executable, "-I", "-c", program, str(primary), str(framework), str(root), str(case), str(task_index)],
+        subprocess.run([sys.executable, "-s", "-c", PRIMARY_COST_BOOTSTRAP, str(primary), str(framework), str(root),
+                       str(case), str(task_index), PRIMARY_SOURCE_SHA256, FULL_CONFIG_SHA256,
+                       identity["source_identity"]["sha256"], identity["source_identity"]["files"]["src/horsehair/agent_cost_envelope.py"]],
                        cwd=primary, env=environment, check=True, timeout=7.5 * 3600)
     require(source_identity(framework) == identity["source_identity"], "Framework changed during measurement")
     return read_json(case / f"cell-{task_index:02d}" / "receipt.json")
