@@ -6,6 +6,8 @@ This document describes the durable study stages. The private deployment receipt
 
 The [metadata and compute resolution extension](COMPUTE_AND_METADATA_RESOLUTION.md) documents the original-workbook audit and bounded behavioural/agent CPU measurements. Technical probe completion does not clear missing biological provenance or final scientific admission.
 
+Verified milestone, 21 October 2026: the 12-cell agent CPU cost pack and its native aggregation are complete. Stage B still requires behavioural workload measurements and complete resource admission. Stage F2 remains gated by the frozen scientific completion rules and the uncovered final training/analysis costs.
+
 | Stage | Work | Evidence required to advance | Principal artifacts |
 |---|---|---|---|
 | 0. Release and qualification | Freeze source/configuration; qualify Python, CUDA, R, OrthoFinder and TransDecoder on allocated hardware | Successful native jobs and verified software fixtures/files | Release identity, qualification receipts, native accounting |

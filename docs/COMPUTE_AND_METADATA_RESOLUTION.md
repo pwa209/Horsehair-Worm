@@ -150,3 +150,33 @@ timed-out read-only status requests or strictly validated live-record conflicts.
 Scheduler mutation commands are never automatically retried. Frozen primary
 interpreters retain qualified Alliance vendor libraries while verifying the
 primary scientific package identity.
+
+At 14:21 UTC on 21 October, all 12 agent CPU cells and aggregate job 6657916
+completed successfully. The source-bound aggregate reports 24 measured policies
+and a safety-scaled forecast of 10,725.24 CPU core-hours for evaluation of the
+240 final policies, with approximately 64.15 GB and 2,640 additional files.
+This is a projected evaluation cost, not observed final-study expenditure. Final
+GPU training and H4 analysis remain outside this estimate. The original 254
+unavailable episode rows remain preserved; scientific admission is still
+`not_admitted`.
+
+The largest per-policy evaluation forecast is 69.89 hours. Prospective final
+job bounds and partitioning therefore still need review against the current
+12-hour evaluation allocations before admission; a projected total below the
+study CPU cap does not establish that each individual allocation is sufficient.
+
+Behavioural cells 6657821_18 and 6657821_19 failed before numerical processing
+when their 30-second storage-quota guard wait expired while controller 6632164
+held that guard. The existing guard, owner records, failed accounting and all
+successful measurements were preserved. A private launcher now retries only
+the exact storage-headroom `ReceiptLockTimeout`, with at most five fresh calls,
+a 300-second overall window, native allocation margins and durable per-attempt
+evidence. Storage exhaustion and other failures remain immediate errors. The
+guard passed 28 focused tests; the qualified numerical source remains unchanged.
+
+Recovery deployment 6668893 completed successfully and released array 6669092
+for only indices 18–19, sequentially. Fresh aggregate 6669095 depends on both
+the original 39-cell array and the retry array. It writes a separate summary;
+the original aggregate and submission ledger were not changed. First retry
+6669092_18 was running at 14:29 UTC. This is operational recovery in progress,
+not completed behavioural workload coverage or scientific admission.
