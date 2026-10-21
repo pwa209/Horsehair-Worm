@@ -1,0 +1,151 @@
+{
+  "automatic_replay_permitted": false,
+  "files": {
+    "acquire-ethoscope-db-canary-20261021.py": {
+      "bytes": 18095,
+      "sha256": "30a843a2771196a3eec1e202f8e695fd1d41e58b6423a73218ec74b6285ea17c"
+    },
+    "activate-f2-registry-repair-v1-20261021.py": {
+      "bytes": 28897,
+      "sha256": "87787bf04770d454abc15c36aa9b144d52c459ee7f990a620a96e87188c79284"
+    },
+    "audit-af-dam-secondary-v1-20261021.py": {
+      "bytes": 28406,
+      "sha256": "76c6b4579ba8dbb5aff586cf2d68b290ea67cee6f93b7e0d6a98edbccfe4ea20"
+    },
+    "audit-ethoscope-sqlite-schema-20261021.py": {
+      "bytes": 22048,
+      "sha256": "479efed2094c0c099ee23321529bb1c9d35099df1822c4d1bb9c898d82fb762c"
+    },
+    "index-vtl-zip-metadata-20261021.py": {
+      "bytes": 16420,
+      "sha256": "8798a30cc2c7abf38ffa4a9fca6b66359a95b625807a0c25efb627369ce15c2f"
+    },
+    "qualify-af-execution-v2-20261021.py": {
+      "bytes": 11808,
+      "sha256": "7c15e9c39991440fb4018bb9930156e22a265eb81c974a967ae9d49b7c58389a"
+    },
+    "qualify-f2-registry-repair-v1-20261021.py": {
+      "bytes": 15359,
+      "sha256": "fa655450d6d67a2ae517339965cc6befe44d1621c5751549b85f046a86c7e61c"
+    },
+    "recover-f2-training0000-state-20261021.py": {
+      "bytes": 23907,
+      "sha256": "504eb2764073a5b614d986827ccacad3189ea4be5988313ead47ab41805fe26a"
+    },
+    "registered-snapshot-read-guard-20261021.py": {
+      "bytes": 12198,
+      "sha256": "42fd488d27d1bf9aa75b46c113257525e296c526250e75ba12319d6139854db4"
+    },
+    "run-af-agent-controller-registry-v2-20261021.py": {
+      "bytes": 52862,
+      "sha256": "e1852d78a1f00e9ee8855413db1f6599fe31a73c4f4498d7b09158f4c4f61a1c"
+    },
+    "run-af-archive-canary-v1-20261021.py": {
+      "bytes": 11509,
+      "sha256": "afea3e25acd05f249b886e2def5bde6781d0685770908aecbdbb8797b33ae4ec"
+    },
+    "run-dam-structural-audit-v1-20261021.py": {
+      "bytes": 22600,
+      "sha256": "c90d56cc5c71c832bed6d9e08b58d0f07650095b86cd0eb299aebbf7a4aac80d"
+    },
+    "run-ethoscope-sqlite-audit-v1-20261021.py": {
+      "bytes": 30605,
+      "sha256": "b1a1d836e17dfe819f0809b5597bf7562766336e3f9ffebb1892a4bde8adcf26"
+    },
+    "run-ethoscope-sqlite-audit-v2-20261021.py": {
+      "bytes": 35400,
+      "sha256": "0ac09cce7d100531d5331cf84d89824e89458ef7ae4917a326741cbb756325a0"
+    },
+    "run-f00d-worker-registry-overlay-20261021.py": {
+      "bytes": 4062,
+      "sha256": "dd39905ce44f89f7f8bbdd325d1a0f1d5ec7950dd89d0e3bb267f6fdfe77a09a"
+    },
+    "run-full-cohort-profile-v2-20261021.py": {
+      "bytes": 14309,
+      "sha256": "396e0ec6f9cf5936884fdd08d23e5e3d6e92f9bb06c654d747d04b2b27338787"
+    },
+    "run-full-record-adjoint-v1-20261021.py": {
+      "bytes": 36630,
+      "sha256": "c5fcef7a63e9f680632093b4ef4902fa5496ba37605763dd40cfe7fc04b50c04"
+    },
+    "test_acquire_ethoscope_db_canary_20261021.py": {
+      "bytes": 14121,
+      "sha256": "6a7d31cdcc08674aee39af0361cfe234d1eb669548634daf3458c4dd592f4ab3"
+    },
+    "test_activate_f2_registry_repair_v1_20261021.py": {
+      "bytes": 10701,
+      "sha256": "c17a8737b24b8d1b52973189bee0d53cbd341b89582728b0cdd8a8135f3a8373"
+    },
+    "test_af_agent_controller_registry_v2_20261021.py": {
+      "bytes": 33742,
+      "sha256": "406297d4cc3c1de376678aa4d8445ed6895dd52b04516ba33cae324f41d34763"
+    },
+    "test_af_archive_canary_v1_20261021.py": {
+      "bytes": 2049,
+      "sha256": "9e4bfd1364060d5e7bfd1654bb8b6a86c6f2f4f9faf6b4ca5b6cc7a552aabe3c"
+    },
+    "test_audit_af_dam_secondary_v1_20261021.py": {
+      "bytes": 14310,
+      "sha256": "36a25ef7c42773871b4b472112e18f6d773c7017a388408bf2a64ae78267b770"
+    },
+    "test_audit_ethoscope_sqlite_schema_20261021.py": {
+      "bytes": 14610,
+      "sha256": "ec03b87487c6d5e7ad1eb3b319de10bf655f501d8b89aa500420765b2558eacf"
+    },
+    "test_f00d_worker_registry_overlay_20261021.py": {
+      "bytes": 4064,
+      "sha256": "2fdcf83a1abc796f82e86d3d3014fd785d195bf7ca4dc6457f2d6dd5db9b3968"
+    },
+    "test_full_cohort_profile_v2_20261021.py": {
+      "bytes": 8627,
+      "sha256": "e7ca2c09c78005eac2433b3373733a1f0f8bfb126e7f45bffaa257651b58453f"
+    },
+    "test_full_record_adjoint_v1_20261021.py": {
+      "bytes": 19940,
+      "sha256": "a9b64eee757add0105cf20d54e3d5d8b21fbe522e1243f57c95758ed3e5299ec"
+    },
+    "test_index_vtl_zip_metadata_20261021.py": {
+      "bytes": 11927,
+      "sha256": "f039c151e2fd9ac9edc18f597c40580a42bdf31cd8120b2c5871427580c7ffba"
+    },
+    "test_qualify_af_execution_v2_20261021.py": {
+      "bytes": 9091,
+      "sha256": "9c19d8bfdc638778469eb9fa8a9f55c97a3a3e9ffa41b9e5d6ba13c491d7424e"
+    },
+    "test_qualify_f2_registry_repair_v1_20261021.py": {
+      "bytes": 6532,
+      "sha256": "e2d7fd13a91ec40b0fb2bcef246a1ff3a22ac36a48c20df2bd80e1a3f29b0772"
+    },
+    "test_recover_f2_training0000_state_20261021.py": {
+      "bytes": 19478,
+      "sha256": "6cb7fdcc55f12164d81666f70e545b6efd610a1299baef66e483a271fbbe1673"
+    },
+    "test_registered_snapshot_read_guard_20261021.py": {
+      "bytes": 10892,
+      "sha256": "346f96d02384c361fdd376264c02ba05e7cc53fa18492cd032357fadb8e14879"
+    },
+    "test_run_dam_structural_audit_v1_20261021.py": {
+      "bytes": 12794,
+      "sha256": "fea87d2b9a316961e6c486b1a77625162f1c9e35bbf22dbdb31f8603dcd995bc"
+    },
+    "test_run_ethoscope_sqlite_audit_v1_20261021.py": {
+      "bytes": 17938,
+      "sha256": "95de139f8a6893a4ebea5cab29d433b832ba76fad982bad4171d1a80a84db061"
+    },
+    "test_run_ethoscope_sqlite_audit_v2_20261021.py": {
+      "bytes": 23811,
+      "sha256": "4fa728ece7ba48061125e888dce27f0aec8841c3d816c9dd8799fb6022bd6517"
+    },
+    "test_verified_evidence_archive_20261021.py": {
+      "bytes": 26299,
+      "sha256": "ec4131d283d3f3a792a561c6ae6324de853a4301def9d275a03018a9801f5462"
+    },
+    "verified-evidence-archive-20261021.py": {
+      "bytes": 55510,
+      "sha256": "045d8650db62c0fa52d7f56bb7bdb2669729509c23ecfbbc847e73cbbff8d42a"
+    }
+  },
+  "kind": "reviewed_operational_source_snapshot",
+  "scientific_data_included": false
+}

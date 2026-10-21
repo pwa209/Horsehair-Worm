@@ -41,13 +41,21 @@ The entry points are sequential:
    verified ordered condition parts. Original and promoted weight hashes remain
    distinct. An unavailable, missing, duplicate, altered or corrupt record blocks
    inference; no row is filled, dropped or converted to a negative observation.
-   Individual original part files remain required. An archive alone is not a
-   substitute until a separately qualified archive-reading adapter is added.
+   By default all individual original part files remain required. The optional
+   [condition archive interface](H4_CONDITION_ARCHIVE_INTERFACE.md) permits an
+   explicitly pinned complete600-member archive for a listed policy only after
+   independent native archive-canary and current consumer-source qualification.
+   Every original raw receipt and every part is still validated; the canonical
+   assembled file and original checkpoints remain ordinary preserved files.
 
 The same entry points are available through `python -m
 horsehair.agent_analysis_v2`: `freeze-plan`, `freeze-inputs` and `analyze`.
 The latter two commands require an independently supplied analysis-plan SHA;
 `analyze` also requires the independently supplied input-manifest SHA.
+`freeze-inputs` accepts `--archive-registry` together with its independently
+supplied `--archive-registry-sha256`. Omitting them preserves the original-file
+path. This addition does not authorize removing files; operational packing and
+removal have separate reviewed drivers and native gates.
 
 The complete workload contains 240 policies, 20 independent final seeds per
 architecture/task block, 300 conditions and 153,600 trial rows per policy:

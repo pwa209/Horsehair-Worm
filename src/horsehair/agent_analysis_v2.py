@@ -7,6 +7,10 @@ admission, storage headroom, leases and process deadlines belong to the launcher
 from __future__ import annotations
 
 import copy
+from contextlib import contextmanager, nullcontext
+import hashlib
+import importlib.util
+import io
 import json
 from pathlib import Path
 import re
@@ -26,6 +30,14 @@ ANALYSIS_AMENDMENT = 'H4-complete-float64-evaluation-bridge-v1'
 EVIDENCE_KEYS = {'qualification', 'precision_plan', 'precision_binding', 'precision_diagnostics', 'precision_assembly'}
 MIN_FULL_QUALIFICATION_TESTS = 1737  # Qualified1694-test core plus initial43 bridge tests.
 FULL_TEST_SELECTION = 'complete source/tests directory; no environment selectors or third-party plugin autoload'
+ARCHIVE_HELPER_SHA256 = '045d8650db62c0fa52d7f56bb7bdb2669729509c23ecfbbc847e73cbbff8d42a'
+ARCHIVE_REGISTRY_KIND = 'final_policy_condition_archive_registry_v1'
+ARCHIVE_PACK_FRAMEWORK_SHA256 = '4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1'
+ARCHIVE_PACK_QUALIFICATION_SHA256 = '29ed530f3783f3c35c3cf20343bdb663732ec2bf4bf5c3218f8b029510becc2f'
+ARCHIVE_PACK_QUALIFICATION_PATH = 'maintenance/study-af-execution-support-v1-20261021/qualification.json'
+ARCHIVE_PACK_QUALIFICATION_JOB = '6684484'
+ARCHIVE_CELL_KEYS = {'evaluation_case', 'policy_inputs', 'archive_directory', 'index_sha256', 'archive_sha256',
+                     'pack_intent', 'roundtrip', 'pack_receipt', 'pack_producer'}
 
 
 def _require(value, message):
@@ -95,6 +107,185 @@ def _exclusive_json(path, value):
     _require(len(raw) <= 50_000_000, 'Analysis metadata exceeds finite bound')
     with Path(path).open('xb') as handle:
         handle.write(raw); handle.flush(); os.fsync(handle.fileno())
+
+
+def _load_archive_helper(path):
+    raw = Path(path).read_bytes()
+    _require(hashlib.sha256(raw).hexdigest() == ARCHIVE_HELPER_SHA256, 'Archive reader source changed before import')
+    spec = importlib.util.spec_from_file_location('_h4_verified_archive_' + ARCHIVE_HELPER_SHA256, path)
+    _require(spec is not None and spec.loader is not None, 'Archive helper is not an importable source file')
+    helper = importlib.util.module_from_spec(spec)
+    # Execute the already-hashed source bytes, never a second unverified read.
+    exec(compile(raw, str(path), 'exec'), helper.__dict__)
+    return helper
+
+
+def _archive_metadata(root, helper, binding):
+    path = _bound(root, binding, json_file=False)
+    _require(path.stat().st_size <= 10_000_000, 'Archive metadata exceeds finite bound')
+    raw = path.read_bytes()
+    _require(hashlib.sha256(raw).hexdigest() == binding['sha256'], 'Archive metadata changed while reading')
+    return helper.strict_json(raw)
+
+
+def _archive_context(root, binding, cells):
+    """Load only an explicitly pinned operational reader; no data-supplied code."""
+    if binding is None:
+        return None
+    registry = _bound(root, binding)
+    _require(set(registry) == {'schema_version', 'kind', 'root', 'full_config_sha256',
+        'primary_scientific_source_sha256', 'archive_helper', 'archive_canary', 'cells',
+        'scientific_result', 'admission_authority'} and registry['schema_version'] == 1
+        and registry['kind'] == ARCHIVE_REGISTRY_KIND and registry['root'] == str(root)
+        and registry['full_config_sha256'] == BASE_CONFIG_SHA256
+        and registry['primary_scientific_source_sha256'] == PRIMARY_SCIENTIFIC_SOURCE_SHA256
+        and registry['scientific_result'] is False and registry['admission_authority'] is False,
+        'Exact personal source-bound condition archive registry required')
+    helper_path = _bound(root, registry['archive_helper'], json_file=False)
+    _require(registry['archive_helper']['sha256'] == ARCHIVE_HELPER_SHA256,
+             'Only the separately reviewed exact archive reader is supported')
+    helper = _load_archive_helper(helper_path)
+    # Parse a second time with the pinned strict parser: duplicate/nonfinite JSON
+    # cannot become a different registry after ordinary metadata decoding.
+    registry = _archive_metadata(root, helper, binding)
+    helper._verify_canary(registry['archive_canary'], root)
+    roster = registry['cells']
+    _require(isinstance(roster, dict) and all(isinstance(k, str) and k in {str(i) for i in range(240)} for k in roster),
+             'Archive cells must use exact canonical decimal policy indices')
+    by_index = {cell['index']: cell for cell in cells}
+    for key, descriptor in roster.items():
+        _require(int(key) in by_index, 'Archive cell is absent from the original campaign')
+        _archive_descriptor(root, helper, descriptor, by_index[int(key)])
+    _bound(root, registry['archive_helper'], json_file=False); _bound(root, binding, json_file=False)
+    return {'binding': copy.deepcopy(binding), 'registry': registry, 'helper': helper}
+
+
+def _archive_descriptor(root, helper, descriptor, cell):
+    """Metadata/native provenance, independently of endpoint reads."""
+    _require(isinstance(descriptor, dict) and set(descriptor) == ARCHIVE_CELL_KEYS,
+             'Exact immutable policy archive descriptor required')
+    source = _confined(root, descriptor['evaluation_case'])
+    directory = _confined(root, descriptor['archive_directory'])
+    _require(source == Path(cell['evaluation_case']).resolve() and directory.is_relative_to(root / 'maintenance')
+             and not directory.is_relative_to(source) and _sha(descriptor['index_sha256'])
+             and _sha(descriptor['archive_sha256']), 'Archive belongs to another canonical policy case')
+    inputs = descriptor['policy_inputs']
+    _require(isinstance(inputs, dict) and set(inputs) == {'plan', 'binding', 'summary'}, 'Canonical archive inputs required')
+    for key, name in [('plan', 'plan.json'), ('binding', 'plan-binding.json'), ('summary', 'evaluation_summary.json')]:
+        _require(inputs[key] == _locator(root, source / name), 'Archive canonical policy input changed')
+    values = {}
+    for key, name in [('pack_intent', 'pack-intent.json'), ('roundtrip', 'roundtrip.json'), ('pack_receipt', 'pack-receipt.json')]:
+        _require(Path(descriptor[key]['path']).resolve() == directory / name, 'Archive evidence moved to another directory')
+        values[key] = _archive_metadata(root, helper, descriptor[key])
+    index = _archive_metadata(root, helper, {'path': str(directory / 'index.json'), 'sha256': descriptor['index_sha256']})
+    intent, roundtrip, receipt = (values[k] for k in ['pack_intent', 'roundtrip', 'pack_receipt'])
+    _require(index.get('kind') == intent.get('kind') == 'completed-final-policy-conditions'
+             and index.get('source') == intent.get('source') == str(source)
+             and index.get('helper_sha256') == intent.get('helper_sha256') == ARCHIVE_HELPER_SHA256
+             and index.get('authority') == intent.get('authority')
+             and index.get('members') == intent.get('members') and len(index.get('members', [])) == 600
+             and index.get('authority', {}).get('policy_inputs') == inputs
+             and receipt.get('status') == 'verified_archive_originals_retained'
+             and receipt.get('helper_sha256') == ARCHIVE_HELPER_SHA256
+             and receipt.get('index_sha256') == descriptor['index_sha256']
+             and receipt.get('archive_sha256') == descriptor['archive_sha256']
+             and receipt.get('intent_sha256') == descriptor['pack_intent']['sha256']
+             and receipt.get('roundtrip_sha256') == descriptor['roundtrip']['sha256']
+             and receipt.get('files') == roundtrip.get('files') == 600
+             and receipt.get('original_removal_authorized') is False
+             and receipt.get('scientific_result') is False and receipt.get('admission_authority') is False
+             and roundtrip.get('index_sha256') == descriptor['index_sha256']
+             and roundtrip.get('archive_sha256') == descriptor['archive_sha256']
+             and roundtrip.get('independent_extracted_bytes_verified') is True
+             and roundtrip.get('member_roster_sha256') == index.get('member_roster_sha256')
+             and roundtrip.get('bytes') == index.get('source_content_bytes'), 'Exact verified pack/roundtrip receipt required')
+    producer = descriptor['pack_producer']
+    _require(isinstance(producer, dict) and set(producer) == {'native', 'result', 'qualification'}, 'Separate pack-producer native proof and qualification required')
+    _pack_qualification(root, producer['qualification'])
+    job, _ = helper.verify_native(producer['native'], root, completed=True)
+    result = _archive_metadata(root, helper, producer['result'])
+    expected = {'schema_version': 1, 'status': 'complete_verified_policy_archive_pack', 'native_job_id': job,
+        'archive_helper_sha256': ARCHIVE_HELPER_SHA256, 'evaluation_case': str(source), 'archive_directory': str(directory),
+        'index_sha256': descriptor['index_sha256'], 'archive_sha256': descriptor['archive_sha256'],
+        'pack_intent_sha256': descriptor['pack_intent']['sha256'], 'roundtrip_sha256': descriptor['roundtrip']['sha256'],
+        'pack_receipt_sha256': descriptor['pack_receipt']['sha256'], 'full_config_sha256': BASE_CONFIG_SHA256,
+        'primary_scientific_source_sha256': PRIMARY_SCIENTIFIC_SOURCE_SHA256, 'scientific_result': False, 'admission_authority': False}
+    _require(all(result.get(k) == v for k, v in expected.items())
+             and result.get('execution_source_sha256') == ARCHIVE_PACK_FRAMEWORK_SHA256,
+             'Pack producer does not bind this exact archive and canonical policy')
+    return index
+
+
+def _pack_qualification(root, locator):
+    """The initial pack transport supports only the already qualified4f frame.
+
+    This does not claim the private pack wrapper belongs to the public1694-test
+    suite. Its library has the separate exact39-case native canary above.
+    """
+    _require(locator == {'path': str(root / ARCHIVE_PACK_QUALIFICATION_PATH),
+                         'sha256': ARCHIVE_PACK_QUALIFICATION_SHA256}, 'Exact independently qualified pack framework required')
+    q = _bound(root, locator)
+    counts = {'tests': 1694, 'failures': 0, 'errors': 0, 'skipped': 0}
+    _require(q.get('status') == 'complete' and type(q.get('returncode')) is int and q['returncode'] == 0
+             and q.get('source_sha256') == ARCHIVE_PACK_FRAMEWORK_SHA256 and q.get('config_sha256') == BASE_CONFIG_SHA256
+             and q.get('source_verified_unchanged') is True and q.get('slurm_job_id') == ARCHIVE_PACK_QUALIFICATION_JOB
+             and q.get('test_counts') == counts, 'Full pinned1694-test pack framework qualification required')
+    proof = completed_native_dependency(root, ARCHIVE_PACK_QUALIFICATION_JOB)
+    _require(proof is not None, 'Pack framework native qualification completion is missing')
+    record = proof['native_records'][ARCHIVE_PACK_QUALIFICATION_JOB]
+    _require(record.get('state') == 'COMPLETED' and record.get('user') == 'pwa209'
+             and record.get('account') == 'def-ptewarie_cpu' and record.get('job_id_raw') == ARCHIVE_PACK_QUALIFICATION_JOB
+             and record.get('unallocated_metadata') is False and record.get('cpus') == 4
+             and type(record.get('elapsed_seconds')) is int and 0 < record['elapsed_seconds'] <= 3600
+             and 'gpu' not in record.get('alloc_tres', '').lower(), 'Owned four-CPU native pack qualification proof required')
+    artifact = q.get('artifacts', {}).get('junit', {})
+    junit = _bound(root, {'path': artifact.get('path'), 'sha256': artifact.get('sha256')}, json_file=False)
+    from .cli import _qualification_junit
+    _require(junit.is_relative_to(root / 'state/qualification-evidence') and junit.stat().st_size == artifact.get('bytes')
+             and _qualification_junit(junit) == counts, 'Actual pinned1694-test native JUnit bytes required')
+
+
+@contextmanager
+def _archived_conditions(root, context, descriptor, cell, value, assembly):
+    """One verified reader, every original raw packet; never a partial fallback."""
+    helper = context['helper']; index = _archive_descriptor(root, helper, descriptor, cell)
+    source = Path(cell['evaluation_case']).resolve()
+    _, _, native_result = helper.verify_authority(index['authority'], source, root, policy=True)
+    _require(native_result.get('result') == assembly
+             and native_result.get('evaluation_plan_sha256') == descriptor['policy_inputs']['plan']['sha256']
+             and native_result.get('evaluation_binding_sha256') == descriptor['policy_inputs']['binding']['sha256'],
+             'Archive original native assembly authority differs')
+    with helper.ArchiveReader(descriptor['archive_directory'], descriptor['index_sha256'], descriptor['archive_sha256']) as reader:
+        _require(reader.index == index, 'Archive index changed while opening')
+        bindings = assembly.get('condition_bindings', [])
+        _require(len(bindings) == 300 and all(type(r.get('condition_index')) is int for r in bindings)
+                 and [r['condition_index'] for r in bindings] == list(range(300)),
+                 'All ordered original archive conditions required')
+        expected, committed = {}, {}
+        for i, binding in enumerate(bindings):
+            receipt_name, artifact_name = binding['receipt_name'], binding['artifact_name']
+            _require(re.fullmatch(r'condition-[0-9]{5}-[0-9a-f]{32}\.json', receipt_name)
+                     and artifact_name == receipt_name[:-5] + '.parquet'
+                     and receipt_name not in expected and artifact_name not in expected,
+                     'Unknown or duplicate original archived part name')
+            expected.update({receipt_name: binding['receipt_sha256'], artifact_name: binding['artifact_sha256']})
+            raw = reader.read_member(receipt_name); receipt = helper.strict_json(raw)
+            _require(hashlib.sha256(raw).hexdigest() == binding['receipt_sha256']
+                     and type(receipt.get('condition_index')) is int and receipt['condition_index'] == i
+                     and receipt.get('condition') == value['conditions'][i] and receipt.get('status') == 'complete'
+                     and receipt.get('plan_sha256') == descriptor['policy_inputs']['plan']['sha256']
+                     and receipt.get('original_weight_sha256') == value['original_weight_sha256']
+                     and receipt.get('evaluation_weight_sha256') == assembly['evaluation_weight_sha256']
+                     and receipt.get('artifact_name') == artifact_name and receipt.get('artifact_sha256') == binding['artifact_sha256'],
+                     'Archived original condition provenance changed')
+            evaluation._validate_restoration(receipt['restoration'], value['conditions'][i])
+            committed[i] = dict(receipt, _receipt_name=receipt_name, _receipt_sha256=binding['receipt_sha256'])
+        _require({name: member['sha256'] for name, member in reader.members.items()} == expected,
+                 'Archive must contain exactly all600 authoritative condition files')
+        yield reader, committed
+    # Recheck the pathname too: a replaced archive must not hide behind an open fd.
+    _bound(root, {'path': str(Path(descriptor['archive_directory']) / 'evidence.tar'), 'sha256': descriptor['archive_sha256']}, json_file=False)
+    _archive_descriptor(root, helper, descriptor, cell)
 
 
 def _campaign(config, protocol, plan, root):
@@ -257,13 +448,19 @@ def _entry(root, cell):
             'assembled_trials': _locator(root, case / artifact)}
 
 
-def freeze_inputs(case, *, expected_plan_sha256=None):
+def freeze_inputs(case, *, expected_plan_sha256=None, archive_registry=None):
     """Pin every complete policy manifest; endpoint values are not read here."""
     plan = _load(case, expected_plan_sha256); root = Path(plan['root']); case = Path(case)
     with exclusive_file_lock(case / 'analysis.lock', timeout=0):
+        archives = _archive_context(root, archive_registry, plan['cells'])
         entries = [_entry(root, cell) for cell in plan['cells']]
+        if archives is not None:
+            for entry in entries:
+                descriptor = archives['registry']['cells'].get(str(entry['index']))
+                if descriptor is not None: entry['condition_archive'] = copy.deepcopy(descriptor)
         manifest = {'schema_version': 1, 'analysis_plan_sha256': digest(case / 'analysis-plan.json'), 'cells': entries,
                     'scientific_result': False, 'admission_authority': False, 'created_unix': time.time()}
+        if archives is not None: manifest['archive_registry'] = copy.deepcopy(archive_registry)
         _exclusive_json(case / 'inputs.json', manifest)
         _exclusive_json(case / 'inputs-binding.json', {'sha256': digest(case / 'inputs.json'), 'automatic_rewrite_permitted': False})
     return manifest
@@ -294,10 +491,13 @@ def _trial_summary(frame, settings, protocol, *, architecture, task, seed):
     return summaries, controls
 
 
-def _validate_cell(plan, cell, entry):
+def _validate_cell(plan, cell, entry, *, archives=None):
     import pandas as pd
     root, settings = Path(plan['root']), evaluation._settings(plan['config']); case = Path(cell['evaluation_case'])
-    _require(entry == _entry(root, cell), 'Pinned policy input manifest changed')
+    expected_entry = _entry(root, cell)
+    descriptor = None if archives is None else archives['registry']['cells'].get(str(cell['index']))
+    if descriptor is not None: expected_entry['condition_archive'] = descriptor
+    _require(entry == expected_entry, 'Pinned policy input manifest changed')
     value = evaluation._load_plan(case, entry['evaluation_plan']['sha256']); _final_plan(plan, cell, value)
     summary = _bound(root, entry['training_summary'])
     expected = {'seed': cell['seed'], 'task': cell['task'], 'architecture': cell['architecture'],
@@ -315,8 +515,6 @@ def _validate_cell(plan, cell, entry):
     _require(all(p.dtype == torch.float32 and torch.isfinite(p).all() for p in base.parameters()),
              'Original checkpoint contains nonfinite or non-float32 parameters')
     promoted_weight = agents.state_hash(evaluation._precision_policy(base, torch.float64))
-    committed = evaluation._committed(case, value)
-    _require(set(committed) == set(range(300)), 'Every original condition must have exactly one committed receipt')
     assembly = _bound(root, entry['assembly_summary'])
     expected_summary = {'status': 'complete_amended_evaluation', 'amendment': evaluation.AMENDMENT,
         'numerical_difference': evaluation.DIFFERENCE, 'plan_sha256': entry['evaluation_plan']['sha256'],
@@ -326,17 +524,28 @@ def _validate_cell(plan, cell, entry):
         'canary': False, 'scientific_result': False, 'admission_authority': False}
     _require(all(assembly.get(k) == v for k, v in expected_summary.items())
              and assembly.get('trial_file_sha256') == entry['assembled_trials']['sha256'], 'Amended complete assembly identity changed')
+    source = (_archived_conditions(root, archives, descriptor, cell, value, assembly) if descriptor is not None
+              else nullcontext((None, evaluation._committed(case, value))))
     bindings, frames = [], []
-    for index, condition in enumerate(value['conditions']):
-        receipt = committed[index]
-        _locator(root, case / receipt['_receipt_name'])
-        _require(receipt['evaluation_weight_sha256'] == promoted_weight, 'Promoted weights changed between conditions')
-        frames.append(evaluation._validate_condition(pd.read_parquet(case / receipt['artifact_name']).to_dict('records'), value, condition))
-        _require(digest(case / receipt['artifact_name']) == receipt['artifact_sha256']
-                 and digest(case / receipt['_receipt_name']) == receipt['_receipt_sha256'],
-                 'Condition source changed while its endpoints were read')
-        bindings.append({'condition_index': index, 'receipt_name': receipt['_receipt_name'], 'receipt_sha256': receipt['_receipt_sha256'],
-                         'artifact_name': receipt['artifact_name'], 'artifact_sha256': receipt['artifact_sha256']})
+    with source as (reader, committed):
+        _require(set(committed) == set(range(300)), 'Every original condition must have exactly one committed receipt')
+        for index, condition in enumerate(value['conditions']):
+            receipt = committed[index]
+            _require(receipt['evaluation_weight_sha256'] == promoted_weight, 'Promoted weights changed between conditions')
+            if reader is None:
+                _locator(root, case / receipt['_receipt_name'])
+                part = pd.read_parquet(case / receipt['artifact_name'])
+            else:
+                # Real condition parts contain512 rows. Keep the reviewed finite
+                # read_member bound; a larger member fails rather than truncates.
+                part = pd.read_parquet(io.BytesIO(reader.read_member(receipt['artifact_name'])))
+            frames.append(evaluation._validate_condition(part.to_dict('records'), value, condition))
+            if reader is None:
+                _require(digest(case / receipt['artifact_name']) == receipt['artifact_sha256']
+                         and digest(case / receipt['_receipt_name']) == receipt['_receipt_sha256'],
+                         'Condition source changed while its endpoints were read')
+            bindings.append({'condition_index': index, 'receipt_name': receipt['_receipt_name'], 'receipt_sha256': receipt['_receipt_sha256'],
+                             'artifact_name': receipt['artifact_name'], 'artifact_sha256': receipt['artifact_sha256']})
     _require(assembly.get('condition_bindings') == bindings, 'Assembly must bind all exact ordered condition receipts and parts')
     frame = pd.concat(frames, ignore_index=True); assembled = pd.read_parquet(_bound(root, entry['assembled_trials'], json_file=False))
     pd.testing.assert_frame_equal(frame, assembled, check_dtype=True, check_exact=True)
@@ -408,11 +617,12 @@ def run(case, *, inputs_sha256, expected_plan_sha256=None):
         _require(manifest.get('analysis_plan_sha256') == digest(case / 'analysis-plan.json')
                  and len(manifest['cells']) == 240 and [r['index'] for r in manifest['cells']] == list(range(240)),
                  'Exact complete input manifest required')
+        archives = _archive_context(root, manifest.get('archive_registry'), plan['cells'])
         output = case / 'analysis'; _require(not output.exists(), 'Completed or partial amended analysis may not be overwritten')
         summaries, controls, failures = [], [], []
         for cell, entry in zip(plan['cells'], manifest['cells']):
             try:
-                summary, control = _validate_cell(plan, cell, entry)
+                summary, control = _validate_cell(plan, cell, entry, archives=archives)
                 summaries.append(summary); controls.append(control)
             except (OSError, ValueError, RuntimeError, KeyError, AssertionError, TypeError) as error:
                 failures.append({'index': cell['index'], 'task': cell['task'], 'architecture': cell['architecture'],
@@ -431,7 +641,14 @@ def run(case, *, inputs_sha256, expected_plan_sha256=None):
         # Recheck every top-level source file after reading, not just the manifest.
         for entry in manifest['cells']:
             for name, binding in entry.items():
-                if name != 'index': _bound(root, binding, json_file=False)
+                if name not in {'index', 'condition_archive'}: _bound(root, binding, json_file=False)
+        if archives is not None:
+            # Native selected rows, canary, helper, registry, canonical inputs and
+            # producer receipts are rechecked after statistics, without caching.
+            _archive_context(root, archives['binding'], plan['cells'])
+            for descriptor in archives['registry']['cells'].values():
+                _bound(root, {'path': str(Path(descriptor['archive_directory']) / 'evidence.tar'),
+                             'sha256': descriptor['archive_sha256']}, json_file=False)
         output.mkdir()
         seed_path, control_path, curve_path = output / 'seed_summaries.parquet', output / 'restoration_controls.parquet', output / 'response_curves.json'
         seeds.to_parquet(seed_path, index=False); restoration.to_parquet(control_path, index=False)
@@ -464,6 +681,7 @@ def main(argv=None):
     parser.add_argument('--campaign-plan', type=Path); parser.add_argument('--campaign-plan-sha256')
     parser.add_argument('--original-protocol', type=Path); parser.add_argument('--original-protocol-sha256')
     parser.add_argument('--evidence', type=Path); parser.add_argument('--evidence-sha256')
+    parser.add_argument('--archive-registry', type=Path); parser.add_argument('--archive-registry-sha256')
     args = parser.parse_args(argv)
     if args.mode == 'freeze-plan':
         _require(all([args.config, args.root, args.campaign_plan, args.campaign_plan_sha256,
@@ -475,7 +693,10 @@ def main(argv=None):
             original_protocol=args.original_protocol, original_protocol_sha256=args.original_protocol_sha256, evidence=evidence)
     else:
         _require(_sha(args.plan_sha256), 'An independent immutable analysis-plan SHA is required')
-        if args.mode == 'freeze-inputs': freeze_inputs(args.case, expected_plan_sha256=args.plan_sha256)
+        if args.mode == 'freeze-inputs':
+            _require(bool(args.archive_registry) == bool(args.archive_registry_sha256), 'Archive registry requires both path and independent SHA')
+            archive = None if args.archive_registry is None else {'path': str(args.archive_registry), 'sha256': args.archive_registry_sha256}
+            freeze_inputs(args.case, expected_plan_sha256=args.plan_sha256, archive_registry=archive)
         else:
             _require(_sha(args.inputs_sha256), 'An independent immutable input-manifest SHA is required')
             run(args.case, inputs_sha256=args.inputs_sha256, expected_plan_sha256=args.plan_sha256)

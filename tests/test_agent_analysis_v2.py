@@ -295,7 +295,8 @@ def test_missing_policy_files_record_full_incomplete_audit_and_no_result(context
     assert audit['scientific_result'] is False and audit['admission_authority'] is False
 
 
-def test_real_full300_condition_cell_revalidates_parts_checkpoint_and_assembly(context):
+@pytest.fixture
+def complete_policy(context):
     torch=pytest.importorskip('torch')
     root,config,protocol,_,plan=context;cell=plan['cells'][0]
     training=Path(cell['training_case']);training.mkdir(parents=True)
@@ -325,22 +326,28 @@ def test_real_full300_condition_cell_revalidates_parts_checkpoint_and_assembly(c
                     'target_policy_kl':condition['strength']**2/2,'protocol_sha256':value['evaluation_protocol_sha256'],
                     'heldout_condition':True,'effective_coefficients':condition['rank'],'numerical_status':'available',
                     'calibration_numerical_status':'available','numerical_failure_reason':None})
-        artifact=case/f'condition-{i:05d}-fixture.parquet';pd.DataFrame(rows).to_parquet(artifact,index=False)
+        stem=f'condition-{i:05d}-{i+1:032x}'
+        artifact=case/(stem+'.parquet');pd.DataFrame(rows).to_parquet(artifact,index=False)
         restoration={**{k:condition[k] for k in ['mechanism','rank','strength','matching_arm']},'base_weights_unchanged':True,
             'intervened_probability_status':'available','restoration_max_probability_error':0.,'altered_max_probability_change':0.}
-        atomic_json(case/f'condition-{i:05d}-fixture.json',{'status':'complete','plan_sha256':digest(case/'plan.json'),
+        atomic_json(case/(stem+'.json'),{'status':'complete','plan_sha256':digest(case/'plan.json'),
             'condition_index':i,'condition':condition,'artifact_name':artifact.name,'artifact_sha256':digest(artifact),
             'rows':512,'restoration':restoration,'calibration_numerical_diagnostics':[],
             'original_weight_sha256':summary['weight_sha256'],'evaluation_weight_sha256':promoted,'slurm_job_id':'1'})
     assembly=execution.assemble(case,expected_plan_sha256=digest(case/'plan.json'))
+    return plan,cell,checkpoint,value,assembly
+
+
+def test_real_full300_condition_cell_revalidates_parts_checkpoint_and_assembly(context,complete_policy):
+    root,*_=context;plan,cell,checkpoint,value,assembly=complete_policy;case=Path(cell['evaluation_case'])
     entry=bridge._entry(root,cell)
     summaries,controls=bridge._validate_cell(plan,cell,entry)
     assert len(summaries)==300 and len(controls)==1200
     assert (summaries.redirection_difference==0).all()
-    part=case/'condition-00000-fixture.parquet';previous=part.read_bytes();part.write_bytes(b'corrupted')
+    part=case/f'condition-00000-{1:032x}.parquet';previous=part.read_bytes();part.write_bytes(b'corrupted')
     with pytest.raises(ValueError,match='Committed condition file changed'):bridge._validate_cell(plan,cell,entry)
     part.write_bytes(previous)
-    receipt=case/'condition-00000-fixture.json';old_receipt=receipt.read_bytes();receipt.rename(case/'missing-receipt.saved')
+    receipt=case/f'condition-00000-{1:032x}.json';old_receipt=receipt.read_bytes();receipt.rename(case/'missing-receipt.saved')
     with pytest.raises(ValueError,match='Every original condition'):bridge._validate_cell(plan,cell,entry)
     (case/'missing-receipt.saved').rename(receipt);assert receipt.read_bytes()==old_receipt
     before=checkpoint.read_bytes();checkpoint.write_bytes(b'corrupted')
@@ -352,3 +359,207 @@ def test_real_full300_condition_cell_revalidates_parts_checkpoint_and_assembly(c
     frame.to_parquet(assembled,index=False);assembly['trial_file_sha256']=digest(assembled)
     atomic_json(case/'evaluation_summary.json',assembly);changed=bridge._entry(root,cell)
     with pytest.raises(AssertionError):bridge._validate_cell(plan,cell,changed)
+
+
+def archive_native(root, job):
+    """Synthetic persisted sacct/owner proof; no scheduler calls."""
+    record={'state':'COMPLETED','exit_code':'0:0','elapsed_seconds':12,'cpus':1,'gpus':0,
+        'job_id':job,'job_id_raw':job,'cpu_core_hours':12/3600,'gpu_hours':0.,'basis':'sacct final allocated wall time'}
+    ledger=root/'state/resource-budget.json'
+    value=read_json(ledger) if ledger.exists() else {'native_jobs':{}}
+    value['native_jobs'][job]=record;atomic_json(ledger,value)
+    proof={'job_id':job,'array':None,'dependency_kind':'afterok','source_path':str(ledger),
+        'source_file_sha256_at_capture':digest(ledger),'native_records':{job:record},
+        'native_records_sha256':canonical_hash({job:record}),
+        'basis':'Positive persisted final sacct records for every declared task; require COMPLETED/0:0 for afterok'}
+    proof['completion_proof_sha256']=canonical_hash(proof)
+    owner={'job_id':job,'state':'COMPLETED','exit_code':'0:0','elapsed_seconds':12,'cpus':1,'gpus':0,
+        'user':'pwa209','account':'def-ptewarie_cpu'}
+    result={}
+    for key,data in [('completion',proof),('owner',owner)]:
+        path=root/f'maintenance/archive-proofs/{job}-{key}.json';atomic_json(path,data)
+        result[key]=bridge._locator(root,path)
+    return result
+
+
+def archive_frame_qualification(root, monkeypatch):
+    import xml.etree.ElementTree as ET
+    qjob=bridge.ARCHIVE_PACK_QUALIFICATION_JOB;archive_native(root,qjob)
+    ledger_path=root/'state/resource-budget.json';ledger=read_json(ledger_path)
+    ledger['native_jobs'][qjob].update(cpus=4,cpu_core_hours=48/3600,user='pwa209',account='def-ptewarie_cpu',
+        unallocated_metadata=False,alloc_tres='billing=4,cpu=4,mem=16G,node=1')
+    atomic_json(ledger_path,ledger)
+    suite=ET.Element('testsuite',tests='1694',failures='0',errors='0',skipped='0')
+    for i in range(1694):ET.SubElement(suite,'testcase',classname='synthetic_complete_framework',name=f'case_{i}')
+    junit=root/'state/qualification-evidence/archive-frame.xml';junit.parent.mkdir(parents=True,exist_ok=True);junit.write_bytes(ET.tostring(suite))
+    qualification={'status':'complete','returncode':0,'source_sha256':bridge.ARCHIVE_PACK_FRAMEWORK_SHA256,
+        'config_sha256':bridge.BASE_CONFIG_SHA256,'source_verified_unchanged':True,'slurm_job_id':qjob,
+        'test_counts':{'tests':1694,'failures':0,'errors':0,'skipped':0},
+        'artifacts':{'junit':{'path':str(junit),'sha256':digest(junit),'bytes':junit.stat().st_size}}}
+    qpath=root/bridge.ARCHIVE_PACK_QUALIFICATION_PATH;atomic_json(qpath,qualification)
+    monkeypatch.setattr(bridge,'ARCHIVE_PACK_QUALIFICATION_SHA256',digest(qpath))
+    return bridge._locator(root,qpath)
+
+
+@pytest.fixture
+def archive_support(context, monkeypatch):
+    import xml.etree.ElementTree as ET
+    root,config,*_=context
+    monkeypatch.delenv('SLURM_JOB_ID',raising=False)
+    fixtures=Path(__file__).parent/'fixtures/evidence_archive'
+    area=root/'maintenance/archive-support';area.mkdir(parents=True)
+    helper_path=area/'verified-evidence-archive-20261021.py'
+    helper_path.write_bytes((fixtures/helper_path.name).read_bytes())
+    assert digest(helper_path)==bridge.ARCHIVE_HELPER_SHA256
+    original_loader=bridge._load_archive_helper
+    def load(path):
+        helper=original_loader(path)
+        # Only the test's temporary personal-root configuration is substituted.
+        # The production reader is the exact frozen fixture source bytes.
+        helper.CONFIG=bridge.BASE_CONFIG_SHA256
+        return helper
+    monkeypatch.setattr(bridge,'_load_archive_helper',load)
+    helper=load(helper_path)
+    test_path=area/'test_verified_evidence_archive_20261021.py'
+    test_path.write_bytes((fixtures/(test_path.name+'.txt')).read_bytes())
+    assert digest(test_path)==helper.EXPECTED_CANARY_TEST_SHA256
+    suite=ET.Element('testsuite',tests='39',failures='0',errors='0',skipped='0')
+    for name in helper.EXPECTED_CANARY_TEST_NAMES:
+        ET.SubElement(suite,'testcase',classname='test_verified_evidence_archive_20261021',name=name)
+    junit=area/'junit.xml';junit.write_bytes(ET.tostring(suite))
+    canary={'status':'complete_verified_native_archive_canary','helper_sha256':bridge.ARCHIVE_HELPER_SHA256,
+        'roundtrip_verified':True,'unchanged_source_removal_guards_verified':True,
+        'scientific_result':False,'admission_authority':False,
+        'test_counts':{'tests':39,'failures':0,'errors':0,'skipped':0},'test_source':bridge._locator(root,test_path),
+        'junit':bridge._locator(root,junit),'test_roster_sha256':canonical_hash(sorted(helper.EXPECTED_CANARY_TEST_NAMES)),
+        'native':archive_native(root,'200'),'native_job_id':'200'}
+    canary_path=area/'canary.json';atomic_json(canary_path,canary)
+    registry={'schema_version':1,'kind':bridge.ARCHIVE_REGISTRY_KIND,'root':str(root),
+        'full_config_sha256':bridge.BASE_CONFIG_SHA256,'primary_scientific_source_sha256':bridge.PRIMARY_SCIENTIFIC_SOURCE_SHA256,
+        'archive_helper':bridge._locator(root,helper_path),'archive_canary':bridge._locator(root,canary_path),
+        'cells':{},'scientific_result':False,'admission_authority':False}
+    registry_path=area/'registry.json'
+    def save():
+        atomic_json(registry_path,registry)
+        return bridge._locator(root,registry_path)
+    return helper,registry,save
+
+
+@pytest.mark.parametrize('change',['none','helper','cell_key','foreign_root','flags','canary_boolean','canary_one_test',
+    'canary_failed_case','canary_missing_native','duplicate_json'])
+def test_archive_registry_requires_exact_helper_and_complete_positive_native_canary(context,archive_support,change):
+    root,_,_,_,plan=context;helper,registry,save=archive_support
+    if change=='helper':registry['archive_helper']['sha256']='f'*64
+    elif change=='cell_key':registry['cells']['00']={}
+    elif change=='foreign_root':registry['root']=str(root.parent)
+    elif change=='flags':registry['admission_authority']=True
+    elif change.startswith('canary_'):
+        path=Path(registry['archive_canary']['path']);value=read_json(path)
+        if change=='canary_boolean':value=True
+        elif change=='canary_one_test':value['test_counts']['tests']=1
+        elif change=='canary_failed_case':
+            junit=Path(value['junit']['path']);raw=junit.read_text();junit.write_text(raw.replace(' />','><failure /></testcase>',1))
+            value['junit']['sha256']=digest(junit)
+        else:
+            ledger=root/'state/resource-budget.json';atomic_json(ledger,{'native_jobs':{}})
+        atomic_json(path,value);registry['archive_canary']['sha256']=digest(path)
+    binding=save()
+    if change=='duplicate_json':
+        path=Path(binding['path']);raw=path.read_text();path.write_text(raw.replace('{','{"schema_version":1,',1))
+        binding['sha256']=digest(path)
+    if change=='none':assert bridge._archive_context(root,binding,plan['cells'])['registry']==registry
+    else:
+        with pytest.raises((ValueError,AttributeError)):bridge._archive_context(root,binding,plan['cells'])
+
+
+@pytest.mark.parametrize('change',['none','source','single_test','short_junit','failed_native','foreign_owner','zero_seconds','wrong_cpus','wrong_locator'])
+def test_pack_framework_qualification_is_independent_full_and_positive(context,monkeypatch,change):
+    root,*_=context;locator=archive_frame_qualification(root,monkeypatch);path=Path(locator['path']);q=read_json(path)
+    if change=='source':q['source_sha256']='f'*64
+    elif change=='single_test':q['test_counts']['tests']=1
+    elif change=='short_junit':
+        artifact=q['artifacts']['junit'];junit=Path(artifact['path'])
+        junit.write_text('<testsuite tests="1694"><testcase name="one"/></testsuite>')
+        artifact.update(sha256=digest(junit),bytes=junit.stat().st_size)
+    elif change in {'failed_native','foreign_owner','zero_seconds','wrong_cpus'}:
+        ledger_path=root/'state/resource-budget.json';ledger=read_json(ledger_path);record=ledger['native_jobs'][bridge.ARCHIVE_PACK_QUALIFICATION_JOB]
+        if change=='failed_native':record.update(state='FAILED',exit_code='1:0')
+        elif change=='foreign_owner':record['user']='other'
+        elif change=='zero_seconds':record['elapsed_seconds']=0
+        else:record['cpus']=1
+        atomic_json(ledger_path,ledger)
+    atomic_json(path,q);locator=bridge._locator(root,path)
+    # Keep the test receipt byte-bound while separately exercising semantic
+    # gates. Production's constant pins the actual immutable native receipt.
+    monkeypatch.setattr(bridge,'ARCHIVE_PACK_QUALIFICATION_SHA256',locator['sha256'])
+    if change=='wrong_locator':locator['path']=str(root/'maintenance/another-qualification.json')
+    if change=='none':bridge._pack_qualification(root,locator)
+    else:
+        with pytest.raises(ValueError):bridge._pack_qualification(root,locator)
+
+
+def test_real600_member_archive_is_identical_after_original_parts_are_absent(context,complete_policy,archive_support,monkeypatch):
+    root,_,_,_,_=context;plan,cell,checkpoint,value,assembly=complete_policy;helper,registry,save=archive_support
+    case=Path(cell['evaluation_case']);raw_entry=bridge._entry(root,cell)
+    expected=bridge._validate_cell(plan,cell,raw_entry)
+    inputs={key:bridge._locator(root,case/name) for key,name in [('plan','plan.json'),('binding','plan-binding.json'),('summary','evaluation_summary.json')]}
+    result={'native_job_id':'100','source_sha256':plan['campaign']['source_binding']['execution_source_sha256'],
+        'full_config_sha256':bridge.BASE_CONFIG_SHA256,'scientific_result':False,'admission_authority':False,
+        'status':'complete_native_work','mode':'agent-assembly','evaluation_case':str(case),
+        'evaluation_plan_sha256':inputs['plan']['sha256'],'evaluation_binding_sha256':inputs['binding']['sha256'],'result':assembly}
+    result_path=root/'maintenance/archive-proofs/assembly-result.json';atomic_json(result_path,result)
+    authority={'primary_source_sha256':bridge.PRIMARY_SCIENTIFIC_SOURCE_SHA256,'full_config_sha256':bridge.BASE_CONFIG_SHA256,
+        'execution_source_sha256':result['source_sha256'],'native':archive_native(root,'100'),
+        'result_receipt':bridge._locator(root,result_path),'policy_inputs':inputs}
+    # Windows sandbox disallows hard links. Publication is fixture construction,
+    # not the consumer under test; the real tar/index/hash/parser remain intact.
+    monkeypatch.setattr(helper,'_publish_file',lambda source,destination:Path(source).rename(destination))
+    directory=root/'maintenance/policy-archive'
+    pack=helper.pack_policy(case,directory,authority=authority,root=root)
+    descriptor={'evaluation_case':str(case),'policy_inputs':inputs,'archive_directory':str(directory),
+        'index_sha256':pack['index_sha256'],'archive_sha256':pack['archive_sha256'],
+        **{key:bridge._locator(root,directory/name) for key,name in [('pack_intent','pack-intent.json'),('roundtrip','roundtrip.json'),('pack_receipt','pack-receipt.json')]}}
+    producer={'schema_version':1,'status':'complete_verified_policy_archive_pack','native_job_id':'300',
+        'archive_helper_sha256':bridge.ARCHIVE_HELPER_SHA256,'evaluation_case':str(case),'archive_directory':str(directory),
+        'index_sha256':pack['index_sha256'],'archive_sha256':pack['archive_sha256'],
+        'pack_intent_sha256':descriptor['pack_intent']['sha256'],'roundtrip_sha256':descriptor['roundtrip']['sha256'],
+        'pack_receipt_sha256':descriptor['pack_receipt']['sha256'],'execution_source_sha256':'e'*64,
+        'full_config_sha256':bridge.BASE_CONFIG_SHA256,'primary_scientific_source_sha256':bridge.PRIMARY_SCIENTIFIC_SOURCE_SHA256,
+        'scientific_result':False,'admission_authority':False}
+    producer_path=root/'maintenance/archive-proofs/pack-result.json';atomic_json(producer_path,producer)
+    descriptor['pack_producer']={'native':archive_native(root,'300'),'result':bridge._locator(root,producer_path),
+        'qualification':archive_frame_qualification(root,monkeypatch)}
+    producer['execution_source_sha256']=bridge.ARCHIVE_PACK_FRAMEWORK_SHA256;atomic_json(producer_path,producer)
+    descriptor['pack_producer']['result']=bridge._locator(root,producer_path)
+    registry['cells']['0']=descriptor;binding=save()
+    archives=bridge._archive_context(root,binding,plan['cells'])
+    entry={**raw_entry,'condition_archive':copy.deepcopy(descriptor)}
+    # Remove only disposable synthetic originals, exactly their known600 paths.
+    for condition in assembly['condition_bindings']:
+        (case/condition['receipt_name']).unlink();(case/condition['artifact_name']).unlink()
+    actual=bridge._validate_cell(plan,cell,entry,archives=archives)
+    for a,b in zip(actual,expected):pd.testing.assert_frame_equal(a,b,check_exact=True)
+    assert checkpoint.exists() and (case/assembly['artifact_name']).exists()
+    assert len(actual[0])==300 and len(actual[1])==1200
+    # A listed archive never silently falls back to originals, even with only a
+    # subset absent/corrupt. Unlisted cells still require all original parts.
+    with pytest.raises(ValueError,match='Every original condition'):bridge._validate_cell(plan,cell,raw_entry)
+    with pytest.raises(ValueError,match='manifest changed'):bridge._validate_cell(plan,cell,raw_entry,archives=archives)
+    for change in ['pack_job','pack_result','wrong_cell','pack_receipt','index']:
+        altered=copy.deepcopy(descriptor)
+        if change=='pack_job':altered['pack_producer']['native']=authority['native']
+        elif change=='pack_result':altered['pack_producer']['result']=authority['result_receipt']
+        elif change=='wrong_cell':altered['evaluation_case']=str(case.parent/'cell-0001')
+        elif change=='pack_receipt':altered['pack_receipt']['sha256']='f'*64
+        else:altered['index_sha256']='f'*64
+        with pytest.raises(ValueError):bridge._archive_descriptor(root,helper,altered,cell)
+    # Path replacement/corruption is detected by the real full tar reader.
+    archive=directory/'evidence.tar';before=archive.read_bytes();archive.write_bytes(b'corrupted')
+    with pytest.raises(ValueError,match='Archive bytes changed'):bridge._validate_cell(plan,cell,entry,archives=archives)
+    archive.write_bytes(before)
+    # Re-pinning a changed canonical assembly cannot replace comparison against
+    # all exact archived condition rows or the original native result authority.
+    assembled=case/assembly['artifact_name'];frame=pd.read_parquet(assembled);frame.loc[0,'redirection']=1
+    frame.to_parquet(assembled,index=False);assembly['trial_file_sha256']=digest(assembled)
+    atomic_json(case/'evaluation_summary.json',assembly)
+    with pytest.raises(ValueError):bridge._validate_cell(plan,cell,entry,archives=archives)
