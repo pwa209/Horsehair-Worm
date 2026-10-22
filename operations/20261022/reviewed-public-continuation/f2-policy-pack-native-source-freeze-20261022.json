@@ -1,0 +1,58 @@
+{
+  "admission_authority": false,
+  "controller_descriptor_published": false,
+  "execution_package": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e",
+  "files": [
+    {
+      "bytes": 45891,
+      "name": "run-f2-policy-archive-pack-v1-20261021.py",
+      "sha256": "0490b796efcbd6b7063ef3fc1e454f8b38cd6692d139d06626829e0db04a018d"
+    },
+    {
+      "bytes": 34737,
+      "name": "test_f2_policy_archive_pack_v1_20261021.py",
+      "sha256": "25a4c507d4f2b23a70ef496519fcfafd643f986277d11224cb38413edbe93225"
+    },
+    {
+      "bytes": 13332,
+      "name": "qualify-f2-policy-pack-v1-20261022.py",
+      "sha256": "63dbc330c9e8b21e643e1337ff44c07cb31ef05ca123fc07721eab1fd34989d9"
+    },
+    {
+      "bytes": 6353,
+      "name": "test_qualify_f2_policy_pack_v1_20261022.py",
+      "sha256": "05799d2828d8dcd571de8051adf9dc62471ae86826ddf73715873dc7b28d7649"
+    }
+  ],
+  "fixture_files": {
+    "configs/study.json": "b872f121b6cef11a7726fc56b4c237c714fab41bbafa2a6090d7e2c1e2f91353",
+    "src/horsehair/agent_analysis_v2.py": "507fbe01700e4310a4e44b16f178d924fe291585d20646830e97b7a28e13fd6c",
+    "tests/fixtures/evidence_archive/test_verified_evidence_archive_20261021.py.txt": "ec4131d283d3f3a792a561c6ae6324de853a4301def9d275a03018a9801f5462",
+    "tests/fixtures/evidence_archive/verified-evidence-archive-20261021.py": "045d8650db62c0fa52d7f56bb7bdb2669729509c23ecfbbc847e73cbbff8d42a"
+  },
+  "fixture_package": "/scratch/pwa209/horsehair-worm/releases/20261021-e104ce63fa53-f047ce12b0a4",
+  "native_request": "336",
+  "new_full_public_qualification": {
+    "job_id": "6703313",
+    "sha256": "8c3e1910deabea6c1061ddb353c3a6881fb70fb9fe86948007557a03ca809176",
+    "tests": 1889
+  },
+  "qualification_driver_mock_tests": {
+    "name": "test_qualify_f2_policy_pack_v1_20261022.py",
+    "role": "separate local/peer contract suite; not substituted for target native full suite",
+    "tests": 19
+  },
+  "result_case": "/scratch/pwa209/horsehair-worm/maintenance/study-af-policy-pack-qualification-support-v1-20261022",
+  "retained_originals": true,
+  "schema_version": 1,
+  "scientific_result": false,
+  "source_stage": "/scratch/pwa209/horsehair-worm/maintenance/study-af-policy-pack-qualification-stage-v1-20261022",
+  "status": "source_only_candidate_awaiting_peer_and_native_private_qualification",
+  "storage_savings_credited": 0,
+  "target_suite": {
+    "full_native_run_required": true,
+    "name": "test_f2_policy_archive_pack_v1_20261021.py",
+    "roster_sha256": "dff8b217135ec1d0957baebf26e1ee345abc168cee164c10a6d6f93aea49e87d",
+    "tests": 103
+  }
+}

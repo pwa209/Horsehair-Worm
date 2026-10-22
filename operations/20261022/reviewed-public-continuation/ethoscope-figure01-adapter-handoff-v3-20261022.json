@@ -1,0 +1,168 @@
+{
+  "SSH_or_Slurm_used": false,
+  "activated": false,
+  "complete_source_fixture_closure_bytes": 2593122,
+  "deployed": false,
+  "focused_drain_tests": {
+    "deselected": 112,
+    "passed": 11,
+    "scope": "actual65,537/131,073/262,145zero-byteonepartandsplitplusbufferedemptydrainandnegativebounds",
+    "seconds": 11.13
+  },
+  "full_cohort_sequential_processing_seconds_design_bound": 54600,
+  "historical_focused_json_tests": {
+    "deselected": 104,
+    "helper_sha256": "02a0cef10b24e4d78a93d0d9f50de20f757bc92fef20bfb09be0b95637dd2abd",
+    "passed": 8,
+    "scope": "strict finite decode includingpositive/negativeexponentoverflowdirectandnested plusfiniteacceptance",
+    "seconds": 7.22
+  },
+  "local_mock_tests": {
+    "errors": 0,
+    "failures": 0,
+    "native_POSIX_alarm_branch_executed_locally": false,
+    "passed": 123,
+    "roster_sha256": "94b983fa3aaee257fae79b2530225c6553cde169a7fb7adb094ab4ac0aa572cb",
+    "seconds": 47.71,
+    "skips": 0
+  },
+  "native_qualification_complete": false,
+  "old_canary_source_sha256": "30a843a2771196a3eec1e202f8e695fd1d41e58b6423a73218ec74b6285ea17c",
+  "old_canary_tests_sha256": "6a7d31cdcc08674aee39af0361cfe234d1eb669548634daf3458c4dd592f4ab3",
+  "original_H1_H2_H3_cleared": false,
+  "peer_review_complete": false,
+  "pins": [
+    {
+      "bytes": 46893,
+      "path": "work/acquire-ethoscope-figure01-v1-20261022.py",
+      "sha256": "0b2571bb650b95ae22f1988caebc8ef5c0371ba6b0ccea5bb8f5a88f332c1cbd"
+    },
+    {
+      "bytes": 37663,
+      "path": "work/test_acquire_ethoscope_figure01_v1_20261022.py",
+      "sha256": "24215ff1ec91d76e4b41e45f081c3253a9cd4a8f83f1765feaeaae7a16f98938"
+    },
+    {
+      "bytes": 18354,
+      "path": "work/ETHOSCOPE_FIGURE01_ADAPTER_API_V3_20261022.md",
+      "sha256": "069801a1eb08ca618a5d1fb217550b31b542859f2c3ffa1bc389bdd2043b17b8"
+    },
+    {
+      "bytes": 20753,
+      "path": "work/figure01-adapter-tests-v6-20261022.xml",
+      "sha256": "e337c3d412e1c6fabc8981c63f7105650cb2ea9f79d458b4780bbff55aa35a99"
+    },
+    {
+      "bytes": 484213,
+      "path": "work/ethoscope-figure01-acquisition-manifest-v2-20261022.json",
+      "sha256": "92248b2b213fe7db425ee1fbe9c18c0699c7638943f7edd34bcf2081eeb91490"
+    },
+    {
+      "bytes": 2149,
+      "path": "work/figure01-adapter-drain-focus-20261022.xml",
+      "sha256": "55026c655cde7a83c53fbca090e75d6f3c84e736e4e571bda944006e901dcfe6"
+    }
+  ],
+  "preserved_previous_candidates": [
+    {
+      "bytes": 45939,
+      "path": "work/acquire-ethoscope-figure01-v1-candidate-6bf86360-20261022.py.txt",
+      "sha256": "6bf86360bc8519020be437cc0b7ba066209bffd2d93098d11e7d54e67e480c08"
+    },
+    {
+      "bytes": 32517,
+      "path": "work/test_acquire_ethoscope_figure01_v1_candidate_9c478bcb_20261022.py.txt",
+      "sha256": "9c478bcbd51f6d62ad6047e10e374933f72f886fad3f9adad33a4de157154246"
+    },
+    {
+      "bytes": 16028,
+      "path": "work/ETHOSCOPE_FIGURE01_ADAPTER_API_V1_20261022.md",
+      "sha256": "0c603eb1aaa76bbf94f9736e864afd395ed763faeebcb3a65985f15117bdd102"
+    },
+    {
+      "bytes": 3887,
+      "path": "work/ethoscope-figure01-adapter-handoff-v1-20261022.json",
+      "sha256": "299905bba2fc20bd2161b14be86a50d679741a7d90a768c7b555e856dca30cd4"
+    },
+    {
+      "bytes": 46153,
+      "path": "work/acquire-ethoscope-figure01-v1-candidate-02a0cef1-20261022.py.txt",
+      "sha256": "02a0cef10b24e4d78a93d0d9f50de20f757bc92fef20bfb09be0b95637dd2abd"
+    },
+    {
+      "bytes": 32755,
+      "path": "work/test_acquire_ethoscope_figure01_v1_candidate_3677e061_20261022.py.txt",
+      "sha256": "3677e0615ecde2f5f4dae0ce1724eae4db36203f49353a23c7dafb9bdc0158dc"
+    },
+    {
+      "bytes": 17501,
+      "path": "work/ETHOSCOPE_FIGURE01_ADAPTER_API_V2_20261022.md",
+      "sha256": "2d0ad810889060636b41a26450a723bf92f18bdb9a4e56544534f48ba483de12"
+    },
+    {
+      "bytes": 5218,
+      "path": "work/ethoscope-figure01-adapter-handoff-v2-20261022.json",
+      "sha256": "c8bcfd3271c77b8a7479e3aa9bd7c50c428cf69cd02ae82a13a30fe30beace05"
+    }
+  ],
+  "production_attempt_reservation": {
+    "bounded_root_extra_outputs_bytes_max": 500000000,
+    "bytes": 26000000000,
+    "conservative_bytes_bound_with_extra_member_margin_and_overflow": 25890041259,
+    "conservative_paths_before_root_artifacts": 3545,
+    "files": 5000
+  },
+  "proposed_additional_qualification_reservation": {
+    "bytes": 256000000,
+    "files": 3000
+  },
+  "public_source_modified_by_this_agent": false,
+  "qualification_fixture_tree_observed": {
+    "bytes": 43371091,
+    "data": "all synthetic or existing source metadata",
+    "deleted": false,
+    "files": 2132,
+    "path": "work/figure01-adapter-test-temp-v6-20261022"
+  },
+  "real_HTTP_called": false,
+  "revision": "bounded_raw_deflate_empty_input_drain_with_progress_guard_only",
+  "runtime_fixture_closure": [
+    {
+      "bytes": 20544,
+      "path": "work/public-cohort-metadata-20261021/zenodo-6567039.json",
+      "sha256": "2514b6e65c2892c69db797263ee545d546a76beee4ac931fc3b1257f45992cce"
+    },
+    {
+      "bytes": 1030376,
+      "path": "work/public-cohort-metadata-20261021/ethoscope-METADATA.txt",
+      "sha256": "83230109101cb01e57fb5f0d64b48b1965f07d9f45cf9c41db8105357c3d1616"
+    },
+    {
+      "bytes": 82998,
+      "path": "work/public-cohort-metadata-20261021/db_files_with_checksum.txt",
+      "sha256": "39d6f17957c394d95b3746df1aa4ff75ba15ae4722ffede293ed0c6de9c729c6"
+    },
+    {
+      "bytes": 4974,
+      "path": "work/public-cohort-metadata-20261021/zip_files_checksums.csv",
+      "sha256": "8cb455520bd4382d136010f6ef5fe0507cbcccaa0dd20b6ab60f2b01f6cbdff5"
+    },
+    {
+      "bytes": 596027,
+      "path": "work/public-cohort-metadata-20261021/ethoscope-split-zip-index.json",
+      "sha256": "ffc58aa960a5fdaec167107c4fece8fd7789fb5daad79675c9aa85980dee46b6"
+    },
+    {
+      "bytes": 223898,
+      "path": "work/public-cohort-metadata-20261021/ethoscope-split-zip-directory.bin",
+      "sha256": "c2a550fe715ab0de9bc70499b04f94c747da50845b9725cd96fa130420382528"
+    },
+    {
+      "bytes": 65536,
+      "path": "work/public-cohort-metadata-20261021/ethoscope-split-zip-tail.bin",
+      "sha256": "d80d5a2e9b380bfed81126a67cbdb29bb574a6c5fd298de79d4a2788b7d97385"
+    }
+  ],
+  "scientific_database_opened": false,
+  "scope": "source_only_new_private_adapter_handoff_not_activated"
+}

@@ -1,0 +1,54 @@
+{
+  "admission_authority": false,
+  "all240_scale_qualified": false,
+  "controller_descriptor_published": false,
+  "files": [
+    {
+      "bytes": 12654,
+      "name": "verify-f2-condition-archives-v2-20261022.py",
+      "sha256": "b02afa747f8e37a654dc0eda6f3a370808cdd381cf92a55a9b56ea9a8b6bfcae"
+    },
+    {
+      "bytes": 15130,
+      "name": "test_verify_f2_condition_archives_v2_20261022.py",
+      "sha256": "88e79c8fcb4fe7b80882c176d78006f301c50a0c0f6cb8266d4c5bfbb867c565"
+    }
+  ],
+  "fixture_files": {
+    "configs/study.json": "b872f121b6cef11a7726fc56b4c237c714fab41bbafa2a6090d7e2c1e2f91353",
+    "tests/fixtures/evidence_archive/README.md": "2e5e1fdd65bc7f19949bd97c82253bc093f8fecf7bef5295f2350ef5c90e9c8c",
+    "tests/fixtures/evidence_archive/test_verified_evidence_archive_20261021.py.txt": "ec4131d283d3f3a792a561c6ae6324de853a4301def9d275a03018a9801f5462",
+    "tests/fixtures/evidence_archive/verified-evidence-archive-20261021.py": "045d8650db62c0fa52d7f56bb7bdb2669729509c23ecfbbc847e73cbbff8d42a",
+    "tests/test_agent_analysis_v2.py": "25b2b72392fdaa98997739567e1487a7c913027f16dcb4d8d3f95b6b9368a0b8"
+  },
+  "full_source_sha256": "f047ce12b0a4a31312f2b4f5b6cff144342a12950f2e84fe1d444c8ea3a9b68c",
+  "hard_parent_timeout_required": true,
+  "independent_peer_light": {
+    "deselected_heavy": 2,
+    "seconds": 22.41,
+    "source_approved": true,
+    "tests": 23
+  },
+  "local_full_canary": {
+    "errors": 0,
+    "failures": 0,
+    "junit_sha256": "bbfc8b0919395f2290bd4920b072af7db73467aa17b469dbe303b8899ab60df6",
+    "seconds": 420.49,
+    "skipped": 0,
+    "tests": 25
+  },
+  "max_child_seconds": 900,
+  "native_private_canary_complete": false,
+  "originals_removed": false,
+  "public_module_sha256": "507fbe01700e4310a4e44b16f178d924fe291585d20646830e97b7a28e13fd6c",
+  "public_qualification": {
+    "job_id": "6703313",
+    "sha256": "8c3e1910deabea6c1061ddb353c3a6881fb70fb9fe86948007557a03ca809176",
+    "tests": 1889
+  },
+  "runtime_package": "/scratch/pwa209/horsehair-worm/releases/20261021-e104ce63fa53-f047ce12b0a4",
+  "schema_version": 1,
+  "scientific_result": false,
+  "status": "source_and_local_canary_peer_approved_native_private_canary_pending",
+  "storage_savings_credited": 0
+}

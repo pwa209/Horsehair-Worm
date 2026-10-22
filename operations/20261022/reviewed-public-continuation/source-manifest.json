@@ -1,0 +1,208 @@
+{
+  "admission_authority": false,
+  "files": {
+    "ETHOSCOPE_FIGURE01_ACQUISITION_API_20261022.md": {
+      "bytes": 16369,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "442d3ea794bacb5a7e3fe4c9306ba9982e6b494d64a8fc3401bc1ef0e4fff91e"
+    },
+    "ETHOSCOPE_FIGURE01_ADAPTER_API_ERRATUM_20261022.md": {
+      "bytes": 1595,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "2255550033cee7861b90624c9be6d6d44914104ce493ca0ff2479928368412ee"
+    },
+    "ETHOSCOPE_FIGURE01_ADAPTER_API_V3_20261022.md": {
+      "bytes": 18354,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "069801a1eb08ca618a5d1fb217550b31b542859f2c3ffa1bc389bdd2043b17b8"
+    },
+    "F2_POLICY_PACK_NATIVE_API_20261022.md": {
+      "bytes": 7762,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "d1acfdd8d3f05c97d75b135cb31b5de0fd93a4a2cd0504cf62aeded05d97886e"
+    },
+    "README.md": {
+      "bytes": 1834,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "5e80a4400b61811ab83482bedaff7e5d4e5ea3e49f4565f9071391b92b716ce9"
+    },
+    "VTL_STOCK_WORKBOOK_SCHEMA_V2_API_20261022.md": {
+      "bytes": 3648,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "82546a630fee0b58ad4dafbb19f284f1fb6775eb7933e17cde44767be0430782"
+    },
+    "acquire-ethoscope-figure01-v1-20261022.py": {
+      "bytes": 46893,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "0b2571bb650b95ae22f1988caebc8ef5c0371ba6b0ccea5bb8f5a88f332c1cbd"
+    },
+    "archive-controller-child-v2-source-freeze-20261022.json": {
+      "bytes": 2229,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "55a875b5cdf6b554be7cc79bc70b0129699fcc4719a9d470a259b2be430f33fc"
+    },
+    "audit-vtl-stock-workbook-schema-20261021.py": {
+      "bytes": 19237,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "83ac33c41fc42c35f78add06458ad99bcbd2402425b5dd49afd17d964fc2c8d7"
+    },
+    "audit-vtl-stock-workbook-schema-v2-20261022.py": {
+      "bytes": 22980,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "77af55c3cd2f1ef0b0ca4ed38252e86b39591d4104007812771da994fb92ab4f"
+    },
+    "build-ethoscope-figure01-manifest-20261022.py": {
+      "bytes": 24112,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "d043f7c85e52c2e5ddb64f3c6eee3935a20fb24586870cf25a78288669902314"
+    },
+    "build-native-metadata-stages-324-325.py": {
+      "bytes": 7078,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "3f42be691499baa6a371b224e1f96ac52ac9ee76d0d22e6725480b70136bed23"
+    },
+    "build-policy-pack-qualification-continuation-347.py": {
+      "bytes": 4263,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "a77eb63571eb098c7c0b25f6340f83932123f78af68cfc81c09e553938c8cbf3"
+    },
+    "build-policy-pack-qualification-stage-336.py": {
+      "bytes": 6999,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "6021ba11278db6e29b50efe97f6724fc716cdc27e2d75b31562c23f8d7401631"
+    },
+    "build-stock-metadata-stage-342.py": {
+      "bytes": 5207,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "20227ab18bf6bd4badc13b36a87327253f62ec9a3d0ef0476b0abdb52eaa57f2"
+    },
+    "ethoscope-figure01-acquisition-manifest-v2-20261022.json": {
+      "bytes": 484213,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "92248b2b213fe7db425ee1fbe9c18c0699c7638943f7edd34bcf2081eeb91490"
+    },
+    "ethoscope-figure01-adapter-handoff-v3-20261022.json": {
+      "bytes": 6334,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "4b25fc6303187fb9e5b053a13df66d0e6a6781e93f4a90ecbe3c0bddf0d4107f"
+    },
+    "f2-policy-pack-native-source-freeze-20261022.json": {
+      "bytes": 2599,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "af0406daa14cdb4b074663a72724e8592002e7929ff5e8880b648c8b5bf2c17c"
+    },
+    "hhw-af-pack-qualification-continuation-20261022-347.sh": {
+      "bytes": 19324,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "1577520c8fc3134e5045e756cd227ceced4bf851daca2cb282ccef9408b5aa0a"
+    },
+    "hhw-recovery-stage-20261021-336.sh": {
+      "bytes": 52833,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "2257fce420e3467d50634e1fc12ebc52402ac13c5fcd3da5bea22e1826606704"
+    },
+    "hhw-recovery-stage-20261021-342.sh": {
+      "bytes": 33270,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "f41a3e2fc6e8afcf4051051d958b7b400e272474c7851f6190551ace5c33b5e7"
+    },
+    "native-evidence.json": {
+      "bytes": 3683,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "a7f5b1c025deb9d1afbe7d4097e995e5f297baf32535213c58db374dfe7bd688"
+    },
+    "project-terminal-reader-census-v1-20261021.py": {
+      "bytes": 20774,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "f976b5da226573ed5d64aa428fcab2e1470de6c74e24a360c8eaf5305bc3478e"
+    },
+    "qualify-af-execution-v4-20261021.py": {
+      "bytes": 20977,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "f2423e731b48728f88e352a354e7e96a5d85fdcc974080ccd25727e37d4c844f"
+    },
+    "qualify-f2-policy-pack-v1-20261022.py": {
+      "bytes": 13332,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "63dbc330c9e8b21e643e1337ff44c07cb31ef05ca123fc07721eab1fd34989d9"
+    },
+    "run-f2-policy-archive-pack-v1-20261021.py": {
+      "bytes": 45891,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "0490b796efcbd6b7063ef3fc1e454f8b38cd6692d139d06626829e0db04a018d"
+    },
+    "run-native-metadata-gate-v1-20261021.py": {
+      "bytes": 10742,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "00f743f2943fa3d58b8b4dc8cd4c1f6b26f38375d3504977cea4da61455edd2d"
+    },
+    "run-native-stock-metadata-gate-v2-20261022.py": {
+      "bytes": 11180,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "9d02f3ec0da35664ba880771ac6b092602ef1ce7b0b53d6ab2ad881aecf74d72"
+    },
+    "ssh-bridge-administration-v1-20261022.py": {
+      "bytes": 8368,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "8a6f64269d38ae1b381a79990a6e81eb089f72bc9c1a3e9f6705ce0465e8356b"
+    },
+    "test_acquire_ethoscope_figure01_v1_20261022.py": {
+      "bytes": 37663,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "24215ff1ec91d76e4b41e45f081c3253a9cd4a8f83f1765feaeaae7a16f98938"
+    },
+    "test_audit_vtl_stock_workbook_schema_20261021.py": {
+      "bytes": 12016,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "ec4e3791cc3da26219a882a0c93b3328b50356e4595e46c80647e98b96540021"
+    },
+    "test_audit_vtl_stock_workbook_schema_v2_20261022.py": {
+      "bytes": 17483,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "b5c33f212d7d256a27418ff19de657346af501bc1a60cfb73889a295dd414d42"
+    },
+    "test_build_ethoscope_figure01_manifest_20261022.py": {
+      "bytes": 7809,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "f1ea6f7a8b3b80a10f2a05ae36cca904efec4e348e05c9eebd5e4402da9da72b"
+    },
+    "test_f2_policy_archive_pack_v1_20261021.py": {
+      "bytes": 34737,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "25a4c507d4f2b23a70ef496519fcfafd643f986277d11224cb38413edbe93225"
+    },
+    "test_project_terminal_reader_census_v1_20261021.py": {
+      "bytes": 9799,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "1b5a6c2eb2447e4dc712c83953abe26114e11e5e8d2011e12a62fe754dd86993"
+    },
+    "test_qualify_af_execution_v4_20261021.py": {
+      "bytes": 23673,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "71cf3e61043bc683e856234be9811032f0c67b8e81a4ab61f7e25caa0ad66ea4"
+    },
+    "test_qualify_f2_policy_pack_v1_20261022.py": {
+      "bytes": 6353,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "05799d2828d8dcd571de8051adf9dc62471ae86826ddf73715873dc7b28d7649"
+    },
+    "test_ssh_bridge_administration_v1_20261022.py": {
+      "bytes": 14516,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "d8055fe3f3c228759c3909892711b36b3e51ac1920d2eb54a1c554db31520fc1"
+    },
+    "test_verify_f2_condition_archives_v2_20261022.py": {
+      "bytes": 15130,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "88e79c8fcb4fe7b80882c176d78006f301c50a0c0f6cb8266d4c5bfbb867c565"
+    },
+    "verify-f2-condition-archives-v2-20261022.py": {
+      "bytes": 12654,
+      "role": "Reviewed source or time-stamped technical evidence; native authority is separate",
+      "sha256": "b02afa747f8e37a654dc0eda6f3a370808cdd381cf92a55a9b56ea9a8b6bfcae"
+    }
+  },
+  "schema_version": 1,
+  "scientific_result": false,
+  "scope": "Reviewed source and public metadata only"
+}
