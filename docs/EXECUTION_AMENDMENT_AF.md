@@ -174,3 +174,11 @@ consumer integration and handover remain independent gates. No original was
 removed, no savings were credited, and no scientific conclusion follows from
 these software tests. The [source and actual local evidence](../operations/20261023/archive-reader-v3-qualification/README.md)
 are preserved as a separate candidate rather than altering the frozen repair.
+
+
+Native registration update, 23 October 00:59 CEST: the archive reader test
+allocation is actual job **6824584**, pending afterok **6811498** and **6822432**.
+Its exact plan/ledger/script/source/argument bindings were revalidated on
+Narval 3. This is queue registration, not completed native qualification or
+consumer integration. The [fresh evidence](../operations/20261023/native-archive-test-registration/README.md)
+also retains the four-job queue and the census's partial 38,000-file progress.

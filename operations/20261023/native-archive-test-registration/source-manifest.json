@@ -1,0 +1,25 @@
+{
+  "files": {
+    "README.md": {
+      "bytes": 1261,
+      "sha256": "b89ff12daf748666c0e25051ae12ff0ad259184866f58268a1995c2fbcf448b9"
+    },
+    "hhw-aa-verified-registrations-20261023-409.sh": {
+      "bytes": 3277,
+      "sha256": "02f3c2a5d346874795c073d0a115a5f70d666be645fc03ba408cd3359b3a6bf9"
+    },
+    "hhw-recovery-stage-20261021-406.json": {
+      "bytes": 94,
+      "sha256": "3acc0397cf26469efafac70552e8eb380fd98dcfeb4494fd6c107a94e69d0457"
+    },
+    "hhw-recovery-stage-20261021-406.txt": {
+      "bytes": 319,
+      "sha256": "e1ac4e8ebf155f55e34fdbfde4827a76e55dc48bfe6e7e8b7f6fece1a48babe1"
+    },
+    "verified-native-registration.json": {
+      "bytes": 14903,
+      "sha256": "fae5c010aa517b78ceb9fea2ec5fcb0e5275caa66f3a85909c25e659364a7ee3"
+    }
+  },
+  "kind": "verified_native_archive_test_registration_v1"
+}
