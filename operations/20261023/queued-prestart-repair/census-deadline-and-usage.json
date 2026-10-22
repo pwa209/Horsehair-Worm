@@ -1,0 +1,35 @@
+{
+  "actual_allocation": {
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "JobId=6811498 JobName=hhw-recovery-375 UserId=pwa209(3164768) GroupId=pwa209(3164768) MCS_label=N/A Priority=1692754 Nice=0 Account=def-ptewarie_cpu QOS=normal JobState=RUNNING Reason=None Dependency=(null) Requeue=0 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0 RunTime=01:12:24 TimeLimit=04:00:00 TimeMin=N/A SubmitTime=2026-10-22T21:23:15 EligibleTime=2026-10-22T21:23:15 AccrueTime=2026-10-22T21:23:15 StartTime=2026-10-22T21:23:17 EndTime=2026-10-23T01:23:17 Deadline=N/A SuspendTime=None SecsPreSuspend=0 LastSchedEval=2026-10-22T21:23:17 Scheduler=Main Partition=cpubase_bycore_b2 AllocNode:Sid=narval2:521633 ReqNodeList=(null) ExcNodeList=(null) NodeList=nc31024 BatchHost=nc31024 NumNodes=1 NumCPUs=4 NumTasks=1 CPUs/Task=4 ReqB:S:C:T=0:0:*:* ReqTRES=cpu=4,mem=16G,node=1,billing=4000 AllocTRES=cpu=4,mem=16G,node=1,billing=4000 Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=* MinCPUsNode=4 MinMemoryNode=16G MinTmpDiskNode=0 Features=[rome|milan|genoa] DelayBoot=00:00:00 OverSubscribe=OK Contiguous=0 Licenses=(null) LicensesAlloc=(null) Network=(null) Command=/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-375/recovery-375.sbatch SubmitLine=sbatch --parsable /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-375/recovery-375.sbatch WorkDir=/lustre06/project/6101854/pwa209/horsehair-worm/releases/20261016-5c3ae6df532d-91c8824f2adb StdErr= StdIn=/dev/null StdOut=/scratch/pwa209/horsehair-worm/logs/recovery-375-6811498_4294967294.log TresPerTask=cpu=4\n"
+  },
+  "checked_utc": "2026-10-22T22:35:33.745200+00:00",
+  "complete_census": false,
+  "freshness_rewritten": false,
+  "host": "narval3.narval.calcul.quebec",
+  "no_reliable_completion_eta": true,
+  "partial_progress_log_tail": "35, \"elapsed_seconds\": 1104.012249480933, \"files\": 4000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3348484914, \"elapsed_seconds\": 1238.6504507688805, \"files\": 5000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3388660291, \"elapsed_seconds\": 1378.332870868966, \"files\": 6000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3444685598, \"elapsed_seconds\": 1526.767495173961, \"files\": 7000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3489176798, \"elapsed_seconds\": 1680.79993407242, \"files\": 8000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3541720626, \"elapsed_seconds\": 1886.1183127360418, \"files\": 9000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3588526563, \"elapsed_seconds\": 2068.1988024963066, \"files\": 10000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3614172880, \"elapsed_seconds\": 2142.581719950773, \"files\": 11000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3625321277, \"elapsed_seconds\": 2160.780265038833, \"files\": 12000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3636354887, \"elapsed_seconds\": 2197.346298239194, \"files\": 13000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3647463710, \"elapsed_seconds\": 2217.7949823709205, \"files\": 14000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3658814777, \"elapsed_seconds\": 2260.282757649198, \"files\": 15000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3669403023, \"elapsed_seconds\": 2296.547476740554, \"files\": 16000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3680528900, \"elapsed_seconds\": 2315.3595522120595, \"files\": 17000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3691436578, \"elapsed_seconds\": 2349.2476988043636, \"files\": 18000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3942641153, \"elapsed_seconds\": 2488.5162839600816, \"files\": 19000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3977189191, \"elapsed_seconds\": 2702.162553523667, \"files\": 20000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4032222853, \"elapsed_seconds\": 2892.3391313059255, \"files\": 21000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4085962550, \"elapsed_seconds\": 3131.9819466657937, \"files\": 22000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4117067852, \"elapsed_seconds\": 3363.761886768043, \"files\": 23000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\n",
+  "read_only": true,
+  "sampled_usage": {
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "6811498.batch|00:00:28|1958964K|1959544K|411277357|411277357|1\n"
+  },
+  "sweep_start": {
+    "bytes": 294,
+    "device": 3836972646,
+    "exists": true,
+    "inode": 144127494566450282,
+    "owner": 3164768,
+    "value": {
+      "exact_sizes": true,
+      "original_function": "horsehair.budget.storage_snapshot",
+      "original_function_modified": false,
+      "registration_mutex_held": false,
+      "started_monotonic": 4319988.750105617,
+      "started_unix": 1792704702.4366162,
+      "started_utc": "2026-10-22T21:31:42.436616+00:00"
+    }
+  }
+}

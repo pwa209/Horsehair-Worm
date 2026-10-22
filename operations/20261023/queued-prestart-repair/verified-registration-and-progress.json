@@ -1,0 +1,116 @@
+{
+  "checked_utc": "2026-10-22T22:30:59.643981+00:00",
+  "commands": {
+    "native": {
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "6811498|6811498|RUNNING|0:0|4062|4|billing=4000,cpu=4,mem=16777216K,node=1|nc31024|2026-10-22T21:23:17|Unknown|pwa209|def-ptewarie_cpu|\n6811498.batch|6811498.batch|RUNNING|0:0|4062|4|cpu=4,mem=16777216K,node=1|nc31024|2026-10-22T21:23:17|Unknown||def-ptewarie_cpu|\n6811498.extern|6811498.extern|RUNNING|0:0|4062|4|billing=4000,cpu=4,mem=16777216K,node=1|nc31024|2026-10-22T21:23:17|Unknown||def-ptewarie_cpu|\n6819399|6819399|PENDING|0:0|0|0||None assigned|Unknown|Unknown|pwa209|def-ptewarie_cpu|\n6822432|6822432|PENDING|0:0|0|0||None assigned|Unknown|Unknown|pwa209|def-ptewarie_cpu|\n6822568|6822568|PENDING|0:0|0|0||None assigned|Unknown|Unknown|pwa209|def-ptewarie_cpu|\n6822730|6822730|PENDING|0:0|0|0||None assigned|Unknown|Unknown|pwa209|def-ptewarie_cpu|\n"
+    },
+    "queue": {
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "6811498|hhw-recovery-375|RUNNING|None|(null)|2026-10-22T21:23:17|1:07:42\n6632164|hhw-pipeline-controller-0|RUNNING|None|(null)|2026-10-21T10:49:58|1-11:41:01\n6632209|hhw-pipeline-controller-1|PENDING|Dependency|afterany:6632164(unfulfilled)|N/A|0:00\n6632225|hhw-pipeline-controller-2|PENDING|Dependency|afterany:6632209(unfulfilled)|N/A|0:00\n6632239|hhw-pipeline-controller-3|PENDING|Dependency|afterany:6632225(unfulfilled)|N/A|0:00\n6819399|hhw-recovery-377|PENDING|Dependency|afterok:6811498(unfulfilled)|N/A|0:00\n6822432|hhw-recovery-394|PENDING|Dependency|afterok:6811498(unfulfilled)|N/A|0:00\n6822568|hhw-recovery-395|PENDING|Dependency|afterok:6822432(unfulfilled)|N/A|0:00\n6822730|hhw-recovery-399|PENDING|Dependency|afterok:6811498(unfulfilled)|N/A|0:00"
+    }
+  },
+  "host": "narval3.narval.calcul.quebec",
+  "log_tails": {
+    "6811498": "{\"source_verified\": true, \"sha256\": \"4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1\"}\n..............................                                           [100%]\n30 passed in 0.54s\n............................................                             [100%]\n44 passed in 0.20s\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 2598566668, \"elapsed_seconds\": 451.3684988236055, \"files\": 1000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3058726956, \"elapsed_seconds\": 708.0370577862486, \"files\": 2000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3144493046, \"elapsed_seconds\": 999.235970409587, \"files\": 3000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3242692735, \"elapsed_seconds\": 1104.012249480933, \"files\": 4000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3348484914, \"elapsed_seconds\": 1238.6504507688805, \"files\": 5000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3388660291, \"elapsed_seconds\": 1378.332870868966, \"files\": 6000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3444685598, \"elapsed_seconds\": 1526.767495173961, \"files\": 7000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3489176798, \"elapsed_seconds\": 1680.79993407242, \"files\": 8000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3541720626, \"elapsed_seconds\": 1886.1183127360418, \"files\": 9000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3588526563, \"elapsed_seconds\": 2068.1988024963066, \"files\": 10000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3614172880, \"elapsed_seconds\": 2142.581719950773, \"files\": 11000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3625321277, \"elapsed_seconds\": 2160.780265038833, \"files\": 12000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3636354887, \"elapsed_seconds\": 2197.346298239194, \"files\": 13000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3647463710, \"elapsed_seconds\": 2217.7949823709205, \"files\": 14000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3658814777, \"elapsed_seconds\": 2260.282757649198, \"files\": 15000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3669403023, \"elapsed_seconds\": 2296.547476740554, \"files\": 16000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3680528900, \"elapsed_seconds\": 2315.3595522120595, \"files\": 17000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3691436578, \"elapsed_seconds\": 2349.2476988043636, \"files\": 18000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3942641153, \"elapsed_seconds\": 2488.5162839600816, \"files\": 19000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 3977189191, \"elapsed_seconds\": 2702.162553523667, \"files\": 20000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4032222853, \"elapsed_seconds\": 2892.3391313059255, \"files\": 21000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4085962550, \"elapsed_seconds\": 3131.9819466657937, \"files\": 22000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4117067852, \"elapsed_seconds\": 3363.761886768043, \"files\": 23000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\n"
+  },
+  "read_only": true,
+  "registrations": {
+    "394": {
+      "config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+      "job_id": "6822432",
+      "ledger_path": "/scratch/pwa209/horsehair-worm/state/recovery-support-20261021-394-submission.json",
+      "ledger_sha256": "88684247b51c4fb2b1edcfc307d5a6caf72f89e1d541ea71617184955e6d3309",
+      "native_dependencies": [
+        "6811498"
+      ],
+      "plan_sha256": "037a316c515e2506807cb91cc773736c61408fdd30bacbb2f4cf98ebb657fd71",
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-394/recovery-394.sbatch",
+      "script_sha256": "307c9d430705cbc033bfa953b24377a45124d00adaa43108256654d2ee22d7e6",
+      "source_sha256": "4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1",
+      "task": {
+        "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/qualify-f2-registry-repair-v6-20261022.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-394/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-394-submission.json --native-task recovery-394 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-394/recovery-394.sbatch",
+        "dependency_kind": "afterok",
+        "depends": [],
+        "external_dependencies": [
+          "6811498"
+        ],
+        "name": "recovery-394",
+        "resources": {
+          "cpus": 4,
+          "gpu": false,
+          "hours": 1,
+          "memory": "16G"
+        },
+        "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-394/recovery-394.sbatch",
+        "script_sha256": "307c9d430705cbc033bfa953b24377a45124d00adaa43108256654d2ee22d7e6"
+      },
+      "verified": true
+    },
+    "395": {
+      "config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+      "job_id": "6822568",
+      "ledger_path": "/scratch/pwa209/horsehair-worm/state/recovery-support-20261021-395-submission.json",
+      "ledger_sha256": "2b89a4b0838f2faa1e62bbcadc6f4da61e3efdde978c03c99eb59b97cc8b4282",
+      "native_dependencies": [
+        "6822432"
+      ],
+      "plan_sha256": "b42bc733e9fb6620088531f6956f22712db9c7e11e5208a1e8f5921b7130f095",
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-395/recovery-395.sbatch",
+      "script_sha256": "8adfef390412138fa48407ed63c1df772ab54e94a20e6733df37880d551add93",
+      "source_sha256": "4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1",
+      "task": {
+        "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/activate-f2-prestart-three-v1-20261022.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-395/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-395-submission.json --native-task recovery-395 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-395/recovery-395.sbatch --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/source-manifest.json --source-manifest-sha256 4b09442dfa29fac9f3b442e9793a0476035b174577bf67f316f1afcd9b9091f4 --qualification-job-id 6822432 --approval-reference 'Existing user authorization to repair and continue the computational study, 22 October 2026.'",
+        "dependency_kind": "afterok",
+        "depends": [],
+        "external_dependencies": [
+          "6822432"
+        ],
+        "name": "recovery-395",
+        "resources": {
+          "cpus": 4,
+          "gpu": false,
+          "hours": 4,
+          "memory": "16G"
+        },
+        "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-395/recovery-395.sbatch",
+        "script_sha256": "8adfef390412138fa48407ed63c1df772ab54e94a20e6733df37880d551add93"
+      },
+      "verified": true
+    },
+    "399": {
+      "config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+      "job_id": "6822730",
+      "ledger_path": "/scratch/pwa209/horsehair-worm/state/recovery-support-20261021-399-submission.json",
+      "ledger_sha256": "3971e9fccfb2417f003949e0becfee44cf886c8261af41d7dca8ba1124f2fe20",
+      "native_dependencies": [
+        "6811498"
+      ],
+      "plan_sha256": "51decdbd2813518ad6613e35c357d1b6d424de79723e663f968d38999e05bcd1",
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-399/recovery-399.sbatch",
+      "script_sha256": "5b0bfa742c268822cfefc30348c1a689bcda4aa144b1b8e96e346a00c66cd533",
+      "source_sha256": "8495a3d985515bf71f476295da87e663a1e764864ddce47a06794e7e11d88f94",
+      "task": {
+        "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-cohort-prefix-stage-v5-r2-20261023/run-cohort-prefix-stage-v5-r1-20261022.py",
+        "dependency_kind": "afterok",
+        "depends": [],
+        "external_dependencies": [
+          "6811498"
+        ],
+        "name": "recovery-399",
+        "resources": {
+          "array": null,
+          "cpus": 1,
+          "gpu": false,
+          "hours": 8,
+          "memory": "64G"
+        },
+        "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-399/recovery-399.sbatch",
+        "script_sha256": "5b0bfa742c268822cfefc30348c1a689bcda4aa144b1b8e96e346a00c66cd533"
+      },
+      "verified": true
+    }
+  }
+}

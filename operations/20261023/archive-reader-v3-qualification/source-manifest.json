@@ -1,0 +1,57 @@
+{
+  "files": {
+    "README.md": {
+      "bytes": 1740,
+      "sha256": "175be958aa53b1f6057e4ed89d355d0923253d723570f4ff13518af9610178a3"
+    },
+    "archive-consumer-qualification-freeze-20261023.json": {
+      "bytes": 2143,
+      "sha256": "dfc25d0ce4cddd7962ee37b14453a12ae395c31a4745e7aef57885196265bc41"
+    },
+    "archive-consumer-v3-qualifier-final-20261023.xml": {
+      "bytes": 12139,
+      "sha256": "7854444c2487d97cea10f3aa086b61e20f40c7fd8690c2ec388d36bd06f72870"
+    },
+    "archive-overlay-v3-final-candidate-20261023.xml": {
+      "bytes": 23721,
+      "sha256": "bd169e8be4df5e95389d64c8af9255467b75a383fe8d20e7f4ba1aa1ed4a2f28"
+    },
+    "build-archive-consumer-qualification-406.py": {
+      "bytes": 6769,
+      "sha256": "4d0aa902544e811bf7e9cf87d8ee055af142037c200e77b64b7574e8937cba86"
+    },
+    "hhw-recovery-stage-20261021-406.sh": {
+      "bytes": 109794,
+      "sha256": "7f245e0149dad3fecbaf7e110392dc792b33f52ddbba8581094def089115a11b"
+    },
+    "qualify-f2-archive-consumer-v3-20261023.py": {
+      "bytes": 23298,
+      "sha256": "b4108ce65d2f662dea08d4e3f9dca044fc89376a6d826295a2913e1f07f52ae4"
+    },
+    "run-af-agent-controller-archive-v3-20261023.py": {
+      "bytes": 39874,
+      "sha256": "2004e959019a2fe564f58d1e5fce70ee988a3afb9e62ebc42b95488eaa9fdc02"
+    },
+    "run-af-agent-controller-registry-v6-20261022.py": {
+      "bytes": 62900,
+      "sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866"
+    },
+    "test_af_agent_controller_archive_v3_20261023.py": {
+      "bytes": 51358,
+      "sha256": "de914a3b8a3ad99586a9082912dcbf36004fcd9391501cbe5f44cfee79f8e461"
+    },
+    "test_qualify_f2_archive_consumer_v3_20261023.py": {
+      "bytes": 22604,
+      "sha256": "e1c9b998b6e8ff5fd018819838ac7467463dcbd22e39384bca96945c9db2955b"
+    },
+    "test_verify_f2_condition_archives_v2_20261022.py": {
+      "bytes": 15130,
+      "sha256": "88e79c8fcb4fe7b80882c176d78006f301c50a0c0f6cb8266d4c5bfbb867c565"
+    },
+    "verify-f2-condition-archives-v2-20261022.py": {
+      "bytes": 12654,
+      "sha256": "b02afa747f8e37a654dc0eda6f3a370808cdd381cf92a55a9b56ea9a8b6bfcae"
+    }
+  },
+  "kind": "archive_reader_v3_qualification_candidate_and_registration_v1"
+}

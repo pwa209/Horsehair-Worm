@@ -112,7 +112,7 @@ Corrected operational source `f047ce12b0a4a31312f2b4f5b6cff144342a12950f2e84fe1d
 
 Activation 6699819 completed successfully, COMPLETED/0:0, after 31 actual activation tests. It installed only the sealed failed-policy retry and released controller segments 6701493, 6701494, 6701495 and 6701498. At 22:20:40 UTC, the exact bound campaign state was active at revision37 with six completed trainings, including retry6702524 for policy0000. Its original failed allocation remains history. Further training and evaluation jobs were running. The complete 240-policy experiment and H4 inference remain unfinished; the old controller-failure file is not a new failure of the active repaired segment.
 
-Metadata audits6704313 and6704402 are separately registered with the positive exact census as prerequisite. Each has one CPU,16GB and one hour, qualified4f execution, the explicit source-bound resource policy, strict positive qualification/ownership checks, finite registration waits and current six-hour storage checks. The complete38-case census suite or47-case stock-workbook suite must pass natively before the first actual audit input read. Whole input hashing and parsing run inside supervised finite children. These jobs classify source metadata only; they authorize no archive saving, source removal, scientific fit or original provenance gate clearance.
+Metadata audits6704313 and 6704402 are separately registered with the positive exact census as prerequisite. Each has one CPU,16GB and one hour, qualified4f execution, the explicit source-bound resource policy, strict positive qualification/ownership checks, finite registration waits and current six-hour storage checks. The complete38-case census suite or47-case stock-workbook suite must pass natively before the first actual audit input read. Whole input hashing and parsing run inside supervised finite children. These jobs classify source metadata only; they authorize no archive saving, source removal, scientific fit or original provenance gate clearance.
 
 The proposed count-model numerical appendix remains an ignored, unexecuted draft. Synthetic checks found that fixed prior-centred quadrature can miss narrow posterior mass by more than its declared practical score threshold. Increasing a node count or integrating around one mode is not accepted as a repair. A replacement needs independent value/first-gradient checks, tail control, multimode coverage and measured cost before actual counts are fitted.
 
@@ -145,3 +145,32 @@ Replacement registrations, their native test counts, failed-child evidence and f
 ## Completion rule
 
 A stage closes only when its required source provenance, diagnostics and scientific artifacts exist and pass their declared checks. Queued jobs, successful software tests, a frozen plan or a supported replacement endpoint do not by themselves establish the original hypothesis. A scientifically negative result can complete an analysis; a missing independent unit or exposure assignment cannot.
+
+
+## Verified registrations, 23 October 00:30 CEST
+
+Native qualification 6822432 and corrected behavioural probe 6822730 are pending
+afterok the running exact census 6811498. Native targeted recovery/activation
+6822568 is pending afterok 6822432. All three actual IDs were joined back to
+the canonical plan, submission ledger and script hashes on Narval3. The
+partial 23,000-file progress is not a completed census, and no freshness clock
+was rewritten. The latest source-only Git 9c701a8 mirror is verified on personal
+scratch. The [registration capsule](../operations/20261023/queued-prestart-repair/README.md)
+preserves receipts and bounded progress evidence. Scientific continuation,
+controller health, complete inference and archive integration remain open.
+
+
+## Archive reader compatibility and native qualification candidate
+
+The separate v3 archive adapter preserves controller v6's original and three
+new retry mappings and its completed-producer refresh. Its actual local
+closure passed 136 cases, and the separately reviewed qualifier passed 72.
+The qualifier rechecks both six-hour census clocks after quota waits and binds
+initial source bytes plus all 13 arguments to the published stage intent.
+Native request 406 targets a finite four-CPU, 16 GB, one-hour allocation after
+source-bound positive census 6811498 and registry qualification 6822432.
+Native registration/completion, a real policy pack and separate finalizer,
+consumer integration and handover remain independent gates. No original was
+removed, no savings were credited, and no scientific conclusion follows from
+these software tests. The [source and actual local evidence](../operations/20261023/archive-reader-v3-qualification/README.md)
+are preserved as a separate candidate rather than altering the frozen repair.

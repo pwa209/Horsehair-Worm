@@ -1,0 +1,69 @@
+{
+  "files": {
+    "README.md": {
+      "bytes": 2646,
+      "sha256": "5dbb62bddba36bee49334a87f43747e481ac214dd0d8d0120665153fa84ba03e"
+    },
+    "build-scratch-source-mirror-408.py": {
+      "bytes": 1812,
+      "sha256": "899c5e243f0fc03b9deb4ad09e851654bf04adaadc49d50c1beec53d66ec710e"
+    },
+    "census-deadline-and-usage.json": {
+      "bytes": 5722,
+      "sha256": "b4f0d5466edda450d0586dd7292087040032eb4599a89816a65f1703f4099bef"
+    },
+    "census-progress-2249-utc.json": {
+      "bytes": 6044,
+      "sha256": "b445eaf2e6b6fa3f2dd4bbaeb2cd02d1df63709f9bafe419379ccbe03f58877a"
+    },
+    "hhw-aa-census-progress-20261023-405.sh": {
+      "bytes": 2926,
+      "sha256": "190cabcf4347157b920420b3a5b5f80eb97c770ecb47c4e7bb73275066201b81"
+    },
+    "hhw-aa-census-progress-20261023-407.sh": {
+      "bytes": 2926,
+      "sha256": "190cabcf4347157b920420b3a5b5f80eb97c770ecb47c4e7bb73275066201b81"
+    },
+    "hhw-aa-verified-registrations-20261023-404.sh": {
+      "bytes": 3233,
+      "sha256": "0981c2026ae4c164f8045587fc3e665c185971da328285c1c79fe23224e6d23e"
+    },
+    "hhw-af-reviewed-source-mirror-20261023-402.json": {
+      "bytes": 106,
+      "sha256": "93edc91e7d812c0ab4c6fdce3f67ef2734e1f8c9512ae9d750a738a45f808b1d"
+    },
+    "hhw-af-reviewed-source-mirror-20261023-402.txt": {
+      "bytes": 643,
+      "sha256": "404d2095a04c11aef0a3f2fd603200f3ff13758f7f351a7207ede588b554a92e"
+    },
+    "hhw-recovery-stage-20261021-394.json": {
+      "bytes": 95,
+      "sha256": "5add5a08e874909f152f33883671e7c603e4b9b116d8c28c6e976a8eb11c661a"
+    },
+    "hhw-recovery-stage-20261021-394.txt": {
+      "bytes": 306,
+      "sha256": "960fabd1e1eeda78413a7ceb680b3c0cd4a61bf1a267a203db9fe27be0051f4a"
+    },
+    "hhw-recovery-stage-20261021-395.json": {
+      "bytes": 95,
+      "sha256": "47cc9e3010ec90b00fd14c91b2484eb3603abdd03f613e074ef1affbd522ed4e"
+    },
+    "hhw-recovery-stage-20261021-395.txt": {
+      "bytes": 314,
+      "sha256": "0614d1cf1c9ff2d047e14d22efeebbcbdf6ea859072f0ee88db04c40dd3bb6ec"
+    },
+    "hhw-recovery-stage-20261021-399.json": {
+      "bytes": 95,
+      "sha256": "f734bd7352f5b142044b7472a255665952e1352cd2df3acff5011b55544cb367"
+    },
+    "hhw-recovery-stage-20261021-399.txt": {
+      "bytes": 305,
+      "sha256": "36670f676e0925ab8f22fea5bfd524bc4eca4408b7e8af130973cfc161ec256d"
+    },
+    "verified-registration-and-progress.json": {
+      "bytes": 11445,
+      "sha256": "44031407886c43e29b4f22c6d77883ec6230ea882b174c5e0e9fc8c082ab872a"
+    }
+  },
+  "kind": "verified-native-repair-registrations-v1"
+}
