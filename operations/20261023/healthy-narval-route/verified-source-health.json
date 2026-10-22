@@ -1,0 +1,53 @@
+{
+  "checked_utc": "2026-10-22T22:08:36.629999+00:00",
+  "files": {
+    "plans/recovery-support-20261020-527/plan.json": {
+      "bytes": 8666,
+      "sha256": "eb0a3477feaedd95924f474d9319117e329bcaecdbba8a53881cfb0b690fa476"
+    },
+    "releases/20261021-6ed201653dfa-4f3903d7c26e/tests/test_slurm.py": {
+      "bytes": 10846,
+      "sha256": "b805fe9b58c765b8fdd16f6f6efa7dce45ab57c8e6659a190cb12763f7d4ce5e"
+    }
+  },
+  "host": "narval3.narval.calcul.quebec",
+  "identities": {
+    "/project/def-ptewarie/pwa209/horsehair-worm/releases/20261013-829e3817bee1-0e2b1ebce8bf": {
+      "files": 48,
+      "matches": true,
+      "sha256": "0e2b1ebce8bffe10799470b3ac20828e621f1415f3a18bca8cd67d502f1e8630"
+    },
+    "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e": {
+      "files": 97,
+      "matches": true,
+      "sha256": "4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1"
+    }
+  },
+  "publication": {
+    "maintenance/study-af-prestart-three-activation-stage-v1-20261022": {
+      "exists": true,
+      "is_symlink": false
+    },
+    "maintenance/study-af-registry-repair-support-v6-20261022": {
+      "exists": false,
+      "is_symlink": false
+    },
+    "plans/recovery-support-20261021-384": {
+      "exists": false,
+      "is_symlink": false
+    },
+    "plans/recovery-support-20261021-385": {
+      "exists": false,
+      "is_symlink": false
+    },
+    "state/recovery-support-20261021-384-submission.json": {
+      "exists": false,
+      "is_symlink": false
+    },
+    "state/recovery-support-20261021-385-submission.json": {
+      "exists": false,
+      "is_symlink": false
+    }
+  },
+  "read_only": true
+}

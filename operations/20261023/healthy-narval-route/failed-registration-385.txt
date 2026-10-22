@@ -1,0 +1,42 @@
+Traceback (most recent call last):
+  File "/scratch/pwa209/horsehair-worm/maintenance/study-af-prestart-three-activation-stage-v1-20261022/administration-registry-read-guard-v4-20261022.py", line 142, in guarded_reader
+  File "/scratch/pwa209/horsehair-worm/maintenance/sixth-repair-support-20261016/controller-primary-repair-sixth-20261016.py", line 161, in all_registered_work
+  File "/cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/python/3.11.5/lib/python3.11/pathlib.py", line 1303, in is_symlink
+    return S_ISLNK(self.lstat().st_mode)
+                   ^^^^^^^^^^^^
+  File "/cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/python/3.11.5/lib/python3.11/pathlib.py", line 1163, in lstat
+    return self.stat(follow_symlinks=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/python/3.11.5/lib/python3.11/pathlib.py", line 1013, in stat
+    return os.stat(self, follow_symlinks=follow_symlinks)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+BrokenPipeError: [Errno 108] Cannot send after transport endpoint shutdown: '/scratch/pwa209/horsehair-worm/plans/af-f2-training-0043/plan.json'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/src/horsehair/core.py", line 126, in exclusive_file_lock
+  File "/scratch/pwa209/horsehair-worm/maintenance/study-af-prestart-three-activation-stage-v1-20261022/administration-registry-read-guard-v4-20261022.py", line 98, in registration_lock
+  File "<stdin>", line 33, in <module>
+  File "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/src/horsehair/campaign.py", line 86, in combined_admission
+  File "/scratch/pwa209/horsehair-worm/maintenance/study-af-prestart-three-activation-stage-v1-20261022/administration-registry-read-guard-v4-20261022.py", line 210, in read
+  File "/scratch/pwa209/horsehair-worm/maintenance/study-af-prestart-three-activation-stage-v1-20261022/administration-registry-read-guard-v4-20261022.py", line 186, in guarded_reader
+  File "/scratch/pwa209/horsehair-worm/maintenance/study-af-prestart-three-activation-stage-v1-20261022/administration-registry-read-guard-v4-20261022.py", line 48, in exclusive
+  File "/cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/python/3.11.5/lib/python3.11/pathlib.py", line 1044, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+BrokenPipeError: [Errno 108] Cannot send after transport endpoint shutdown: '/scratch/pwa209/horsehair-worm/maintenance/study-af-prestart-three-activation-stage-v1-20261022/submission-registry-reads/read-1792706929911632095-bc80b36b36dc425fa3c8ceb0a2ef421f/attempt-1-result.json'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<stdin>", line 32, in <module>
+  File "/cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/python/3.11.5/lib/python3.11/contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/scratch/pwa209/horsehair-worm/maintenance/study-af-prestart-three-activation-stage-v1-20261022/administration-registry-read-guard-v4-20261022.py", line 99, in registration_lock
+  File "/cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/python/3.11.5/lib/python3.11/contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/src/horsehair/core.py", line 130, in exclusive_file_lock
+  File "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/src/horsehair/core.py", line 113, in release
+BrokenPipeError: [Errno 108] Cannot send after transport endpoint shutdown
+

@@ -1,0 +1,38 @@
+{
+  "admission_authority": false,
+  "campaign_revision": 405,
+  "checked_utc": "2026-10-22T22:16:17.158153+00:00",
+  "failed_client": "narval2.narval.calcul.quebec",
+  "failed_requests": {
+    "384": "source verification ESHUTDOWN108 before staging/publication",
+    "385": "registry evidence ESHUTDOWN108 before publication"
+  },
+  "fresh_requests": {
+    "394": "native364-case qualification afterok census375",
+    "395": "exactthree-target activation afterok source-bound Q394",
+    "399": "unchanged98-case behavioural prefix; rechecks old376 absence"
+  },
+  "kind": "healthy_client_route_and_fresh_registration_checkpoint",
+  "known_jobs": {
+    "census": "6811498",
+    "prior_registry_qualification": "6819399"
+  },
+  "native_registration_published_by_failed_requests": false,
+  "new_controller_ids": [],
+  "new_request_slurm_ids": {},
+  "old_requests_replayed": false,
+  "partial_census_progress": {
+    "elapsed_scan_seconds": 2488.5162839600816,
+    "files": 19000,
+    "is_complete": false
+  },
+  "policies_complete": 67,
+  "primary_science_changed": false,
+  "queue_snapshot": "6811498|hhw-recovery-375|RUNNING|None|(null)|2026-10-22T21:23:17|53:00\n6632164|hhw-pipeline-controller-0|RUNNING|None|(null)|2026-10-21T10:49:58|1-11:26:19\n6632209|hhw-pipeline-controller-1|PENDING|Dependency|afterany:6632164(unfulfilled)|N/A|0:00\n6632225|hhw-pipeline-controller-2|PENDING|Dependency|afterany:6632209(unfulfilled)|N/A|0:00\n6632239|hhw-pipeline-controller-3|PENDING|Dependency|afterany:6632225(unfulfilled)|N/A|0:00\n6819399|hhw-recovery-377|PENDING|Dependency|afterok:6811498(unfulfilled)|N/A|0:00",
+  "scientific_result": false,
+  "source_commit_mirrored": "3d03b49e3976c6a3d0044492a70426d63626acd1",
+  "source_sha256": "f047ce12b0a4a31312f2b4f5b6cff144342a12950f2e84fe1d444c8ea3a9b68c",
+  "study_complete": false,
+  "training_complete": 76,
+  "verified_administration_client": "narval3.narval.calcul.quebec"
+}

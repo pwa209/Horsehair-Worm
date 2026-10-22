@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "<stdin>", line 11, in <module>
+  File "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/src/horsehair/core.py", line 150, in source_identity
+  File "/cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/python/3.11.5/lib/python3.11/pathlib.py", line 1267, in is_file
+    return S_ISREG(self.stat().st_mode)
+                   ^^^^^^^^^^^
+  File "/cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/python/3.11.5/lib/python3.11/pathlib.py", line 1013, in stat
+    return os.stat(self, follow_symlinks=follow_symlinks)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+BrokenPipeError: [Errno 108] Cannot send after transport endpoint shutdown: '/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/tests/test_slurm.py'
+

@@ -1,0 +1,65 @@
+{
+  "files": {
+    "README.md": {
+      "bytes": 1445,
+      "sha256": "494d6e89fc65911711553ac8c8e5ff8cf5ef7b952107b9124c0f431dca6e81a6"
+    },
+    "build-healthy-route-394-395.py": {
+      "bytes": 2765,
+      "sha256": "26e3b779ac711f88402c2a5439ea7551ef4f6dee3b4f366461601574d4a68222"
+    },
+    "build-prefix-registration-390.py": {
+      "bytes": 2977,
+      "sha256": "2efd819f84aa872bb8087136121b037d24d951981365d202e8c20e48700a8b50"
+    },
+    "build-prefix-registration-399.py": {
+      "bytes": 2977,
+      "sha256": "411ecd6b60bb78bc9e783bafba87ba7f5158adeedb024a5211ea114f9e5ba162"
+    },
+    "failed-registration-384.json": {
+      "bytes": 95,
+      "sha256": "60876fa9a5dbe9e9a86988468f7d899e0a42f3c84fe9df7306478cd5b7d61bc1"
+    },
+    "failed-registration-384.txt": {
+      "bytes": 883,
+      "sha256": "67199df12d915f4269c15661436a8ecbec1a97dd7814801dadaeb2d98a445a76"
+    },
+    "failed-registration-385.json": {
+      "bytes": 95,
+      "sha256": "51f04c8a25b83c38fe7a374f10f8717b6c5330b8b3a7f5b072bdf6218bc8f80d"
+    },
+    "failed-registration-385.txt": {
+      "bytes": 4080,
+      "sha256": "bff3f0be0323ca912a8b56474ed5eefc843c810e023070144808d56b6d768101"
+    },
+    "hhw-aa-native-progress-20261023-400.sh": {
+      "bytes": 2576,
+      "sha256": "d7526462ccc1fb9463d7c3437c698c9c6b2809d7f5042536ccf6f3a69bd4fdad"
+    },
+    "hhw-aa-source-health-20261023-393.sh": {
+      "bytes": 2361,
+      "sha256": "0cd897ee2552f550a7cce5919795f6c3b0b2996b3b6fcb3ff1b3f8bf05f869b5"
+    },
+    "hhw-recovery-stage-20261021-394.sh": {
+      "bytes": 162379,
+      "sha256": "8254e96c402b4d8aa43c98d43880a607f2d222408d0f1eb2c351a60277f29e9e"
+    },
+    "hhw-recovery-stage-20261021-395.sh": {
+      "bytes": 34688,
+      "sha256": "ff7059e7a7cac7aeaac49b6ee048db72db008a1103a5818de908dd65fa9f3c6b"
+    },
+    "hhw-recovery-stage-20261021-399.sh": {
+      "bytes": 62381,
+      "sha256": "20c5363c59c39cfa1c728879bc67905a945d400f801ad6d4d035321d4676ff5d"
+    },
+    "manifest.json": {
+      "bytes": 1924,
+      "sha256": "572954d176f54c8d72190a1cceea6a12692eaa45de84906ba1cb08f76c178f4d"
+    },
+    "verified-source-health.json": {
+      "bytes": 1664,
+      "sha256": "cc2dae367161aa8c9bdb5ea50245242ba1ddde13d82a57b4fed34ebac1f06bfc"
+    }
+  },
+  "kind": "immutable_reviewed_operational_snapshot"
+}
