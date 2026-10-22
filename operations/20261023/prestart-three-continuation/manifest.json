@@ -1,0 +1,63 @@
+{
+  "admission_authority": false,
+  "author_contact_permitted": false,
+  "census_job_id": "6811498",
+  "census_status": "running_at_2026-10-22T21:55:05Z_not_a_completion_claim",
+  "config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+  "diagnostic": {
+    "checked_utc": "2026-10-22T20:59:58.564992+00:00",
+    "native_job_id": "6807825",
+    "policies_complete": 67,
+    "state_binding": {
+      "admission_authority": false,
+      "campaign_plan_sha256": "36f7db5dc790108040e454674006421144184db929b3de88aec2b9a9008727e0",
+      "revision": 405,
+      "scientific_result": false,
+      "state_file_sha256": "d44aa7c09bcd09c007009d9d5af58c2976f1d53eabbdd93c8f0daf92d9afa684",
+      "state_sha256": "80c8d048550f4e0e606ff323e2ce99af177b92cfe6c43144956c3c2b852f792b"
+    },
+    "training_complete": 76
+  },
+  "execution_framework_sha256": "4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1",
+  "kind": "reviewed_three_prestart_failure_continuation",
+  "later_read_only_probe": {
+    "checked_utc": "2026-10-22T21:55:05.039621+00:00",
+    "failed_plan_readable": true,
+    "host": "narval3.narval.calcul.quebec"
+  },
+  "local_tests": {
+    "activation_mock_and_schema_contracts": 64,
+    "operational": 172,
+    "pure_recovery": 86,
+    "qualification_wrapper": 47,
+    "total": 369
+  },
+  "native_qualification_status": "pending",
+  "new_controller_ids": [],
+  "primary_science_changed": false,
+  "registration_376": {
+    "exit_code": 1,
+    "failure": "Lustre read and lock release reported ESHUTDOWN108; no automatic replay",
+    "slurm_job_id": null
+  },
+  "registration_requests": {
+    "384": "transport_queued_not_confirmed_slurm",
+    "385": "transport_queued_not_confirmed_slurm"
+  },
+  "required_native_tests": {
+    "activation_mock_and_schema_contracts": 64,
+    "legacy_migration": 42,
+    "operational": 172,
+    "pure_recovery": 86,
+    "total": 364
+  },
+  "scientific_result": false,
+  "source_sha256": "f047ce12b0a4a31312f2b4f5b6cff144342a12950f2e84fe1d444c8ea3a9b68c",
+  "state_derivative_status": "not_activated",
+  "study_complete": false,
+  "target_failed_jobs": {
+    "evaluation-0073-01": "6795585",
+    "training-0076": "6795113",
+    "training-0077": "6795225"
+  }
+}

@@ -4,6 +4,8 @@ The user requested completion of stages Aâ€“F and explicitly authorized lif
 
 The original configuration remains SHA256 `446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35`; the primary scientific source remains `0e2b1ebce8bffe10799470b3ac20828e621f1415f3a18bca8cd67d502f1e8630`. Completed ant counts, molecular discovery freeze, agent development fits and frozen selection remain original evidence.
 
+Verified continuation, 22 October 2026, 23:40 CEST: diagnostic job 6807825 positively completed and established 76 complete trainings and 67 complete policies in preserved revision 405. The failures in evaluation 0073 wave 1 and training 0076/0077 occurred at registry admission, before output creation. They require a three-target operational derivative; changing the scientific wave, checkpoint, frozen intent or outcome is not authorized by that repair. Fresh census 6811498 is running after 74 native prerequisites; the full scan and subsequent qualification/activation remain incomplete. Registry latency measurements explain why the old 180-second bound failed; a cooperative 900-second bound and added instrumentation do not establish a permanent fix for filesystem stalls.
+
 ## Resource policy
 
 An explicitly supplied, immutable, source-bound operational descriptor removes the cumulative 20,000 CPU core-hour and 400 GPU-hour caps. The initial concurrent operating window is 256 CPUs and four independent one-GPU jobs. Each native allocation remains finite, at most 168 hours, and must satisfy actual account, partition, scheduler and storage limits. The existing 6 TB study storage limit, 250,000 study-file limit and 2 TB personal byte reserve remain unchanged.

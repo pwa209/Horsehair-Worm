@@ -1,0 +1,129 @@
+{
+  "files": {
+    "README.md": {
+      "bytes": 2567,
+      "sha256": "a1ddb9debb54e6c8b772267dc1626900bd74aa56c706fe8b913e00459deb0577"
+    },
+    "activate-f2-prestart-three-v1-20261022.py": {
+      "bytes": 39774,
+      "sha256": "586bbf301ef69621cc1132b8b25a9c243f29a2e918b54d564e84be816af2d2eb"
+    },
+    "activation-prestart-three-v1-local.xml": {
+      "bytes": 11005,
+      "sha256": "94c7a5cd3845a8aa5890ecf17e6a8e101f92164f395604caf640978128e86959"
+    },
+    "build-prestart-three-deployment-384-385.py": {
+      "bytes": 6223,
+      "sha256": "163e96b45f9783e2f3169257252189f1ba0286fa85bb5d6b52cdf1eeb19ad49c"
+    },
+    "hhw-aa-filesystem-diagnostic-20261023-391.sh": {
+      "bytes": 2341,
+      "sha256": "37713c5c9b278d6e2aadea9cc446b3103e9998d6013e883ab2d6bbe7f6ac14b5"
+    },
+    "hhw-recovery-stage-20261021-384.sh": {
+      "bytes": 161507,
+      "sha256": "cbb313750abd244bade5d12145019a3372ecc85de8a0f313e227facf172f8ce7"
+    },
+    "hhw-recovery-stage-20261021-385.sh": {
+      "bytes": 33812,
+      "sha256": "9b6ad196ef0da2e4bbccd11785738963b7964c277750ba7aa919ca3e1d67aa6c"
+    },
+    "manifest.json": {
+      "bytes": 2237,
+      "sha256": "bf4f5becceea02bd43b700d4a9095581f81cba7e486e6c1d3af8208a126f98b2"
+    },
+    "prestart-three-qualification-freeze-20261022.json": {
+      "bytes": 1719,
+      "sha256": "f7139666658074b7928d37ab5d61ef84e4e3534a979bd755f60890c0394d91b9"
+    },
+    "prestart-three-source-manifest-20261022.json": {
+      "bytes": 1769,
+      "sha256": "4b09442dfa29fac9f3b442e9793a0476035b174577bf67f316f1afcd9b9091f4"
+    },
+    "qualify-f2-registry-repair-v6-20261022.py": {
+      "bytes": 18784,
+      "sha256": "875ec697466351b21718eded61a6e81ac23d74ce0902ce481ebc970012261020"
+    },
+    "recover-f2-prestart-three-state-v1-20261022-local-junit.xml": {
+      "bytes": 14686,
+      "sha256": "e15fdcf7df319902d9c516bd76af97515a99979b582f943047ffa2ae2babfc3e"
+    },
+    "recover-f2-prestart-three-state-v1-20261022.py": {
+      "bytes": 26120,
+      "sha256": "7151017a3579694228b1ba78f14da9cdda3e4a4608d98f9f257d2d2c4b26807d"
+    },
+    "recover-f2-training0000-state-20261021.py": {
+      "bytes": 23907,
+      "sha256": "504eb2764073a5b614d986827ccacad3189ea4be5988313ead47ab41805fe26a"
+    },
+    "registered-snapshot-read-guard-v4-20261022.py": {
+      "bytes": 15419,
+      "sha256": "5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a"
+    },
+    "registered-snapshot-read-guard-v5-20261022.py": {
+      "bytes": 17865,
+      "sha256": "7bd2bf562d0a81887ef1afd308ddd9265e5cadb23ba4b2e5946980b659505431"
+    },
+    "registration-376-completion.json": {
+      "bytes": 95,
+      "sha256": "fc11fb0f3c36d9dbbae9cbaf3748f2749a1dcc265bc0fabe206762649fe3af40"
+    },
+    "registration-376-failure.txt": {
+      "bytes": 3415,
+      "sha256": "347d40a0797c9acb0555ddefa64176e5fba4a660d1b3d20b5a166b630191032a"
+    },
+    "registry-q-v6-root-final-20261022.xml": {
+      "bytes": 8020,
+      "sha256": "1363ff095a629233a828f80697c65bfe937beeea64ab64e0c5b1318529c1e2db"
+    },
+    "registry-v6-operational-freeze-final-20261022.json": {
+      "bytes": 760,
+      "sha256": "9136f3cd4b258c431c7d57782a0091beff37768bceee9793860ba05690d53285"
+    },
+    "registry-v6-root-operational-final-20261022.xml": {
+      "bytes": 30537,
+      "sha256": "2692ba08d835ab361c31decf5d736e2506066a969cc4c53a3a5475af7b7c98df"
+    },
+    "run-af-agent-controller-registry-v6-20261022.py": {
+      "bytes": 62900,
+      "sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866"
+    },
+    "run-f00d-worker-registry-overlay-20261021.py": {
+      "bytes": 4062,
+      "sha256": "dd39905ce44f89f7f8bbdd325d1a0f1d5ec7950dd89d0e3bb267f6fdfe77a09a"
+    },
+    "test_activate_f2_prestart_three_v1_20261022.py": {
+      "bytes": 29755,
+      "sha256": "7969911a11d54c71c33c41f9888f4d3889db5326489ff6468399823640d54964"
+    },
+    "test_af_agent_controller_registry_v6_20261022.py": {
+      "bytes": 56567,
+      "sha256": "da703c4cc8b172a2ea79067a8f5c5e9d0976853823a8ed230e3fb1a721633a3d"
+    },
+    "test_f00d_worker_registry_overlay_20261021.py": {
+      "bytes": 4064,
+      "sha256": "2fdcf83a1abc796f82e86d3d3014fd785d195bf7ca4dc6457f2d6dd5db9b3968"
+    },
+    "test_qualify_f2_registry_repair_v6_20261022.py": {
+      "bytes": 12909,
+      "sha256": "8ebf7f455a4c8ff8282dbdb3c0e94ee93f0d5e8eac3e276a6ae57a7c01159067"
+    },
+    "test_recover_f2_prestart_three_state_v1_20261022.py": {
+      "bytes": 23361,
+      "sha256": "dddccdc4d800110ecfbdf72f8a3fb25f7726a858d80272c016cce3c233b4253d"
+    },
+    "test_recover_f2_training0000_state_20261021.py": {
+      "bytes": 19478,
+      "sha256": "6cb7fdcc55f12164d81666f70e545b6efd610a1299baef66e483a271fbbe1673"
+    },
+    "test_registered_snapshot_read_guard_v4_20261022.py": {
+      "bytes": 16216,
+      "sha256": "0e4f029814f1aca969fe282dac99a61373128a6dbbe4a0672ba5706a736545b9"
+    },
+    "test_registered_snapshot_read_guard_v5_20261022.py": {
+      "bytes": 23218,
+      "sha256": "934196d84276299ce2b567bef6925515e4656978401a0dd4f49c8bd2d1339d72"
+    }
+  },
+  "kind": "immutable_reviewed_operational_snapshot"
+}

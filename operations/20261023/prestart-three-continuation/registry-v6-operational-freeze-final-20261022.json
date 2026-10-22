@@ -1,0 +1,14 @@
+{
+  "count": 172,
+  "roster_sha256": "cae9f3349cf709af939c6953b626cf54e9d7ef1a4a0a711874960d89e939195b",
+  "test_sources": {
+    "test_registered_snapshot_read_guard_v5_20261022.py": "934196d84276299ce2b567bef6925515e4656978401a0dd4f49c8bd2d1339d72",
+    "test_f00d_worker_registry_overlay_20261021.py": "2fdcf83a1abc796f82e86d3d3014fd785d195bf7ca4dc6457f2d6dd5db9b3968",
+    "test_af_agent_controller_registry_v6_20261022.py": "da703c4cc8b172a2ea79067a8f5c5e9d0976853823a8ed230e3fb1a721633a3d"
+  },
+  "controller_sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866",
+  "junit": {
+    "path": "work\\registry-v6-root-operational-final-20261022.xml",
+    "sha256": "2692ba08d835ab361c31decf5d736e2506066a969cc4c53a3a5475af7b7c98df"
+  }
+}
