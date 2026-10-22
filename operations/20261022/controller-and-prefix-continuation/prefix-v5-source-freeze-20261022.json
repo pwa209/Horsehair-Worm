@@ -1,0 +1,20 @@
+{
+  "mathematical_functions_ast_unchanged": {
+    "prepare": true,
+    "run_prefix": true,
+    "_worker": true,
+    "validation_call_or_null": true,
+    "validation_summary": true
+  },
+  "whole_local_tests": 98,
+  "native_tests_required": 98,
+  "maximum_worker_seconds": 27900,
+  "native_hours": 8,
+  "old_qualified_probe_runtime_helper_changed": false,
+  "source_pins": {
+    "run-full-cohort-prefix-v5-20261022.py": "dec3ace9591b71759bbd7418b550e657ecb87a85823652e9d1e56547fe19ec60",
+    "run-full-cohort-prefix-context-v5-20261022.py": "e055352de535d029c658723b69707c371ab5d89e451cace506d305c344a3fd0f",
+    "test_full_cohort_prefix_v5_20261022.py": "874cfce84a7814536e6442a00775d7ad3b652ef7ad12a087e81585edd0b88169",
+    "test_full_cohort_prefix_context_v5_20261022.py": "47c09780ff90feeaa362599fe8a2bb5ab367a1d6a7e3724c427cc5f4668fea9f"
+  }
+}

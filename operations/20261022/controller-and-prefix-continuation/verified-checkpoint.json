@@ -1,0 +1,92 @@
+{
+  "A_through_F_complete": false,
+  "actual_full_figure01_acquisition": false,
+  "archive_compaction_activated": false,
+  "authors_contacted": false,
+  "campaign_status_historical": {
+    "H4_inference_status": "pending_separate_validated_analysis_and_bridge",
+    "admission_authority": false,
+    "jobs": 219,
+    "native_controller_job": "6701494",
+    "new_intentions": 7,
+    "policies_complete": 64,
+    "precision_gate": true,
+    "revision": 404,
+    "scientific_result": false,
+    "segment": 1,
+    "state_sha256": "a0aafa19ed0b2cbfa2f8322a31603b24f1a643ea0e0ce5e741f9a493eee7ee7d",
+    "status": "active",
+    "storage_pending": null,
+    "training_complete": 74
+  },
+  "completed_audits": {
+    "figure01_qualification": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-figure01-qualification-support-v1-20261022/qualification.json",
+      "sha256": "e4eb48f1c1d60e24025168e2df7c996a8a594a08e420d8601a1ce870f0e9a3e6",
+      "status": "complete_figure01_adapter_native_qualification"
+    },
+    "pack_qualification": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-policy-pack-qualification-support-v1-20261022/qualification.json",
+      "sha256": "96f366d38e30f1a146f5c328c20fc67c9e06c12a656ea22aafa629cafa11216f",
+      "status": "complete_f2_policy_pack_operational_qualification_v1"
+    },
+    "stock": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-stock-metadata-support-v2-20261022/receipt.json",
+      "sha256": "92ae52ba27aa942279f410454e27904f2cb3061eef0b5cffa295bae8b3749c1a",
+      "status": "complete_native_metadata_audit"
+    }
+  },
+  "controller_chain_healthy_at_observation": false,
+  "historical_census_summary": {
+    "captured_utc": "2026-10-22T13:18:09.100045+00:00",
+    "personal_available_files": 391549,
+    "personal_used_files": 608451,
+    "study_bytes": 1140181661342,
+    "study_files": 139573
+  },
+  "native_accounting_display_timezone_of_this_old_read": "cluster default; use explicit UTC JSON clocks rather than its naive sacct times",
+  "observed_utc": "2026-10-22T20:06:47.893540+00:00",
+  "original_H1_H2_H3_metadata_recovered": false,
+  "queue_at_observation": {
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "6632164|hhw-pipeline-controller-0|RUNNING|None|(null)|2026-10-21T06:49:58|1-09:16:54\n6632209|hhw-pipeline-controller-1|PENDING|Dependency|afterany:6632164(unfulfilled)|N/A|0:00\n6632225|hhw-pipeline-controller-2|PENDING|Dependency|afterany:6632209(unfulfilled)|N/A|0:00\n6632239|hhw-pipeline-controller-3|PENDING|Dependency|afterany:6632225(unfulfilled)|N/A|0:00"
+  },
+  "replacement_request_ids_pending_native_confirmation": [
+    "374",
+    "375",
+    "376",
+    "377"
+  ],
+  "state_binding_at_observation": {
+    "admission_authority": false,
+    "campaign_plan_sha256": "36f7db5dc790108040e454674006421144184db929b3de88aec2b9a9008727e0",
+    "revision": 405,
+    "scientific_result": false,
+    "state_file_sha256": "d44aa7c09bcd09c007009d9d5af58c2976f1d53eabbdd93c8f0daf92d9afa684",
+    "state_sha256": "80c8d048550f4e0e606ff323e2ce99af177b92cfe6c43144956c3c2b852f792b"
+  },
+  "successful_reconciliation_receipt": {
+    "admission_authority": false,
+    "automatic_replay_permitted": false,
+    "native_job_id": "6757565",
+    "native_scientific_jobs_submitted_by_repair": [],
+    "original_files_removed": false,
+    "original_state_preserved": true,
+    "released_controller_successors": [
+      "6701494",
+      "6701495",
+      "6701498"
+    ],
+    "scientific_result": false,
+    "state_revision": 214,
+    "state_sha256": "9320a8f730fceeb168835323faf3eceddc0f6d7b2716994bd50d9dc1caae15a4",
+    "status": "reconciled_never_submitted_intentions_and_released_successors",
+    "test_counts": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 34
+    }
+  }
+}

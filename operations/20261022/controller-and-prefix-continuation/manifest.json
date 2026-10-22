@@ -1,0 +1,319 @@
+{
+  "config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+  "files": [
+    {
+      "bytes": 3446,
+      "name": "reconcile-unsubmitted-f2-intents-v1-20261022.py",
+      "sha256": "6cb420833a40fef8a1053b24602de9e9598ff5a0c405955d28ffa7b091f788fd"
+    },
+    {
+      "bytes": 4541,
+      "name": "test_reconcile_unsubmitted_f2_intents_v1_20261022.py",
+      "sha256": "1d4f1e906bfa935566c97897f8eecdaa6fd787107d6c1efa931a2c882501d4c5"
+    },
+    {
+      "bytes": 17742,
+      "name": "run-f2-unsubmitted-reconciliation-v1-20261022.py",
+      "sha256": "788d4ba04246a9a2871c7c627d396b374a70a1149e13030584d671713639e3cf"
+    },
+    {
+      "bytes": 46419,
+      "name": "run-full-cohort-prefix-v4-20261022.py",
+      "sha256": "dbee79ff0c223f17b4d4718b93367037510117dbc6ddcd6289d238acdca11c7f"
+    },
+    {
+      "bytes": 12562,
+      "name": "run-full-cohort-prefix-context-v4-20261022.py",
+      "sha256": "5d3e6e0a68c9da8dd24e9292ef221cf43784f6ac0da08cd29d2aaa94da839b57"
+    },
+    {
+      "bytes": 22806,
+      "name": "test_full_cohort_prefix_v4_20261022.py",
+      "sha256": "3f584b2e3d93428db3ae09bb98cef5de1ff38681ad8b27a7855389c7b1aa388e"
+    },
+    {
+      "bytes": 12085,
+      "name": "test_full_cohort_prefix_context_v4_20261022.py",
+      "sha256": "f9812bec15ed2c90ef327c675bdcdc62bfe39bf75f85b0b6879929ab773e2320"
+    },
+    {
+      "bytes": 47086,
+      "name": "run-full-cohort-prefix-v5-20261022.py",
+      "sha256": "dec3ace9591b71759bbd7418b550e657ecb87a85823652e9d1e56547fe19ec60"
+    },
+    {
+      "bytes": 12562,
+      "name": "run-full-cohort-prefix-context-v5-20261022.py",
+      "sha256": "e055352de535d029c658723b69707c371ab5d89e451cace506d305c344a3fd0f"
+    },
+    {
+      "bytes": 24106,
+      "name": "test_full_cohort_prefix_v5_20261022.py",
+      "sha256": "874cfce84a7814536e6442a00775d7ad3b652ef7ad12a087e81585edd0b88169"
+    },
+    {
+      "bytes": 12085,
+      "name": "test_full_cohort_prefix_context_v5_20261022.py",
+      "sha256": "47c09780ff90feeaa362599fe8a2bb5ab367a1d6a7e3724c427cc5f4668fea9f"
+    },
+    {
+      "bytes": 1103,
+      "name": "prefix-v4-source-freeze-20261022.json",
+      "sha256": "700967572ef8a6e15d1cb817e99bfac37f323e7fadbada2310b37762de43b37a"
+    },
+    {
+      "bytes": 848,
+      "name": "prefix-v5-source-freeze-20261022.json",
+      "sha256": "c8a87f38638a32581ac25b4bb6bccd2f76228d694ff45af4c55a75e78caed521"
+    },
+    {
+      "bytes": 15419,
+      "name": "registered-snapshot-read-guard-v4-20261022.py",
+      "sha256": "5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a"
+    },
+    {
+      "bytes": 16216,
+      "name": "test_registered_snapshot_read_guard_v4_20261022.py",
+      "sha256": "0e4f029814f1aca969fe282dac99a61373128a6dbbe4a0672ba5706a736545b9"
+    },
+    {
+      "bytes": 57135,
+      "name": "run-af-agent-controller-registry-v5-20261022.py",
+      "sha256": "22864922c6121ffccecd2f8000f28fd9b382fed2e9b52952383c69287c646917"
+    },
+    {
+      "bytes": 40688,
+      "name": "test_af_agent_controller_registry_v5_20261022.py",
+      "sha256": "4312415a0574bc3bf86ec08aaed439aabc98bc604a6ed1e9420b894c72aed79a"
+    },
+    {
+      "bytes": 4062,
+      "name": "run-f00d-worker-registry-overlay-20261021.py",
+      "sha256": "dd39905ce44f89f7f8bbdd325d1a0f1d5ec7950dd89d0e3bb267f6fdfe77a09a"
+    },
+    {
+      "bytes": 4064,
+      "name": "test_f00d_worker_registry_overlay_20261021.py",
+      "sha256": "2fdcf83a1abc796f82e86d3d3014fd785d195bf7ca4dc6457f2d6dd5db9b3968"
+    },
+    {
+      "bytes": 15374,
+      "name": "qualify-f2-registry-repair-v5-20261022.py",
+      "sha256": "852cb7c6bc1caff7d021bf7a80d780bf29da65c0d734e5e86c035eb74d68ef37"
+    },
+    {
+      "bytes": 7241,
+      "name": "test_qualify_f2_registry_repair_v5_20261022.py",
+      "sha256": "23c39a794c6b46b9a2a46da3f7e2ec147e091141e913b454b8f289e6405a1bdc"
+    },
+    {
+      "bytes": 23907,
+      "name": "recover-f2-training0000-state-20261021.py",
+      "sha256": "504eb2764073a5b614d986827ccacad3189ea4be5988313ead47ab41805fe26a"
+    },
+    {
+      "bytes": 19478,
+      "name": "test_recover_f2_training0000_state_20261021.py",
+      "sha256": "6cb7fdcc55f12164d81666f70e545b6efd610a1299baef66e483a271fbbe1673"
+    },
+    {
+      "bytes": 22489,
+      "name": "run-fresh-storage-census-v3-20261022.py",
+      "sha256": "d9c812ee01194816a85ddf4591d436ee7dc9a7373c6c82086aab1c35adf06ebd"
+    },
+    {
+      "bytes": 14273,
+      "name": "test_run_fresh_storage_census_v3_20261022.py",
+      "sha256": "11b4383058e03f86424d599e182a7bdebc7508db68f4658e1aa066838c672394"
+    },
+    {
+      "bytes": 24760,
+      "name": "run-fresh-storage-census-v4-20261022.py",
+      "sha256": "05627118529a153e38eb45f2cf778fb4fbc09289bb890cb7962cdb8c2b137c18"
+    },
+    {
+      "bytes": 14462,
+      "name": "test_run_fresh_storage_census_v4_20261022.py",
+      "sha256": "f28bc638824e5f5dc5d56e923c184a8451f667412c1c545b10d9b30c9b31da4e"
+    },
+    {
+      "bytes": 49391,
+      "name": "controller-primary-repair-sixth-20261016.py",
+      "sha256": "49815eeb509909d5eac2ebde2e4f4a3918cf40cefdc5f643f2bcaffead629eb1"
+    },
+    {
+      "bytes": 38675,
+      "name": "run-vtl-track-schema-audit-v2-20261021.py",
+      "sha256": "284b082a04eccebe707378a6e8f26836a4467846e3b213c3e9ff9b4325a86ff1"
+    },
+    {
+      "bytes": 2327,
+      "name": "read-f2-failed-child-native-v1-20261022.py",
+      "sha256": "59f53257f334f61e4cfa0ec3196671d8e231279e4865e19791d82f7fe3cba6d1"
+    },
+    {
+      "bytes": 2040,
+      "name": "patch-registry-read-margin-admin-v4-20261022.py",
+      "sha256": "994a493e68f74e29f5887ef0d64e3be6ce8af6f3f4fa3cf2e27783f79fe23249"
+    },
+    {
+      "bytes": 6967,
+      "name": "build-census-stage-372.py",
+      "sha256": "c16ac4f7a3b7af81e9f8e84d1b5dbef412e510190fb8d22ccd95d1ca8387bc15"
+    },
+    {
+      "bytes": 8944,
+      "name": "build-census-stage-375.py",
+      "sha256": "da77e75b0ea44439a27a84458d14480c5851f03cbc2aa4a0aa4ae6c5b152e3bb"
+    },
+    {
+      "bytes": 43188,
+      "name": "run-cohort-prefix-stage-v4-20261022.py",
+      "sha256": "f3720f8537e4bc245102580116fd923576a218cae9ae1833c8f354b184430d8e"
+    },
+    {
+      "bytes": 44100,
+      "name": "run-cohort-prefix-stage-v5-20261022.py",
+      "sha256": "32e093076f4df767b705f07fbdba264a6ab9fde9fc0590951e0f57fb1b7ac704"
+    },
+    {
+      "bytes": 44109,
+      "name": "run-cohort-prefix-stage-v5-r1-20261022.py",
+      "sha256": "f53d4d1059992bfe06cb66b862a99bfda9201c177ec90d8b29853176cb973242"
+    },
+    {
+      "bytes": 34500,
+      "name": "run-fresh-census-stage-v3-20261022.py",
+      "sha256": "3c15bc64c87b91fff3bdb903a8c753be87ad8aa1ddc462019a7960d1872ee4e2"
+    },
+    {
+      "bytes": 49909,
+      "name": "run-fresh-census-stage-v4-20261022.py",
+      "sha256": "d1b70c7d6528ad30e5f2bf1a898306674088dbb1cf74b28acc3253b2ebdbdd7e"
+    },
+    {
+      "bytes": 7574,
+      "name": "hhw-af-controller-maintenance-pause-20261022-360.sh",
+      "sha256": "b2d60e979096b0ed191580067a687ae88132bdc28de2c0539ab78b4e273e7357"
+    },
+    {
+      "bytes": 5792,
+      "name": "hhw-af-postpause-and-qualification-read-20261022-364.sh",
+      "sha256": "6c59a847b330e09d99398e083d62cbb600adbade4d076154648e52de16cd1331"
+    },
+    {
+      "bytes": 2387,
+      "name": "hhw-af-maintenance-progress-20261022-367.sh",
+      "sha256": "a476860ba52e10a2f6131d1d134ddd4bba3246d3a2b4f085c70ce23e7fed70a6"
+    },
+    {
+      "bytes": 3275,
+      "name": "hhw-af-controller-failure-read-20261022-368.sh",
+      "sha256": "5cd9e1d727dae3d77981829eeb033be8734abb83b7298f4a8624c54a3012e137"
+    },
+    {
+      "bytes": 52304,
+      "name": "hhw-recovery-stage-20261021-365.sh",
+      "sha256": "f9dae239f12ced582fdc9722f5f613e551945e92bd8a62ccc6bb6357a503bab9"
+    },
+    {
+      "bytes": 20849,
+      "name": "hhw-recovery-stage-20261021-366.sh",
+      "sha256": "b7334bdfae9ed523ba7004e4170f589c1646cf0058a3a454812dc38b3e0e00ef"
+    },
+    {
+      "bytes": 10654,
+      "name": "hhw-recovery-stage-20261021-371.sh",
+      "sha256": "b129f72ba54466728827bc5a998711ad4805dd617b43ed4494d55dc0a335fe8f"
+    },
+    {
+      "bytes": 43842,
+      "name": "hhw-recovery-stage-20261021-372.sh",
+      "sha256": "597f5b08cf78c74359bf4b913de188892add165c631a36ad91c49e4185d16431"
+    },
+    {
+      "bytes": 54247,
+      "name": "hhw-recovery-stage-20261021-373.sh",
+      "sha256": "52d6bfd6595c15b30bae612ddd1ebfb60a3328e79b219746e64ececc0220c18c"
+    },
+    {
+      "bytes": 17611,
+      "name": "hhw-recovery-stage-20261021-374.sh",
+      "sha256": "7b9ca3ecfde196cd79d8acbbd738dc1f3fd8af7a8c0cd2e3de16fae506ebe825"
+    },
+    {
+      "bytes": 65303,
+      "name": "hhw-recovery-stage-20261021-375.sh",
+      "sha256": "4b65287aad4965b2ca71a1970d892afcb008648bf4b7e88fdd4af38fa2fbeb8c"
+    },
+    {
+      "bytes": 61224,
+      "name": "hhw-recovery-stage-20261021-376.sh",
+      "sha256": "7fc68942e06f5df0fea0113471a0c5c79603cc2e52f046effc94f1e5829f4d7f"
+    },
+    {
+      "bytes": 90628,
+      "name": "hhw-recovery-stage-20261021-377.sh",
+      "sha256": "419c280e75ba4bec0dcd65ed950193b33a273f4733da374be37a81409615c9ee"
+    },
+    {
+      "bytes": 6211,
+      "name": "f2-reconcile-tests-20261022.xml",
+      "sha256": "ecd569dee8beb74fdb61601eaf3e992c3e0d5d614974bfb252dd2365dcda9e34"
+    },
+    {
+      "bytes": 13170,
+      "name": "prefix-v4-root-final-20261022.xml",
+      "sha256": "0221ad21928c245aa42e18b568e7d1d388d950466efd458da41639f40a4911aa"
+    },
+    {
+      "bytes": 12767,
+      "name": "prefix-v4-isolated-final-20261022.xml",
+      "sha256": "d1e9453315c79ee6f160e5bdf80138452d25814c5e8da2e990cc283cecf6d7d4"
+    },
+    {
+      "bytes": 15854,
+      "name": "prefix-v5-root-20261022.xml",
+      "sha256": "671486e5aee76487bc5ca3d5d70a9fb6a4154ed536b3ff20562864d4393fbbe9"
+    },
+    {
+      "bytes": 5189,
+      "name": "registry-v4-root-20261022.xml",
+      "sha256": "a6f61ecc03ca5eed62e962a4b8c8c6071f8a944d264a8dfbc9231143647afe9a"
+    },
+    {
+      "bytes": 17508,
+      "name": "registry-v5-root-20261022.xml",
+      "sha256": "4e1f9a3154149d580e050f4b49e6e9a5a07b5b8e7ed55a502a316b8d2f7ea0e0"
+    },
+    {
+      "bytes": 5394,
+      "name": "registry-q-v5-root-final-20261022.xml",
+      "sha256": "262750b461e2431210b258d3a382ec35614d62118c123db691330fa60548cafe"
+    },
+    {
+      "bytes": 7423,
+      "name": "census-v3-root-20261022.xml",
+      "sha256": "c35b52233ed32666d2dd401464976d7870bcef10e231d74f27c1d7093dbe1c1d"
+    },
+    {
+      "bytes": 7423,
+      "name": "census-v4-root-final-20261022.xml",
+      "sha256": "1e05cec0822285983b7fe6f81b019435e85bf49cef300f4d0e124bfe8e2db73d"
+    },
+    {
+      "bytes": 3821,
+      "name": "verified-checkpoint.json",
+      "sha256": "269c3b61c29576f786d190488bc99d8b3e2286afb022e0288625adf21e2b548f"
+    },
+    {
+      "bytes": 2359,
+      "name": "README.md",
+      "sha256": "08e8d3bd5cf20abc56fc444c9b2150e5577edbae691665317fe811f73c154f08"
+    }
+  ],
+  "primary_source_sha256": "0e2b1ebce8bffe10799470b3ac20828e621f1415f3a18bca8cd67d502f1e8630",
+  "public_execution_source_sha256": "f047ce12b0a4a31312f2b4f5b6cff144342a12950f2e84fe1d444c8ea3a9b68c",
+  "schema_version": 1,
+  "scope": "source and evidence snapshot; candidates require their declared native gates"
+}

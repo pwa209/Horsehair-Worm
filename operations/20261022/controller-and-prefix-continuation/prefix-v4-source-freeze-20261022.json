@@ -1,0 +1,31 @@
+{
+  "source_pins": {
+    "run-full-cohort-prefix-v4-20261022.py": "dbee79ff0c223f17b4d4718b93367037510117dbc6ddcd6289d238acdca11c7f",
+    "test_full_cohort_prefix_v4_20261022.py": "3f584b2e3d93428db3ae09bb98cef5de1ff38681ad8b27a7855389c7b1aa388e",
+    "run-full-cohort-prefix-context-v4-20261022.py": "5d3e6e0a68c9da8dd24e9292ef221cf43784f6ac0da08cd29d2aaa94da839b57",
+    "test_full_cohort_prefix_context_v4_20261022.py": "f9812bec15ed2c90ef327c675bdcdc62bfe39bf75f85b0b6879929ab773e2320"
+  },
+  "stage_sha256": "f3720f8537e4bc245102580116fd923576a218cae9ae1833c8f354b184430d8e",
+  "request_sha256": "f9dae239f12ced582fdc9722f5f613e551945e92bd8a62ccc6bb6357a503bab9",
+  "native_allocation": {
+    "cpus": 1,
+    "memory": "64G",
+    "hours": 8,
+    "gpu": false
+  },
+  "external_dependencies": [
+    "6753750"
+  ],
+  "qualification_counts": {
+    "prefix": 40,
+    "context": 41
+  },
+  "mathematical_functions_ast_unchanged": [
+    "prepare",
+    "run_prefix",
+    "_worker",
+    "validation_call_or_null",
+    "validation_summary"
+  ],
+  "production_submitted": false
+}
