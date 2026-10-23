@@ -1,0 +1,119 @@
+{
+  "admission_authority": false,
+  "cancellation_details": {
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "6811498|hhw-recovery-375|FAILED|None|1:0|14248|240|2026-10-22T21:23:17|2026-10-23T01:20:45\n6819399|hhw-recovery-377|CANCELLED|None|0:0|0|60|None|2026-10-23T01:25:56\n6822432|hhw-recovery-394|CANCELLED|None|0:0|0|60|None|2026-10-23T01:25:56\n6822568|hhw-recovery-395|CANCELLED|None|0:0|0|240|None|2026-10-23T01:25:56\n6822730|hhw-recovery-399|CANCELLED|None|0:0|0|480|None|2026-10-23T01:25:56\n6824584|hhw-recovery-406|CANCELLED|None|0:0|0|60|None|2026-10-23T01:25:56\n"
+  },
+  "canonical_campaign_state": {
+    "binding": {
+      "admission_authority": false,
+      "campaign_plan_sha256": "36f7db5dc790108040e454674006421144184db929b3de88aec2b9a9008727e0",
+      "revision": 405,
+      "scientific_result": false,
+      "state_file_sha256": "d44aa7c09bcd09c007009d9d5af58c2976f1d53eabbdd93c8f0daf92d9afa684",
+      "state_sha256": "80c8d048550f4e0e606ff323e2ce99af177b92cfe6c43144956c3c2b852f792b"
+    },
+    "bytes": 9742154,
+    "compressed_bytes_match_binding": true,
+    "file_sha256": "d44aa7c09bcd09c007009d9d5af58c2976f1d53eabbdd93c8f0daf92d9afa684",
+    "prior_405_bytes_unchanged": true
+  },
+  "census_failure": {
+    "bytes": 439,
+    "exists": true,
+    "sha256": "62d0e1fa1183726902d9b3eb3486ef8eec381f4214b85a9c1b3c909955885522",
+    "value": {
+      "admission_authority": false,
+      "end_time_extends_admission_freshness": false,
+      "error": "Finite census deadline reached; original timestamps preserved",
+      "error_type": "TimeoutError",
+      "failed_unix": 1792718418.2918584,
+      "freshness_timestamp_rewritten": false,
+      "scientific_gates_cleared": false,
+      "scientific_result": false,
+      "started_unix": 1792704702.4366162,
+      "status": "failed_no_timestamp_rewrite_or_automatic_replay"
+    }
+  },
+  "census_log_tail": "h\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4310272132, \"elapsed_seconds\": 4759.282734768465, \"files\": 35000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4324006063, \"elapsed_seconds\": 4853.930509408936, \"files\": 36000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4487513679, \"elapsed_seconds\": 4939.765427952632, \"files\": 37000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4641325981, \"elapsed_seconds\": 5236.9710576515645, \"files\": 38000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4705687144, \"elapsed_seconds\": 5703.122330242768, \"files\": 39000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4767621196, \"elapsed_seconds\": 6134.600247232243, \"files\": 40000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4790378220, \"elapsed_seconds\": 6551.225955513306, \"files\": 41000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4886843632, \"elapsed_seconds\": 7208.054322839715, \"files\": 42000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4895636378, \"elapsed_seconds\": 7387.459842558019, \"files\": 43000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4906730564, \"elapsed_seconds\": 7432.778927663341, \"files\": 44000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4917611038, \"elapsed_seconds\": 7523.607854088768, \"files\": 45000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4928565324, \"elapsed_seconds\": 7598.060878701508, \"files\": 46000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4939729454, \"elapsed_seconds\": 7641.251405489631, \"files\": 47000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4950590916, \"elapsed_seconds\": 7732.157856799662, \"files\": 48000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4964299602, \"elapsed_seconds\": 7843.701478747651, \"files\": 49000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4975173740, \"elapsed_seconds\": 7889.727084591053, \"files\": 50000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4986378262, \"elapsed_seconds\": 7966.298630144447, \"files\": 51000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 4997431125, \"elapsed_seconds\": 8058.191837667488, \"files\": 52000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5008368615, \"elapsed_seconds\": 8098.973497395404, \"files\": 53000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5019293776, \"elapsed_seconds\": 8203.264637681656, \"files\": 54000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5030358286, \"elapsed_seconds\": 8308.637175860815, \"files\": 55000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5041605187, \"elapsed_seconds\": 8356.825029763393, \"files\": 56000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5052580116, \"elapsed_seconds\": 8454.165884696878, \"files\": 57000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5063462074, \"elapsed_seconds\": 8503.833856325597, \"files\": 58000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5074777763, \"elapsed_seconds\": 8602.687619644217, \"files\": 59000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5085519847, \"elapsed_seconds\": 8703.126554377377, \"files\": 60000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5096484702, \"elapsed_seconds\": 8758.601187004708, \"files\": 61000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5107551681, \"elapsed_seconds\": 8866.25301015377, \"files\": 62000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5118958589, \"elapsed_seconds\": 8960.235163311474, \"files\": 63000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5129917775, \"elapsed_seconds\": 9092.304790212773, \"files\": 64000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5154806124, \"elapsed_seconds\": 9280.967492356896, \"files\": 65000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5165771116, \"elapsed_seconds\": 9328.687071845867, \"files\": 66000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5211833548, \"elapsed_seconds\": 9710.747131292708, \"files\": 67000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5261873973, \"elapsed_seconds\": 10178.034399106167, \"files\": 68000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5311795112, \"elapsed_seconds\": 10706.215074062347, \"files\": 69000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5364727120, \"elapsed_seconds\": 11174.882632700726, \"files\": 70000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5422991398, \"elapsed_seconds\": 11673.07959299907, \"files\": 71000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5516905540, \"elapsed_seconds\": 12260.784141638316, \"files\": 72000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5526556001, \"elapsed_seconds\": 12260.795368135907, \"files\": 73000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 5941805889, \"elapsed_seconds\": 12541.459982185625, \"files\": 74000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nSTORAGE_CENSUS_PROGRESS {\"bytes\": 57043731217, \"elapsed_seconds\": 13637.835147005506, \"files\": 75000, \"io_workers\": 16, \"method\": \"owned_regular_length\"}\nTraceback (most recent call last):\n  File \"/scratch/pwa209/horsehair-worm/maintenance/study-af-fresh-storage-census-stage-v4-20261022/run-fresh-census-stage-v4-20261022.py\", line 34, in <module>\n    runpy.run_path(str(helper),run_name='__main__')\n  File \"<frozen runpy>\", line 291, in run_path\n  File \"<frozen runpy>\", line 98, in _run_module_code\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/scratch/pwa209/horsehair-worm/maintenance/study-af-fresh-storage-census-stage-v4-20261022/run-fresh-storage-census-v4-20261022.py\", line 363, in <module>\n    if __name__=='__main__':main()\n                            ^^^^^^\n  File \"/scratch/pwa209/horsehair-worm/maintenance/study-af-fresh-storage-census-stage-v4-20261022/run-fresh-storage-census-v4-20261022.py\", line 350, in main\n    result=run_snapshot(budget.storage_snapshot,ROOT,SUPPORT,end)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/scratch/pwa209/horsehair-worm/maintenance/study-af-fresh-storage-census-stage-v4-20261022/run-fresh-storage-census-v4-20261022.py\", line 263, in run_snapshot\n    value=snapshot(root,exact_sizes=True)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/src/horsehair/budget.py\", line 146, in storage_snapshot\n    for path,measured in entries:\n  File \"/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/src/horsehair/storage_artifacts.py\", line 512, in iter_regular_lengths\n    measurements = (_parallel_lengths(paths, root, max_bytes, uid, executor, workers) if executor\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/src/horsehair/storage_artifacts.py\", line 437, in _parallel_lengths\n    results.append((path, future.result()))\n                          ^^^^^^^^^^^^^^^\n  File \"/cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/python/3.11.5/lib/python3.11/concurrent/futures/_base.py\", line 451, in result\n    self._condition.wait(timeout)\n  File \"/cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v3/Compiler/gcccore/python/3.11.5/lib/python3.11/threading.py\", line 320, in wait\n    waiter.acquire()\n  File \"/scratch/pwa209/horsehair-worm/maintenance/study-af-fresh-storage-census-stage-v4-20261022/run-fresh-storage-census-v4-20261022.py\", line 326, in expired\n    def expired(signum,frame):raise TimeoutError('Finite census deadline reached; original timestamps preserved')\n                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTimeoutError: Finite census deadline reached; original timestamps preserved\n",
+  "checked_local": "2026-10-23 08:42 CEST",
+  "checked_utc": "2026-10-23T06:41:57.113218+00:00",
+  "kind": "read_only_census_and_repair_status_check_v1",
+  "last_validated_counts": {
+    "basis": "Exact compressed revision405 bytes match prior allocated diagnostic6807825; stale revision404 status was not used.",
+    "policies_complete": 67,
+    "training_complete": 76
+  },
+  "missing_recovery_artifacts": {
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-archive-consumer-qualification-support-v3-20261023/qualification.json": {
+      "errno": 2,
+      "error": "[Errno 2] No such file or directory: '/scratch/pwa209/horsehair-worm/maintenance/study-af-archive-consumer-qualification-support-v3-20261023/qualification.json'",
+      "error_type": "FileNotFoundError"
+    },
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-campaign-v1-20261021/agent-final-f64-v1/submission-r2-evaluation-0073-01.json": {
+      "errno": 2,
+      "error": "[Errno 2] No such file or directory: '/scratch/pwa209/horsehair-worm/maintenance/study-af-campaign-v1-20261021/agent-final-f64-v1/submission-r2-evaluation-0073-01.json'",
+      "error_type": "FileNotFoundError"
+    },
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-campaign-v1-20261021/agent-final-f64-v1/submission-r2-training-0076.json": {
+      "errno": 2,
+      "error": "[Errno 2] No such file or directory: '/scratch/pwa209/horsehair-worm/maintenance/study-af-campaign-v1-20261021/agent-final-f64-v1/submission-r2-training-0076.json'",
+      "error_type": "FileNotFoundError"
+    },
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-campaign-v1-20261021/agent-final-f64-v1/submission-r2-training-0077.json": {
+      "errno": 2,
+      "error": "[Errno 2] No such file or directory: '/scratch/pwa209/horsehair-worm/maintenance/study-af-campaign-v1-20261021/agent-final-f64-v1/submission-r2-training-0077.json'",
+      "error_type": "FileNotFoundError"
+    },
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-fresh-storage-census-v4-20261022/receipt.json": {
+      "errno": 2,
+      "error": "[Errno 2] No such file or directory: '/scratch/pwa209/horsehair-worm/maintenance/study-af-fresh-storage-census-v4-20261022/receipt.json'",
+      "error_type": "FileNotFoundError"
+    },
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-fresh-storage-census-v4-20261022/sweep-result.json": {
+      "errno": 2,
+      "error": "[Errno 2] No such file or directory: '/scratch/pwa209/horsehair-worm/maintenance/study-af-fresh-storage-census-v4-20261022/sweep-result.json'",
+      "error_type": "FileNotFoundError"
+    },
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-prestart-three-recovery-v1-20261022/installation.json": {
+      "errno": 2,
+      "error": "[Errno 2] No such file or directory: '/scratch/pwa209/horsehair-worm/maintenance/study-af-prestart-three-recovery-v1-20261022/installation.json'",
+      "error_type": "FileNotFoundError"
+    },
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/native-activation-prestart-three-v1/activation-failure.json": {
+      "errno": 2,
+      "error": "[Errno 2] No such file or directory: '/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/native-activation-prestart-three-v1/activation-failure.json'",
+      "error_type": "FileNotFoundError"
+    },
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/native-activation-prestart-three-v1/descriptor-prestart-three-v1.json": {
+      "errno": 2,
+      "error": "[Errno 2] No such file or directory: '/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/native-activation-prestart-three-v1/descriptor-prestart-three-v1.json'",
+      "error_type": "FileNotFoundError"
+    },
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/native-activation-prestart-three-v1/receipt.json": {
+      "errno": 2,
+      "error": "[Errno 2] No such file or directory: '/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/native-activation-prestart-three-v1/receipt.json'",
+      "error_type": "FileNotFoundError"
+    },
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/private-qualification.json": {
+      "errno": 2,
+      "error": "[Errno 2] No such file or directory: '/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/private-qualification.json'",
+      "error_type": "FileNotFoundError"
+    },
+    "/scratch/pwa209/horsehair-worm/state/study-af-f2-registry-r2-controllers-v1-20261022-submission.json": {
+      "errno": 2,
+      "error": "[Errno 2] No such file or directory: '/scratch/pwa209/horsehair-worm/state/study-af-f2-registry-r2-controllers-v1-20261022-submission.json'",
+      "error_type": "FileNotFoundError"
+    }
+  },
+  "native_jobs": {
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "6811498|6811498|FAILED|1:0|14248|4|billing=4000,cpu=4,mem=16777216K,node=1|nc31024|2026-10-22T21:23:17|2026-10-23T01:20:45|pwa209|def-ptewarie_cpu|\n6811498.batch|6811498.batch|FAILED|1:0|14248|4|cpu=4,mem=16777216K,node=1|nc31024|2026-10-22T21:23:17|2026-10-23T01:20:45||def-ptewarie_cpu|16773540K\n6811498.extern|6811498.extern|COMPLETED|0:0|14248|4|billing=4000,cpu=4,mem=16777216K,node=1|nc31024|2026-10-22T21:23:17|2026-10-23T01:20:45||def-ptewarie_cpu|\n6819399|6819399|CANCELLED|0:0|0|0||None assigned|None|2026-10-23T01:25:56|pwa209|def-ptewarie_cpu|\n6822432|6822432|CANCELLED|0:0|0|0||None assigned|None|2026-10-23T01:25:56|pwa209|def-ptewarie_cpu|\n6822568|6822568|CANCELLED|0:0|0|0||None assigned|None|2026-10-23T01:25:56|pwa209|def-ptewarie_cpu|\n6822730|6822730|CANCELLED|0:0|0|0||None assigned|None|2026-10-23T01:25:56|pwa209|def-ptewarie_cpu|\n6824584|6824584|CANCELLED|0:0|0|0||None assigned|None|2026-10-23T01:25:56|pwa209|def-ptewarie_cpu|\n"
+  },
+  "native_jobs_submitted_by_check": false,
+  "read_only": true,
+  "replacement_controller_ids": {},
+  "scientific_result": false
+}

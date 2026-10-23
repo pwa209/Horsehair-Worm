@@ -182,3 +182,13 @@ Its exact plan/ledger/script/source/argument bindings were revalidated on
 Narval 3. This is queue registration, not completed native qualification or
 consumer integration. The [fresh evidence](../operations/20261023/native-archive-test-registration/README.md)
 also retains the four-job queue and the census's partial 38,000-file progress.
+
+
+Read-only status update, 23 October 08:42 CEST: census 6811498 failed at its
+finite deadline. All five dependents were cancelled without starting; the
+replacement-controller activation did not execute. Exact compressed state
+bytes remain revision 405 with 76 completed trainings and 67 completed policies.
+The [preserved live status](../operations/20261023/census-deadline-status-check/README.md)
+records native outcomes and missing activation artifacts. A new qualified
+census and fresh dependent registrations remain necessary; this check did
+not submit jobs, rewrite freshness or modify scientific state.
