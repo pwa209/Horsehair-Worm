@@ -1,0 +1,101 @@
+{
+  "files": {
+    "README.md": {
+      "bytes": 2637,
+      "sha256": "47d5db5c9b07dcb19f5d495322e6374a0e562d64858335a541d17aa6d8c19845"
+    },
+    "build-rolling-census-qualification-428.py": {
+      "bytes": 6743,
+      "sha256": "885371bb66c2199ea1dc6daeb3f16adcd302e20a80f7bbb1ef44f01917f1c6b6"
+    },
+    "execution-source-manifest-v2.json": {
+      "bytes": 5644,
+      "sha256": "e407578d5838f11e2d12f02c3cc4821f401152ae689305b9fd7c8e7959fba8fc"
+    },
+    "external-census-policy-final-20261023.xml": {
+      "bytes": 12073,
+      "sha256": "95a2059d856f4bf5d5afc8b2f7d11b4f690057424a7be6312748cfc24bd0246d"
+    },
+    "hhw-python-dependency-diagnostics-20261023-435.txt": {
+      "bytes": 1599,
+      "sha256": "d8db07fccdf088b54755af7217cbf110220818b7d75cb3c81c2a104c4f810782"
+    },
+    "hhw-recovery-stage-20261021-428.sh": {
+      "bytes": 165688,
+      "sha256": "0d5786e71a37283debf5d3862d15c76505cbc9e35ebaa107d4ea0c788d3c669f"
+    },
+    "hhw-recovery-stage-20261021-428.txt": {
+      "bytes": 305,
+      "sha256": "b0a6fb5c230a19e54991837d23142f0674ff4173a0463da8975039ce1bcb0744"
+    },
+    "hhw-streaming-qualification-failure-20261023-427.txt": {
+      "bytes": 2648,
+      "sha256": "a93c71362e470b8de97321998cc29471086da8bbd56bb301f04b4bcd7d7722de"
+    },
+    "qualify-streaming-census-v1-20261023.py": {
+      "bytes": 25115,
+      "sha256": "c1ddf15d87953ad9d5758864553c8b858b77ef1c753cb41c5f4727789e9b1e1a"
+    },
+    "qualify-streaming-census-v2-20261023.py": {
+      "bytes": 28112,
+      "sha256": "95c506d1f1420dde78fc87c171e410eca273f92e9a7d977319cc12fbc9836188"
+    },
+    "registered-snapshot-read-guard-v4-20261022.py": {
+      "bytes": 15419,
+      "sha256": "5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a"
+    },
+    "rolling-census-complete-local-20261023.xml": {
+      "bytes": 120750,
+      "sha256": "a946904eb247d0335bef1d225354d3a3931121dd074b81c5c2c02bab0549890b"
+    },
+    "run-af-agent-controller-census-policy-v1-20261023.py": {
+      "bytes": 26982,
+      "sha256": "6839c74f35a231fe743cc9e895b1b16177d80e575cb8561e1d762b182c1d8033"
+    },
+    "run-fresh-storage-census-v5-20261023.py": {
+      "bytes": 46593,
+      "sha256": "b448607b00512ef865a3369da56c18bf6f98ab589b6a524795e5bbed9c64e569"
+    },
+    "run-fresh-storage-census-v6-20261023.py": {
+      "bytes": 55807,
+      "sha256": "4fb2f11a11b335288dbfa92e821556c67becd0fb9fc67d2f8c70e6514d2cc810"
+    },
+    "streaming-storage-census-v1-20261023.py": {
+      "bytes": 11452,
+      "sha256": "a1620825ef1401b7497746b7b9128e3d43b985675985505273dca3c36f30364e"
+    },
+    "test_af_agent_controller_census_policy_v1_20261023.py": {
+      "bytes": 26166,
+      "sha256": "c7f458b63b4322905e0487c79f9e2d8a12831d0ddff3cdcb829583466ca41308"
+    },
+    "test_qualify_streaming_census_v1_20261023.py": {
+      "bytes": 21026,
+      "sha256": "340bbe0046e2cd3da5aff33566d93ff229ceeed872f3edbc92ee743d55433fc8"
+    },
+    "test_qualify_streaming_census_v2_20261023.py": {
+      "bytes": 24219,
+      "sha256": "4faaa183493a3c2c0c6578dae254a3aecc8924323c2aa0eca6d9549c2d378520"
+    },
+    "test_registered_snapshot_read_guard_v4_20261022.py": {
+      "bytes": 16216,
+      "sha256": "0e4f029814f1aca969fe282dac99a61373128a6dbbe4a0672ba5706a736545b9"
+    },
+    "test_run_fresh_storage_census_v5_20261023.py": {
+      "bytes": 37258,
+      "sha256": "734aa1e349332660072fedf8246d7bc6fdc8f47c7cca0d4d06893088c5b1df58"
+    },
+    "test_run_fresh_storage_census_v6_20261023.py": {
+      "bytes": 18614,
+      "sha256": "0ed479c57e8ae73f4fff5d238065a26bb5b80cfa5b6863fe3da6d465f2d1992e"
+    },
+    "test_streaming_storage_census_v1_20261023.py": {
+      "bytes": 13095,
+      "sha256": "20665f0fef390ea0ac88ca7b08eb90aa177ec1281d326b3553942d8c55713b4f"
+    },
+    "verified-source-checkpoint.json": {
+      "bytes": 4797,
+      "sha256": "df5d1b8c74e8b0c9df2397af11c29aef387eb0f06ecd76d5325f87d44256f7cc"
+    }
+  },
+  "kind": "streaming_census_repair_source_capsule_v1"
+}
