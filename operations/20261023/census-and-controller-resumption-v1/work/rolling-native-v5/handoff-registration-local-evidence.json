@@ -1,0 +1,17 @@
+{
+  "helper_sha256": "1391efced13fc9022ab23e3f839831465e697644b779a392d0c2b60668ca3251",
+  "junit": {
+    "path": "work\\rolling-native-v5\\handoff-local-final.xml",
+    "sha256": "04c08f0049aaa67ca184330a2977404bc40558f9a1b83c159091ae36134d0428"
+  },
+  "kind": "f2-external-census-handoff-local-registration-evidence-v1",
+  "qualification_claimed": false,
+  "scheduler_submitted": false,
+  "shell_sha256": "882ee2f14780f96d285ee36140e1471ba9fa61d3bcc897b4af1f4743de980d73",
+  "source_manifest_sha256": "92ec92709c466a672d420676cb8446804919dc1615aa5d01ebe3dca1fbf7a21c",
+  "test_source_sha256": "ed5a78d9d96ed669819a18c84e60046579979f9d3490c2046d611244f9a70a6b",
+  "tests": {
+    "count": 91,
+    "roster_sha256": "708880273d9d4e75b90b201657151491b76f782133226bbc9aca8873f3d833e9"
+  }
+}

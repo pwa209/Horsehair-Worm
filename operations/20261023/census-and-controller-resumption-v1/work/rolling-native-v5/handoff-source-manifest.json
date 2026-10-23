@@ -1,0 +1,35 @@
+{
+  "activation_registration": {
+    "ledger_path": "/scratch/pwa209/horsehair-worm/state/recovery-support-20261021-432-submission.json",
+    "plan_path": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-432/plan.json",
+    "script_path": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-432/recovery-432.sbatch",
+    "task_name": "recovery-432"
+  },
+  "activation_source": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/activate-f2-prestart-three-v1-20261022.py",
+    "sha256": "586bbf301ef69621cc1132b8b25a9c243f29a2e918b54d564e84be816af2d2eb"
+  },
+  "files": {
+    "handoff-f2-external-census-v1-20261023.py": "1391efced13fc9022ab23e3f839831465e697644b779a392d0c2b60668ca3251",
+    "test_handoff_f2_external_census_v1_20261023.py": "ed5a78d9d96ed669819a18c84e60046579979f9d3490c2046d611244f9a70a6b"
+  },
+  "kind": "f2-external-census-handoff-source-manifest-v1",
+  "provider_registration": {
+    "ledger_path": "/scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json",
+    "plan_path": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json"
+  },
+  "q2_registration": {
+    "ledger_path": "/scratch/pwa209/horsehair-worm/state/recovery-support-20261021-456-submission.json",
+    "plan_path": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-456/plan.json",
+    "script_path": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-456/recovery-456.sbatch",
+    "task_name": "recovery-456"
+  },
+  "q2_source_manifest": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+    "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+  },
+  "tests": {
+    "count": 91,
+    "roster_sha256": "708880273d9d4e75b90b201657151491b76f782133226bbc9aca8873f3d833e9"
+  }
+}

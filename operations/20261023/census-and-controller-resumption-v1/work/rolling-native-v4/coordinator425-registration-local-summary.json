@@ -1,0 +1,19 @@
+{
+  "request_id": "425",
+  "helper_sha256": "cc94ea69ca9d4d74e0cf9db5bae4548fcb4d5e6847a0d3d9466932a8eae5340d",
+  "source_manifest_sha256": "69cbd2f15f30b30f09be3fd12deec9faf835e8774fdf5d1d504b2b9560cbce57",
+  "child_ids": [
+    "429",
+    "430",
+    "431",
+    "432",
+    "433",
+    "434",
+    "451"
+  ],
+  "qualification_logical_id": "452",
+  "scheduler_submitted": false,
+  "path": "work\\rolling-native-v4\\hhw-recovery-stage-20261021-425.sh",
+  "sha256": "9fac44a4316bdbab13411017d8d6db719fa2bf2e3b63574bf177f100d7d166e3",
+  "source_manifest_path": "work\\rolling-native-v4\\coordinator-source-manifest.json"
+}

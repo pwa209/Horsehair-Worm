@@ -1,0 +1,79 @@
+[
+  {
+    "request_id": "430",
+    "predecessor_logical_id": "377",
+    "path": "work\\rolling-native-v5\\hhw-recovery-stage-20261021-430.sh",
+    "sha256": "40f6bd8bd20851a5b543d08dcf3cee624e6ea21d1b1171cdc059f95e55336b0e",
+    "helper_sha256": "852cb7c6bc1caff7d021bf7a80d780bf29da65c0d734e5e86c035eb74d68ef37",
+    "canonical_helper": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v5-20261022/qualify-f2-registry-repair-v5-20261022.py",
+    "operational_differences": [],
+    "native_accounting_bootstrap": false,
+    "scheduler_submitted": false
+  },
+  {
+    "request_id": "431",
+    "predecessor_logical_id": "394",
+    "path": "work\\rolling-native-v5\\hhw-recovery-stage-20261021-431.sh",
+    "sha256": "75a47227be72598a4b5c888450ef35b3682129c01637f452b7bdc62716d7215d",
+    "helper_sha256": "875ec697466351b21718eded61a6e81ac23d74ce0902ce481ebc970012261020",
+    "canonical_helper": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/qualify-f2-registry-repair-v6-20261022.py",
+    "operational_differences": [],
+    "native_accounting_bootstrap": false,
+    "scheduler_submitted": false
+  },
+  {
+    "request_id": "432",
+    "predecessor_logical_id": "395",
+    "path": "work\\rolling-native-v5\\hhw-recovery-stage-20261021-432.sh",
+    "sha256": "342069bc411b9c2e5ad8bbe05b06d865ed1299b28539a2d3ccb1ce41952b8829",
+    "helper_sha256": "586bbf301ef69621cc1132b8b25a9c243f29a2e918b54d564e84be816af2d2eb",
+    "canonical_helper": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/activate-f2-prestart-three-v1-20261022.py",
+    "operational_differences": [],
+    "native_accounting_bootstrap": true,
+    "scheduler_submitted": false
+  },
+  {
+    "request_id": "433",
+    "predecessor_logical_id": "399",
+    "path": "work\\rolling-native-v5\\hhw-recovery-stage-20261021-433.sh",
+    "sha256": "d6ad49fbd1874f6b593ed43bd21fc04a82300a58813cbaa5b6a208a06073cd36",
+    "helper_sha256": "982816f2328c4bde95eeeb4b1bd761fa9d908039c0426e017f649ff5f1ad7ea3",
+    "canonical_helper": "/scratch/pwa209/horsehair-worm/maintenance/study-af-cohort-prefix-stage-v5-r2-20261023/run-cohort-prefix-stage-v5-r1-20261022.py",
+    "operational_differences": [
+      {
+        "before": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-376/recovery-376.sbatch",
+        "after": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-433/recovery-433.sbatch"
+      },
+      {
+        "before": "/scratch/pwa209/horsehair-worm/maintenance/study-af-cohort-prefix-stage-v5-r1-20261022/run-full-cohort-prefix-context-v5-20261022.py",
+        "after": "/scratch/pwa209/horsehair-worm/maintenance/study-af-resubmission-433-20261023/run-full-cohort-prefix-context-v5-20261022.py"
+      },
+      {
+        "before": "/scratch/pwa209/horsehair-worm/maintenance/study-af-cohort-prefix-stage-v5-r1-20261022/test_full_cohort_prefix_v5_20261022.py",
+        "after": "/scratch/pwa209/horsehair-worm/maintenance/study-af-resubmission-433-20261023/test_full_cohort_prefix_v5_20261022.py"
+      },
+      {
+        "before": "/scratch/pwa209/horsehair-worm/maintenance/study-af-cohort-prefix-stage-v5-r1-20261022/test_full_cohort_prefix_context_v5_20261022.py",
+        "after": "/scratch/pwa209/horsehair-worm/maintenance/study-af-resubmission-433-20261023/test_full_cohort_prefix_context_v5_20261022.py"
+      }
+    ],
+    "native_accounting_bootstrap": false,
+    "scheduler_submitted": false
+  },
+  {
+    "request_id": "434",
+    "predecessor_logical_id": "406",
+    "path": "work\\rolling-native-v5\\hhw-recovery-stage-20261021-434.sh",
+    "sha256": "bdb75c962cdc1288258d6a596ced39a3ba4ede789fd9dc964ba96a19952c7b26",
+    "helper_sha256": "0a5c459bf21c178692c07ffc96da52bbcb67f59817f950165ca7d6b23ae9205a",
+    "canonical_helper": "/scratch/pwa209/horsehair-worm/maintenance/study-af-archive-consumer-qualification-stage-v3-20261023/qualify-f2-archive-consumer-v3-20261023.py",
+    "operational_differences": [
+      {
+        "before": "SUPPORT=ROOT/'maintenance/study-af-archive-consumer-qualification-stage-v3-20261023'",
+        "after": "SUPPORT=ROOT/'maintenance/study-af-resubmission-434-20261023'"
+      }
+    ],
+    "native_accounting_bootstrap": false,
+    "scheduler_submitted": false
+  }
+]

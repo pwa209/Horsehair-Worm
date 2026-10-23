@@ -1,0 +1,89 @@
+{
+  "actual_native_first_ast_sha256": "68bd48e464f7b9a85691f936cf5458bef1d153bb29452f926c7adc2c077f5d36",
+  "all_operational_function_bodies_ast_identical": true,
+  "all_test_ids_counts_unchanged": true,
+  "all_thirteen_suite_ast_audit": {
+    "baseline_budget": [],
+    "baseline_storage_artifact_cache": [],
+    "baseline_storage_artifacts": [],
+    "baseline_storage_boundary_cache": [],
+    "baseline_storage_snapshot_artifacts": [],
+    "baseline_storage_snapshot_boundary": [],
+    "external_census_policy": [
+      {
+        "ast_dump_line": 107,
+        "function": "test_install_changes_only_fresh_census_all_base_functions_objects_and_bodies_retained",
+        "hardcoded_cross_interpreter_sha": false
+      },
+      {
+        "ast_dump_line": 116,
+        "function": "test_install_changes_only_fresh_census_all_base_functions_objects_and_bodies_retained",
+        "hardcoded_cross_interpreter_sha": false
+      }
+    ],
+    "kernel": [],
+    "qualifier": [],
+    "registry": [],
+    "repeatable_wrapper": [
+      {
+        "ast_dump_line": 19,
+        "function": "function_nodes",
+        "hardcoded_cross_interpreter_sha": false
+      }
+    ],
+    "rolling_qualifier": [],
+    "wrapper": [
+      {
+        "ast_dump_line": 258,
+        "function": "test_legacy_positive_proofs_and_native_guard_sources_are_preserved",
+        "hardcoded_cross_interpreter_sha": true
+      }
+    ]
+  },
+  "existing_frozen_files_modified": false,
+  "kind": "rolling-census-python311-ast-portability-evidence-v1",
+  "linux_budget_roster_unchanged": "a29d0c2854dafc41da5b6bcb7e31a03545bcad6134612b52a5f64c166bb52e7e",
+  "modified_test_source": "test_run_fresh_storage_census_v5_20261023.py",
+  "namespace_assignment_changes": {
+    "qualify-streaming-census-v2-20261023.py": [
+      "SUPPORT",
+      "CASE"
+    ],
+    "run-af-agent-controller-census-policy-v1-20261023.py": [
+      "SUPPORT",
+      "QUALIFICATION",
+      "PROVIDER_CASE"
+    ],
+    "run-fresh-storage-census-v6-20261023.py": [
+      "CASE_ROOT",
+      "SOURCE_SUPPORT",
+      "KERNEL_Q",
+      "PHASE"
+    ]
+  },
+  "native_diagnostic": {
+    "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\narval-deployment\\hhw-native-wrapper-failure-20261023-447.txt",
+    "sha256": "3232bef94fe85edfdd56673eeea81d1fd75bbbbb5e38c0a38f4ccd66809e1d3c"
+  },
+  "native_failed_test": "test_legacy_positive_proofs_and_native_guard_sources_are_preserved",
+  "native_job_id": "6860420",
+  "native_qualification_claimed": false,
+  "native_wrapper_junit_sha256": "b06be02e1ca4fc46469654f7f417107b5be484caefbb16f16782b598e8c71524",
+  "native_wrapper_passed": 121,
+  "native_wrapper_tests": 122,
+  "original_wrapper_source_sha256": "b448607b00512ef865a3369da56c18bf6f98ab589b6a524795e5bbed9c64e569",
+  "portable_representation_rule": "deepcopy; delete only empty list type_params on FunctionDef/AsyncFunctionDef/ClassDef; reject nonempty or unexpected; all remaining AST fields unchanged",
+  "previous_manifest": {
+    "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v3\\source-manifest.json",
+    "sha256": "fefcb2cd1e5f7b70ebab7e959955d96c9ea4072dd133370adf2f6a8e6cb03ff0"
+  },
+  "python311_ast_sha256": {
+    "brief_admission": "d21d78dd7f743a984689ed077ead366487a7f33ef03717c603c59c0e9658e898",
+    "completed_registry_qualification": "0ea782feed8d7c1e1e80679a11489b48ce03f01f9a0c8af1c58e3963b630bc55",
+    "qualification_proof": "68bd48e464f7b9a85691f936cf5458bef1d153bb29452f926c7adc2c077f5d36",
+    "registry_qualification": "20d66af05da0652a5b93126044934640ba5d9037a46a1e65ae3e6b34c79317eb",
+    "snapshot_clocks": "7c2e9ab7af427fd49fd0e45507e2840923c02aacafcf70d7ca2911dc1c9e34e2"
+  },
+  "source_manifest_native_path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v3-20261023/source-manifest.json",
+  "source_manifest_sha256": "43660c97e50c5a24d42abb321514405107b9f1cade649a492f1c91355486ecb8"
+}

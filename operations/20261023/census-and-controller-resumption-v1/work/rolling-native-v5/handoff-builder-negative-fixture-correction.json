@@ -1,0 +1,10 @@
+{
+  "after": ".replace('support-v4-', 'support-v3-')",
+  "after_sha256": "d07803239a7f94cee920f6c4f828931d5c43d7137b9b2a5830f2f19a16e4547d",
+  "before": ".replace('support-v3-', 'support-v2-')",
+  "before_sha256": "bb8ebee64e472374004e46d50d573e8a578d16236229efac0c5d88027db3948a",
+  "failed_xml": "work/handoff451-builder-v2-local-junit.xml",
+  "failure_reason": "16casesawaitactualv5ACT432source;oneoutdatednegativefixturedidnotmutatev4namespace",
+  "kind": "local-negative-fixture-namespace-correction-v1",
+  "runtime_builder_changed": false
+}

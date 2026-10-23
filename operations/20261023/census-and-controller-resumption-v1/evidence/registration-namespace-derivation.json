@@ -1,0 +1,106 @@
+{
+  "kind": "unsubmitted-registration-namespace-derivation-v1",
+  "new_source_manifest_sha256": "43660c97e50c5a24d42abb321514405107b9f1cade649a492f1c91355486ecb8",
+  "scheduler_submitted": false,
+  "sources": [
+    {
+      "after_sha256": "a5578bed2462ef94813dca8ce90cff5d962f3fc08e7daaf4a734c613f6dfadd6",
+      "before_sha256": "088cd82e4b85f6cc8a988f35172d13f3932ebd53bd1721fad3968b39bfc2486b",
+      "explicit_replacements": {
+        "recovery-444": {
+          "after": "recovery-452",
+          "occurrences": 1
+        },
+        "recovery-support-20261021-444": {
+          "after": "recovery-support-20261021-452",
+          "occurrences": 2
+        },
+        "study-af-rolling-census-qualification-v3-20261023": {
+          "after": "study-af-rolling-census-qualification-v4-20261023",
+          "occurrences": 1
+        },
+        "study-af-rolling-census-registration-v2-20261023": {
+          "after": "study-af-rolling-census-registration-v3-20261023",
+          "occurrences": 1
+        },
+        "study-af-rolling-census-support-v2-20261023": {
+          "after": "study-af-rolling-census-support-v3-20261023",
+          "occurrences": 1
+        },
+        "study-af-rolling-storage-census-v2-20261023": {
+          "after": "study-af-rolling-storage-census-v3-20261023",
+          "occurrences": 1
+        },
+        "work/rolling-native-v3": {
+          "after": "work/rolling-native-v4",
+          "occurrences": 1
+        }
+      },
+      "name": "build-rolling-census-registration-429.py"
+    },
+    {
+      "after_sha256": "18ecc59f300f8dde0bde9a3f83fe06189ac6634a7774cbaa02e04c4069a51586",
+      "before_sha256": "18ecc59f300f8dde0bde9a3f83fe06189ac6634a7774cbaa02e04c4069a51586",
+      "explicit_replacements": {},
+      "name": "test_rolling_census_registration_429.py"
+    },
+    {
+      "after_sha256": "2818bda75a3fff8e343600df1322db7a2bb26ff3eb0cd2a2ea6cdb26e713d9ca",
+      "before_sha256": "cfd5a02bc8b6fb1369ffffedefd1f2049832a0669a77bdd4438abe4134d3cc85",
+      "explicit_replacements": {
+        "('416','444')": {
+          "after": "('416','452')",
+          "occurrences": 1
+        },
+        "6cdbd5507b065ed2b23bc7b60c5fce498f43794c417d7ce1643aaa8f925c4cb8": {
+          "after": "61001913e746537da3583c2844c760f6589b48be763a44f83be446d5d204a1da",
+          "occurrences": 1
+        },
+        "WORK_ROOT/'rolling-native-v3'": {
+          "after": "WORK_ROOT/'rolling-native-v4'",
+          "occurrences": 1
+        },
+        "fefcb2cd1e5f7b70ebab7e959955d96c9ea4072dd133370adf2f6a8e6cb03ff0": {
+          "after": "43660c97e50c5a24d42abb321514405107b9f1cade649a492f1c91355486ecb8",
+          "occurrences": 1
+        },
+        "q444": {
+          "after": "q452",
+          "occurrences": 1
+        },
+        "study-af-rolling-census-qualification-v3-20261023": {
+          "after": "study-af-rolling-census-qualification-v4-20261023",
+          "occurrences": 1
+        },
+        "study-af-rolling-census-registration-v2-20261023": {
+          "after": "study-af-rolling-census-registration-v3-20261023",
+          "occurrences": 1
+        },
+        "study-af-rolling-census-support-v2-20261023": {
+          "after": "study-af-rolling-census-support-v3-20261023",
+          "occurrences": 1
+        }
+      },
+      "name": "build-rolling-dependents-430-434.py"
+    },
+    {
+      "after_sha256": "dedb88ba660fddac24e8176c5ce4bb78a31c725a5d45b74a72a54b7f81a72fd9",
+      "before_sha256": "7af6b0a80f842d0abd74306a52ce91c9b306450472ff34dc58789a3120fab175",
+      "explicit_replacements": {
+        "6cdbd5507b065ed2b23bc7b60c5fce498f43794c417d7ce1643aaa8f925c4cb8": {
+          "after": "61001913e746537da3583c2844c760f6589b48be763a44f83be446d5d204a1da",
+          "occurrences": 1
+        },
+        "fefcb2cd1e5f7b70ebab7e959955d96c9ea4072dd133370adf2f6a8e6cb03ff0": {
+          "after": "43660c97e50c5a24d42abb321514405107b9f1cade649a492f1c91355486ecb8",
+          "occurrences": 1
+        },
+        "study-af-rolling-census-qualification-v3-20261023": {
+          "after": "study-af-rolling-census-qualification-v4-20261023",
+          "occurrences": 1
+        }
+      },
+      "name": "test_rolling_dependents_430_434.py"
+    }
+  ]
+}

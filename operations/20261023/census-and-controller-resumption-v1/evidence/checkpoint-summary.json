@@ -1,0 +1,47 @@
+{
+  "campaign": {
+    "revision": 405,
+    "sha256": "d44aa7c09bcd09c007009d9d5af58c2976f1d53eabbdd93c8f0daf92d9afa684"
+  },
+  "checked_utc": "2026-10-23T09:56:31.598309+00:00",
+  "controller_health_established": false,
+  "coordinator": {
+    "native_job_id": "6864084",
+    "request_id": "425",
+    "start_utc": "2026-10-23T09:56:20",
+    "state": "RUNNING"
+  },
+  "deletion_authorized": false,
+  "full_study_census_completed": false,
+  "future_storage_savings_credited": 0,
+  "handoff_completed": false,
+  "kind": "census-controller-resumption-native-checkpoint-v1",
+  "not_yet_registered_at_checkpoint": [
+    "429",
+    "430",
+    "431",
+    "432",
+    "433",
+    "434",
+    "451"
+  ],
+  "qualification": {
+    "cpus": 8,
+    "elapsed_seconds": 166,
+    "errors": 0,
+    "exit_code": "0:0",
+    "failures": 0,
+    "native_job_id": "6863966",
+    "native_junit_suites": 13,
+    "native_junit_tests": 757,
+    "receipt_sha256": "8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c",
+    "request_id": "456",
+    "skipped": 0,
+    "state": "COMPLETED"
+  },
+  "scientific_result": false,
+  "source_capture": {
+    "path": "work/narval-deployment/hhw-census-restoration-live-20261023-459.txt",
+    "sha256": "43c01f514f46e14da42506c91c9b95aab173a49521e2f22603adb5cf37c8aca4"
+  }
+}

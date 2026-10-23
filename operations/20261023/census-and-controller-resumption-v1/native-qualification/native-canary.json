@@ -1,0 +1,216 @@
+{
+  "admission_authority": false,
+  "end_time_extends_admission_freshness": false,
+  "fixture_quota_is_admission_authority": false,
+  "fixture_quota_simulated": true,
+  "fixtures_root": "/localscratch/pwa209.6863966.0/hhw-streaming-census-q-6863966/native-canary",
+  "freshness_timestamp_rewritten": false,
+  "original_iterator_restored": true,
+  "original_measurement_functions_preserved": true,
+  "owner_uid": 3164768,
+  "pending_limit": 128,
+  "primitive_contract": {
+    "functions": {
+      "horsehair.budget.storage_snapshot": "52873fd017a676de4e12da55534dae1fff315f0fdcbac80ec8fb546ecc776c9f",
+      "horsehair.storage_artifacts._boundary_length": "edbc9460e90126da3f8c21089f196d484230a78cab702a61f97406d775ebc15a",
+      "horsehair.storage_artifacts._directory_identity": "efbca55dc06e2b7a177d5c8bdd4b28f6115bb056e38b33f2e8cd86362d787d0a",
+      "horsehair.storage_artifacts._length_arguments": "b0315319302c074a0180af64f9f83e2f1d49a0471d4f3b457a9877bf78d86ffe",
+      "horsehair.storage_artifacts._metadata": "8f57effd721d94d8de657b660d2264df1484f3577fb8a385a01abbc5b11111b4",
+      "horsehair.storage_artifacts._open_directory": "a625760c5970eaa6858b6fb603e076053e6716d809bf7a8daade92952a1f01fb",
+      "horsehair.storage_artifacts._open_leaf": "4144ccf42b21c539eba9a504133953c2ac387d02625247498670bd67e2ae2ff8",
+      "horsehair.storage_artifacts._parallel_lengths": "3661398d8ba24a4591dae4c300e16777f778cd64e64a9b48d154941b2b5927a2",
+      "horsehair.storage_artifacts._regular_identity": "3763ea98c9fa9560acc3ebb3993edd1e6c79afa1f6f0140668f14d6dfc8c7682",
+      "horsehair.storage_artifacts._relative_parts": "63c2f922b24310383922bde6b9c07a81af2a95b4a40c47a31b08007b75bb78c4",
+      "horsehair.storage_artifacts._require_linux": "3978929f0467bf52ebab2d7ef18a5b68331e5f44b1ab656aefe6ddd5c4e488d8",
+      "horsehair.storage_artifacts._stable_regular_length": "bca8ace81e65e7320525f20150a422ced675c3f9fbf9e624652f30c1beacad2c",
+      "horsehair.storage_artifacts._statx_function": "7ca8f18ffa14a3c4c89c16570a68b4c7db046b8681b5eda5c836808759793b59",
+      "horsehair.storage_artifacts.artifact_read_cap": "ab0afdf4ac23fb9c62d028ade9ba936e52efd44e4b1e975e8170d41d82b5d2b9",
+      "horsehair.storage_artifacts.measure_regular_eof": "8590019031cb843b552d206e4a84a2298a862d78f98db35cf019c95f52a1bff2",
+      "horsehair.storage_artifacts.measure_regular_length": "f20e42368cf32c1fb771c36f515a36b4288b5bf60a09e86d4d18d783e9e43d91",
+      "horsehair.storage_artifacts.validate_regular_length_measurement": "b898e5988017219183d252e280edc8e49c02fe5dcbc5037696a7b7a1d195dc13"
+    },
+    "source_files": {
+      "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/src/horsehair/budget.py": "49509a7fc9484d9c0859ce1ef7501e4a0b57b4d29864496dc599fa76d18e269c",
+      "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/src/horsehair/storage_artifacts.py": "c2e1cbe785027f92fb30833a9fdfb58e7cdee9c3907a1d2eefb6deb8efa11968"
+    }
+  },
+  "primitive_identity": {
+    "after": {
+      "functions": {
+        "horsehair.budget.storage_snapshot": {
+          "ast_sha256": "52873fd017a676de4e12da55534dae1fff315f0fdcbac80ec8fb546ecc776c9f",
+          "object_id": 23265885557664
+        },
+        "horsehair.storage_artifacts._boundary_length": {
+          "ast_sha256": "edbc9460e90126da3f8c21089f196d484230a78cab702a61f97406d775ebc15a",
+          "object_id": 23265882999040
+        },
+        "horsehair.storage_artifacts._directory_identity": {
+          "ast_sha256": "efbca55dc06e2b7a177d5c8bdd4b28f6115bb056e38b33f2e8cd86362d787d0a",
+          "object_id": 23265882999680
+        },
+        "horsehair.storage_artifacts._length_arguments": {
+          "ast_sha256": "b0315319302c074a0180af64f9f83e2f1d49a0471d4f3b457a9877bf78d86ffe",
+          "object_id": 23265882998880
+        },
+        "horsehair.storage_artifacts._metadata": {
+          "ast_sha256": "8f57effd721d94d8de657b660d2264df1484f3577fb8a385a01abbc5b11111b4",
+          "object_id": 23265882997760
+        },
+        "horsehair.storage_artifacts._open_directory": {
+          "ast_sha256": "a625760c5970eaa6858b6fb603e076053e6716d809bf7a8daade92952a1f01fb",
+          "object_id": 23265882998240
+        },
+        "horsehair.storage_artifacts._open_leaf": {
+          "ast_sha256": "4144ccf42b21c539eba9a504133953c2ac387d02625247498670bd67e2ae2ff8",
+          "object_id": 23265882998400
+        },
+        "horsehair.storage_artifacts._parallel_lengths": {
+          "ast_sha256": "3661398d8ba24a4591dae4c300e16777f778cd64e64a9b48d154941b2b5927a2",
+          "object_id": 23265882999840
+        },
+        "horsehair.storage_artifacts._regular_identity": {
+          "ast_sha256": "3763ea98c9fa9560acc3ebb3993edd1e6c79afa1f6f0140668f14d6dfc8c7682",
+          "object_id": 23265882998720
+        },
+        "horsehair.storage_artifacts._relative_parts": {
+          "ast_sha256": "63c2f922b24310383922bde6b9c07a81af2a95b4a40c47a31b08007b75bb78c4",
+          "object_id": 23265893053312
+        },
+        "horsehair.storage_artifacts._require_linux": {
+          "ast_sha256": "3978929f0467bf52ebab2d7ef18a5b68331e5f44b1ab656aefe6ddd5c4e488d8",
+          "object_id": 23265882997600
+        },
+        "horsehair.storage_artifacts._stable_regular_length": {
+          "ast_sha256": "bca8ace81e65e7320525f20150a422ced675c3f9fbf9e624652f30c1beacad2c",
+          "object_id": 23265882999520
+        },
+        "horsehair.storage_artifacts._statx_function": {
+          "ast_sha256": "7ca8f18ffa14a3c4c89c16570a68b4c7db046b8681b5eda5c836808759793b59",
+          "object_id": 23265884460608
+        },
+        "horsehair.storage_artifacts.artifact_read_cap": {
+          "ast_sha256": "ab0afdf4ac23fb9c62d028ade9ba936e52efd44e4b1e975e8170d41d82b5d2b9",
+          "object_id": 23265882997440
+        },
+        "horsehair.storage_artifacts.measure_regular_eof": {
+          "ast_sha256": "8590019031cb843b552d206e4a84a2298a862d78f98db35cf019c95f52a1bff2",
+          "object_id": 23265882998560
+        },
+        "horsehair.storage_artifacts.measure_regular_length": {
+          "ast_sha256": "f20e42368cf32c1fb771c36f515a36b4288b5bf60a09e86d4d18d783e9e43d91",
+          "object_id": 23265882999360
+        },
+        "horsehair.storage_artifacts.validate_regular_length_measurement": {
+          "ast_sha256": "b898e5988017219183d252e280edc8e49c02fe5dcbc5037696a7b7a1d195dc13",
+          "object_id": 23265882999200
+        }
+      },
+      "source_files": {
+        "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/src/horsehair/budget.py": "49509a7fc9484d9c0859ce1ef7501e4a0b57b4d29864496dc599fa76d18e269c",
+        "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/src/horsehair/storage_artifacts.py": "c2e1cbe785027f92fb30833a9fdfb58e7cdee9c3907a1d2eefb6deb8efa11968"
+      }
+    },
+    "before": {
+      "functions": {
+        "horsehair.budget.storage_snapshot": {
+          "ast_sha256": "52873fd017a676de4e12da55534dae1fff315f0fdcbac80ec8fb546ecc776c9f",
+          "object_id": 23265885557664
+        },
+        "horsehair.storage_artifacts._boundary_length": {
+          "ast_sha256": "edbc9460e90126da3f8c21089f196d484230a78cab702a61f97406d775ebc15a",
+          "object_id": 23265882999040
+        },
+        "horsehair.storage_artifacts._directory_identity": {
+          "ast_sha256": "efbca55dc06e2b7a177d5c8bdd4b28f6115bb056e38b33f2e8cd86362d787d0a",
+          "object_id": 23265882999680
+        },
+        "horsehair.storage_artifacts._length_arguments": {
+          "ast_sha256": "b0315319302c074a0180af64f9f83e2f1d49a0471d4f3b457a9877bf78d86ffe",
+          "object_id": 23265882998880
+        },
+        "horsehair.storage_artifacts._metadata": {
+          "ast_sha256": "8f57effd721d94d8de657b660d2264df1484f3577fb8a385a01abbc5b11111b4",
+          "object_id": 23265882997760
+        },
+        "horsehair.storage_artifacts._open_directory": {
+          "ast_sha256": "a625760c5970eaa6858b6fb603e076053e6716d809bf7a8daade92952a1f01fb",
+          "object_id": 23265882998240
+        },
+        "horsehair.storage_artifacts._open_leaf": {
+          "ast_sha256": "4144ccf42b21c539eba9a504133953c2ac387d02625247498670bd67e2ae2ff8",
+          "object_id": 23265882998400
+        },
+        "horsehair.storage_artifacts._parallel_lengths": {
+          "ast_sha256": "3661398d8ba24a4591dae4c300e16777f778cd64e64a9b48d154941b2b5927a2",
+          "object_id": 23265882999840
+        },
+        "horsehair.storage_artifacts._regular_identity": {
+          "ast_sha256": "3763ea98c9fa9560acc3ebb3993edd1e6c79afa1f6f0140668f14d6dfc8c7682",
+          "object_id": 23265882998720
+        },
+        "horsehair.storage_artifacts._relative_parts": {
+          "ast_sha256": "63c2f922b24310383922bde6b9c07a81af2a95b4a40c47a31b08007b75bb78c4",
+          "object_id": 23265893053312
+        },
+        "horsehair.storage_artifacts._require_linux": {
+          "ast_sha256": "3978929f0467bf52ebab2d7ef18a5b68331e5f44b1ab656aefe6ddd5c4e488d8",
+          "object_id": 23265882997600
+        },
+        "horsehair.storage_artifacts._stable_regular_length": {
+          "ast_sha256": "bca8ace81e65e7320525f20150a422ced675c3f9fbf9e624652f30c1beacad2c",
+          "object_id": 23265882999520
+        },
+        "horsehair.storage_artifacts._statx_function": {
+          "ast_sha256": "7ca8f18ffa14a3c4c89c16570a68b4c7db046b8681b5eda5c836808759793b59",
+          "object_id": 23265884460608
+        },
+        "horsehair.storage_artifacts.artifact_read_cap": {
+          "ast_sha256": "ab0afdf4ac23fb9c62d028ade9ba936e52efd44e4b1e975e8170d41d82b5d2b9",
+          "object_id": 23265882997440
+        },
+        "horsehair.storage_artifacts.measure_regular_eof": {
+          "ast_sha256": "8590019031cb843b552d206e4a84a2298a862d78f98db35cf019c95f52a1bff2",
+          "object_id": 23265882998560
+        },
+        "horsehair.storage_artifacts.measure_regular_length": {
+          "ast_sha256": "f20e42368cf32c1fb771c36f515a36b4288b5bf60a09e86d4d18d783e9e43d91",
+          "object_id": 23265882999360
+        },
+        "horsehair.storage_artifacts.validate_regular_length_measurement": {
+          "ast_sha256": "b898e5988017219183d252e280edc8e49c02fe5dcbc5037696a7b7a1d195dc13",
+          "object_id": 23265882999200
+        }
+      },
+      "source_files": {
+        "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/src/horsehair/budget.py": "49509a7fc9484d9c0859ce1ef7501e4a0b57b4d29864496dc599fa76d18e269c",
+        "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/src/horsehair/storage_artifacts.py": "c2e1cbe785027f92fb30833a9fdfb58e7cdee9c3907a1d2eefb6deb8efa11968"
+      }
+    },
+    "budget_function_body_unchanged": true,
+    "each_returned_measurement_has_closed_own_descriptors": true,
+    "measurement_functions_unchanged": true,
+    "only_pending_measurements_and_results_are_bounded": true,
+    "original_iterator_object_id": 23265883000000,
+    "other_measurements_may_remain_active_across_yield": true,
+    "pending_capacity_adapts_to_native_file_descriptor_budget": true,
+    "requested_pending": 128,
+    "requested_workers": 64,
+    "restored": true,
+    "restored_iterator_object_id": 23265883000000,
+    "traversal_policy_changed": true
+  },
+  "scientific_gates_cleared": false,
+  "scientific_result": false,
+  "serial_equals_streaming": true,
+  "sorted_regular_lengths": {
+    "empty": 0,
+    "nested/sparse": 1048577,
+    "prefix": 65536,
+    "small": 17
+  },
+  "special_not_opened": true,
+  "status": "complete_native_local_syscall_canary",
+  "symlink_not_followed": true,
+  "workers": 64
+}

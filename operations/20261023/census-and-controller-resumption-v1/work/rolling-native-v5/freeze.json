@@ -1,0 +1,292 @@
+{
+  "actual_local_scopes": {
+    "baseline_budget": {
+      "actual_roster_sha256": "289842179fa08f311d64e717ee5d19f1b4c163258c27000c51fae3d8b0107b12",
+      "junit": {
+        "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5-all-local-20261023.xml",
+        "sha256": "2d1e39d696e1a580c7241e2db2e6dd139d0953be82a1400ca4e3eb6135210922"
+      },
+      "known_platform_id_difference": {
+        "local": "test_budget::test_quota_receipt_write_failure_is_never_retried_or_reported_ready[10069]",
+        "native": "test_budget::test_quota_receipt_write_failure_is_never_retried_or_reported_ready[122]",
+        "native_roster_sha256": "a29d0c2854dafc41da5b6bcb7e31a03545bcad6134612b52a5f64c166bb52e7e",
+        "other_45_ids_identical": true
+      },
+      "source_sha256": "9ea7346e98203bc098121689f7a4ac4a45c2ef488bd2472d894cc0beee0d65de",
+      "tests": 46
+    },
+    "baseline_storage_artifact_cache": {
+      "actual_roster_sha256": "2ee73376e7d259414344425b2932271e1ce3d5abac10c869ed8890efbf2e09bc",
+      "junit": {
+        "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5-all-local-20261023.xml",
+        "sha256": "2d1e39d696e1a580c7241e2db2e6dd139d0953be82a1400ca4e3eb6135210922"
+      },
+      "source_sha256": "19921beee77beea62c649e34f0a129bdd07a0255c9d1c65f7cc779e56c8d9065",
+      "tests": 59
+    },
+    "baseline_storage_artifacts": {
+      "actual_roster_sha256": "6b0724696d7151cd0e0a1d4beb50c4e0ea085aa0afee8b370575516fc62a5b14",
+      "junit": {
+        "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5-all-local-20261023.xml",
+        "sha256": "2d1e39d696e1a580c7241e2db2e6dd139d0953be82a1400ca4e3eb6135210922"
+      },
+      "source_sha256": "a6ec2fb94323f4388ec7862a7c334c4bb2f0d56dfbe5bcc5f8e993c816f2c12b",
+      "tests": 120
+    },
+    "baseline_storage_boundary_cache": {
+      "actual_roster_sha256": "9dbfaa4c3a2b857258e88e8f51b6cabeebb37c0cf0ec3cd9c0ff17180a672945",
+      "junit": {
+        "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5-all-local-20261023.xml",
+        "sha256": "2d1e39d696e1a580c7241e2db2e6dd139d0953be82a1400ca4e3eb6135210922"
+      },
+      "source_sha256": "49400961147f65f26f2e7f6596e0f282d50498eb4590356d39dfc44be5fffea6",
+      "tests": 44
+    },
+    "baseline_storage_snapshot_artifacts": {
+      "actual_roster_sha256": "dcc04ea08706ab11dd17fa035abab5ba1cc8e2ce80921a86413e4c4283ff7d0d",
+      "junit": {
+        "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5-all-local-20261023.xml",
+        "sha256": "2d1e39d696e1a580c7241e2db2e6dd139d0953be82a1400ca4e3eb6135210922"
+      },
+      "source_sha256": "591d700b7968db248efbb7af46ed28dbd9ef6b3ff3fff1659c55c5e0decdbd28",
+      "tests": 4
+    },
+    "baseline_storage_snapshot_boundary": {
+      "actual_roster_sha256": "b215097f2af8d49a2a81427cdc16448e4679189bef68e8273755eefe56aecc24",
+      "junit": {
+        "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5-all-local-20261023.xml",
+        "sha256": "2d1e39d696e1a580c7241e2db2e6dd139d0953be82a1400ca4e3eb6135210922"
+      },
+      "source_sha256": "831e82054a12aa28cbdb50f24f135fa16d590e806546e389b76085848f5653f2",
+      "tests": 10
+    },
+    "external_census_policy": {
+      "actual_roster_sha256": "26f42367f6b53579e6ed923fc075c68466871e9296e4beb1a7103a4166384c21",
+      "junit": {
+        "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5-all-local-20261023.xml",
+        "sha256": "2d1e39d696e1a580c7241e2db2e6dd139d0953be82a1400ca4e3eb6135210922"
+      },
+      "source_sha256": "c7f458b63b4322905e0487c79f9e2d8a12831d0ddff3cdcb829583466ca41308",
+      "tests": 71
+    },
+    "kernel": {
+      "actual_roster_sha256": "bd54089198c59f3e00e4901550865daf10c705e73bfc5b7767e647a44f6eceaf",
+      "junit": {
+        "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5-all-local-20261023.xml",
+        "sha256": "2d1e39d696e1a580c7241e2db2e6dd139d0953be82a1400ca4e3eb6135210922"
+      },
+      "source_sha256": "20665f0fef390ea0ac88ca7b08eb90aa177ec1281d326b3553942d8c55713b4f",
+      "tests": 49
+    },
+    "qualifier": {
+      "actual_roster_sha256": "324195d803b7435c91019170eef13c4e57a4116cfd484d08599a572f50b97ca4",
+      "junit": {
+        "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5-all-local-20261023.xml",
+        "sha256": "2d1e39d696e1a580c7241e2db2e6dd139d0953be82a1400ca4e3eb6135210922"
+      },
+      "source_sha256": "340bbe0046e2cd3da5aff33566d93ff229ceeed872f3edbc92ee743d55433fc8",
+      "tests": 75
+    },
+    "registry": {
+      "actual_roster_sha256": "f739bd790619578af0d01600d76e6564b0cd244a9aff88c4db092303fb32c84c",
+      "junit": {
+        "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5-all-local-20261023.xml",
+        "sha256": "2d1e39d696e1a580c7241e2db2e6dd139d0953be82a1400ca4e3eb6135210922"
+      },
+      "source_sha256": "0e4f029814f1aca969fe282dac99a61373128a6dbbe4a0672ba5706a736545b9",
+      "tests": 30
+    },
+    "repeatable_wrapper": {
+      "actual_roster_sha256": "021036fdffe99c975be90c4b1cd2a92d3da157bcfeffc1c5381c2d0402574681",
+      "junit": {
+        "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5-all-local-20261023.xml",
+        "sha256": "2d1e39d696e1a580c7241e2db2e6dd139d0953be82a1400ca4e3eb6135210922"
+      },
+      "source_sha256": "0ed479c57e8ae73f4fff5d238065a26bb5b80cfa5b6863fe3da6d465f2d1992e",
+      "tests": 43
+    },
+    "rolling_qualifier": {
+      "actual_roster_sha256": "571409144e4ef17f1d06871707624b66275238cc472c5c8d47148abf5feed746",
+      "junit": {
+        "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5-all-local-20261023.xml",
+        "sha256": "2d1e39d696e1a580c7241e2db2e6dd139d0953be82a1400ca4e3eb6135210922"
+      },
+      "source_sha256": "4faaa183493a3c2c0c6578dae254a3aecc8924323c2aa0eca6d9549c2d378520",
+      "tests": 84
+    },
+    "wrapper": {
+      "actual_roster_sha256": "9256e0ffb30a2bceb30ef6cb21010da7041668ab53147a219b1840c931ffc0db",
+      "junit": {
+        "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5-all-local-20261023.xml",
+        "sha256": "2d1e39d696e1a580c7241e2db2e6dd139d0953be82a1400ca4e3eb6135210922"
+      },
+      "source_sha256": "caf3b9ecc56c2af298411c31790892621e97de506aca2e3ea1d1c9c22745d97a",
+      "tests": 122
+    }
+  },
+  "additional_native_sibling_fixture": {
+    "included_in_manifest_files": false,
+    "included_in_native_stage_sources": true,
+    "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5\\run-af-agent-controller-registry-v6-20261022.py",
+    "sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866"
+  },
+  "coordinator_source": {
+    "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\coordinate-reviewed-registrations-v4-20261023.py",
+    "sha256": "7fb6f3de9b49bab23ec3a6179e0ca0021d44df1588929113e889439fb5c51c02"
+  },
+  "coordinator_tests": {
+    "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\test_coordinate_reviewed_registrations_v4_20261023.py",
+    "sha256": "6c5047fac853fbbf9061f87659eabf4bd29b35e0de6426b24a7bb464fa29fa86"
+  },
+  "kind": "rolling-census-native-v5-local-freeze-v1",
+  "namespace_derivation": {
+    "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5\\namespace-derivation.json",
+    "sha256": "f31a5599421514721f42ddd8ca5362b966e104ff3cba69d9028a55d3f34afd29"
+  },
+  "native_qualification_claimed": false,
+  "previous_frozen_sources_modified": false,
+  "private_sources": {
+    "qualify-streaming-census-v1-20261023.py": "c1ddf15d87953ad9d5758864553c8b858b77ef1c753cb41c5f4727789e9b1e1a",
+    "qualify-streaming-census-v2-20261023.py": "32fca6288d496ad298c1bc2e8f990bfd4b118d4ed36802d83ee245c0ee0c2a11",
+    "registered-snapshot-read-guard-v4-20261022.py": "5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a",
+    "run-af-agent-controller-census-policy-v1-20261023.py": "120f02d098b6c9afa0ea0df54f590ae381b4227d4892ba0f9ee4acc93e6fec0f",
+    "run-fresh-storage-census-v5-20261023.py": "b448607b00512ef865a3369da56c18bf6f98ab589b6a524795e5bbed9c64e569",
+    "run-fresh-storage-census-v6-20261023.py": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3",
+    "streaming-storage-census-v1-20261023.py": "a1620825ef1401b7497746b7b9128e3d43b985675985505273dca3c36f30364e",
+    "test_af_agent_controller_census_policy_v1_20261023.py": "c7f458b63b4322905e0487c79f9e2d8a12831d0ddff3cdcb829583466ca41308",
+    "test_qualify_streaming_census_v1_20261023.py": "340bbe0046e2cd3da5aff33566d93ff229ceeed872f3edbc92ee743d55433fc8",
+    "test_qualify_streaming_census_v2_20261023.py": "4faaa183493a3c2c0c6578dae254a3aecc8924323c2aa0eca6d9549c2d378520",
+    "test_registered_snapshot_read_guard_v4_20261022.py": "0e4f029814f1aca969fe282dac99a61373128a6dbbe4a0672ba5706a736545b9",
+    "test_run_fresh_storage_census_v5_20261023.py": "caf3b9ecc56c2af298411c31790892621e97de506aca2e3ea1d1c9c22745d97a",
+    "test_run_fresh_storage_census_v6_20261023.py": "0ed479c57e8ae73f4fff5d238065a26bb5b80cfa5b6863fe3da6d465f2d1992e",
+    "test_streaming_storage_census_v1_20261023.py": "20665f0fef390ea0ac88ca7b08eb90aa177ec1281d326b3553942d8c55713b4f"
+  },
+  "q456_builder": {
+    "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\build-native-fixture-qualification-456.py",
+    "sha256": "7a4fa97febf06617adab95165bb30db2f8b929e3d878decf0733fc943613c765"
+  },
+  "q456_fixture_contract_tests": {
+    "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\test_rolling_native_v5_fixture_20261023.py",
+    "sha256": "d33b3d2f6476b00840ef541fbbb389524cf9cbf4fb7a2299db722e0a23d9cfad"
+  },
+  "q456_registration": {
+    "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5\\hhw-recovery-stage-20261021-456.sh",
+    "sha256": "0c0584fe8ad7d8e70189edaa95d76acdfca7dbcc4494647c25c55a04fad441b7"
+  },
+  "registration_builder": {
+    "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\derive-rolling-registrations-v5-20261023.py",
+    "sha256": "07bbe32bedbf6ea9d9f1c0dcccf5f806d819d7869bde807f702934f7738c96b1"
+  },
+  "registration_derivation": {
+    "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5\\registration-namespace-derivation.json",
+    "sha256": "c887bec59ac045588c663420e6c5b0fabcc52a7080f8359534a973609a5d2974"
+  },
+  "separate_local_checks": {
+    "coordinator_and_registrations": {
+      "actual_roster_sha256": "ac4b0d6ba24a8cbb9a010fe949a7847de1462bcf4f5248e0a51c60ecf7e62685",
+      "junit": {
+        "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5-registration-coordinator-local.xml",
+        "sha256": "1e42c8e8a0566ba35322a6a488edad2377df1e5db2a186687f9e54df32c1f153"
+      },
+      "tests": 138
+    },
+    "fixture_and_derivation": {
+      "actual_roster_sha256": "3124ddfdf63c15cfe10c6f951b56bbce08099ffaed5229a46c58ccf88f78c183",
+      "junit": {
+        "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5-fixture-local.xml",
+        "sha256": "2c3c8967974af1a4db91067ac578b535048dfed655ddf221be82bc22614f8a64"
+      },
+      "tests": 12
+    }
+  },
+  "source_builder": {
+    "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\build-rolling-native-v5-20261023.py",
+    "sha256": "a1773f453c23d65f5e7e8aa991953a01272f476d353ac0324a8f6c8bc0ee7ddc"
+  },
+  "source_manifest": {
+    "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v5\\source-manifest.json",
+    "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+  },
+  "suite_contracts": {
+    "baseline_budget": {
+      "roster_sha256": "a29d0c2854dafc41da5b6bcb7e31a03545bcad6134612b52a5f64c166bb52e7e",
+      "source": "tests/test_budget.py",
+      "source_sha256": "9ea7346e98203bc098121689f7a4ac4a45c2ef488bd2472d894cc0beee0d65de",
+      "tests": 46
+    },
+    "baseline_storage_artifact_cache": {
+      "roster_sha256": "2ee73376e7d259414344425b2932271e1ce3d5abac10c869ed8890efbf2e09bc",
+      "source": "tests/test_storage_artifact_cache.py",
+      "source_sha256": "19921beee77beea62c649e34f0a129bdd07a0255c9d1c65f7cc779e56c8d9065",
+      "tests": 59
+    },
+    "baseline_storage_artifacts": {
+      "roster_sha256": "6b0724696d7151cd0e0a1d4beb50c4e0ea085aa0afee8b370575516fc62a5b14",
+      "source": "tests/test_storage_artifacts.py",
+      "source_sha256": "a6ec2fb94323f4388ec7862a7c334c4bb2f0d56dfbe5bcc5f8e993c816f2c12b",
+      "tests": 120
+    },
+    "baseline_storage_boundary_cache": {
+      "roster_sha256": "9dbfaa4c3a2b857258e88e8f51b6cabeebb37c0cf0ec3cd9c0ff17180a672945",
+      "source": "tests/test_storage_boundary_cache.py",
+      "source_sha256": "49400961147f65f26f2e7f6596e0f282d50498eb4590356d39dfc44be5fffea6",
+      "tests": 44
+    },
+    "baseline_storage_snapshot_artifacts": {
+      "roster_sha256": "dcc04ea08706ab11dd17fa035abab5ba1cc8e2ce80921a86413e4c4283ff7d0d",
+      "source": "tests/test_storage_snapshot_artifacts.py",
+      "source_sha256": "591d700b7968db248efbb7af46ed28dbd9ef6b3ff3fff1659c55c5e0decdbd28",
+      "tests": 4
+    },
+    "baseline_storage_snapshot_boundary": {
+      "roster_sha256": "b215097f2af8d49a2a81427cdc16448e4679189bef68e8273755eefe56aecc24",
+      "source": "tests/test_storage_snapshot_boundary.py",
+      "source_sha256": "831e82054a12aa28cbdb50f24f135fa16d590e806546e389b76085848f5653f2",
+      "tests": 10
+    },
+    "external_census_policy": {
+      "roster_sha256": "26f42367f6b53579e6ed923fc075c68466871e9296e4beb1a7103a4166384c21",
+      "source": "test_af_agent_controller_census_policy_v1_20261023.py",
+      "source_sha256": "c7f458b63b4322905e0487c79f9e2d8a12831d0ddff3cdcb829583466ca41308",
+      "tests": 71
+    },
+    "kernel": {
+      "roster_sha256": "bd54089198c59f3e00e4901550865daf10c705e73bfc5b7767e647a44f6eceaf",
+      "source": "test_streaming_storage_census_v1_20261023.py",
+      "source_sha256": "20665f0fef390ea0ac88ca7b08eb90aa177ec1281d326b3553942d8c55713b4f",
+      "tests": 49
+    },
+    "qualifier": {
+      "roster_sha256": "324195d803b7435c91019170eef13c4e57a4116cfd484d08599a572f50b97ca4",
+      "source": "test_qualify_streaming_census_v1_20261023.py",
+      "source_sha256": "340bbe0046e2cd3da5aff33566d93ff229ceeed872f3edbc92ee743d55433fc8",
+      "tests": 75
+    },
+    "registry": {
+      "roster_sha256": "f739bd790619578af0d01600d76e6564b0cd244a9aff88c4db092303fb32c84c",
+      "source": "test_registered_snapshot_read_guard_v4_20261022.py",
+      "source_sha256": "0e4f029814f1aca969fe282dac99a61373128a6dbbe4a0672ba5706a736545b9",
+      "tests": 30
+    },
+    "repeatable_wrapper": {
+      "roster_sha256": "021036fdffe99c975be90c4b1cd2a92d3da157bcfeffc1c5381c2d0402574681",
+      "source": "test_run_fresh_storage_census_v6_20261023.py",
+      "source_sha256": "0ed479c57e8ae73f4fff5d238065a26bb5b80cfa5b6863fe3da6d465f2d1992e",
+      "tests": 43
+    },
+    "rolling_qualifier": {
+      "roster_sha256": "571409144e4ef17f1d06871707624b66275238cc472c5c8d47148abf5feed746",
+      "source": "test_qualify_streaming_census_v2_20261023.py",
+      "source_sha256": "4faaa183493a3c2c0c6578dae254a3aecc8924323c2aa0eca6d9549c2d378520",
+      "tests": 84
+    },
+    "wrapper": {
+      "roster_sha256": "9256e0ffb30a2bceb30ef6cb21010da7041668ab53147a219b1840c931ffc0db",
+      "source": "test_run_fresh_storage_census_v5_20261023.py",
+      "source_sha256": "caf3b9ecc56c2af298411c31790892621e97de506aca2e3ea1d1c9c22745d97a",
+      "tests": 122
+    }
+  },
+  "total_local_scope_tests_passed": 757,
+  "total_native_expected_tests": 757
+}

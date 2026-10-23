@@ -1,0 +1,29 @@
+{
+  "kind": "exact_platform_test_id_portability_audit_v1",
+  "scope": "baseline_budget_only",
+  "test_source": {
+    "path": "tests/test_budget.py",
+    "sha256": "9ea7346e98203bc098121689f7a4ac4a45c2ef488bd2472d894cc0beee0d65de"
+  },
+  "local_xml": {
+    "path": "work\\streaming-census-public-baseline-local-20261023.xml",
+    "sha256": "1565a81e4a357e65613e0e40c059b1a12ef16223673cc87a37ff29c8da14ca88"
+  },
+  "native_capture": {
+    "path": "work\\narval-deployment\\hhw-rolling-qualification-roster-20261023-443.txt",
+    "sha256": "dca2cf8e8320fd4d8407e2def342b0d2b8ead963abf6deb3349eb6f508690eec",
+    "reported_actual_native_xml_sha256": "049fd19a207c0c7dff0a426bb8d10dbf43dd6ea22a63e149bc412f5b45f18537"
+  },
+  "tests_local": 46,
+  "tests_actual_native": 46,
+  "actual_native_failed": [],
+  "windows_only": [
+    "test_budget::test_quota_receipt_write_failure_is_never_retried_or_reported_ready[10069]"
+  ],
+  "linux_only": [
+    "test_budget::test_quota_receipt_write_failure_is_never_retried_or_reported_ready[122]"
+  ],
+  "actual_linux_roster_sha256": "a29d0c2854dafc41da5b6bcb7e31a03545bcad6134612b52a5f64c166bb52e7e",
+  "source_algorithm_changed": false,
+  "native_full_qualification_claimed": false
+}

@@ -1,0 +1,172 @@
+{
+  "kind": "unsubmitted-registration-namespace-derivation-v1",
+  "new_source_manifest_sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e",
+  "scheduler_submitted": false,
+  "sources": [
+    {
+      "after_sha256": "e2823a180ad866833620deee063aa638787c93038ffee44115e6b82bd9b0cb17",
+      "before_sha256": "a5578bed2462ef94813dca8ce90cff5d962f3fc08e7daaf4a734c613f6dfadd6",
+      "explicit_replacements": {
+        "recovery-452": {
+          "after": "recovery-456",
+          "occurrences": 1
+        },
+        "recovery-support-20261021-452": {
+          "after": "recovery-support-20261021-456",
+          "occurrences": 2
+        },
+        "study-af-rolling-census-qualification-v4-20261023": {
+          "after": "study-af-rolling-census-qualification-v5-20261023",
+          "occurrences": 1
+        },
+        "study-af-rolling-census-registration-v3-20261023": {
+          "after": "study-af-rolling-census-registration-v4-20261023",
+          "occurrences": 1
+        },
+        "study-af-rolling-census-support-v3-20261023": {
+          "after": "study-af-rolling-census-support-v4-20261023",
+          "occurrences": 1
+        },
+        "study-af-rolling-storage-census-v3-20261023": {
+          "after": "study-af-rolling-storage-census-v4-20261023",
+          "occurrences": 1
+        },
+        "work/rolling-native-v4": {
+          "after": "work/rolling-native-v5",
+          "occurrences": 1
+        }
+      },
+      "name": "build-rolling-census-registration-429.py"
+    },
+    {
+      "after_sha256": "18ecc59f300f8dde0bde9a3f83fe06189ac6634a7774cbaa02e04c4069a51586",
+      "before_sha256": "18ecc59f300f8dde0bde9a3f83fe06189ac6634a7774cbaa02e04c4069a51586",
+      "explicit_replacements": {},
+      "name": "test_rolling_census_registration_429.py"
+    },
+    {
+      "after_sha256": "bad3f8a790807943b9dc5c985435d6e85f2e1d5be06b315aa196b44b72b18b28",
+      "before_sha256": "2818bda75a3fff8e343600df1322db7a2bb26ff3eb0cd2a2ea6cdb26e713d9ca",
+      "explicit_replacements": {
+        "('416','452')": {
+          "after": "('416','456')",
+          "occurrences": 1
+        },
+        "43660c97e50c5a24d42abb321514405107b9f1cade649a492f1c91355486ecb8": {
+          "after": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e",
+          "occurrences": 1
+        },
+        "61001913e746537da3583c2844c760f6589b48be763a44f83be446d5d204a1da": {
+          "after": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3",
+          "occurrences": 1
+        },
+        "WORK_ROOT/'rolling-native-v4'": {
+          "after": "WORK_ROOT/'rolling-native-v5'",
+          "occurrences": 1
+        },
+        "q452": {
+          "after": "q456",
+          "occurrences": 1
+        },
+        "study-af-rolling-census-qualification-v4-20261023": {
+          "after": "study-af-rolling-census-qualification-v5-20261023",
+          "occurrences": 1
+        },
+        "study-af-rolling-census-registration-v3-20261023": {
+          "after": "study-af-rolling-census-registration-v4-20261023",
+          "occurrences": 1
+        },
+        "study-af-rolling-census-support-v3-20261023": {
+          "after": "study-af-rolling-census-support-v4-20261023",
+          "occurrences": 1
+        }
+      },
+      "name": "build-rolling-dependents-430-434.py"
+    },
+    {
+      "after_sha256": "56aec91ba8e4bf91427094c913be2a12e13172c5a0c7d4f4bf91eec35b00347a",
+      "before_sha256": "dedb88ba660fddac24e8176c5ce4bb78a31c725a5d45b74a72a54b7f81a72fd9",
+      "explicit_replacements": {
+        "43660c97e50c5a24d42abb321514405107b9f1cade649a492f1c91355486ecb8": {
+          "after": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e",
+          "occurrences": 1
+        },
+        "61001913e746537da3583c2844c760f6589b48be763a44f83be446d5d204a1da": {
+          "after": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3",
+          "occurrences": 1
+        },
+        "study-af-rolling-census-qualification-v4-20261023": {
+          "after": "study-af-rolling-census-qualification-v5-20261023",
+          "occurrences": 1
+        }
+      },
+      "name": "test_rolling_dependents_430_434.py"
+    },
+    {
+      "additional_stage_fixture": {
+        "name": "run-af-agent-controller-registry-v6-20261022.py",
+        "sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866"
+      },
+      "after_sha256": "7a4fa97febf06617adab95165bb30db2f8b929e3d878decf0733fc943613c765",
+      "before_sha256": "2c6e8dfeee35b60f54faa672b5036b788588ba3fa2997a2553a4ffa3fb4f4f86",
+      "explicit_replacements": {
+        "ID='452'": {
+          "after": "ID='456'",
+          "occurrences": 1
+        },
+        "hhw-recovery-stage-20261021-452.sh": {
+          "after": "hhw-recovery-stage-20261021-456.sh",
+          "occurrences": 1
+        },
+        "recovery-support-20261021-452": {
+          "after": "recovery-support-20261021-456",
+          "occurrences": 2
+        },
+        "study-af-rolling-census-support-v3-20261023": {
+          "after": "study-af-rolling-census-support-v4-20261023",
+          "occurrences": 1
+        },
+        "work/rolling-native-v4": {
+          "after": "work/rolling-native-v5",
+          "occurrences": 1
+        }
+      },
+      "name": "build-native-fixture-qualification-456.py"
+    },
+    {
+      "after_sha256": "7fb6f3de9b49bab23ec3a6179e0ca0021d44df1588929113e889439fb5c51c02",
+      "before_sha256": "cc94ea69ca9d4d74e0cf9db5bae4548fcb4d5e6847a0d3d9466932a8eae5340d",
+      "explicit_replacements": {
+        "Q452": {
+          "after": "Q456",
+          "occurrences": 3
+        },
+        "coordinate-reviewed-registrations-v3-20261023.py": {
+          "after": "coordinate-reviewed-registrations-v4-20261023.py",
+          "occurrences": 1
+        },
+        "recovery-452": {
+          "after": "recovery-456",
+          "occurrences": 1
+        },
+        "recovery-support-20261021-452": {
+          "after": "recovery-support-20261021-456",
+          "occurrences": 2
+        },
+        "study-af-reviewed-registration-coordinator-v3-20261023": {
+          "after": "study-af-reviewed-registration-coordinator-v4-20261023",
+          "occurrences": 1
+        },
+        "study-af-rolling-census-qualification-v4-20261023": {
+          "after": "study-af-rolling-census-qualification-v5-20261023",
+          "occurrences": 1
+        },
+        "study-af-rolling-census-support-v3-20261023": {
+          "after": "study-af-rolling-census-support-v4-20261023",
+          "occurrences": 1
+        }
+      },
+      "name": "coordinate-reviewed-registrations-v4-20261023.py"
+    }
+  ]
+}

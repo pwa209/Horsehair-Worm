@@ -1,0 +1,40 @@
+{
+  "additional_native_sibling_fixture": {
+    "included_in_manifest_files": false,
+    "name": "run-af-agent-controller-registry-v6-20261022.py",
+    "sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866"
+  },
+  "all_operational_function_bodies_ast_identical": true,
+  "all_test_source_bytes_identical": true,
+  "all_thirteen_suite_contracts_identical": true,
+  "existing_frozen_files_modified": false,
+  "kind": "rolling-census-native-v5-namespace-derivation-v1",
+  "local_only_registry_fixture": {
+    "name": "controller-primary-repair-sixth-20261016.py",
+    "sha256": "49815eeb509909d5eac2ebde2e4f4a3918cf40cefdc5f643f2bcaffead629eb1"
+  },
+  "namespace_assignment_changes": {
+    "qualify-streaming-census-v2-20261023.py": [
+      "SUPPORT",
+      "CASE"
+    ],
+    "run-af-agent-controller-census-policy-v1-20261023.py": [
+      "SUPPORT",
+      "QUALIFICATION",
+      "PROVIDER_CASE"
+    ],
+    "run-fresh-storage-census-v6-20261023.py": [
+      "CASE_ROOT",
+      "SOURCE_SUPPORT",
+      "KERNEL_Q",
+      "PHASE"
+    ]
+  },
+  "native_expected_tests": 757,
+  "native_qualification_claimed": false,
+  "previous_manifest": {
+    "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\rolling-native-v4\\source-manifest.json",
+    "sha256": "43660c97e50c5a24d42abb321514405107b9f1cade649a492f1c91355486ecb8"
+  },
+  "source_manifest_sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+}

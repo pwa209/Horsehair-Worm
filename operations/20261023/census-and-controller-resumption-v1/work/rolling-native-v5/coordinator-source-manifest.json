@@ -1,0 +1,28 @@
+{
+  "files": {
+    "coordinate-reviewed-registrations-v4-20261023.py": "7fb6f3de9b49bab23ec3a6179e0ca0021d44df1588929113e889439fb5c51c02",
+    "hhw-recovery-stage-20261021-429.sh": "759809874ce4c26863b7a23fad85c3a3ab7b9193325876db4ae312b552d205e1",
+    "hhw-recovery-stage-20261021-430.sh": "40f6bd8bd20851a5b543d08dcf3cee624e6ea21d1b1171cdc059f95e55336b0e",
+    "hhw-recovery-stage-20261021-431.sh": "75a47227be72598a4b5c888450ef35b3682129c01637f452b7bdc62716d7215d",
+    "hhw-recovery-stage-20261021-432.sh": "342069bc411b9c2e5ad8bbe05b06d865ed1299b28539a2d3ccb1ce41952b8829",
+    "hhw-recovery-stage-20261021-433.sh": "d6ad49fbd1874f6b593ed43bd21fc04a82300a58813cbaa5b6a208a06073cd36",
+    "hhw-recovery-stage-20261021-434.sh": "bdb75c962cdc1288258d6a596ced39a3ba4ede789fd9dc964ba96a19952c7b26",
+    "hhw-recovery-stage-20261021-451.sh": "882ee2f14780f96d285ee36140e1471ba9fa61d3bcc897b4af1f4743de980d73"
+  },
+  "kind": "finite-reviewed-registration-coordinator-source-manifest-v1",
+  "qualification": {
+    "ledger": "/scratch/pwa209/horsehair-worm/state/recovery-support-20261021-456-submission.json",
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json",
+    "plan": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-456/plan.json",
+    "source_manifest": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+      "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+    },
+    "task": "recovery-456",
+    "validator": {
+      "function": "kernel_qualification",
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+      "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+    }
+  }
+}

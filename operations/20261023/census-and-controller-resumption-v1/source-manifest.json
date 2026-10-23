@@ -1,0 +1,1141 @@
+{
+  "files": {
+    "README.md": {
+      "bytes": 4839,
+      "sha256": "ebd1fd669fb4e8968c5d7b8836e96ff011821dee86a9165adc0e810f6eeebbb0"
+    },
+    "census-v5/execution-source-manifest.json": {
+      "bytes": 5644,
+      "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+    },
+    "census-v5/freeze.json": {
+      "bytes": 15814,
+      "sha256": "aebdb38f4a16aa2dee502982eb7742d7cd43ad17c0b3fbe557f28c50d4bee221"
+    },
+    "census-v5/qualify-streaming-census-v1-20261023.py": {
+      "bytes": 25115,
+      "sha256": "c1ddf15d87953ad9d5758864553c8b858b77ef1c753cb41c5f4727789e9b1e1a"
+    },
+    "census-v5/qualify-streaming-census-v2-20261023.py": {
+      "bytes": 28112,
+      "sha256": "32fca6288d496ad298c1bc2e8f990bfd4b118d4ed36802d83ee245c0ee0c2a11"
+    },
+    "census-v5/registered-snapshot-read-guard-v4-20261022.py": {
+      "bytes": 15419,
+      "sha256": "5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a"
+    },
+    "census-v5/run-af-agent-controller-census-policy-v1-20261023.py": {
+      "bytes": 26982,
+      "sha256": "120f02d098b6c9afa0ea0df54f590ae381b4227d4892ba0f9ee4acc93e6fec0f"
+    },
+    "census-v5/run-af-agent-controller-registry-v6-20261022.py": {
+      "bytes": 62900,
+      "sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866"
+    },
+    "census-v5/run-fresh-storage-census-v5-20261023.py": {
+      "bytes": 46593,
+      "sha256": "b448607b00512ef865a3369da56c18bf6f98ab589b6a524795e5bbed9c64e569"
+    },
+    "census-v5/run-fresh-storage-census-v6-20261023.py": {
+      "bytes": 55807,
+      "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+    },
+    "census-v5/streaming-storage-census-v1-20261023.py": {
+      "bytes": 11452,
+      "sha256": "a1620825ef1401b7497746b7b9128e3d43b985675985505273dca3c36f30364e"
+    },
+    "census-v5/test_af_agent_controller_census_policy_v1_20261023.py": {
+      "bytes": 26166,
+      "sha256": "c7f458b63b4322905e0487c79f9e2d8a12831d0ddff3cdcb829583466ca41308"
+    },
+    "census-v5/test_qualify_streaming_census_v1_20261023.py": {
+      "bytes": 21026,
+      "sha256": "340bbe0046e2cd3da5aff33566d93ff229ceeed872f3edbc92ee743d55433fc8"
+    },
+    "census-v5/test_qualify_streaming_census_v2_20261023.py": {
+      "bytes": 24219,
+      "sha256": "4faaa183493a3c2c0c6578dae254a3aecc8924323c2aa0eca6d9549c2d378520"
+    },
+    "census-v5/test_registered_snapshot_read_guard_v4_20261022.py": {
+      "bytes": 16216,
+      "sha256": "0e4f029814f1aca969fe282dac99a61373128a6dbbe4a0672ba5706a736545b9"
+    },
+    "census-v5/test_run_fresh_storage_census_v5_20261023.py": {
+      "bytes": 37967,
+      "sha256": "caf3b9ecc56c2af298411c31790892621e97de506aca2e3ea1d1c9c22745d97a"
+    },
+    "census-v5/test_run_fresh_storage_census_v6_20261023.py": {
+      "bytes": 18614,
+      "sha256": "0ed479c57e8ae73f4fff5d238065a26bb5b80cfa5b6863fe3da6d465f2d1992e"
+    },
+    "census-v5/test_streaming_storage_census_v1_20261023.py": {
+      "bytes": 13095,
+      "sha256": "20665f0fef390ea0ac88ca7b08eb90aa177ec1281d326b3553942d8c55713b4f"
+    },
+    "census/execution-source-manifest.json": {
+      "bytes": 5644,
+      "sha256": "43660c97e50c5a24d42abb321514405107b9f1cade649a492f1c91355486ecb8"
+    },
+    "census/qualify-streaming-census-v1-20261023.py": {
+      "bytes": 25115,
+      "sha256": "c1ddf15d87953ad9d5758864553c8b858b77ef1c753cb41c5f4727789e9b1e1a"
+    },
+    "census/qualify-streaming-census-v2-20261023.py": {
+      "bytes": 28112,
+      "sha256": "ccb78fc20f34538ca589b4a8509f6a210f2fa20529d7cf5465eaf1b684ed3002"
+    },
+    "census/registered-snapshot-read-guard-v4-20261022.py": {
+      "bytes": 15419,
+      "sha256": "5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a"
+    },
+    "census/run-af-agent-controller-census-policy-v1-20261023.py": {
+      "bytes": 26982,
+      "sha256": "3b8ea785eca1c356344f38bd8c3498b68e6dfa18ad70c3cdf3a727e864e1ca15"
+    },
+    "census/run-af-agent-controller-registry-v6-20261022.py": {
+      "bytes": 62900,
+      "sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866"
+    },
+    "census/run-fresh-storage-census-v5-20261023.py": {
+      "bytes": 46593,
+      "sha256": "b448607b00512ef865a3369da56c18bf6f98ab589b6a524795e5bbed9c64e569"
+    },
+    "census/run-fresh-storage-census-v6-20261023.py": {
+      "bytes": 55807,
+      "sha256": "61001913e746537da3583c2844c760f6589b48be763a44f83be446d5d204a1da"
+    },
+    "census/streaming-storage-census-v1-20261023.py": {
+      "bytes": 11452,
+      "sha256": "a1620825ef1401b7497746b7b9128e3d43b985675985505273dca3c36f30364e"
+    },
+    "census/test_af_agent_controller_census_policy_v1_20261023.py": {
+      "bytes": 26166,
+      "sha256": "c7f458b63b4322905e0487c79f9e2d8a12831d0ddff3cdcb829583466ca41308"
+    },
+    "census/test_qualify_streaming_census_v1_20261023.py": {
+      "bytes": 21026,
+      "sha256": "340bbe0046e2cd3da5aff33566d93ff229ceeed872f3edbc92ee743d55433fc8"
+    },
+    "census/test_qualify_streaming_census_v2_20261023.py": {
+      "bytes": 24219,
+      "sha256": "4faaa183493a3c2c0c6578dae254a3aecc8924323c2aa0eca6d9549c2d378520"
+    },
+    "census/test_registered_snapshot_read_guard_v4_20261022.py": {
+      "bytes": 16216,
+      "sha256": "0e4f029814f1aca969fe282dac99a61373128a6dbbe4a0672ba5706a736545b9"
+    },
+    "census/test_run_fresh_storage_census_v5_20261023.py": {
+      "bytes": 37967,
+      "sha256": "caf3b9ecc56c2af298411c31790892621e97de506aca2e3ea1d1c9c22745d97a"
+    },
+    "census/test_run_fresh_storage_census_v6_20261023.py": {
+      "bytes": 18614,
+      "sha256": "0ed479c57e8ae73f4fff5d238065a26bb5b80cfa5b6863fe3da6d465f2d1992e"
+    },
+    "census/test_streaming_storage_census_v1_20261023.py": {
+      "bytes": 13095,
+      "sha256": "20665f0fef390ea0ac88ca7b08eb90aa177ec1281d326b3553942d8c55713b4f"
+    },
+    "evidence/budget-errno-test-id-portability-audit-20261023.json": {
+      "bytes": 1245,
+      "sha256": "307c4fa59e2e3dcaf3ac412fe4ea79bec9e2abf1bba7b174a0edd52e232572d7"
+    },
+    "evidence/checkpoint-summary.json": {
+      "bytes": 1293,
+      "sha256": "c1b40301ab7fe51c2323c75ee018d90fee964a35eda9b0539ed43caf40773e67"
+    },
+    "evidence/coordinator425-builder-local-junit.xml": {
+      "bytes": 3572,
+      "sha256": "4ddf526e6e378fb9e1d2c23c2b48d12e5a4490d6d63cc1dcb757f5e2c87ac160"
+    },
+    "evidence/coordinator425-v3-local-junit.xml": {
+      "bytes": 14545,
+      "sha256": "de912a3e398a01e75712918108e43af3257122cc775329b340f4e7d969f23b11"
+    },
+    "evidence/freeze.json": {
+      "bytes": 14763,
+      "sha256": "d540af11f2be5929a1286cfb928244b1cd954107f2dd43100575b484f49d12ef"
+    },
+    "evidence/handoff-tests-20261023-final.xml": {
+      "bytes": 15725,
+      "sha256": "d5534b4402c280f80c8746cbd3e21e8c6ff575bd27b04625057dd4d89fc96f2c"
+    },
+    "evidence/handoff451-builder-local-passing-junit.xml": {
+      "bytes": 6478,
+      "sha256": "8a49f0e93293cc80ca3c132b58a36f1d7dc4498bdf500bfd6ec827cf4c733ee1"
+    },
+    "evidence/handoff451-builder-v2-local-final-junit.xml": {
+      "bytes": 6589,
+      "sha256": "bc86af14f6ddd0dcf1b101762ebbe0fdc5816587fcd44570d3c9688d268ddd27"
+    },
+    "evidence/registration-contracts-local-evidence.json": {
+      "bytes": 476,
+      "sha256": "29a63e5bcac8395a47e9ad1467742a24ba3f1a890ddd6e8cf4ec0a47741c6059"
+    },
+    "evidence/registration-contracts-local-final.xml": {
+      "bytes": 25160,
+      "sha256": "0d5d78e70db7048ed07c3f781dfcef21b3bfdaac6c351adeb670a668cd31f211"
+    },
+    "evidence/registration-namespace-derivation.json": {
+      "bytes": 4296,
+      "sha256": "481282f5e5a22bd70fad744f68a0adeb74ea58fbc5608a3033c90fa52b82f277"
+    },
+    "evidence/rolling-native-v4-adversarial-local-20261023.xml": {
+      "bytes": 2536,
+      "sha256": "598eb9024cb0e79dac5c9026c2d70505e75350eed2a75966d22ef687db0f836e"
+    },
+    "evidence/rolling-native-v4-all-local-20261023.xml": {
+      "bytes": 152208,
+      "sha256": "2a1286455532377961f03de7b1bb1db3f67e538fb57677e90d27e654fcd92947"
+    },
+    "evidence/rolling-native-v4-registry-final-20261023.xml": {
+      "bytes": 5729,
+      "sha256": "263fdc88653eddef4c4d7d74576ea5fea584da02d584517b34768f4cea244b0f"
+    },
+    "evidence/rolling-native-v5-all-local-20261023.xml": {
+      "bytes": 130315,
+      "sha256": "2d1e39d696e1a580c7241e2db2e6dd139d0953be82a1400ca4e3eb6135210922"
+    },
+    "evidence/rolling-native-v5-fixture-local.xml": {
+      "bytes": 2383,
+      "sha256": "2c3c8967974af1a4db91067ac578b535048dfed655ddf221be82bc22614f8a64"
+    },
+    "evidence/rolling-native-v5-registration-coordinator-local.xml": {
+      "bytes": 24346,
+      "sha256": "1e42c8e8a0566ba35322a6a488edad2377df1e5db2a186687f9e54df32c1f153"
+    },
+    "evidence/source-manifest.json": {
+      "bytes": 5644,
+      "sha256": "43660c97e50c5a24d42abb321514405107b9f1cade649a492f1c91355486ecb8"
+    },
+    "evidence/streaming-census-public-baseline-local-20261023.xml": {
+      "bytes": 43972,
+      "sha256": "1565a81e4a357e65613e0e40c059b1a12ef16223673cc87a37ff29c8da14ca88"
+    },
+    "native-qualification/native-canary.json": {
+      "bytes": 11620,
+      "sha256": "62740c1b183e56569fe5e6aef437500c42f8500f3c2e606759564c6c4813a462"
+    },
+    "native-qualification/qualification.json": {
+      "bytes": 29782,
+      "sha256": "8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c"
+    },
+    "runtime/maintenance/study-af-archive-consumer-qualification-stage-v3-20261023/administration-registry-read-guard-v4-20261022.py": {
+      "bytes": 15419,
+      "sha256": "5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a"
+    },
+    "runtime/maintenance/study-af-archive-consumer-qualification-stage-v3-20261023/qualify-f2-archive-consumer-v3-20261023.py": {
+      "bytes": 23298,
+      "sha256": "b4108ce65d2f662dea08d4e3f9dca044fc89376a6d826295a2913e1f07f52ae4"
+    },
+    "runtime/maintenance/study-af-archive-consumer-qualification-stage-v3-20261023/run-af-agent-controller-archive-v3-20261023.py": {
+      "bytes": 39874,
+      "sha256": "2004e959019a2fe564f58d1e5fce70ee988a3afb9e62ebc42b95488eaa9fdc02"
+    },
+    "runtime/maintenance/study-af-archive-consumer-qualification-stage-v3-20261023/run-af-agent-controller-registry-v6-20261022.py": {
+      "bytes": 62900,
+      "sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866"
+    },
+    "runtime/maintenance/study-af-archive-consumer-qualification-stage-v3-20261023/test_af_agent_controller_archive_v3_20261023.py": {
+      "bytes": 51358,
+      "sha256": "de914a3b8a3ad99586a9082912dcbf36004fcd9391501cbe5f44cfee79f8e461"
+    },
+    "runtime/maintenance/study-af-archive-consumer-qualification-stage-v3-20261023/test_qualify_f2_archive_consumer_v3_20261023.py": {
+      "bytes": 22604,
+      "sha256": "e1c9b998b6e8ff5fd018819838ac7467463dcbd22e39384bca96945c9db2955b"
+    },
+    "runtime/maintenance/study-af-archive-consumer-qualification-stage-v3-20261023/test_verify_f2_condition_archives_v2_20261022.py": {
+      "bytes": 15130,
+      "sha256": "88e79c8fcb4fe7b80882c176d78006f301c50a0c0f6cb8266d4c5bfbb867c565"
+    },
+    "runtime/maintenance/study-af-archive-consumer-qualification-stage-v3-20261023/verify-f2-condition-archives-v2-20261022.py": {
+      "bytes": 12654,
+      "sha256": "b02afa747f8e37a654dc0eda6f3a370808cdd381cf92a55a9b56ea9a8b6bfcae"
+    },
+    "runtime/maintenance/study-af-cohort-prefix-stage-v5-r2-20261023/run-cohort-prefix-stage-v5-r1-20261022.py": {
+      "bytes": 44109,
+      "sha256": "f53d4d1059992bfe06cb66b862a99bfda9201c177ec90d8b29853176cb973242"
+    },
+    "runtime/maintenance/study-af-prestart-three-activation-stage-v2-20261023/activate-f2-prestart-three-v1-20261022.py": {
+      "bytes": 39774,
+      "sha256": "586bbf301ef69621cc1132b8b25a9c243f29a2e918b54d564e84be816af2d2eb"
+    },
+    "runtime/maintenance/study-af-prestart-three-activation-stage-v2-20261023/administration-registry-read-guard-v4-20261022.py": {
+      "bytes": 15419,
+      "sha256": "5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v5-20261022/qualify-f2-registry-repair-v5-20261022.py": {
+      "bytes": 15374,
+      "sha256": "852cb7c6bc1caff7d021bf7a80d780bf29da65c0d734e5e86c035eb74d68ef37"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v5-20261022/recover-f2-training0000-state-20261021.py": {
+      "bytes": 23907,
+      "sha256": "504eb2764073a5b614d986827ccacad3189ea4be5988313ead47ab41805fe26a"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v5-20261022/registered-snapshot-read-guard-v4-20261022.py": {
+      "bytes": 15419,
+      "sha256": "5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v5-20261022/run-af-agent-controller-registry-v5-20261022.py": {
+      "bytes": 57135,
+      "sha256": "22864922c6121ffccecd2f8000f28fd9b382fed2e9b52952383c69287c646917"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v5-20261022/run-f00d-worker-registry-overlay-20261021.py": {
+      "bytes": 4062,
+      "sha256": "dd39905ce44f89f7f8bbdd325d1a0f1d5ec7950dd89d0e3bb267f6fdfe77a09a"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v5-20261022/test_af_agent_controller_registry_v5_20261022.py": {
+      "bytes": 40688,
+      "sha256": "4312415a0574bc3bf86ec08aaed439aabc98bc604a6ed1e9420b894c72aed79a"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v5-20261022/test_f00d_worker_registry_overlay_20261021.py": {
+      "bytes": 4064,
+      "sha256": "2fdcf83a1abc796f82e86d3d3014fd785d195bf7ca4dc6457f2d6dd5db9b3968"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v5-20261022/test_recover_f2_training0000_state_20261021.py": {
+      "bytes": 19478,
+      "sha256": "6cb7fdcc55f12164d81666f70e545b6efd610a1299baef66e483a271fbbe1673"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v5-20261022/test_registered_snapshot_read_guard_v4_20261022.py": {
+      "bytes": 16216,
+      "sha256": "0e4f029814f1aca969fe282dac99a61373128a6dbbe4a0672ba5706a736545b9"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v6-20261022/activate-f2-prestart-three-v1-20261022.py": {
+      "bytes": 39774,
+      "sha256": "586bbf301ef69621cc1132b8b25a9c243f29a2e918b54d564e84be816af2d2eb"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v6-20261022/administration-registry-read-guard-v4-20261022.py": {
+      "bytes": 15419,
+      "sha256": "5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v6-20261022/qualify-f2-registry-repair-v6-20261022.py": {
+      "bytes": 18784,
+      "sha256": "875ec697466351b21718eded61a6e81ac23d74ce0902ce481ebc970012261020"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v6-20261022/recover-f2-prestart-three-state-v1-20261022.py": {
+      "bytes": 26120,
+      "sha256": "7151017a3579694228b1ba78f14da9cdda3e4a4608d98f9f257d2d2c4b26807d"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v6-20261022/recover-f2-training0000-state-20261021.py": {
+      "bytes": 23907,
+      "sha256": "504eb2764073a5b614d986827ccacad3189ea4be5988313ead47ab41805fe26a"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v6-20261022/registered-snapshot-read-guard-v5-20261022.py": {
+      "bytes": 17865,
+      "sha256": "7bd2bf562d0a81887ef1afd308ddd9265e5cadb23ba4b2e5946980b659505431"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v6-20261022/run-af-agent-controller-registry-v6-20261022.py": {
+      "bytes": 62900,
+      "sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v6-20261022/run-f00d-worker-registry-overlay-20261021.py": {
+      "bytes": 4062,
+      "sha256": "dd39905ce44f89f7f8bbdd325d1a0f1d5ec7950dd89d0e3bb267f6fdfe77a09a"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v6-20261022/source-manifest.json": {
+      "bytes": 1769,
+      "sha256": "4b09442dfa29fac9f3b442e9793a0476035b174577bf67f316f1afcd9b9091f4"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v6-20261022/test_activate_f2_prestart_three_v1_20261022.py": {
+      "bytes": 29755,
+      "sha256": "7969911a11d54c71c33c41f9888f4d3889db5326489ff6468399823640d54964"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v6-20261022/test_af_agent_controller_registry_v6_20261022.py": {
+      "bytes": 56567,
+      "sha256": "da703c4cc8b172a2ea79067a8f5c5e9d0976853823a8ed230e3fb1a721633a3d"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v6-20261022/test_f00d_worker_registry_overlay_20261021.py": {
+      "bytes": 4064,
+      "sha256": "2fdcf83a1abc796f82e86d3d3014fd785d195bf7ca4dc6457f2d6dd5db9b3968"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v6-20261022/test_qualify_f2_registry_repair_v6_20261022.py": {
+      "bytes": 12909,
+      "sha256": "8ebf7f455a4c8ff8282dbdb3c0e94ee93f0d5e8eac3e276a6ae57a7c01159067"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v6-20261022/test_recover_f2_prestart_three_state_v1_20261022.py": {
+      "bytes": 23361,
+      "sha256": "dddccdc4d800110ecfbdf72f8a3fb25f7726a858d80272c016cce3c233b4253d"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v6-20261022/test_recover_f2_training0000_state_20261021.py": {
+      "bytes": 19478,
+      "sha256": "6cb7fdcc55f12164d81666f70e545b6efd610a1299baef66e483a271fbbe1673"
+    },
+    "runtime/maintenance/study-af-registry-repair-support-v6-20261022/test_registered_snapshot_read_guard_v5_20261022.py": {
+      "bytes": 23218,
+      "sha256": "934196d84276299ce2b567bef6925515e4656978401a0dd4f49c8bd2d1339d72"
+    },
+    "runtime/maintenance/study-af-rolling-census-support-v3-20261023/run-fresh-storage-census-v6-20261023.py": {
+      "bytes": 55807,
+      "sha256": "61001913e746537da3583c2844c760f6589b48be763a44f83be446d5d204a1da"
+    },
+    "runtime/maintenance/study-af-rolling-census-support-v3-20261023/source-manifest.json": {
+      "bytes": 5644,
+      "sha256": "43660c97e50c5a24d42abb321514405107b9f1cade649a492f1c91355486ecb8"
+    },
+    "work/build-external-census-handoff-registration-451-v2.py": {
+      "bytes": 8615,
+      "sha256": "a31176e8be85fc40628912b8ed4c5d60432c875f5798c41d4caecbcf58419e52"
+    },
+    "work/build-external-census-handoff-registration-451.py": {
+      "bytes": 8577,
+      "sha256": "7ffbb85662dc671f98afdba8eb57b1f3313ceaa1bd245c9220bb104402516e4a"
+    },
+    "work/build-native-fixture-qualification-456.py": {
+      "bytes": 4753,
+      "sha256": "7a4fa97febf06617adab95165bb30db2f8b929e3d878decf0733fc943613c765"
+    },
+    "work/build-native-portability-qualification-452.py": {
+      "bytes": 4244,
+      "sha256": "2c6e8dfeee35b60f54faa672b5036b788588ba3fa2997a2553a4ffa3fb4f4f86"
+    },
+    "work/build-reviewed-registration-coordinator-425.py": {
+      "bytes": 18379,
+      "sha256": "cdc774096e8836b5ca632f60d15f9b78f269c19fb917a2262d93114dbb5b1b66"
+    },
+    "work/build-rolling-native-v3-20261023.py": {
+      "bytes": 12819,
+      "sha256": "b317189bac94e26034d0217307ace7c34e2119c6d8fbe5bc40c917f4f32cc929"
+    },
+    "work/build-rolling-native-v4-20261023.py": {
+      "bytes": 12260,
+      "sha256": "fb652db6c01f46fd70de4f2b2de9df2380df2d34a5fee7a4b2339080b6d1b72a"
+    },
+    "work/build-rolling-native-v5-20261023.py": {
+      "bytes": 5642,
+      "sha256": "a1773f453c23d65f5e7e8aa991953a01272f476d353ac0324a8f6c8bc0ee7ddc"
+    },
+    "work/coordinate-reviewed-registrations-v1-20261023.py": {
+      "bytes": 25872,
+      "sha256": "efe0c359f8042d377b0bdad12c2785041b3d4140a781945dc97245723a34603c"
+    },
+    "work/coordinate-reviewed-registrations-v2-20261023.py": {
+      "bytes": 25872,
+      "sha256": "80dc25ad270ee0b19c0f68f5e66c0ef8f4a32db2722ea832ce6fee1dde781f13"
+    },
+    "work/coordinate-reviewed-registrations-v3-20261023.py": {
+      "bytes": 25872,
+      "sha256": "cc94ea69ca9d4d74e0cf9db5bae4548fcb4d5e6847a0d3d9466932a8eae5340d"
+    },
+    "work/coordinate-reviewed-registrations-v4-20261023.py": {
+      "bytes": 25872,
+      "sha256": "7fb6f3de9b49bab23ec3a6179e0ca0021d44df1588929113e889439fb5c51c02"
+    },
+    "work/derive-rolling-native-v4-registrations-20261023.py": {
+      "bytes": 2828,
+      "sha256": "f8c62629c24689484a476764d821b97292c296ca6a1cb3fe50805cfd0819e123"
+    },
+    "work/derive-rolling-registrations-v5-20261023.py": {
+      "bytes": 8504,
+      "sha256": "07bbe32bedbf6ea9d9f1c0dcccf5f806d819d7869bde807f702934f7738c96b1"
+    },
+    "work/handoff-f2-external-census-v1-20261023-freeze.json": {
+      "bytes": 12767,
+      "sha256": "87c43082f291dbd4bf78ceae855b42db070cb4bfad952536df734781298cdbe6"
+    },
+    "work/handoff-f2-external-census-v1-20261023.py": {
+      "bytes": 45360,
+      "sha256": "bc64862d70a48856f9b2d9e3b35e450e04ecc70a93273170b28909992761e58d"
+    },
+    "work/hhw-native-portability-qualification-progress-20261023-453.sh": {
+      "bytes": 1884,
+      "sha256": "fa60f600c33735a6b19000b1d72e1f6e9019f7be7987d7611880cf4a2d18a50f"
+    },
+    "work/hhw-native-portability-qualification-progress-20261023-454.sh": {
+      "bytes": 1884,
+      "sha256": "fa60f600c33735a6b19000b1d72e1f6e9019f7be7987d7611880cf4a2d18a50f"
+    },
+    "work/hhw-native-wrapper-failure-20261023-447.sh": {
+      "bytes": 1160,
+      "sha256": "a1f4503efef3f67179319b143a2a420c8e6bde1e6861ee12ca7257ef48a058fa"
+    },
+    "work/hhw-recovery-stage-20261021-394.sh": {
+      "bytes": 162379,
+      "sha256": "8254e96c402b4d8aa43c98d43880a607f2d222408d0f1eb2c351a60277f29e9e"
+    },
+    "work/narval-deployment/hhw-census-restoration-live-20261023-459.json": {
+      "bytes": 104,
+      "sha256": "9159f8bd28da2647453a14af62255005439b3e9cc029d1b2ff21b68ca51121ba"
+    },
+    "work/narval-deployment/hhw-census-restoration-live-20261023-459.txt": {
+      "bytes": 47867,
+      "sha256": "43c01f514f46e14da42506c91c9b95aab173a49521e2f22603adb5cf37c8aca4"
+    },
+    "work/narval-deployment/hhw-held-canary-diagnostics-20261023-439.json": {
+      "bytes": 104,
+      "sha256": "0356ebbd5ac25135d8434f4f62e373e76229602060c123221309515415ab999b"
+    },
+    "work/narval-deployment/hhw-held-canary-diagnostics-20261023-439.txt": {
+      "bytes": 3824,
+      "sha256": "1e743c63885ad32efe53344d6aa032e85ed656447a89a4f4ba6966632164ee47"
+    },
+    "work/narval-deployment/hhw-native-external-policy-failure-20261023-455.json": {
+      "bytes": 111,
+      "sha256": "f8f747b7952ad26fb6c0788d803784d5f5324dec365bcda29caceb601f64c49a"
+    },
+    "work/narval-deployment/hhw-native-external-policy-failure-20261023-455.txt": {
+      "bytes": 98927,
+      "sha256": "51dad2d36984d52e35511a183d43093e92374cc20cf197e0545a18f8e7e4a4eb"
+    },
+    "work/narval-deployment/hhw-native-fixture-qualification-progress-20261023-457.json": {
+      "bytes": 117,
+      "sha256": "cad62421b22b316ed25833975804c774e44fc48a3b9316bf8883da66dde9ad0a"
+    },
+    "work/narval-deployment/hhw-native-fixture-qualification-progress-20261023-457.txt": {
+      "bytes": 1625,
+      "sha256": "cdd965c2019756bd1617b3a708ffe9f257b2221175cacc196955974f686e34ad"
+    },
+    "work/narval-deployment/hhw-native-portability-qualification-progress-20261023-453.json": {
+      "bytes": 122,
+      "sha256": "b87d8df0c5b126c4bbb76aa7939336faf98dc4d8a09d557daa2acd0142277b95"
+    },
+    "work/narval-deployment/hhw-native-portability-qualification-progress-20261023-453.txt": {
+      "bytes": 1625,
+      "sha256": "45fedf2e13cf690b2b9a0b513c9e7108c047edd06a242a59e03c04067cd875b1"
+    },
+    "work/narval-deployment/hhw-native-portability-qualification-progress-20261023-454.json": {
+      "bytes": 122,
+      "sha256": "5e520498c8cb53fd67c0db7e724cafb072213425b896527cd3f191278e60f509"
+    },
+    "work/narval-deployment/hhw-native-portability-qualification-progress-20261023-454.txt": {
+      "bytes": 4824,
+      "sha256": "d326d12445c199a502c79d9483e10bcc06ee45da9660940dbe97bbad781a1fbc"
+    },
+    "work/narval-deployment/hhw-native-wrapper-failure-20261023-447.json": {
+      "bytes": 103,
+      "sha256": "2a32cb9f82d9371661549b122b3c6e3d54d0cf7881921e395d97f61126628e13"
+    },
+    "work/narval-deployment/hhw-native-wrapper-failure-20261023-447.txt": {
+      "bytes": 8443,
+      "sha256": "3232bef94fe85edfdd56673eeea81d1fd75bbbbb5e38c0a38f4ccd66809e1d3c"
+    },
+    "work/narval-deployment/hhw-recovery-stage-20261021-425-bridge-completion.json": {
+      "bytes": 95,
+      "sha256": "88531505c2080c2da1e697752f814393578901174100f64ff8120ed523e67fb9"
+    },
+    "work/narval-deployment/hhw-recovery-stage-20261021-425-bridge-output.txt": {
+      "bytes": 316,
+      "sha256": "898059f1657672f106f70046fdb2a7887e8c2b791284982072b914db94359ec9"
+    },
+    "work/narval-deployment/hhw-recovery-stage-20261021-452.json": {
+      "bytes": 95,
+      "sha256": "1c3320b9304551c684b793496a4f6b14bef66ec01c503360c542e4964c7388da"
+    },
+    "work/narval-deployment/hhw-recovery-stage-20261021-452.txt": {
+      "bytes": 305,
+      "sha256": "5b21343bc16dadef528d36a013c97664485b275cff56bd9bd7bbdcac280e73ac"
+    },
+    "work/narval-deployment/hhw-recovery-stage-20261021-456-bridge-completion.json": {
+      "bytes": 95,
+      "sha256": "4ac98ecb418d846f1a753ba4dd2a69192209ffb7e983311a3e4d3120c61244d1"
+    },
+    "work/narval-deployment/hhw-recovery-stage-20261021-456-bridge-output.txt": {
+      "bytes": 305,
+      "sha256": "b88f3fd8e91d86f63a35aed8696752300d437afdb8f2d51e8152bb0f78da36dd"
+    },
+    "work/narval-deployment/hhw-rolling-qualification-roster-20261023-443.json": {
+      "bytes": 109,
+      "sha256": "095efeab387d108ba088de82a4678f18e23b50c4cd09f5a50b13a336c5a5210e"
+    },
+    "work/narval-deployment/hhw-rolling-qualification-roster-20261023-443.txt": {
+      "bytes": 5490,
+      "sha256": "dca2cf8e8320fd4d8407e2def342b0d2b8ead963abf6deb3349eb6f508690eec"
+    },
+    "work/qualify-streaming-census-v1-20261023.py": {
+      "bytes": 25115,
+      "sha256": "c1ddf15d87953ad9d5758864553c8b858b77ef1c753cb41c5f4727789e9b1e1a"
+    },
+    "work/qualify-streaming-census-v2-20261023.py": {
+      "bytes": 28112,
+      "sha256": "95c506d1f1420dde78fc87c171e410eca273f92e9a7d977319cc12fbc9836188"
+    },
+    "work/registered-snapshot-read-guard-v4-20261022.py": {
+      "bytes": 15419,
+      "sha256": "5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a"
+    },
+    "work/rolling-census-complete-local-20261023.xml": {
+      "bytes": 120750,
+      "sha256": "a946904eb247d0335bef1d225354d3a3931121dd074b81c5c2c02bab0549890b"
+    },
+    "work/rolling-census-source-manifest-20261023.json": {
+      "bytes": 5644,
+      "sha256": "e407578d5838f11e2d12f02c3cc4821f401152ae689305b9fd7c8e7959fba8fc"
+    },
+    "work/rolling-native-v3/freeze.json": {
+      "bytes": 9188,
+      "sha256": "629031eefc6ea826c53a1ee8d87df2685e5a3e771aa8020a3914bd9502e2104e"
+    },
+    "work/rolling-native-v3/qualify-streaming-census-v1-20261023.py": {
+      "bytes": 25115,
+      "sha256": "c1ddf15d87953ad9d5758864553c8b858b77ef1c753cb41c5f4727789e9b1e1a"
+    },
+    "work/rolling-native-v3/qualify-streaming-census-v2-20261023.py": {
+      "bytes": 28112,
+      "sha256": "156b9a3d0da299101a32ade0a69416c59063bf4d53d9ee7106f77c0945f32565"
+    },
+    "work/rolling-native-v3/registered-snapshot-read-guard-v4-20261022.py": {
+      "bytes": 15419,
+      "sha256": "5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a"
+    },
+    "work/rolling-native-v3/run-af-agent-controller-census-policy-v1-20261023.py": {
+      "bytes": 26982,
+      "sha256": "011e4d4a9f365a250d1839711cf1924f1cd3133c3218f8add7ea2ac1cbd23208"
+    },
+    "work/rolling-native-v3/run-af-agent-controller-registry-v6-20261022.py": {
+      "bytes": 62900,
+      "sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866"
+    },
+    "work/rolling-native-v3/run-fresh-storage-census-v5-20261023.py": {
+      "bytes": 46593,
+      "sha256": "b448607b00512ef865a3369da56c18bf6f98ab589b6a524795e5bbed9c64e569"
+    },
+    "work/rolling-native-v3/run-fresh-storage-census-v6-20261023.py": {
+      "bytes": 55807,
+      "sha256": "6cdbd5507b065ed2b23bc7b60c5fce498f43794c417d7ce1643aaa8f925c4cb8"
+    },
+    "work/rolling-native-v3/source-manifest.json": {
+      "bytes": 5644,
+      "sha256": "fefcb2cd1e5f7b70ebab7e959955d96c9ea4072dd133370adf2f6a8e6cb03ff0"
+    },
+    "work/rolling-native-v3/streaming-storage-census-v1-20261023.py": {
+      "bytes": 11452,
+      "sha256": "a1620825ef1401b7497746b7b9128e3d43b985675985505273dca3c36f30364e"
+    },
+    "work/rolling-native-v3/test_af_agent_controller_census_policy_v1_20261023.py": {
+      "bytes": 26166,
+      "sha256": "c7f458b63b4322905e0487c79f9e2d8a12831d0ddff3cdcb829583466ca41308"
+    },
+    "work/rolling-native-v3/test_qualify_streaming_census_v1_20261023.py": {
+      "bytes": 21026,
+      "sha256": "340bbe0046e2cd3da5aff33566d93ff229ceeed872f3edbc92ee743d55433fc8"
+    },
+    "work/rolling-native-v3/test_qualify_streaming_census_v2_20261023.py": {
+      "bytes": 24219,
+      "sha256": "4faaa183493a3c2c0c6578dae254a3aecc8924323c2aa0eca6d9549c2d378520"
+    },
+    "work/rolling-native-v3/test_registered_snapshot_read_guard_v4_20261022.py": {
+      "bytes": 16216,
+      "sha256": "0e4f029814f1aca969fe282dac99a61373128a6dbbe4a0672ba5706a736545b9"
+    },
+    "work/rolling-native-v3/test_run_fresh_storage_census_v5_20261023.py": {
+      "bytes": 37258,
+      "sha256": "734aa1e349332660072fedf8246d7bc6fdc8f47c7cca0d4d06893088c5b1df58"
+    },
+    "work/rolling-native-v3/test_run_fresh_storage_census_v6_20261023.py": {
+      "bytes": 18614,
+      "sha256": "0ed479c57e8ae73f4fff5d238065a26bb5b80cfa5b6863fe3da6d465f2d1992e"
+    },
+    "work/rolling-native-v3/test_streaming_storage_census_v1_20261023.py": {
+      "bytes": 13095,
+      "sha256": "20665f0fef390ea0ac88ca7b08eb90aa177ec1281d326b3553942d8c55713b4f"
+    },
+    "work/rolling-native-v4/ast-portability-evidence.json": {
+      "bytes": 3917,
+      "sha256": "4af07c5ab0a14a2b1d26a19a1d9c9afe0f1139db44c4a69b7a662c6c69e2fe6c"
+    },
+    "work/rolling-native-v4/build-rolling-census-registration-429.py": {
+      "bytes": 13544,
+      "sha256": "a5578bed2462ef94813dca8ce90cff5d962f3fc08e7daaf4a734c613f6dfadd6"
+    },
+    "work/rolling-native-v4/build-rolling-dependents-430-434.py": {
+      "bytes": 11953,
+      "sha256": "2818bda75a3fff8e343600df1322db7a2bb26ff3eb0cd2a2ea6cdb26e713d9ca"
+    },
+    "work/rolling-native-v4/controller-primary-repair-sixth-20261016.py": {
+      "bytes": 49391,
+      "sha256": "49815eeb509909d5eac2ebde2e4f4a3918cf40cefdc5f643f2bcaffead629eb1"
+    },
+    "work/rolling-native-v4/coordinator-source-manifest.json": {
+      "bytes": 1894,
+      "sha256": "69cbd2f15f30b30f09be3fd12deec9faf835e8774fdf5d1d504b2b9560cbce57"
+    },
+    "work/rolling-native-v4/coordinator425-registration-local-summary.json": {
+      "bytes": 635,
+      "sha256": "e4285526e390061117884c1ab684bd13174ebb5b245e904a8d462ad69ddfca5c"
+    },
+    "work/rolling-native-v4/freeze.json": {
+      "bytes": 14763,
+      "sha256": "d540af11f2be5929a1286cfb928244b1cd954107f2dd43100575b484f49d12ef"
+    },
+    "work/rolling-native-v4/handoff-registration-local-evidence.json": {
+      "bytes": 777,
+      "sha256": "9135b5d6e9c896c3da7e6b4cd4f475edffc9e8c82cef38a1cab78553ec208fe8"
+    },
+    "work/rolling-native-v4/handoff-source-manifest.json": {
+      "bytes": 1917,
+      "sha256": "f90f1fcdd452cb04e6a9521963ef4c58321d88326132c67a3f2a34bcbfef9020"
+    },
+    "work/rolling-native-v4/hhw-recovery-stage-20261021-425.sh": {
+      "bytes": 172387,
+      "sha256": "9fac44a4316bdbab13411017d8d6db719fa2bf2e3b63574bf177f100d7d166e3"
+    },
+    "work/rolling-native-v4/hhw-recovery-stage-20261021-429.sh": {
+      "bytes": 13102,
+      "sha256": "b109f5684c7c45762fe78ab0bf31437ca144c02aee04d1e01d10cd736ef5a35a"
+    },
+    "work/rolling-native-v4/hhw-recovery-stage-20261021-430.sh": {
+      "bytes": 15235,
+      "sha256": "b39a643019db7a621ae1329e7433414b60bf27c8e34e2792dbb94243b9082afa"
+    },
+    "work/rolling-native-v4/hhw-recovery-stage-20261021-431.sh": {
+      "bytes": 15727,
+      "sha256": "56dba485cae5305d28357da09ff156741545e325f0713a28e628d6c5192f8f05"
+    },
+    "work/rolling-native-v4/hhw-recovery-stage-20261021-432.sh": {
+      "bytes": 16119,
+      "sha256": "e3e8ff21f8263b8a5c3f0a8bcdbc6989bed6024175fd61f0e245be734aed78c6"
+    },
+    "work/rolling-native-v4/hhw-recovery-stage-20261021-433.sh": {
+      "bytes": 59003,
+      "sha256": "31c05a00c463f52618a78eec6a680f947109556b85d621d8ea57b592c42d9ad8"
+    },
+    "work/rolling-native-v4/hhw-recovery-stage-20261021-434.sh": {
+      "bytes": 26611,
+      "sha256": "e80e863883094573f1924fd1307fd58a9c57044a4ab689f2250a627b363b9129"
+    },
+    "work/rolling-native-v4/hhw-recovery-stage-20261021-451.sh": {
+      "bytes": 45180,
+      "sha256": "db743c6d709622cfc0eae11b4439a9cfe31955d28e4f7682028324ab9bf994bb"
+    },
+    "work/rolling-native-v4/hhw-recovery-stage-20261021-452.sh": {
+      "bytes": 166080,
+      "sha256": "48d4a8aff72c687a2f67c9b6186991d3eaa0c265b10a0c568d2b38a08bc0aced"
+    },
+    "work/rolling-native-v4/qualify-streaming-census-v1-20261023.py": {
+      "bytes": 25115,
+      "sha256": "c1ddf15d87953ad9d5758864553c8b858b77ef1c753cb41c5f4727789e9b1e1a"
+    },
+    "work/rolling-native-v4/qualify-streaming-census-v2-20261023.py": {
+      "bytes": 28112,
+      "sha256": "ccb78fc20f34538ca589b4a8509f6a210f2fa20529d7cf5465eaf1b684ed3002"
+    },
+    "work/rolling-native-v4/registered-snapshot-read-guard-v4-20261022.py": {
+      "bytes": 15419,
+      "sha256": "5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a"
+    },
+    "work/rolling-native-v4/registration-contracts-local-evidence.json": {
+      "bytes": 476,
+      "sha256": "29a63e5bcac8395a47e9ad1467742a24ba3f1a890ddd6e8cf4ec0a47741c6059"
+    },
+    "work/rolling-native-v4/registration-contracts-local-final.xml": {
+      "bytes": 25160,
+      "sha256": "0d5d78e70db7048ed07c3f781dfcef21b3bfdaac6c351adeb670a668cd31f211"
+    },
+    "work/rolling-native-v4/registration-namespace-derivation.json": {
+      "bytes": 4296,
+      "sha256": "481282f5e5a22bd70fad744f68a0adeb74ea58fbc5608a3033c90fa52b82f277"
+    },
+    "work/rolling-native-v4/resubmission-433-operational/operational-differences.json": {
+      "bytes": 1398,
+      "sha256": "b66500606063af4cb363b286ddfe8c7f95e3645e1902eed0cbeb6d893f1dc643"
+    },
+    "work/rolling-native-v4/resubmission-433-operational/run-cohort-prefix-stage-v5-r1-20261022.py": {
+      "bytes": 44082,
+      "sha256": "982816f2328c4bde95eeeb4b1bd761fa9d908039c0426e017f649ff5f1ad7ea3"
+    },
+    "work/rolling-native-v4/resubmission-434-operational/operational-differences.json": {
+      "bytes": 453,
+      "sha256": "e379744f96a6fa7f6832751fd5bd2f9bbbe685ae5e635b072a2b7e8576ad4841"
+    },
+    "work/rolling-native-v4/resubmission-434-operational/qualify-f2-archive-consumer-v3-20261023.py": {
+      "bytes": 23275,
+      "sha256": "0a5c459bf21c178692c07ffc96da52bbcb67f59817f950165ca7d6b23ae9205a"
+    },
+    "work/rolling-native-v4/resubmission-434-operational/run-af-agent-controller-archive-v3-20261023.py": {
+      "bytes": 39874,
+      "sha256": "2004e959019a2fe564f58d1e5fce70ee988a3afb9e62ebc42b95488eaa9fdc02"
+    },
+    "work/rolling-native-v4/resubmission-434-operational/run-af-agent-controller-registry-v6-20261022.py": {
+      "bytes": 62900,
+      "sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866"
+    },
+    "work/rolling-native-v4/resubmission-434-operational/test_af_agent_controller_archive_v3_20261023.py": {
+      "bytes": 51358,
+      "sha256": "de914a3b8a3ad99586a9082912dcbf36004fcd9391501cbe5f44cfee79f8e461"
+    },
+    "work/rolling-native-v4/resubmission-434-operational/test_qualify_f2_archive_consumer_v3_20261023.py": {
+      "bytes": 22604,
+      "sha256": "e1c9b998b6e8ff5fd018819838ac7467463dcbd22e39384bca96945c9db2955b"
+    },
+    "work/rolling-native-v4/resubmission-434-operational/test_verify_f2_condition_archives_v2_20261022.py": {
+      "bytes": 15130,
+      "sha256": "88e79c8fcb4fe7b80882c176d78006f301c50a0c0f6cb8266d4c5bfbb867c565"
+    },
+    "work/rolling-native-v4/resubmission-434-operational/verify-f2-condition-archives-v2-20261022.py": {
+      "bytes": 12654,
+      "sha256": "b02afa747f8e37a654dc0eda6f3a370808cdd381cf92a55a9b56ea9a8b6bfcae"
+    },
+    "work/rolling-native-v4/rolling-dependents-430-434-local-manifest.json": {
+      "bytes": 4387,
+      "sha256": "23b6cc29e5a64a9430c9e988b68d24ec2ca40a3d6b687f487379c3b74428d629"
+    },
+    "work/rolling-native-v4/run-af-agent-controller-census-policy-v1-20261023.py": {
+      "bytes": 26982,
+      "sha256": "3b8ea785eca1c356344f38bd8c3498b68e6dfa18ad70c3cdf3a727e864e1ca15"
+    },
+    "work/rolling-native-v4/run-af-agent-controller-registry-v6-20261022.py": {
+      "bytes": 62900,
+      "sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866"
+    },
+    "work/rolling-native-v4/run-fresh-storage-census-v5-20261023.py": {
+      "bytes": 46593,
+      "sha256": "b448607b00512ef865a3369da56c18bf6f98ab589b6a524795e5bbed9c64e569"
+    },
+    "work/rolling-native-v4/run-fresh-storage-census-v6-20261023.py": {
+      "bytes": 55807,
+      "sha256": "61001913e746537da3583c2844c760f6589b48be763a44f83be446d5d204a1da"
+    },
+    "work/rolling-native-v4/source-manifest.json": {
+      "bytes": 5644,
+      "sha256": "43660c97e50c5a24d42abb321514405107b9f1cade649a492f1c91355486ecb8"
+    },
+    "work/rolling-native-v4/streaming-storage-census-v1-20261023.py": {
+      "bytes": 11452,
+      "sha256": "a1620825ef1401b7497746b7b9128e3d43b985675985505273dca3c36f30364e"
+    },
+    "work/rolling-native-v4/test_af_agent_controller_census_policy_v1_20261023.py": {
+      "bytes": 26166,
+      "sha256": "c7f458b63b4322905e0487c79f9e2d8a12831d0ddff3cdcb829583466ca41308"
+    },
+    "work/rolling-native-v4/test_qualify_streaming_census_v1_20261023.py": {
+      "bytes": 21026,
+      "sha256": "340bbe0046e2cd3da5aff33566d93ff229ceeed872f3edbc92ee743d55433fc8"
+    },
+    "work/rolling-native-v4/test_qualify_streaming_census_v2_20261023.py": {
+      "bytes": 24219,
+      "sha256": "4faaa183493a3c2c0c6578dae254a3aecc8924323c2aa0eca6d9549c2d378520"
+    },
+    "work/rolling-native-v4/test_registered_snapshot_read_guard_v4_20261022.py": {
+      "bytes": 16216,
+      "sha256": "0e4f029814f1aca969fe282dac99a61373128a6dbbe4a0672ba5706a736545b9"
+    },
+    "work/rolling-native-v4/test_rolling_census_registration_429.py": {
+      "bytes": 5167,
+      "sha256": "18ecc59f300f8dde0bde9a3f83fe06189ac6634a7774cbaa02e04c4069a51586"
+    },
+    "work/rolling-native-v4/test_rolling_dependents_430_434.py": {
+      "bytes": 13751,
+      "sha256": "dedb88ba660fddac24e8176c5ce4bb78a31c725a5d45b74a72a54b7f81a72fd9"
+    },
+    "work/rolling-native-v4/test_run_fresh_storage_census_v5_20261023.py": {
+      "bytes": 37967,
+      "sha256": "caf3b9ecc56c2af298411c31790892621e97de506aca2e3ea1d1c9c22745d97a"
+    },
+    "work/rolling-native-v4/test_run_fresh_storage_census_v6_20261023.py": {
+      "bytes": 18614,
+      "sha256": "0ed479c57e8ae73f4fff5d238065a26bb5b80cfa5b6863fe3da6d465f2d1992e"
+    },
+    "work/rolling-native-v4/test_streaming_storage_census_v1_20261023.py": {
+      "bytes": 13095,
+      "sha256": "20665f0fef390ea0ac88ca7b08eb90aa177ec1281d326b3553942d8c55713b4f"
+    },
+    "work/rolling-native-v5/build-rolling-census-registration-429.py": {
+      "bytes": 13544,
+      "sha256": "e2823a180ad866833620deee063aa638787c93038ffee44115e6b82bd9b0cb17"
+    },
+    "work/rolling-native-v5/build-rolling-dependents-430-434.py": {
+      "bytes": 11953,
+      "sha256": "bad3f8a790807943b9dc5c985435d6e85f2e1d5be06b315aa196b44b72b18b28"
+    },
+    "work/rolling-native-v5/controller-primary-repair-sixth-20261016.py": {
+      "bytes": 49391,
+      "sha256": "49815eeb509909d5eac2ebde2e4f4a3918cf40cefdc5f643f2bcaffead629eb1"
+    },
+    "work/rolling-native-v5/coordinator-source-manifest.json": {
+      "bytes": 1894,
+      "sha256": "a597bc65860d75547b859897b96dd39286852f1e60f4591570aa8908d0d823b9"
+    },
+    "work/rolling-native-v5/coordinator425-registration-local-summary.json": {
+      "bytes": 635,
+      "sha256": "ab329e56be0a3152109865e489fbc0b47e9b51a33f7082e40a9bca79f0a5a618"
+    },
+    "work/rolling-native-v5/freeze.json": {
+      "bytes": 15814,
+      "sha256": "aebdb38f4a16aa2dee502982eb7742d7cd43ad17c0b3fbe557f28c50d4bee221"
+    },
+    "work/rolling-native-v5/handoff-builder-local-freeze.json": {
+      "bytes": 840,
+      "sha256": "a1380ec597d3c1feb380a85dce15f81a2f1ddd5a8a8d66291b6605076f07a218"
+    },
+    "work/rolling-native-v5/handoff-builder-namespace-derivation.json": {
+      "bytes": 1002,
+      "sha256": "decea2e5cedd85ea2a58c428509fb3e221f453fc8dd1733a955d7b9a70c18ed6"
+    },
+    "work/rolling-native-v5/handoff-builder-negative-fixture-correction.json": {
+      "bytes": 557,
+      "sha256": "edc023dbb30c1513989e125727cb5b749636e68a18635c2db1a110665dcd24a5"
+    },
+    "work/rolling-native-v5/handoff-f2-external-census-v1-20261023-freeze.json": {
+      "bytes": 12955,
+      "sha256": "98b1abc76995a799d54dcc19cac895e37db41de38b3c80535d60be584168c158"
+    },
+    "work/rolling-native-v5/handoff-f2-external-census-v1-20261023.py": {
+      "bytes": 45360,
+      "sha256": "1391efced13fc9022ab23e3f839831465e697644b779a392d0c2b60668ca3251"
+    },
+    "work/rolling-native-v5/handoff-local-final.xml": {
+      "bytes": 17363,
+      "sha256": "04c08f0049aaa67ca184330a2977404bc40558f9a1b83c159091ae36134d0428"
+    },
+    "work/rolling-native-v5/handoff-namespace-derivation.json": {
+      "bytes": 1847,
+      "sha256": "5a81867fa007d37fde4c71a089274d8ed520b96645bd9d405c03d49426e104a4"
+    },
+    "work/rolling-native-v5/handoff-registration-local-evidence.json": {
+      "bytes": 787,
+      "sha256": "db95e2aadc455fad8905c32386ea5017b38ec071a4055df6dbbc54a17bb786ce"
+    },
+    "work/rolling-native-v5/handoff-source-manifest.json": {
+      "bytes": 1917,
+      "sha256": "92ec92709c466a672d420676cb8446804919dc1615aa5d01ebe3dca1fbf7a21c"
+    },
+    "work/rolling-native-v5/hhw-recovery-stage-20261021-425.sh": {
+      "bytes": 172387,
+      "sha256": "acfa8800ae03d0ed38b245d9c3342afb9fa4d4e8622aeb377b0d997047b99a1c"
+    },
+    "work/rolling-native-v5/hhw-recovery-stage-20261021-429.sh": {
+      "bytes": 13106,
+      "sha256": "759809874ce4c26863b7a23fad85c3a3ab7b9193325876db4ae312b552d205e1"
+    },
+    "work/rolling-native-v5/hhw-recovery-stage-20261021-430.sh": {
+      "bytes": 15235,
+      "sha256": "40f6bd8bd20851a5b543d08dcf3cee624e6ea21d1b1171cdc059f95e55336b0e"
+    },
+    "work/rolling-native-v5/hhw-recovery-stage-20261021-431.sh": {
+      "bytes": 15727,
+      "sha256": "75a47227be72598a4b5c888450ef35b3682129c01637f452b7bdc62716d7215d"
+    },
+    "work/rolling-native-v5/hhw-recovery-stage-20261021-432.sh": {
+      "bytes": 16123,
+      "sha256": "342069bc411b9c2e5ad8bbe05b06d865ed1299b28539a2d3ccb1ce41952b8829"
+    },
+    "work/rolling-native-v5/hhw-recovery-stage-20261021-433.sh": {
+      "bytes": 59003,
+      "sha256": "d6ad49fbd1874f6b593ed43bd21fc04a82300a58813cbaa5b6a208a06073cd36"
+    },
+    "work/rolling-native-v5/hhw-recovery-stage-20261021-434.sh": {
+      "bytes": 26607,
+      "sha256": "bdb75c962cdc1288258d6a596ced39a3ba4ede789fd9dc964ba96a19952c7b26"
+    },
+    "work/rolling-native-v5/hhw-recovery-stage-20261021-451.sh": {
+      "bytes": 45176,
+      "sha256": "882ee2f14780f96d285ee36140e1471ba9fa61d3bcc897b4af1f4743de980d73"
+    },
+    "work/rolling-native-v5/hhw-recovery-stage-20261021-456.sh": {
+      "bytes": 189815,
+      "sha256": "0c0584fe8ad7d8e70189edaa95d76acdfca7dbcc4494647c25c55a04fad441b7"
+    },
+    "work/rolling-native-v5/namespace-derivation.json": {
+      "bytes": 1447,
+      "sha256": "f31a5599421514721f42ddd8ca5362b966e104ff3cba69d9028a55d3f34afd29"
+    },
+    "work/rolling-native-v5/qualify-streaming-census-v1-20261023.py": {
+      "bytes": 25115,
+      "sha256": "c1ddf15d87953ad9d5758864553c8b858b77ef1c753cb41c5f4727789e9b1e1a"
+    },
+    "work/rolling-native-v5/qualify-streaming-census-v2-20261023.py": {
+      "bytes": 28112,
+      "sha256": "32fca6288d496ad298c1bc2e8f990bfd4b118d4ed36802d83ee245c0ee0c2a11"
+    },
+    "work/rolling-native-v5/registered-snapshot-read-guard-v4-20261022.py": {
+      "bytes": 15419,
+      "sha256": "5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a"
+    },
+    "work/rolling-native-v5/registration-namespace-derivation.json": {
+      "bytes": 6802,
+      "sha256": "c887bec59ac045588c663420e6c5b0fabcc52a7080f8359534a973609a5d2974"
+    },
+    "work/rolling-native-v5/resubmission-433-operational/operational-differences.json": {
+      "bytes": 1398,
+      "sha256": "b66500606063af4cb363b286ddfe8c7f95e3645e1902eed0cbeb6d893f1dc643"
+    },
+    "work/rolling-native-v5/resubmission-433-operational/run-cohort-prefix-stage-v5-r1-20261022.py": {
+      "bytes": 44082,
+      "sha256": "982816f2328c4bde95eeeb4b1bd761fa9d908039c0426e017f649ff5f1ad7ea3"
+    },
+    "work/rolling-native-v5/resubmission-434-operational/operational-differences.json": {
+      "bytes": 453,
+      "sha256": "e379744f96a6fa7f6832751fd5bd2f9bbbe685ae5e635b072a2b7e8576ad4841"
+    },
+    "work/rolling-native-v5/resubmission-434-operational/qualify-f2-archive-consumer-v3-20261023.py": {
+      "bytes": 23275,
+      "sha256": "0a5c459bf21c178692c07ffc96da52bbcb67f59817f950165ca7d6b23ae9205a"
+    },
+    "work/rolling-native-v5/resubmission-434-operational/run-af-agent-controller-archive-v3-20261023.py": {
+      "bytes": 39874,
+      "sha256": "2004e959019a2fe564f58d1e5fce70ee988a3afb9e62ebc42b95488eaa9fdc02"
+    },
+    "work/rolling-native-v5/resubmission-434-operational/run-af-agent-controller-registry-v6-20261022.py": {
+      "bytes": 62900,
+      "sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866"
+    },
+    "work/rolling-native-v5/resubmission-434-operational/test_af_agent_controller_archive_v3_20261023.py": {
+      "bytes": 51358,
+      "sha256": "de914a3b8a3ad99586a9082912dcbf36004fcd9391501cbe5f44cfee79f8e461"
+    },
+    "work/rolling-native-v5/resubmission-434-operational/test_qualify_f2_archive_consumer_v3_20261023.py": {
+      "bytes": 22604,
+      "sha256": "e1c9b998b6e8ff5fd018819838ac7467463dcbd22e39384bca96945c9db2955b"
+    },
+    "work/rolling-native-v5/resubmission-434-operational/test_verify_f2_condition_archives_v2_20261022.py": {
+      "bytes": 15130,
+      "sha256": "88e79c8fcb4fe7b80882c176d78006f301c50a0c0f6cb8266d4c5bfbb867c565"
+    },
+    "work/rolling-native-v5/resubmission-434-operational/verify-f2-condition-archives-v2-20261022.py": {
+      "bytes": 12654,
+      "sha256": "b02afa747f8e37a654dc0eda6f3a370808cdd381cf92a55a9b56ea9a8b6bfcae"
+    },
+    "work/rolling-native-v5/rolling-dependents-430-434-local-manifest.json": {
+      "bytes": 4387,
+      "sha256": "ec581965a943b0aee1e82d41d9ea38ca66065c1af2c1248a56ae98dbbc094386"
+    },
+    "work/rolling-native-v5/run-af-agent-controller-census-policy-v1-20261023.py": {
+      "bytes": 26982,
+      "sha256": "120f02d098b6c9afa0ea0df54f590ae381b4227d4892ba0f9ee4acc93e6fec0f"
+    },
+    "work/rolling-native-v5/run-af-agent-controller-registry-v6-20261022.py": {
+      "bytes": 62900,
+      "sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866"
+    },
+    "work/rolling-native-v5/run-fresh-storage-census-v5-20261023.py": {
+      "bytes": 46593,
+      "sha256": "b448607b00512ef865a3369da56c18bf6f98ab589b6a524795e5bbed9c64e569"
+    },
+    "work/rolling-native-v5/run-fresh-storage-census-v6-20261023.py": {
+      "bytes": 55807,
+      "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+    },
+    "work/rolling-native-v5/source-manifest.json": {
+      "bytes": 5644,
+      "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+    },
+    "work/rolling-native-v5/streaming-storage-census-v1-20261023.py": {
+      "bytes": 11452,
+      "sha256": "a1620825ef1401b7497746b7b9128e3d43b985675985505273dca3c36f30364e"
+    },
+    "work/rolling-native-v5/test_af_agent_controller_census_policy_v1_20261023.py": {
+      "bytes": 26166,
+      "sha256": "c7f458b63b4322905e0487c79f9e2d8a12831d0ddff3cdcb829583466ca41308"
+    },
+    "work/rolling-native-v5/test_handoff_f2_external_census_v1_20261023.py": {
+      "bytes": 36489,
+      "sha256": "ed5a78d9d96ed669819a18c84e60046579979f9d3490c2046d611244f9a70a6b"
+    },
+    "work/rolling-native-v5/test_qualify_streaming_census_v1_20261023.py": {
+      "bytes": 21026,
+      "sha256": "340bbe0046e2cd3da5aff33566d93ff229ceeed872f3edbc92ee743d55433fc8"
+    },
+    "work/rolling-native-v5/test_qualify_streaming_census_v2_20261023.py": {
+      "bytes": 24219,
+      "sha256": "4faaa183493a3c2c0c6578dae254a3aecc8924323c2aa0eca6d9549c2d378520"
+    },
+    "work/rolling-native-v5/test_registered_snapshot_read_guard_v4_20261022.py": {
+      "bytes": 16216,
+      "sha256": "0e4f029814f1aca969fe282dac99a61373128a6dbbe4a0672ba5706a736545b9"
+    },
+    "work/rolling-native-v5/test_rolling_census_registration_429.py": {
+      "bytes": 5167,
+      "sha256": "18ecc59f300f8dde0bde9a3f83fe06189ac6634a7774cbaa02e04c4069a51586"
+    },
+    "work/rolling-native-v5/test_rolling_dependents_430_434.py": {
+      "bytes": 13751,
+      "sha256": "56aec91ba8e4bf91427094c913be2a12e13172c5a0c7d4f4bf91eec35b00347a"
+    },
+    "work/rolling-native-v5/test_run_fresh_storage_census_v5_20261023.py": {
+      "bytes": 37967,
+      "sha256": "caf3b9ecc56c2af298411c31790892621e97de506aca2e3ea1d1c9c22745d97a"
+    },
+    "work/rolling-native-v5/test_run_fresh_storage_census_v6_20261023.py": {
+      "bytes": 18614,
+      "sha256": "0ed479c57e8ae73f4fff5d238065a26bb5b80cfa5b6863fe3da6d465f2d1992e"
+    },
+    "work/rolling-native-v5/test_streaming_storage_census_v1_20261023.py": {
+      "bytes": 13095,
+      "sha256": "20665f0fef390ea0ac88ca7b08eb90aa177ec1281d326b3553942d8c55713b4f"
+    },
+    "work/run-af-agent-controller-census-policy-v1-20261023.py": {
+      "bytes": 26982,
+      "sha256": "6839c74f35a231fe743cc9e895b1b16177d80e575cb8561e1d762b182c1d8033"
+    },
+    "work/run-af-agent-controller-registry-v6-20261022.py": {
+      "bytes": 62900,
+      "sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866"
+    },
+    "work/run-fresh-storage-census-v5-20261023.py": {
+      "bytes": 46593,
+      "sha256": "b448607b00512ef865a3369da56c18bf6f98ab589b6a524795e5bbed9c64e569"
+    },
+    "work/run-fresh-storage-census-v6-20261023.py": {
+      "bytes": 55807,
+      "sha256": "4fb2f11a11b335288dbfa92e821556c67becd0fb9fc67d2f8c70e6514d2cc810"
+    },
+    "work/streaming-storage-census-v1-20261023.py": {
+      "bytes": 11452,
+      "sha256": "a1620825ef1401b7497746b7b9128e3d43b985675985505273dca3c36f30364e"
+    },
+    "work/test_af_agent_controller_census_policy_v1_20261023.py": {
+      "bytes": 26166,
+      "sha256": "c7f458b63b4322905e0487c79f9e2d8a12831d0ddff3cdcb829583466ca41308"
+    },
+    "work/test_build_reviewed_registration_coordinator_425.py": {
+      "bytes": 6384,
+      "sha256": "b35e62c89f77dc9cc5917234546c6e5be464a40a0056035b2f94cd60cd3ca30b"
+    },
+    "work/test_coordinate_reviewed_registrations_v3_20261023.py": {
+      "bytes": 30371,
+      "sha256": "87b62b5474abd03937a466495ad0996fd30a81ee99b7dcf18dcc670b45c868d1"
+    },
+    "work/test_coordinate_reviewed_registrations_v4_20261023.py": {
+      "bytes": 31642,
+      "sha256": "6c5047fac853fbbf9061f87659eabf4bd29b35e0de6426b24a7bb464fa29fa86"
+    },
+    "work/test_external_census_handoff_registration_451.py": {
+      "bytes": 16797,
+      "sha256": "ccfeb01b8a8ce5265916b3da3880ac55814e69aaa2432b2086e1e189619d952e"
+    },
+    "work/test_external_census_handoff_registration_451_v2.py": {
+      "bytes": 16855,
+      "sha256": "d07803239a7f94cee920f6c4f828931d5c43d7137b9b2a5830f2f19a16e4547d"
+    },
+    "work/test_handoff_f2_external_census_v1_20261023.py": {
+      "bytes": 36489,
+      "sha256": "e3ea6807c5d3ceaafc93f989593a7bdd3d2e1cb73441c4e8321f20ee76095ae1"
+    },
+    "work/test_qualify_streaming_census_v1_20261023.py": {
+      "bytes": 21026,
+      "sha256": "340bbe0046e2cd3da5aff33566d93ff229ceeed872f3edbc92ee743d55433fc8"
+    },
+    "work/test_qualify_streaming_census_v2_20261023.py": {
+      "bytes": 24219,
+      "sha256": "4faaa183493a3c2c0c6578dae254a3aecc8924323c2aa0eca6d9549c2d378520"
+    },
+    "work/test_registered_snapshot_read_guard_v4_20261022.py": {
+      "bytes": 16216,
+      "sha256": "0e4f029814f1aca969fe282dac99a61373128a6dbbe4a0672ba5706a736545b9"
+    },
+    "work/test_rolling_native_v4_ast_portability_20261023.py": {
+      "bytes": 5319,
+      "sha256": "13d8b7113fde4e47ef018096ad9abc716fd2813219aed4cb58dfdfa496391ebf"
+    },
+    "work/test_rolling_native_v5_fixture_20261023.py": {
+      "bytes": 6808,
+      "sha256": "d33b3d2f6476b00840ef541fbbb389524cf9cbf4fb7a2299db722e0a23d9cfad"
+    },
+    "work/test_run_fresh_storage_census_v5_20261023.py": {
+      "bytes": 37258,
+      "sha256": "734aa1e349332660072fedf8246d7bc6fdc8f47c7cca0d4d06893088c5b1df58"
+    },
+    "work/test_run_fresh_storage_census_v6_20261023.py": {
+      "bytes": 18614,
+      "sha256": "0ed479c57e8ae73f4fff5d238065a26bb5b80cfa5b6863fe3da6d465f2d1992e"
+    },
+    "work/test_streaming_storage_census_v1_20261023.py": {
+      "bytes": 13095,
+      "sha256": "20665f0fef390ea0ac88ca7b08eb90aa177ec1281d326b3553942d8c55713b4f"
+    },
+    "work/verify-reviewed-release-bytes-20261021.py": {
+      "bytes": 2317,
+      "sha256": "c914ce6baf529532f10dda5beff04e7d4e649e4cbb800f5cd06f80a7c4b6a467"
+    }
+  },
+  "kind": "census_and_controller_resumption_source_capsule_v1"
+}

@@ -1,0 +1,24 @@
+{
+  "builder": {
+    "path": "work/build-external-census-handoff-registration-451-v2.py",
+    "sha256": "a31176e8be85fc40628912b8ed4c5d60432c875f5798c41d4caecbcf58419e52"
+  },
+  "junit": {
+    "path": "work\\handoff451-builder-v2-local-final-junit.xml",
+    "sha256": "bc86af14f6ddd0dcf1b101762ebbe0fdc5816587fcd44570d3c9688d268ddd27"
+  },
+  "kind": "handoff451-builder-v2-local-freeze-v1",
+  "native_qualification_claimed": false,
+  "roster_sha256": "2b2af3e2322242cb71c5aafae9e6d055cf9c55def2b763ba02fc3c4571eaef29",
+  "scheduler_submitted": false,
+  "test": {
+    "path": "work/test_external_census_handoff_registration_451_v2.py",
+    "sha256": "d07803239a7f94cee920f6c4f828931d5c43d7137b9b2a5830f2f19a16e4547d"
+  },
+  "test_counts": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 37
+  }
+}

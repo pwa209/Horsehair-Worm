@@ -1,0 +1,19 @@
+{
+  "files": {
+    "activate-f2-prestart-three-v1-20261022.py": "586bbf301ef69621cc1132b8b25a9c243f29a2e918b54d564e84be816af2d2eb",
+    "qualify-f2-registry-repair-v6-20261022.py": "875ec697466351b21718eded61a6e81ac23d74ce0902ce481ebc970012261020",
+    "recover-f2-prestart-three-state-v1-20261022.py": "7151017a3579694228b1ba78f14da9cdda3e4a4608d98f9f257d2d2c4b26807d",
+    "recover-f2-training0000-state-20261021.py": "504eb2764073a5b614d986827ccacad3189ea4be5988313ead47ab41805fe26a",
+    "registered-snapshot-read-guard-v5-20261022.py": "7bd2bf562d0a81887ef1afd308ddd9265e5cadb23ba4b2e5946980b659505431",
+    "run-af-agent-controller-registry-v6-20261022.py": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866",
+    "run-f00d-worker-registry-overlay-20261021.py": "dd39905ce44f89f7f8bbdd325d1a0f1d5ec7950dd89d0e3bb267f6fdfe77a09a",
+    "test_activate_f2_prestart_three_v1_20261022.py": "7969911a11d54c71c33c41f9888f4d3889db5326489ff6468399823640d54964",
+    "test_af_agent_controller_registry_v6_20261022.py": "da703c4cc8b172a2ea79067a8f5c5e9d0976853823a8ed230e3fb1a721633a3d",
+    "test_f00d_worker_registry_overlay_20261021.py": "2fdcf83a1abc796f82e86d3d3014fd785d195bf7ca4dc6457f2d6dd5db9b3968",
+    "test_qualify_f2_registry_repair_v6_20261022.py": "8ebf7f455a4c8ff8282dbdb3c0e94ee93f0d5e8eac3e276a6ae57a7c01159067",
+    "test_recover_f2_prestart_three_state_v1_20261022.py": "dddccdc4d800110ecfbdf72f8a3fb25f7726a858d80272c016cce3c233b4253d",
+    "test_recover_f2_training0000_state_20261021.py": "6cb7fdcc55f12164d81666f70e545b6efd610a1299baef66e483a271fbbe1673",
+    "test_registered_snapshot_read_guard_v5_20261022.py": "934196d84276299ce2b567bef6925515e4656978401a0dd4f49c8bd2d1339d72"
+  },
+  "kind": "f2-prestart-three-source-freeze-v1"
+}

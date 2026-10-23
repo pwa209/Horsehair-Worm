@@ -1,0 +1,15 @@
+{
+  "explicit_replacements": {
+    "HELPER='handoff-f2-external-census-v1-20261023.py'": "HELPER_DIR=Path('work/rolling-native-v5')\nHELPER='handoff-f2-external-census-v1-20261023.py'",
+    "helper=Path('work')/HELPER;test=Path('work')/TEST": "helper=HELPER_DIR/HELPER;test=HELPER_DIR/TEST",
+    "registration('452')": "registration('456')",
+    "study-af-rolling-census-qualification-v4-20261023": "study-af-rolling-census-qualification-v5-20261023",
+    "study-af-rolling-census-support-v3-20261023": "study-af-rolling-census-support-v4-20261023",
+    "work/rolling-native-v4": "work/rolling-native-v5"
+  },
+  "kind": "handoff-registration-builder-namespace-derivation-v1",
+  "scheduler_submitted": false,
+  "source_after_sha256": "a31176e8be85fc40628912b8ed4c5d60432c875f5798c41d4caecbcf58419e52",
+  "source_before_sha256": "7ffbb85662dc671f98afdba8eb57b1f3313ceaa1bd245c9220bb104402516e4a",
+  "test_after_sha256": "bb8ebee64e472374004e46d50d573e8a578d16236229efac0c5d88027db3948a"
+}

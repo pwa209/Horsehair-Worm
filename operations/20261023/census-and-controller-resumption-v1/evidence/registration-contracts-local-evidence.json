@@ -1,0 +1,14 @@
+{
+  "errors": 0,
+  "failures": 0,
+  "junit": {
+    "path": "work\\rolling-native-v4\\registration-contracts-local-final.xml",
+    "sha256": "0d5d78e70db7048ed07c3f781dfcef21b3bfdaac6c351adeb670a668cd31f211"
+  },
+  "kind": "rolling-v4-registration-contract-local-evidence-v1",
+  "qualification_claimed": false,
+  "roster_sha256": "20c023c8e1b07f4bfa83c850a32577f658eb18b6d7dba99c8a1a03c7a8dfc8b8",
+  "scheduler_submitted": false,
+  "skipped": 0,
+  "tests": 124
+}
