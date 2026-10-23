@@ -1,0 +1,38 @@
+{
+  "embedded_actual_native_fixtures": {
+    "488_scontrol_sha256": "51758a668fa1a70dd105c6a4f3ef7d7d57a46ff250797ea53d6cbcde03b32115",
+    "488_script_sha256": "fbe69f82abce43e936a70be0aeb27835e7bb915fadb1cef59b1c06d2d39b4938",
+    "491_raw_13_column_sha256": "bf0e83b0f1aa02f6a9fdde520ccca5f14f6f8f494bb73876dbe951dd580ce9a7"
+  },
+  "files": {
+    "handoff-contracts-local-final.xml": {
+      "bytes": 30512,
+      "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\primary-handoff-v3\\handoff-contracts-local-final.xml",
+      "sha256": "6b41eed54fdf4ccf4d03983bb4b77e28dd84eb6ca51e8fff31a25484c99c2adc"
+    },
+    "handoff-primary-external-census-v1-20261023.py": {
+      "bytes": 51364,
+      "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\primary-handoff-v3\\handoff-primary-external-census-v1-20261023.py",
+      "sha256": "0d37f96bd93dd96266eb3f46eb66bf7bd1ecb929b1e8474f3153b1624fda50f3"
+    },
+    "test_handoff_primary_external_census_v1_20261023.py": {
+      "bytes": 107382,
+      "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\primary-handoff-v3\\test_handoff_primary_external_census_v1_20261023.py",
+      "sha256": "14674660061d3162d33f56d8e01e4a5c23084fd09f9a9da54ddbad6e3b9488fe"
+    }
+  },
+  "historical_v1_v2_preserved": {
+    "work/handoff-primary-external-census-v1-20261023.py": "f299f6be9684e7f5d5ad4e28cd92870f9f8ee4c72774eef876251be9f9123584",
+    "work/primary-handoff-v2/handoff-primary-external-census-v1-20261023.py": "de582b45b5c3f813673f6f0bcaa3aca32659c3b57a75b10511e2409fabb015c9",
+    "work/primary-handoff-v2/test_handoff_primary_external_census_v1_20261023.py": "0bd09ef4ec8fc62c4e5cc98e26698e3a1fc0da462b1891a8f0fc907dd73e7ed5",
+    "work/test_handoff_primary_external_census_v1_20261023.py": "fbe9651e6e01edb109f8fae9fd2e97e1e6a510d022e30776be4ac6c5cade8119"
+  },
+  "kind": "primary-external-census-handoff-v3-local-contract-freeze-v1",
+  "native_qualification_claimed": false,
+  "python_311_grammar": "passed",
+  "status": "153_local_contracts_passed_native_qualification_pending",
+  "tests": {
+    "count": 153,
+    "roster_sha256": "960fb1ad9679f0c740b6a560a44f497495f9f2db60b9ab34b6009fa5c65af3c2"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "finished_unix": 1792755297.9416018,
+  "returncode": 0,
+  "stderr": {
+    "bytes": 0,
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/new-native-000004/attempt-1-stderr.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "stdout": {
+    "bytes": 1560,
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/new-native-000004/attempt-1-stdout.txt",
+    "sha256": "51758a668fa1a70dd105c6a4f3ef7d7d57a46ff250797ea53d6cbcde03b32115"
+  }
+}

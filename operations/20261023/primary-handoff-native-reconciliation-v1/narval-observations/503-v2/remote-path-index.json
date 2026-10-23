@@ -1,0 +1,452 @@
+{
+  "/scratch/pwa209/horsehair-worm/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/external-census-policy.json": {
+    "bytes": 2418,
+    "collection": "files",
+    "path": "files/a4b86cc21ca445d29586d3a4e89399b93441066ee9de8f1c82d89c4069c6a6e6",
+    "sha256": "2b0e6ebaa0f1b511bca4343d4722d43702cf051f956cce59494ddccae656c517"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/handoff-contracts.xml": {
+    "bytes": 20448,
+    "collection": "suites",
+    "path": "files/7a3343e9db20a199dd94780578e13663c127675be7186762aaac0802b2f4a04b",
+    "sha256": "11e094dcde8bb1708f78d752667b7dc6f7990acb98d371c01fd217b1422f47cd"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/native-handoff-qualification.json": {
+    "bytes": 1323,
+    "collection": "files",
+    "path": "files/5fb4849c4631e64e58b81a8b6173a4b8a60f051a908870fa043f8d39186f6c2a",
+    "sha256": "666f89af22652aec112d58867a6e0696ab3c80bb418da9c099fd3c8e3bd9037b"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/receipt.json": {
+    "bytes": 90428,
+    "collection": "files",
+    "path": "files/479572cfe4a4f0e30efbf241e208bfdbbc2a5f6610303a19e309b24210ec2344",
+    "sha256": "ec0e600e161f1546a8b40efe52304f20508323431d20cf2c2ada310b89a5f4ed"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/native-activation-prestart-three-v1/descriptor-prestart-three-v1.json": {
+    "bytes": 4695,
+    "collection": "files",
+    "path": "files/422a7f35537410bb8f349f76ea8ac3d57d1f6b4a595478b3f862a3f583bd754d",
+    "sha256": "9a0706642ac1660fb7f39fe68279ca34bdc10f89812a0c2397608d2a382cf464"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/private-qualification.json": {
+    "bytes": 9223,
+    "collection": "files",
+    "path": "files/3b1abf85056ee3198522b846ab6bfb5ad32ff41358b835c10db565b79d9e6f67",
+    "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-storage-census-v4-20261023/native-6864491/receipt.json": {
+    "bytes": 19020,
+    "collection": "files",
+    "path": "files/2ac7921a9ccfeef5ba5a2d1c049bb583eb5f847a08f05ac78586ecdeebdb0676",
+    "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-descriptor-prestart-reconciliation-v1-20261023/all-three-pending-preflight.json": {
+    "bytes": 7047,
+    "collection": "files",
+    "path": "files/5ff80a47ae689b45166db7da9281b60e348125c950339bfe66459fc1f700d3b0",
+    "sha256": "13ba3ed8639735e1e11cec91ae0551414400583019b964a4faccdf31cbfc6b59"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-descriptor-prestart-reconciliation-v1-20261023/cancel-6870610-intent.json": {
+    "bytes": 2612,
+    "collection": "files",
+    "path": "files/c7638e57983c942ae97aa24a184559ef249a6a6ba99472a984977066ef192c16",
+    "sha256": "d9d8d765021eafb3e7c20e175c49aba3357c9c4c7dede3896c4900e4e332b3d2"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-descriptor-prestart-reconciliation-v1-20261023/cancel-6870610-positive-never-started.json": {
+    "bytes": 431,
+    "collection": "files",
+    "path": "files/30ead454d523fbdffc616649753b49ea7928b13e00db97efb35d9b7c8d59c7c9",
+    "sha256": "ea301f580d4c15027f4e056c974e3ee0f4c3ce1c4bcdee29d346051f2e105ab7"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-descriptor-prestart-reconciliation-v1-20261023/cancel-6870610-result.json": {
+    "bytes": 53,
+    "collection": "files",
+    "path": "files/bf7cb9435b0291e44d7a5bb501f868de9557fa204d25233c8e080708f4541f23",
+    "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-descriptor-prestart-reconciliation-v1-20261023/cancel-6870628-intent.json": {
+    "bytes": 2530,
+    "collection": "files",
+    "path": "files/db2aa403d88f2d0511e350044b074b1d31e35d001be1b8532575a06b306bee2a",
+    "sha256": "30105685d6536105a40ad04ee3961892c0aa7f83f791532df6401baa14a33298"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-descriptor-prestart-reconciliation-v1-20261023/cancel-6870628-positive-never-started.json": {
+    "bytes": 431,
+    "collection": "files",
+    "path": "files/689704460db0a8d832c95b35078164143d246ac09426bbd61382ec8f6dcac194",
+    "sha256": "24cfa4ae718cd5534d85432b28473218201159b343b15ad26bde4f993d9389bd"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-descriptor-prestart-reconciliation-v1-20261023/cancel-6870628-result.json": {
+    "bytes": 53,
+    "collection": "files",
+    "path": "files/2098d4a407f35441a9a5c08307f98f87d8df9bb38c37c063f642111fdc0ca8a3",
+    "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-descriptor-prestart-reconciliation-v1-20261023/cancel-6870632-intent.json": {
+    "bytes": 2530,
+    "collection": "files",
+    "path": "files/3da4e01b891b02e146445c5545dd7da6ad6bb01dd911e753a450c91966615888",
+    "sha256": "fe39df54d8e309acedad99cd45697a8a5b282bbe57e9238f70388c65696ba11c"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-descriptor-prestart-reconciliation-v1-20261023/cancel-6870632-positive-never-started.json": {
+    "bytes": 431,
+    "collection": "files",
+    "path": "files/c2dcd0551091a75ff30233d3a2c1976511281678e4743839ba47bbfffdfed318",
+    "sha256": "665401897297efdce3e3b49036ac814ca6bb8550c6759aa372e6bcabdbae6d6a"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-descriptor-prestart-reconciliation-v1-20261023/cancel-6870632-result.json": {
+    "bytes": 53,
+    "collection": "files",
+    "path": "files/538075f769c6ac6c8d7bcfba9b0262bc2a781ff29866cad4ecb8d0f3ac49d670",
+    "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-descriptor-prestart-reconciliation-v1-20261023/first-prestart-refusal.json": {
+    "bytes": 250,
+    "collection": "files",
+    "path": "files/9730979d2456e65ded1bad4fab688668ed055e9fa3a4b1b1804127395c1aad55",
+    "sha256": "8217e3893b1f2ae5702246043e49cc5ee91ca5041652d9a2add6b2ec2f940655"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-descriptor-prestart-reconciliation-v1-20261023/receipt.json": {
+    "bytes": 298,
+    "collection": "files",
+    "path": "files/b5ce090aeee26e7b162a63063b1629a4fb57c814378edb3235a07e59304a4b53",
+    "sha256": "567ff41003556ffaf316db0d9d5499a20287ffb3fbe304537efac1bb745326ed"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/run-policy.json": {
+    "bytes": 2449,
+    "collection": "files",
+    "path": "files/24a1322f2d1f077a407612f6f37ec9c84e53bdbd38bd448eb34e6720343e8e3c",
+    "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/run-policy.json": {
+    "bytes": 2449,
+    "collection": "files",
+    "path": "files/3de56180bc2e16d4be2a3a20e8e182c92ab58c1bb1fe70265732f3d4237fdf7a",
+    "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/all-four-new-held-native-proof.json": {
+    "bytes": 9273,
+    "collection": "files",
+    "path": "files/f87571bf57456efa16a37412b276402b33a250c4b518dde9ce9c1995d757fa15",
+    "sha256": "fbefed8655bb75f9502b54dfc5bb4f6c689fe40f6264baa7d386d51e0c211573"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/all-new-held-submission-intent.json": {
+    "bytes": 319,
+    "collection": "files",
+    "path": "files/79ed82ffe2152b1bea47c77842ac702685bddb165f7f949ee640e95197cb2aee",
+    "sha256": "5f733e033ea523d6a46f6175a067c6014ebdedccd471cc2d59b1068a0f13d00e"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/handoff-contracts.xml": {
+    "bytes": 41039,
+    "collection": "suites",
+    "path": "files/f5df9c084c92efb1dde88bd61b89d00c6d67830e3e21ca5986852de949da317c",
+    "sha256": "52e95e184ba942d97d27fb848fbf0fe09c8034e2e0da724e1781abc6d4b0c412"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/native-handoff-qualification.json": {
+    "bytes": 1345,
+    "collection": "files",
+    "path": "files/2c03bff57285f15d24a493587aa2be3dbead4f8e7033bd19705da1d0f5485112",
+    "sha256": "6406a8745da24dafa77a13e5a94f3efcffb03dc2466bd902dea1a1c70fe2b6aa"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/native-selftest-intent.json": {
+    "bytes": 1296,
+    "collection": "files",
+    "path": "files/7a1f0b33ba867fd2d9195ae6abfc0d2729e5973a38cc3af7e7aba0f39202e3f1",
+    "sha256": "1d32e5aa803ba84db8a54d8296e60d1e5d4756eabc4c489ab28f68cb2ec528e8"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/native-selftest-stderr.txt": {
+    "bytes": 0,
+    "collection": "files",
+    "path": "files/1529dcaa362630ef65ed6de1245370692c5e138729eeca9d66bd4227ff0599fd",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/native-selftest-stdout.txt": {
+    "bytes": 260,
+    "collection": "files",
+    "path": "files/7c863afccd7e2f3cc4409195d44f4c017e988c791c4edc042ad17814c96e56dc",
+    "sha256": "724f79755f89dcaf41ecb75a4df2f9f6e2c1a9b7f4333da51e5c2f0ae56d9e09"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/primary-handoff-all-new-registered.json": {
+    "bytes": 1351001,
+    "collection": "files",
+    "path": "files/a80ecf3445db27b14a470f6ac226e0b478e5a43c7046e4f34162402061f8424d",
+    "sha256": "904d9ccd2e9892f4fb2541652bb1b19c552116339a57794618d0dd40b1b4a725"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/primary-handoff-before-new-registration.json": {
+    "bytes": 1349341,
+    "collection": "files",
+    "path": "files/6c1b24fa244dca765f86b687e6799f609ff3965b2109425633e44d04416e99fd",
+    "sha256": "5e48a06864ae71c6fec7b16a94420524231054779a707a0896ceb2f6dd9dccd1"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/primary-handoff-finalized-qualification-accounting.json": {
+    "bytes": 1349340,
+    "collection": "files",
+    "path": "files/1031dbe4a1bf29a93a96f180edb55e5d9613b6c3c21a08f019c8eb585a43a871",
+    "sha256": "f20d528a2fd22bad0ce4f0cc7770170c46fb9f16afd2e74893e4243a51ff7461"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/prior-handoff-preserved.json": {
+    "bytes": 4909,
+    "collection": "files",
+    "path": "files/cbab1a099372ef4cdc02fd61ae688223343601f603ef71ea6e29bc078d2a352c",
+    "sha256": "6354cfbe705a7d4efcbb0d00cfa5183292fbf5af92420b66097daf6a328e8367"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/release-intent.json": {
+    "bytes": 236,
+    "collection": "files",
+    "path": "files/0f64cf0a2c5b805e039d8b0de72eb711d0ea4939db06c7b5de0c2757fba7e471",
+    "sha256": "ad7cd845514b9aff8653fa3190699cec1e3a4efbe5dbd468dc96eaad19c03be2"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/release-new-6873105-intent.json": {
+    "bytes": 286,
+    "collection": "files",
+    "path": "files/ae42c4ab628bca15e21db31ec8b4b7d2b36f5df77b5281d30e21c1ca6bd262d6",
+    "sha256": "70b54512b959ce30e297ebad04b2281065242357592a9bf26c63a734da6fc672"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/release-new-6873107-intent.json": {
+    "bytes": 286,
+    "collection": "files",
+    "path": "files/23860770d8c5377cd1b175d77656e677549924af701d54e2eaba9684200a9688",
+    "sha256": "73685c33dc2b91c6b313f5984974e4bcf381be54476286cd8dd2c221d6b6623d"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/release-new-6873107-result.json": {
+    "bytes": 2520,
+    "collection": "files",
+    "path": "files/63fff7d6f521e8d8e5c3e2eeb001ebc0776cdf3cd841728a9ddfacf91c3c2646",
+    "sha256": "cf52eb256e5edc13b4de5bb78c26ec58bbc090e3b049615e22310b6b2386f262"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/run-policy-validation.json": {
+    "bytes": 2092,
+    "collection": "files",
+    "path": "files/2786e358f589e58293db8ed6d07c05b66094ef92cd324b80ba93bd4abf2b8664",
+    "sha256": "14c4eb32b110d5a2a0d83efee39889af57f12a8eaef87ec1bd3d1637b40fbdea"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/handoffs/native-6872985/run-policy.json": {
+    "bytes": 2449,
+    "collection": "files",
+    "path": "files/278ba0093f6442d8f999218ae8c1d7b6bc48db31f3a052f56d51c65eecd20a50",
+    "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_budget-module-origins.json": {
+    "bytes": 934,
+    "collection": "files",
+    "path": "files/93af700d56e1a772539cde8a81f1552e639d86e9ddf4c1bcfced26b400921eb3",
+    "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_pipeline-module-origins.json": {
+    "bytes": 1830,
+    "collection": "files",
+    "path": "files/a31598d9de99c7af1fe6a873e7bc048960d9d2bf1273979539d7f073795a3939",
+    "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+  },
+  "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/primary_policy-module-origins.json": {
+    "bytes": 916,
+    "collection": "files",
+    "path": "files/13cdf646b7800bee17e4bc250b8518f5abd319fc8b66406435271fbc6f00299e",
+    "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v1/plan.json": {
+    "bytes": 18687,
+    "collection": "files",
+    "path": "files/def9a5aec8ee0c04caaa1db3ebfca195eece28b8ee47d7f87397bd565c001596",
+    "sha256": "6a33e4ee89f4f4ef380e712aec7d488bdd7b5acfbb39d28301cabcb7c7e7cdf3"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v1/primary-external-census-controller-0.sbatch": {
+    "bytes": 1958,
+    "collection": "files",
+    "path": "files/512a0a183d9767a9e1a235eaf1f9b4ae675feb6793d71deaa654bc70266836e9",
+    "sha256": "fbe69f82abce43e936a70be0aeb27835e7bb915fadb1cef59b1c06d2d39b4938"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v1/primary-external-census-controller-1.sbatch": {
+    "bytes": 1958,
+    "collection": "files",
+    "path": "files/739903164b883d75bea4975bf378721891576040d45f09114c0429da65d5ec20",
+    "sha256": "0831e0ec643aad2493f34475a62963cf6bffc8419b5ad2a538f9c33369d1539d"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v1/primary-external-census-controller-2.sbatch": {
+    "bytes": 1958,
+    "collection": "files",
+    "path": "files/b8aaa7ac698a2da23e8dd8d6041115328fc0b2e7ea8c86dc4cf8acb58b22b8bc",
+    "sha256": "6fc9ba93d17242e2697cfa6a52a0ba5315902be7e596a3175289de520642ce89"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v1/primary-external-census-controller-3.sbatch": {
+    "bytes": 1958,
+    "collection": "files",
+    "path": "files/7dac2682c19965ef202bbc0b3a26b69f5f6d1a03d709e16020c2dc24a5211128",
+    "sha256": "04f55706c737a29b3ef1137c8605b74062346c2baae939bbed8061358d4fbaba"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v2/plan.json": {
+    "bytes": 18687,
+    "collection": "files",
+    "path": "files/3165fae166ef484312a86163515296ba30d97a10bd29288af97aeb00b486f9db",
+    "sha256": "2b5b77e7230b5365de91caf64f72484c456856b0526549a53400320ee7c32cb3"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v2/primary-external-census-controller-0.sbatch": {
+    "bytes": 2066,
+    "collection": "files",
+    "path": "files/baca5edfbbb8b557bf297e072b0f462c630f9303dd9c95a0f97665269ae4b14d",
+    "sha256": "69157d93af7578a3abbf0f9663a57d44975ab8675adc13867e5b5672d01fa1c5"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v2/primary-external-census-controller-1.sbatch": {
+    "bytes": 2066,
+    "collection": "files",
+    "path": "files/b6965a884f7129b15179efb7c56c614252cceb9e9aeac47b06e1c3a4f0875873",
+    "sha256": "b5cfa87d46d747f15dcd2be6e3e5d991b222b854c6b9b211cf026af234486ff5"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v2/primary-external-census-controller-2.sbatch": {
+    "bytes": 2066,
+    "collection": "files",
+    "path": "files/c3d1b5e7f1f65e8e3dfa4f36bfbd0753d5fa28de6f8aa81b339da37162a188e7",
+    "sha256": "ec21853c8c3ea8b680a7ed1b8ab9652044504255e5e89c44574634e5961d8d7a"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v2/primary-external-census-controller-3.sbatch": {
+    "bytes": 2066,
+    "collection": "files",
+    "path": "files/5b92ab105887aa0d1fb9f95f1edde03de9fa4fb3119ed5414a3fcd5b89741264",
+    "sha256": "a05ab5ae921596ce703a99246dfaea0932d1f166e4f5f495549b911e2da35d3c"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v3/plan.json": {
+    "bytes": 18759,
+    "collection": "files",
+    "path": "files/4338cce1f0492811e6cd5a59d9f64c730b31052168b1609fd0e7ed64968aece3",
+    "sha256": "7149e8a8311b497b3495c3e38ecdd51d7465d679c63e00f1e3ba5be81b60512c"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v3/primary-external-census-controller-0.sbatch": {
+    "bytes": 2074,
+    "collection": "files",
+    "path": "files/a4647af30f2a59d77faf1eae731048aa691782b3b296de4ccd136a96ad823994",
+    "sha256": "40bba01fcac378d79bd3fc0fab35379744168482bec115eb589f27b2e6c02269"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v3/primary-external-census-controller-1.sbatch": {
+    "bytes": 2074,
+    "collection": "files",
+    "path": "files/2b5389f3db25c33095bb7adc0ffcb2bfe107eaeb78ca651b108502a8556b0436",
+    "sha256": "df23c2d53cc0c69ac19710b84ebff7d1094db6714957dac110e86db9a584d964"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v3/primary-external-census-controller-2.sbatch": {
+    "bytes": 2074,
+    "collection": "files",
+    "path": "files/9954197bb35f718c342559ea68b582acb28b2fc000a275f46fe2d0d26dde6299",
+    "sha256": "4b6832958de242479b127302e615bcc3e7a87c10e169176d5f39d53a70179d3c"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v3/primary-external-census-controller-3.sbatch": {
+    "bytes": 2074,
+    "collection": "files",
+    "path": "files/682e2001a487340965ddc49ea62d8996ba74b1d8737301951dad424fb9590b95",
+    "sha256": "179403f786ab7dd34116dc83e59aad9edfdb53fb8d152c84783aff38e31446d2"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-500/plan.json": {
+    "bytes": 14132,
+    "collection": "files",
+    "path": "files/03c2990939550192bbe50c73c7b2bc013a4e9ddd65cc69a6deaef1311516bd3a",
+    "sha256": "58a6d3a7e5462b2c814ce600568815384ebb1d5c03aa7ffb8b8635febdbd6e5f"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-500/recovery-500.sbatch": {
+    "bytes": 1702,
+    "collection": "files",
+    "path": "files/d76a789a26de5b58086918e2b52b9c45880d5d423f0808b8c4f88f0b0f09af2e",
+    "sha256": "a5def0c7da659cbc5b5c7ef72c9ecdf7a970d1f4f8d3356e38427c6f7705c102"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-0.sbatch": {
+    "bytes": 1953,
+    "collection": "files",
+    "path": "files/0895db73b217f111afb965303b3679e436cc838178d4c427086d4a61eec27213",
+    "sha256": "055fb82d5728aac6d5bf289d2ef7379d8119b1cb3b3366ac83071007fc33ca19"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-1.sbatch": {
+    "bytes": 1953,
+    "collection": "files",
+    "path": "files/777486da2218f6aee6d1a5a678082a0c4c36974151d566d69af9d1608937c93b",
+    "sha256": "6a64f85e578c660b210b16679651afbf7e7f2e270a0c9af3ace2f56ffe878d02"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-2.sbatch": {
+    "bytes": 1953,
+    "collection": "files",
+    "path": "files/2fe7b491068183b594cfde0c3b48db0e66df5c1569e03f2fcb574b6bed2f3d67",
+    "sha256": "0b8d01b14d45e7c45844ab27f9a2fc5f77f8750070240af82317556a7cdd69c4"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-3.sbatch": {
+    "bytes": 1953,
+    "collection": "files",
+    "path": "files/ca0ce5e72054730bcda214657ffce13b0c5423309fea738257384ba7453e1bdf",
+    "sha256": "d01b6e5c5b31680e4f64c563317344ada283a7f758cf76316133755cfff5e4a4"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/study-af-f2-external-census-controllers-v1-20261023/plan.json": {
+    "bytes": 18639,
+    "collection": "files",
+    "path": "files/40d3733a6d1ff25dbcc7232ba048a6ce9b647b12764d2e7a8d40930248b03b18",
+    "sha256": "33e8a9b97997caf3f50ef1b0c4e3deac6186fd7738cac8c326f49aeb46ee7f01"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-0.sbatch": {
+    "bytes": 1518,
+    "collection": "files",
+    "path": "files/f0bb0f550592b58bce39501461253141cb75e2ebd829708ab87098a5c3472733",
+    "sha256": "d3d47df66f404ce8b5d24dc4a6012719c369c93200437c031333708fd2902571"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-1.sbatch": {
+    "bytes": 1518,
+    "collection": "files",
+    "path": "files/028521c7517e147dcb4a2c22fedbdadec2c3290f37ad4b87286c85f02a3d1840",
+    "sha256": "8ed1c4dd9ff819b06d2671506a389d85d65293bb765bbe94757dc5bcda6e1546"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-2.sbatch": {
+    "bytes": 1518,
+    "collection": "files",
+    "path": "files/614c6006bad6df675cf5375a563a9e1fef9888974d1ab0e9c65f0e9267bc1d5f",
+    "sha256": "c50d961f4e748bfbc2ec3e477b66755c0b0d2625eb9c85465e545e14f53dc455"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-3.sbatch": {
+    "bytes": 1518,
+    "collection": "files",
+    "path": "files/5007ed1dfe3d92d7f237004ec57ae344f7eba0ec0eee5c42bfa0cc569db2508c",
+    "sha256": "1b18e23f5c19334f06eb192b4ad3f9de3171cddb34274d9687963cc4c84a0e76"
+  },
+  "/scratch/pwa209/horsehair-worm/plans/study-af-f2-registry-r2-controllers-v1-20261022/plan.json": {
+    "bytes": 16978,
+    "collection": "files",
+    "path": "files/55fca35df1552fbc4aab7300f073660ea294f4e7f1c9642e4ffb514e2655e9c5",
+    "sha256": "1851ec7ba5c29a4e6df5536136fbb4bd802d806511547e9d690eb3f0e0fef4e8"
+  },
+  "/scratch/pwa209/horsehair-worm/state/pipeline/20261013-829e3817bee1-0e2b1ebce8bf/status.json": {
+    "bytes": 5692,
+    "collection": "files",
+    "path": "files/ef4f52e299a67b449860734b9fee9cbf6a1ce6f05853536648a8bf147b285db4",
+    "sha256": "1b27764ec39483f53d28edd4b24d0929c297f40939f8c58ef25ce1ebe816a920"
+  },
+  "/scratch/pwa209/horsehair-worm/state/primary-external-census-controllers-v1-submission.json": {
+    "bytes": 4205,
+    "collection": "files",
+    "path": "files/d1e766507f03751ee88750b4a9e56966ad46d3e40c98b537d0f2d92348ac98f7",
+    "sha256": "26efafe65339ec349a65773135d36502a3baa7d3f4523d56f704b16dba3c5be6"
+  },
+  "/scratch/pwa209/horsehair-worm/state/primary-external-census-controllers-v2-submission.json": {
+    "bytes": 4205,
+    "collection": "files",
+    "path": "files/03530b5ce4af505cbf6518e0aa0707bacb9f509b392a17b9006d5367b0312526",
+    "sha256": "0bd363318e2c4195de7f1a4bc5dc424555e26e8ff8251d4333c5c902649ce55c"
+  },
+  "/scratch/pwa209/horsehair-worm/state/primary-external-census-controllers-v3-submission.json": {
+    "bytes": 4205,
+    "collection": "files",
+    "path": "files/5913ed96d8acc59216cd246457004d427e1970d3934f549925a7b7e34f240f84",
+    "sha256": "35334a9eccbdf55cf15ff1563159af972996e933af498df612f731efaf38a49c"
+  },
+  "/scratch/pwa209/horsehair-worm/state/recovery-support-20261021-500-submission.json": {
+    "bytes": 2020,
+    "collection": "files",
+    "path": "files/c13b96498d092d0a41fb8c2d9e2fc61e15031e54aaf0d04d2795923b4c07e038",
+    "sha256": "5e80484c08ffc2b8323b0ac13bebed3fea16a09f2e5af673ffefca6031c1ca35"
+  },
+  "/scratch/pwa209/horsehair-worm/state/study-af-f2-external-census-controllers-v1-20261023-submission.json": {
+    "bytes": 3163,
+    "collection": "files",
+    "path": "files/297d5bfb5f63d492146d06acd9b4b43d8a85173424c443d25778a6f112e077f8",
+    "sha256": "02c8d1f2cd74e8405c2a4fcee3b0c8d5c758dbd5f8f2a20910058680232dc728"
+  },
+  "/scratch/pwa209/horsehair-worm/state/study-af-f2-registry-r2-controllers-v1-20261022-submission.json": {
+    "bytes": 3115,
+    "collection": "files",
+    "path": "files/ba3b341c7db5ecec2d954bdf4323ef7ed8c759316d863077c9f0eec761039b42",
+    "sha256": "243c55d6d18002e9ec6d30eff6be41aab6b0c03c651d604c191f1ae8990b09f3"
+  }
+}

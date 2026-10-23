@@ -1,0 +1,30 @@
+{
+  "admission_authority": false,
+  "end_time_extends_admission_freshness": false,
+  "freshness_timestamp_rewritten": false,
+  "junit": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/handoff-contracts.xml",
+    "sha256": "11e094dcde8bb1708f78d752667b7dc6f7990acb98d371c01fd217b1422f47cd"
+  },
+  "native_completion_required_before_controllers_start": true,
+  "native_job_id": "6865706",
+  "q2_coverage_claimed_for_handoff": false,
+  "scientific_gates_cleared": false,
+  "scientific_result": false,
+  "source": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-external-census-handoff-v1-20261023/handoff-f2-external-census-v1-20261023.py",
+    "sha256": "1391efced13fc9022ab23e3f839831465e697644b779a392d0c2b60668ca3251"
+  },
+  "status": "complete_native_handoff_contracts_completion_pending",
+  "test_counts": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 91
+  },
+  "test_roster_sha256": "708880273d9d4e75b90b201657151491b76f782133226bbc9aca8873f3d833e9",
+  "test_source": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-external-census-handoff-v1-20261023/test_handoff_f2_external_census_v1_20261023.py",
+    "sha256": "ed5a78d9d96ed669819a18c84e60046579979f9d3490c2046d611244f9a70a6b"
+  }
+}

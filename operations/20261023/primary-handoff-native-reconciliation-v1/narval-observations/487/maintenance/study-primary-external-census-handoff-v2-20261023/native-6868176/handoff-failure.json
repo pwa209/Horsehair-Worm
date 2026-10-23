@@ -1,0 +1,13 @@
+{
+  "admission_authority": false,
+  "automatic_replay_permitted": false,
+  "canonical_science_changed": false,
+  "exception": "ValueError",
+  "freshness_timestamp_rewritten": false,
+  "message": "Exact held unstarted new D89 allocation required",
+  "new_controllers_preserved_held_or_afterok_blocked": true,
+  "no_automatic_cleanup_retry_release_or_cancel": true,
+  "scientific_gates_cleared": false,
+  "scientific_result": false,
+  "status": "needs_explicit_reconciliation"
+}

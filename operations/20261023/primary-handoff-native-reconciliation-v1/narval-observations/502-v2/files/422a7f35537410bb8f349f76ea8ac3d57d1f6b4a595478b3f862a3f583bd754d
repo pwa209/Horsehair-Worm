@@ -1,0 +1,80 @@
+{
+  "agent_campaign_case": "/scratch/pwa209/horsehair-worm/maintenance/study-af-campaign-v1-20261021/agent-final-f64-v1",
+  "canary_plan": {
+    "plan_binding_sha256": "00dc09e29036a884121d045f304876c710648bcdaacbc452dd2ee00a83b5fd4e",
+    "plan_sha256": "fb785f4e54dcbd2567e7c490979573ed3ac5ac994c5cf49ad0a8aa20e5030e26"
+  },
+  "canary_request": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-campaign-v1-20261021/agent-v2-native-canary-request.json",
+    "sha256": "c2d40326a7c24e09794647f725c24cf9682ddfc4d66709db4113e5d05fa1c9ae"
+  },
+  "case": "/scratch/pwa209/horsehair-worm/maintenance/study-af-campaign-v1-20261021",
+  "cohort_case": "/scratch/pwa209/horsehair-worm/maintenance/behaviour-full-cohort-profile-v1-20261021",
+  "controller_sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866",
+  "execution_source_sha256": "4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1",
+  "framework_release": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e",
+  "frozen_protocol_sha256": "7da54fc8ef538ed4593b5cd20227647c6f7fa1bee340f57df31daab51ac357c4",
+  "full_config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+  "gpu_qualification": {
+    "descriptor_sha256": "987c4c3bec38ca3a28d14cb1fbe22675bfcd6e5d2a465c8eb9adf01270b5b4bc",
+    "job_id": "6685917",
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-campaign-v1-20261021/native-6685917/receipt.json",
+    "sha256": "8f0a0f5c54ce2954d3dfb564910d62ef3193f922d8b8c5c0e3b32902ff30a5d3"
+  },
+  "precision_gate": {
+    "assembly_job_id": "6689283",
+    "assembly_receipt_path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-campaign-v1-20261021/native-6689283/receipt.json",
+    "descriptor_path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-campaign-v1-20261021/precision-and-f2-continuation-v2/descriptor-v2-worker.json",
+    "descriptor_sha256": "a56965b46c09cdffa4512302dea87ca895372f7668f88748ac2263c4b9a2c6b2",
+    "diagnostics_job_id": "6689270",
+    "diagnostics_receipt_path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-campaign-v1-20261021/native-6689270/receipt.json"
+  },
+  "prestart_retry_amendment": {
+    "job_id": "6865619",
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-prestart-three-recovery-v1-20261022/amendment.json",
+    "sha256": "b539a2513edd52185998d07a923a4bef0e58a4e9dba91e567fa6fe8111740a58"
+  },
+  "primary_source_sha256": "0e2b1ebce8bffe10799470b3ac20828e621f1415f3a18bca8cd67d502f1e8630",
+  "qualification": {
+    "job_id": "6684484",
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-execution-support-v1-20261021/qualification.json",
+    "sha256": "29ed530f3783f3c35c3cf20343bdb663732ec2bf4bf5c3218f8b029510becc2f",
+    "test_counts": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 1694
+    }
+  },
+  "registry_overlay": {
+    "guard": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/registered-snapshot-read-guard-v5-20261022.py",
+      "sha256": "7bd2bf562d0a81887ef1afd308ddd9265e5cadb23ba4b2e5946980b659505431"
+    },
+    "qualification": {
+      "job_id": "6865525",
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/private-qualification.json",
+      "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+    },
+    "recovery": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-training0000-state-repair-v1-20261021/amendment.json",
+      "sha256": "41bebed391a755ead5edee1bdcb56a203d713e533ca2d3d52c4cf2e6ae37b46b"
+    },
+    "worker_shim": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/run-f00d-worker-registry-overlay-20261021.py",
+      "sha256": "dd39905ce44f89f7f8bbdd325d1a0f1d5ec7950dd89d0e3bb267f6fdfe77a09a"
+    }
+  },
+  "resource_policy": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/execution-resource-policies/af-expanded-20261021-v1/policy.json",
+    "sha256": "f4445fb72d6a0fd8e62fb9a3c5ef43a6a6b1e7bf5a369254ff40d617e992b4e5"
+  },
+  "schema_version": 1,
+  "scientific_gates_changed": false,
+  "worker_descriptor": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-campaign-v1-20261021/precision-and-f2-continuation-v2/descriptor-v2-worker.json",
+    "sha256": "a56965b46c09cdffa4512302dea87ca895372f7668f88748ac2263c4b9a2c6b2"
+  },
+  "worker_path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-campaign-v1-20261021/native-worker.py",
+  "worker_sha256": "f00d4265a68a3ace5faa47da4fe2701fff3fe86d9132b09ea748e9f12471e4fd"
+}

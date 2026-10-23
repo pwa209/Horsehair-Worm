@@ -1,0 +1,11 @@
+{
+  "checked_date": "2026-10-23",
+  "findings": [
+    "The ctld option applies the specified filters at the scheduler controller in one request for scalar jobs.",
+    "The state option restricts cancellation to the named state; multiple filters must all match."
+  ],
+  "native_job_status_source": false,
+  "quoted_words": 0,
+  "scope": "Scheduler cancellation filter semantics only",
+  "source": "https://slurm.schedmd.com/scancel.html"
+}

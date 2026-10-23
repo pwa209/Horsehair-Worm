@@ -1,0 +1,16 @@
+{
+  "account": "def-ptewarie_cpu",
+  "alloc_tres": "",
+  "cpus": 0,
+  "elapsed_seconds": 0,
+  "end": "2026-10-23T12:13:41",
+  "exit_code": "0:0",
+  "identity_basis": "Unique scalar native job; zero-allocation queue record",
+  "job_id_raw": "6868888",
+  "max_rss": "",
+  "node_list": "None assigned",
+  "start": "None",
+  "state": "CANCELLED",
+  "unallocated_metadata": false,
+  "user": "pwa209"
+}

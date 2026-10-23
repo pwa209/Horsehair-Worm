@@ -1,0 +1,78 @@
+{
+  "config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+  "environment_job": null,
+  "excluded_nodes": [],
+  "plan_sha256": "60b0c5e8b0d2e777b118580a33ba33048a2a6ea19b69731191cfb52b4868779d",
+  "schema_version": 2,
+  "source_sha256": "4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1",
+  "tasks": {
+    "af-f2-external-census-v1-controller-0": {
+      "command": [
+        "sbatch",
+        "--parsable",
+        "--dependency=afterok:6865706",
+        "/scratch/pwa209/horsehair-worm/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-0.sbatch"
+      ],
+      "completed_native_dependencies": [],
+      "dependency_kind": "afterok",
+      "dependency_resolution_sha256": "934b83cf0cda7a7c005422992751e5755f00a20f424136a87b7fe23d003f6a7d",
+      "issued_native_dependencies": [
+        "6865706"
+      ],
+      "job_id": "6868746",
+      "script_sha256": "d369fc86600ad3565cdd23749860cffbac121de89dc6419d63815ab594a10783",
+      "state": "submitted"
+    },
+    "af-f2-external-census-v1-controller-1": {
+      "command": [
+        "sbatch",
+        "--parsable",
+        "--dependency=afterany:6868746",
+        "/scratch/pwa209/horsehair-worm/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-1.sbatch"
+      ],
+      "completed_native_dependencies": [],
+      "dependency_kind": "afterany",
+      "dependency_resolution_sha256": "dcbaa3bbf0b6a3753ae4bebd823935230f344cf4aab1e067ec12034d28d72b98",
+      "issued_native_dependencies": [
+        "6868746"
+      ],
+      "job_id": "6868747",
+      "script_sha256": "069f97ca416df263dfee6b95f9413d590a381bf1728dc8a7ea2193b44ea2d3f4",
+      "state": "submitted"
+    },
+    "af-f2-external-census-v1-controller-2": {
+      "command": [
+        "sbatch",
+        "--parsable",
+        "--dependency=afterany:6868747",
+        "/scratch/pwa209/horsehair-worm/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-2.sbatch"
+      ],
+      "completed_native_dependencies": [],
+      "dependency_kind": "afterany",
+      "dependency_resolution_sha256": "73ef269eca3bd8b87f8cbfb01f0eb284385ad1ffb917a29031301ca763be0ff6",
+      "issued_native_dependencies": [
+        "6868747"
+      ],
+      "job_id": "6868750",
+      "script_sha256": "3a9be891d3637b507df1390429fa6d7e141708470ad3da55dc047ef80ce4044d",
+      "state": "submitted"
+    },
+    "af-f2-external-census-v1-controller-3": {
+      "command": [
+        "sbatch",
+        "--parsable",
+        "--dependency=afterany:6868750",
+        "/scratch/pwa209/horsehair-worm/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-3.sbatch"
+      ],
+      "completed_native_dependencies": [],
+      "dependency_kind": "afterany",
+      "dependency_resolution_sha256": "4d424e0126338d5fcd082766d39aec7aac3ab0c4f6c288d70873c50644a26d2b",
+      "issued_native_dependencies": [
+        "6868750"
+      ],
+      "job_id": "6868753",
+      "script_sha256": "a369ab96a4cfd17b378736de440994395e29daa3498721bcba5bfe3eefe9e644",
+      "state": "submitted"
+    }
+  }
+}

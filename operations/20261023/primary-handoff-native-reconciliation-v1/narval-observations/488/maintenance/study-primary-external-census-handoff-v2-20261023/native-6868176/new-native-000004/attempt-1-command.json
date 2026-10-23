@@ -1,0 +1,12 @@
+{
+  "attempt": 1,
+  "command": [
+    "scontrol",
+    "show",
+    "job",
+    "6868884",
+    "-o"
+  ],
+  "started_unix": 1792755297.0113478,
+  "timeout_seconds": 60
+}

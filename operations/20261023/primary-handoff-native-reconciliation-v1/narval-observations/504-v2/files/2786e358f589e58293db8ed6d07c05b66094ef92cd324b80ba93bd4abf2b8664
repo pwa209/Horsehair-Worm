@@ -1,0 +1,26 @@
+{
+  "admission_authority": false,
+  "canonical_science_changed": false,
+  "complete_policy_equal_to_finalized_qualification": true,
+  "complete_source_manifest_equal": true,
+  "descriptor": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/handoffs/native-6872985/run-policy.json",
+    "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+  },
+  "freshness_timestamp_rewritten": false,
+  "qualified_primary_helper": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/run-primary-external-census-v1-20261023.py",
+    "sha256": "dd5f8d2aec90896fdcfe190971ea8b6c32a94158a3684566c2b8405748e7c794"
+  },
+  "scientific_gates_cleared": false,
+  "scientific_result": false,
+  "validated_policy_source_pins": {
+    "/lustre06/project/6101854/pwa209/horsehair-worm/releases/20261021-57e0eb8c4c6c-d89b31180d4c/tests/test_budget.py": "9ea7346e98203bc098121689f7a4ac4a45c2ef488bd2472d894cc0beee0d65de",
+    "/lustre06/project/6101854/pwa209/horsehair-worm/releases/20261021-57e0eb8c4c6c-d89b31180d4c/tests/test_pipeline.py": "5e0c052c596765a32ff4443d8668ba3b627dbeb1d7f7f954479048bbc5a14936",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/handoffs/native-6872985/run-policy.json": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/run-primary-external-census-v1-20261023.py": "dd5f8d2aec90896fdcfe190971ea8b6c32a94158a3684566c2b8405748e7c794",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/source-manifest.json": "fd5d7b951b2df0094e82c7c670d6e578a30efa913b4dcc6923cf335627d1dde9",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/test_primary_external_census_v1_20261023.py": "031ecb0cd1364952241decbb5d88f0c1cd8b313373a5630672910d37a1e4390e"
+  },
+  "validation_precedes_all_scheduler_mutations": true
+}

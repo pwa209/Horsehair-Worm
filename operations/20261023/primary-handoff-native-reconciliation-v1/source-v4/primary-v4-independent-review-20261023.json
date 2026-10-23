@@ -1,0 +1,148 @@
+{
+  "completed_history_review": {
+    "K_resource_equivalents_replayed": true,
+    "capture": {
+      "path": "work/narval-deployment/hhw-controller-resumption-live-20261023-498.txt",
+      "sha256": "04051354e497dc765b93c846f351fc4094f0959d6e83df05811baaa8253053d9"
+    },
+    "cleanup_receipt_sha256": "567ff41003556ffaf316db0d9d5499a20287ffb3fbe304537efac1bb745326ed",
+    "failed_first_controller": {
+      "cpus": 1,
+      "elapsed_seconds": 4,
+      "end": "2026-10-23T12:22:49",
+      "exit_code": "1:0",
+      "job_id": "6870608",
+      "memory": "67108864K",
+      "namespace_failure_log_sha256": "940a51ef1252cf82122f55ec9ac24a38edf17b7841e144f710775e6bf666b811",
+      "start": "2026-10-23T12:22:45",
+      "state": "FAILED"
+    },
+    "independent_pure_replay_of_prior_terminal_and_terminal_old_against_actual_498_passed": true,
+    "original_primary_retirement_verified_read_only": true,
+    "parent": {
+      "cpus": 4,
+      "elapsed_seconds": 654,
+      "exit_code": "0:0",
+      "job_id": "6870245",
+      "memory": "16777216K",
+      "positive_persisted_completion_required": true,
+      "state": "COMPLETED"
+    },
+    "qualified_native_parser_source": {
+      "path": "src/horsehair/repair.py",
+      "sha256": "f189d515acdcba105fda56dd8d52c08044db736c8de9176fa5488931d428e7aa"
+    },
+    "raw_packet_and_script_pins_independently_matched": 12,
+    "remaining_prior_contract": "Exact owned scalar CANCELLED/0:0, zero CPUs/elapsed, empty allocation, no node/start/RSS, dated end and explicit zero-allocation identity basis",
+    "remaining_prior_jobs": [
+      "6870610",
+      "6870628",
+      "6870632"
+    ]
+  },
+  "factory500": {
+    "actual_source_manifest_helper_test_count_and_roster_match": true,
+    "completed490_and_root497_history_bound": true,
+    "fresh_support_v4_and_phase_v3_required": true,
+    "junit": {
+      "errors": 0,
+      "failures": 0,
+      "path": "work/primary500-builder-local.xml",
+      "sha256": "7c450cdddcc202236abdb1acafda286b118760ea6af7a99e14094990a44b3b55",
+      "skipped": 0,
+      "tests": 14
+    },
+    "no_failed483_or_current_absence_claim_substitution": true,
+    "only_Q469_dependency": true,
+    "rendered_registration_shell": {
+      "path": "work/primary-native-500/hhw-recovery-stage-20261021-500.sh",
+      "sha256": "5a33d262a11d63b33ab055f62d92e423907185fda7d81600d4b9a7752834d9dc"
+    },
+    "rendered_source_manifest": {
+      "path": "work/primary-native-500/source-manifest.json",
+      "sha256": "ff1d16932df8c535885506e4cc5de65f87e891041ffec453565f87ae8a77a67e"
+    },
+    "source": {
+      "path": "work/build-primary-external-census-handoff-500.py",
+      "sha256": "e42e7b332da3aef651bb34cd48f4660f26051ed3b8947129f8cf506e965b3a97"
+    },
+    "test_source": {
+      "path": "work/test_build_primary_external_census_handoff_500.py",
+      "sha256": "c94a33d5d257ec43ea35cea51496ea53d66abc3f981a2f77a3e169dd351a43c5"
+    }
+  },
+  "helper": {
+    "path": "work/primary-handoff-v4/handoff-primary-external-census-v1-20261023.py",
+    "sha256": "2a28f1b476a42959febbb445824f043521e74713b9f25dee3e9e13db92699381"
+  },
+  "kind": "primary-handoff-v4-independent-review-v1",
+  "limits": {
+    "actual_native_selfqualification_and_final_handoff_completion_still_required": true,
+    "local_XML_independently_parsed_not_rerun_by_reviewer": true,
+    "native_v4_qualification_or_runtime_success_claimed_by_this_record": false,
+    "scheduler_SSH_Git_actions_by_reviewer": false,
+    "source_test_and_factory_not_modified_by_reviewer": true,
+    "the_review_does_not_establish_scientific_results": true
+  },
+  "local_freeze": {
+    "path": "work/primary-handoff-v4/handoff-tests-local-freeze.json",
+    "sha256": "527d653053d66efe0e23454cb1e89b703906082e6df7d18e244f057ce2cc583a"
+  },
+  "local_junit": {
+    "elapsed_seconds_reported_by_author": 348.83,
+    "errors": 0,
+    "failures": 0,
+    "path": "work/primary-handoff-v4/handoff-contracts-local-final.xml",
+    "roster_sha256": "e95b890f5ca232b6ea50a9696c6e8036a307ad80e05599f362c8aede872cae3c",
+    "sha256": "814d74c37315e7bc5178db1cab55d4832aff91e85fb3191fa8eefbc9dc523ffd",
+    "skipped": 0,
+    "tests": 172
+  },
+  "producer_consumer_seam": {
+    "actual_freeze_new_plan_scripts_and_submit_ledger_used": true,
+    "all_four_actual_emitted_argv_pass_real_primary_parser_policy_sources_and_own_registration": true,
+    "complete_policy_and_source_manifest_equality_required": true,
+    "descriptor_namespace": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/handoffs/native-JOB/run-policy.json",
+    "exact_six_returned_source_pin_paths_required_and_rechecked": true,
+    "frozen_primary_helper": {
+      "path": "work/run-primary-external-census-v1-20261023.py",
+      "sha256": "dd5f8d2aec90896fdcfe190971ea8b6c32a94158a3684566c2b8405748e7c794"
+    },
+    "local_integration_test": "test_real_emitted_descriptor_and_all_four_invocations_pass_frozen_primary_validators",
+    "obsolete_handoff_namespace_refused_before_any_scheduler_RPC": true,
+    "real_run_descriptor_calls_policy_sources_before_all_scheduler_mutations": true,
+    "source_manifest_census_manifest_and_kind_tamper_refused_before_mutation": true
+  },
+  "production_mutation_scope": {
+    "actual_native_selftests_and_source_native_qualification_before_mutation": true,
+    "all_four_new_native_held_required_before_release": true,
+    "all_historical_source_plan_ledger_script_descriptor_receipt_and_log_bytes_preserved": true,
+    "finite_allocation_command_and_wait_bounds_retained": true,
+    "first_dependency": "afterok current handoff and first provider6864491; an already completed provider edge requires positive finalized proof",
+    "handoff_support": "study-primary-external-census-handoff-v4-20261023",
+    "historical_reconcile_retire_cancel_calls_absent_from_orchestrate": true,
+    "native_workdir": "Resolved original D89 framework, bound by SBATCH header and highest-precedence CLI chdir; exact native WorkDir check retained",
+    "only_new_scheduler_actions": "Four source-bound held submissions, then four reverse-order releases",
+    "original_D89_lease_science_and_configuration_unchanged": true,
+    "original_and_prior_terminal_proof_rechecked_before_each_release": true,
+    "phase": "primary-external-census-controllers-v3",
+    "receipt_accurately_states_original_retirement_was_not_performed_by_v4": true,
+    "successors": "afterany previous new controller"
+  },
+  "python_3_11_grammar_checked": true,
+  "review_date": "2026-10-23",
+  "status": "no_remaining_material_findings_in_reviewed_v4_source_and_local_contracts",
+  "supersedes": {
+    "critical_finding": "V3 emitted the run descriptor outside PRIMARY_SUPPORT, so the real frozen primary policy_sources rejected it before lease or tick. The 153-case v3 suite lacked the real emitted producer-to-consumer seam.",
+    "review_record": {
+      "path": "work/primary-v3-independent-review-20261023.json",
+      "sha256": "8a21d517c43884ffeb43f9cee0ca505167e46ab2ad86cc70ac5eb782ae3c05d4"
+    },
+    "scope": "Withdraws the prior v3 source signoff; preserve that record as historical evidence.",
+    "v4_resolution": "Publish an immutable descriptor inside PRIMARY_SUPPORT/handoffs/native-JOB and validate it through the actual pinned primary consumer before any scheduler action."
+  },
+  "test_source": {
+    "path": "work/primary-handoff-v4/test_handoff_primary_external_census_v1_20261023.py",
+    "sha256": "e754fb2ce469efeed1f10dadb15213077ea604daf7f5d7b3025d4db2ff903ef1"
+  }
+}

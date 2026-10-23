@@ -1,0 +1,16 @@
+{
+  "automatic_replay_permitted": false,
+  "jobs": [
+    "6870608",
+    "6870610",
+    "6870628",
+    "6870632"
+  ],
+  "old_terminal_required": true,
+  "release_order": [
+    "6870632",
+    "6870628",
+    "6870610",
+    "6870608"
+  ]
+}

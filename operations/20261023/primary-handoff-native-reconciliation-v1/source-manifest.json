@@ -1,0 +1,3414 @@
+{
+  "files": {
+    "README.md": {
+      "bytes": 10238,
+      "sha256": "438fb1596187219a059003bc37562dc153101c22fa5b2d27f90251ec3c15734d"
+    },
+    "narval-observations/486/hhw-controller-resumption-live-20261023-486.json": {
+      "bytes": 107,
+      "sha256": "c9dd8a1fc3ae15b2c138801f64926ab140ebba6fd30ef23a264fee95e8ff6ed9"
+    },
+    "narval-observations/486/hhw-controller-resumption-live-20261023-486.sh": {
+      "bytes": 5534,
+      "sha256": "556967a3434121384d46364d2280df8b2dff08cdff890137bd70d0ef1a04c2f4"
+    },
+    "narval-observations/486/hhw-controller-resumption-live-20261023-486.txt": {
+      "bytes": 237850,
+      "sha256": "5e267b343929e74a889f5ba79230f4ed4a6556d1a7c6907ffbf6c17da340b04f"
+    },
+    "narval-observations/486/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/handoff-contracts.xml": {
+      "bytes": 20448,
+      "sha256": "11e094dcde8bb1708f78d752667b7dc6f7990acb98d371c01fd217b1422f47cd"
+    },
+    "narval-observations/486/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/native-handoff-qualification.json": {
+      "bytes": 1323,
+      "sha256": "666f89af22652aec112d58867a6e0696ab3c80bb418da9c099fd3c8e3bd9037b"
+    },
+    "narval-observations/486/maintenance/study-af-registry-repair-support-v6-20261022/private-qualification.json": {
+      "bytes": 9223,
+      "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+    },
+    "narval-observations/486/maintenance/study-af-rolling-storage-census-v4-20261023/native-6864491/receipt.json": {
+      "bytes": 19020,
+      "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+    },
+    "narval-observations/486/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/handoff-contracts.xml": {
+      "bytes": 29510,
+      "sha256": "bf72f9ee11315874b3f166920494f7e11534d70e45f55a990c607286acdf6615"
+    },
+    "narval-observations/486/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/native-handoff-qualification.json": {
+      "bytes": 1345,
+      "sha256": "fad78280119d94e5b49db4770cd3198dd33d64b3fd6d7b84c998fd1a31161fc6"
+    },
+    "narval-observations/486/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_budget-module-origins.json": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval-observations/486/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_pipeline-module-origins.json": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval-observations/486/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/primary_policy-module-origins.json": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval-observations/486/plans/recovery-support-20261021-483/plan.json": {
+      "bytes": 14132,
+      "sha256": "b312f0b88a7d4bdfc63ce247de2cbf6a73fbc5aae8c984a3060e8ac3f4ae6ff0"
+    },
+    "narval-observations/486/plans/recovery-support-20261021-483/recovery-483.sbatch": {
+      "bytes": 1702,
+      "sha256": "e0a7b20a913bbbcaf8814813aaf683edd8278a6dbf8e4374114670ab84b87450"
+    },
+    "narval-observations/486/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-0.sbatch": {
+      "bytes": 1953,
+      "sha256": "055fb82d5728aac6d5bf289d2ef7379d8119b1cb3b3366ac83071007fc33ca19"
+    },
+    "narval-observations/486/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-1.sbatch": {
+      "bytes": 1953,
+      "sha256": "6a64f85e578c660b210b16679651afbf7e7f2e270a0c9af3ace2f56ffe878d02"
+    },
+    "narval-observations/486/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-2.sbatch": {
+      "bytes": 1953,
+      "sha256": "0b8d01b14d45e7c45844ab27f9a2fc5f77f8750070240af82317556a7cdd69c4"
+    },
+    "narval-observations/486/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-3.sbatch": {
+      "bytes": 1953,
+      "sha256": "d01b6e5c5b31680e4f64c563317344ada283a7f758cf76316133755cfff5e4a4"
+    },
+    "narval-observations/486/plans/study-af-f2-external-census-controllers-v1-20261023/plan.json": {
+      "bytes": 18639,
+      "sha256": "33e8a9b97997caf3f50ef1b0c4e3deac6186fd7738cac8c326f49aeb46ee7f01"
+    },
+    "narval-observations/486/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-0.sbatch": {
+      "bytes": 1518,
+      "sha256": "d3d47df66f404ce8b5d24dc4a6012719c369c93200437c031333708fd2902571"
+    },
+    "narval-observations/486/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-1.sbatch": {
+      "bytes": 1518,
+      "sha256": "8ed1c4dd9ff819b06d2671506a389d85d65293bb765bbe94757dc5bcda6e1546"
+    },
+    "narval-observations/486/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-2.sbatch": {
+      "bytes": 1518,
+      "sha256": "c50d961f4e748bfbc2ec3e477b66755c0b0d2625eb9c85465e545e14f53dc455"
+    },
+    "narval-observations/486/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-3.sbatch": {
+      "bytes": 1518,
+      "sha256": "1b18e23f5c19334f06eb192b4ad3f9de3171cddb34274d9687963cc4c84a0e76"
+    },
+    "narval-observations/486/plans/study-af-f2-registry-r2-controllers-v1-20261022/plan.json": {
+      "bytes": 16978,
+      "sha256": "1851ec7ba5c29a4e6df5536136fbb4bd802d806511547e9d690eb3f0e0fef4e8"
+    },
+    "narval-observations/486/state/recovery-support-20261021-483-submission.json": {
+      "bytes": 2020,
+      "sha256": "f15d1bbb16b0161c6fa6b8482f69827278f260a317a030def4ba1dbcddf26c47"
+    },
+    "narval-observations/486/state/study-af-f2-registry-r2-controllers-v1-20261022-submission.json": {
+      "bytes": 3115,
+      "sha256": "243c55d6d18002e9ec6d30eff6be41aab6b0c03c651d604c191f1ae8990b09f3"
+    },
+    "narval-observations/487/hhw-controller-resumption-live-20261023-487.json": {
+      "bytes": 107,
+      "sha256": "ef61bb4597acc6983bfe21f1e2e6201d3da74173b8fe837daa9ad1bd39d5e15f"
+    },
+    "narval-observations/487/hhw-controller-resumption-live-20261023-487.sh": {
+      "bytes": 5534,
+      "sha256": "556967a3434121384d46364d2280df8b2dff08cdff890137bd70d0ef1a04c2f4"
+    },
+    "narval-observations/487/hhw-controller-resumption-live-20261023-487.txt": {
+      "bytes": 412685,
+      "sha256": "1b5a5fb940780934df4ae400c10a8a5a6daec507e9d12f814bfeaa813d0d9bb5"
+    },
+    "narval-observations/487/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/handoff-contracts.xml": {
+      "bytes": 20448,
+      "sha256": "11e094dcde8bb1708f78d752667b7dc6f7990acb98d371c01fd217b1422f47cd"
+    },
+    "narval-observations/487/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/native-handoff-qualification.json": {
+      "bytes": 1323,
+      "sha256": "666f89af22652aec112d58867a6e0696ab3c80bb418da9c099fd3c8e3bd9037b"
+    },
+    "narval-observations/487/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/receipt.json": {
+      "bytes": 90428,
+      "sha256": "ec0e600e161f1546a8b40efe52304f20508323431d20cf2c2ada310b89a5f4ed"
+    },
+    "narval-observations/487/maintenance/study-af-registry-repair-support-v6-20261022/private-qualification.json": {
+      "bytes": 9223,
+      "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+    },
+    "narval-observations/487/maintenance/study-af-rolling-storage-census-v4-20261023/native-6864491/receipt.json": {
+      "bytes": 19020,
+      "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+    },
+    "narval-observations/487/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/handoff-contracts.xml": {
+      "bytes": 29510,
+      "sha256": "bf72f9ee11315874b3f166920494f7e11534d70e45f55a990c607286acdf6615"
+    },
+    "narval-observations/487/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/handoff-failure.json": {
+      "bytes": 477,
+      "sha256": "6c2a59b1be09ba8577976dc6e1dcf449cd4a384b22e4801d860fb3a66c926ac6"
+    },
+    "narval-observations/487/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/native-handoff-qualification.json": {
+      "bytes": 1345,
+      "sha256": "fad78280119d94e5b49db4770cd3198dd33d64b3fd6d7b84c998fd1a31161fc6"
+    },
+    "narval-observations/487/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/run-policy.json": {
+      "bytes": 2449,
+      "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+    },
+    "narval-observations/487/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_budget-module-origins.json": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval-observations/487/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_pipeline-module-origins.json": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval-observations/487/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/primary_policy-module-origins.json": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval-observations/487/plans/primary-external-census-controllers-v1/plan.json": {
+      "bytes": 18687,
+      "sha256": "6a33e4ee89f4f4ef380e712aec7d488bdd7b5acfbb39d28301cabcb7c7e7cdf3"
+    },
+    "narval-observations/487/plans/primary-external-census-controllers-v1/primary-external-census-controller-0.sbatch": {
+      "bytes": 1958,
+      "sha256": "fbe69f82abce43e936a70be0aeb27835e7bb915fadb1cef59b1c06d2d39b4938"
+    },
+    "narval-observations/487/plans/primary-external-census-controllers-v1/primary-external-census-controller-1.sbatch": {
+      "bytes": 1958,
+      "sha256": "0831e0ec643aad2493f34475a62963cf6bffc8419b5ad2a538f9c33369d1539d"
+    },
+    "narval-observations/487/plans/primary-external-census-controllers-v1/primary-external-census-controller-2.sbatch": {
+      "bytes": 1958,
+      "sha256": "6fc9ba93d17242e2697cfa6a52a0ba5315902be7e596a3175289de520642ce89"
+    },
+    "narval-observations/487/plans/primary-external-census-controllers-v1/primary-external-census-controller-3.sbatch": {
+      "bytes": 1958,
+      "sha256": "04f55706c737a29b3ef1137c8605b74062346c2baae939bbed8061358d4fbaba"
+    },
+    "narval-observations/487/plans/recovery-support-20261021-483/plan.json": {
+      "bytes": 14132,
+      "sha256": "b312f0b88a7d4bdfc63ce247de2cbf6a73fbc5aae8c984a3060e8ac3f4ae6ff0"
+    },
+    "narval-observations/487/plans/recovery-support-20261021-483/recovery-483.sbatch": {
+      "bytes": 1702,
+      "sha256": "e0a7b20a913bbbcaf8814813aaf683edd8278a6dbf8e4374114670ab84b87450"
+    },
+    "narval-observations/487/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-0.sbatch": {
+      "bytes": 1953,
+      "sha256": "055fb82d5728aac6d5bf289d2ef7379d8119b1cb3b3366ac83071007fc33ca19"
+    },
+    "narval-observations/487/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-1.sbatch": {
+      "bytes": 1953,
+      "sha256": "6a64f85e578c660b210b16679651afbf7e7f2e270a0c9af3ace2f56ffe878d02"
+    },
+    "narval-observations/487/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-2.sbatch": {
+      "bytes": 1953,
+      "sha256": "0b8d01b14d45e7c45844ab27f9a2fc5f77f8750070240af82317556a7cdd69c4"
+    },
+    "narval-observations/487/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-3.sbatch": {
+      "bytes": 1953,
+      "sha256": "d01b6e5c5b31680e4f64c563317344ada283a7f758cf76316133755cfff5e4a4"
+    },
+    "narval-observations/487/plans/study-af-f2-external-census-controllers-v1-20261023/plan.json": {
+      "bytes": 18639,
+      "sha256": "33e8a9b97997caf3f50ef1b0c4e3deac6186fd7738cac8c326f49aeb46ee7f01"
+    },
+    "narval-observations/487/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-0.sbatch": {
+      "bytes": 1518,
+      "sha256": "d3d47df66f404ce8b5d24dc4a6012719c369c93200437c031333708fd2902571"
+    },
+    "narval-observations/487/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-1.sbatch": {
+      "bytes": 1518,
+      "sha256": "8ed1c4dd9ff819b06d2671506a389d85d65293bb765bbe94757dc5bcda6e1546"
+    },
+    "narval-observations/487/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-2.sbatch": {
+      "bytes": 1518,
+      "sha256": "c50d961f4e748bfbc2ec3e477b66755c0b0d2625eb9c85465e545e14f53dc455"
+    },
+    "narval-observations/487/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-3.sbatch": {
+      "bytes": 1518,
+      "sha256": "1b18e23f5c19334f06eb192b4ad3f9de3171cddb34274d9687963cc4c84a0e76"
+    },
+    "narval-observations/487/plans/study-af-f2-registry-r2-controllers-v1-20261022/plan.json": {
+      "bytes": 16978,
+      "sha256": "1851ec7ba5c29a4e6df5536136fbb4bd802d806511547e9d690eb3f0e0fef4e8"
+    },
+    "narval-observations/487/state/primary-external-census-controllers-v1-submission.json": {
+      "bytes": 4205,
+      "sha256": "26efafe65339ec349a65773135d36502a3baa7d3f4523d56f704b16dba3c5be6"
+    },
+    "narval-observations/487/state/recovery-support-20261021-483-submission.json": {
+      "bytes": 2020,
+      "sha256": "f15d1bbb16b0161c6fa6b8482f69827278f260a317a030def4ba1dbcddf26c47"
+    },
+    "narval-observations/487/state/study-af-f2-external-census-controllers-v1-20261023-submission.json": {
+      "bytes": 3163,
+      "sha256": "02c8d1f2cd74e8405c2a4fcee3b0c8d5c758dbd5f8f2a20910058680232dc728"
+    },
+    "narval-observations/487/state/study-af-f2-registry-r2-controllers-v1-20261022-submission.json": {
+      "bytes": 3115,
+      "sha256": "243c55d6d18002e9ec6d30eff6be41aab6b0c03c651d604c191f1ae8990b09f3"
+    },
+    "narval-observations/488/hhw-primary-held-failure-proof-20261023-488.json": {
+      "bytes": 107,
+      "sha256": "dbf51daec82bccfc380b37264ab609193829ea78c72f0009139b0a42cf29367a"
+    },
+    "narval-observations/488/hhw-primary-held-failure-proof-20261023-488.sh": {
+      "bytes": 2133,
+      "sha256": "db040103f8c75f53580093d75390a0986bcc6c38e48de05bdbcb84ee480fb97d"
+    },
+    "narval-observations/488/hhw-primary-held-failure-proof-20261023-488.txt": {
+      "bytes": 57808,
+      "sha256": "9620784d90463d08d0ce6186073cb99e8350753df4de8314d066dc4bef03cb4f"
+    },
+    "narval-observations/488/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/handoff-failure.json": {
+      "bytes": 477,
+      "sha256": "6c2a59b1be09ba8577976dc6e1dcf449cd4a384b22e4801d860fb3a66c926ac6"
+    },
+    "narval-observations/488/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/new-native-000004/attempt-1-command.json": {
+      "bytes": 164,
+      "sha256": "9d553cc6a09847b082bb8a2aabed21fc5313784e87459637562948741096b88b"
+    },
+    "narval-observations/488/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/new-native-000004/attempt-1-response.json": {
+      "bytes": 619,
+      "sha256": "261d39c021b437fe82636d4e3b2a94a1216abc9e8cb8461db0b60c78c9aa9ce5"
+    },
+    "narval-observations/488/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/new-native-000004/attempt-1-stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "narval-observations/488/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/new-native-000004/attempt-1-stdout.txt": {
+      "bytes": 1560,
+      "sha256": "51758a668fa1a70dd105c6a4f3ef7d7d57a46ff250797ea53d6cbcde03b32115"
+    },
+    "narval-observations/488/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/new-native-000004/intent.json": {
+      "bytes": 349,
+      "sha256": "58ad8b09cec50d5f37745866f51be7ac890f999c6540e54ae04a750535621b4c"
+    },
+    "narval-observations/488/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/new-native-000004/result.json": {
+      "bytes": 192,
+      "sha256": "46db41e7bdc29bb9a770e36ce3b5cc305f379e6c14afaacfa69c0938236054f2"
+    },
+    "narval-observations/488/plans/primary-external-census-controllers-v1/plan.json": {
+      "bytes": 18687,
+      "sha256": "6a33e4ee89f4f4ef380e712aec7d488bdd7b5acfbb39d28301cabcb7c7e7cdf3"
+    },
+    "narval-observations/488/plans/primary-external-census-controllers-v1/primary-external-census-controller-0.sbatch": {
+      "bytes": 1958,
+      "sha256": "fbe69f82abce43e936a70be0aeb27835e7bb915fadb1cef59b1c06d2d39b4938"
+    },
+    "narval-observations/488/plans/primary-external-census-controllers-v1/primary-external-census-controller-1.sbatch": {
+      "bytes": 1958,
+      "sha256": "0831e0ec643aad2493f34475a62963cf6bffc8419b5ad2a538f9c33369d1539d"
+    },
+    "narval-observations/488/plans/primary-external-census-controllers-v1/primary-external-census-controller-2.sbatch": {
+      "bytes": 1958,
+      "sha256": "6fc9ba93d17242e2697cfa6a52a0ba5315902be7e596a3175289de520642ce89"
+    },
+    "narval-observations/488/plans/primary-external-census-controllers-v1/primary-external-census-controller-3.sbatch": {
+      "bytes": 1958,
+      "sha256": "04f55706c737a29b3ef1137c8605b74062346c2baae939bbed8061358d4fbaba"
+    },
+    "narval-observations/488/state/primary-external-census-controllers-v1-submission.json": {
+      "bytes": 4205,
+      "sha256": "26efafe65339ec349a65773135d36502a3baa7d3f4523d56f704b16dba3c5be6"
+    },
+    "narval-observations/489/hhw-controller-resumption-live-20261023-489.json": {
+      "bytes": 107,
+      "sha256": "ce9d8fa30d603d233ab649ba9d9aeea3f4943d74b9a7fda5be6faf19f625b59b"
+    },
+    "narval-observations/489/hhw-controller-resumption-live-20261023-489.sh": {
+      "bytes": 5534,
+      "sha256": "556967a3434121384d46364d2280df8b2dff08cdff890137bd70d0ef1a04c2f4"
+    },
+    "narval-observations/489/hhw-controller-resumption-live-20261023-489.txt": {
+      "bytes": 412685,
+      "sha256": "c468ef6ed52fc7e869e919fa7afa75b8c772d6279b08659a9be2a503fd35ee32"
+    },
+    "narval-observations/489/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/handoff-contracts.xml": {
+      "bytes": 20448,
+      "sha256": "11e094dcde8bb1708f78d752667b7dc6f7990acb98d371c01fd217b1422f47cd"
+    },
+    "narval-observations/489/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/native-handoff-qualification.json": {
+      "bytes": 1323,
+      "sha256": "666f89af22652aec112d58867a6e0696ab3c80bb418da9c099fd3c8e3bd9037b"
+    },
+    "narval-observations/489/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/receipt.json": {
+      "bytes": 90428,
+      "sha256": "ec0e600e161f1546a8b40efe52304f20508323431d20cf2c2ada310b89a5f4ed"
+    },
+    "narval-observations/489/maintenance/study-af-registry-repair-support-v6-20261022/private-qualification.json": {
+      "bytes": 9223,
+      "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+    },
+    "narval-observations/489/maintenance/study-af-rolling-storage-census-v4-20261023/native-6864491/receipt.json": {
+      "bytes": 19020,
+      "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+    },
+    "narval-observations/489/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/handoff-contracts.xml": {
+      "bytes": 29510,
+      "sha256": "bf72f9ee11315874b3f166920494f7e11534d70e45f55a990c607286acdf6615"
+    },
+    "narval-observations/489/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/handoff-failure.json": {
+      "bytes": 477,
+      "sha256": "6c2a59b1be09ba8577976dc6e1dcf449cd4a384b22e4801d860fb3a66c926ac6"
+    },
+    "narval-observations/489/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/native-handoff-qualification.json": {
+      "bytes": 1345,
+      "sha256": "fad78280119d94e5b49db4770cd3198dd33d64b3fd6d7b84c998fd1a31161fc6"
+    },
+    "narval-observations/489/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/run-policy.json": {
+      "bytes": 2449,
+      "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+    },
+    "narval-observations/489/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_budget-module-origins.json": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval-observations/489/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_pipeline-module-origins.json": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval-observations/489/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/primary_policy-module-origins.json": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval-observations/489/plans/primary-external-census-controllers-v1/plan.json": {
+      "bytes": 18687,
+      "sha256": "6a33e4ee89f4f4ef380e712aec7d488bdd7b5acfbb39d28301cabcb7c7e7cdf3"
+    },
+    "narval-observations/489/plans/primary-external-census-controllers-v1/primary-external-census-controller-0.sbatch": {
+      "bytes": 1958,
+      "sha256": "fbe69f82abce43e936a70be0aeb27835e7bb915fadb1cef59b1c06d2d39b4938"
+    },
+    "narval-observations/489/plans/primary-external-census-controllers-v1/primary-external-census-controller-1.sbatch": {
+      "bytes": 1958,
+      "sha256": "0831e0ec643aad2493f34475a62963cf6bffc8419b5ad2a538f9c33369d1539d"
+    },
+    "narval-observations/489/plans/primary-external-census-controllers-v1/primary-external-census-controller-2.sbatch": {
+      "bytes": 1958,
+      "sha256": "6fc9ba93d17242e2697cfa6a52a0ba5315902be7e596a3175289de520642ce89"
+    },
+    "narval-observations/489/plans/primary-external-census-controllers-v1/primary-external-census-controller-3.sbatch": {
+      "bytes": 1958,
+      "sha256": "04f55706c737a29b3ef1137c8605b74062346c2baae939bbed8061358d4fbaba"
+    },
+    "narval-observations/489/plans/recovery-support-20261021-483/plan.json": {
+      "bytes": 14132,
+      "sha256": "b312f0b88a7d4bdfc63ce247de2cbf6a73fbc5aae8c984a3060e8ac3f4ae6ff0"
+    },
+    "narval-observations/489/plans/recovery-support-20261021-483/recovery-483.sbatch": {
+      "bytes": 1702,
+      "sha256": "e0a7b20a913bbbcaf8814813aaf683edd8278a6dbf8e4374114670ab84b87450"
+    },
+    "narval-observations/489/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-0.sbatch": {
+      "bytes": 1953,
+      "sha256": "055fb82d5728aac6d5bf289d2ef7379d8119b1cb3b3366ac83071007fc33ca19"
+    },
+    "narval-observations/489/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-1.sbatch": {
+      "bytes": 1953,
+      "sha256": "6a64f85e578c660b210b16679651afbf7e7f2e270a0c9af3ace2f56ffe878d02"
+    },
+    "narval-observations/489/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-2.sbatch": {
+      "bytes": 1953,
+      "sha256": "0b8d01b14d45e7c45844ab27f9a2fc5f77f8750070240af82317556a7cdd69c4"
+    },
+    "narval-observations/489/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-3.sbatch": {
+      "bytes": 1953,
+      "sha256": "d01b6e5c5b31680e4f64c563317344ada283a7f758cf76316133755cfff5e4a4"
+    },
+    "narval-observations/489/plans/study-af-f2-external-census-controllers-v1-20261023/plan.json": {
+      "bytes": 18639,
+      "sha256": "33e8a9b97997caf3f50ef1b0c4e3deac6186fd7738cac8c326f49aeb46ee7f01"
+    },
+    "narval-observations/489/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-0.sbatch": {
+      "bytes": 1518,
+      "sha256": "d3d47df66f404ce8b5d24dc4a6012719c369c93200437c031333708fd2902571"
+    },
+    "narval-observations/489/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-1.sbatch": {
+      "bytes": 1518,
+      "sha256": "8ed1c4dd9ff819b06d2671506a389d85d65293bb765bbe94757dc5bcda6e1546"
+    },
+    "narval-observations/489/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-2.sbatch": {
+      "bytes": 1518,
+      "sha256": "c50d961f4e748bfbc2ec3e477b66755c0b0d2625eb9c85465e545e14f53dc455"
+    },
+    "narval-observations/489/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-3.sbatch": {
+      "bytes": 1518,
+      "sha256": "1b18e23f5c19334f06eb192b4ad3f9de3171cddb34274d9687963cc4c84a0e76"
+    },
+    "narval-observations/489/plans/study-af-f2-registry-r2-controllers-v1-20261022/plan.json": {
+      "bytes": 16978,
+      "sha256": "1851ec7ba5c29a4e6df5536136fbb4bd802d806511547e9d690eb3f0e0fef4e8"
+    },
+    "narval-observations/489/state/primary-external-census-controllers-v1-submission.json": {
+      "bytes": 4205,
+      "sha256": "26efafe65339ec349a65773135d36502a3baa7d3f4523d56f704b16dba3c5be6"
+    },
+    "narval-observations/489/state/recovery-support-20261021-483-submission.json": {
+      "bytes": 2020,
+      "sha256": "f15d1bbb16b0161c6fa6b8482f69827278f260a317a030def4ba1dbcddf26c47"
+    },
+    "narval-observations/489/state/study-af-f2-external-census-controllers-v1-20261023-submission.json": {
+      "bytes": 3163,
+      "sha256": "02c8d1f2cd74e8405c2a4fcee3b0c8d5c758dbd5f8f2a20910058680232dc728"
+    },
+    "narval-observations/489/state/study-af-f2-registry-r2-controllers-v1-20261022-submission.json": {
+      "bytes": 3115,
+      "sha256": "243c55d6d18002e9ec6d30eff6be41aab6b0c03c651d604c191f1ae8990b09f3"
+    },
+    "narval-observations/491/hhw-primary-reconciliation-native-preflight-20261023-491.json": {
+      "bytes": 120,
+      "sha256": "b2422fe6dfa6d216471137c1d2c5fb6b7c76f24890eabf821024dfede8feb4d9"
+    },
+    "narval-observations/491/hhw-primary-reconciliation-native-preflight-20261023-491.sh": {
+      "bytes": 904,
+      "sha256": "a4c576834e7d929c3886c58c9a6bc6826eeb5cc9d63cd6f797efccf20cc1b241"
+    },
+    "narval-observations/491/hhw-primary-reconciliation-native-preflight-20261023-491.txt": {
+      "bytes": 1970,
+      "sha256": "a7b7e79a884e5c3f775ece5e2a48d03bdcd1e00d7ae3f12d7ce9018edeeb9526"
+    },
+    "narval-observations/491/primary-reconciliation-491-native-raw.txt": {
+      "bytes": 1531,
+      "sha256": "bf0e83b0f1aa02f6a9fdde520ccca5f14f6f8f494bb73876dbe951dd580ce9a7"
+    },
+    "narval-observations/492/hhw-controller-resumption-live-20261023-492.json": {
+      "bytes": 107,
+      "sha256": "3d7104a401e48e67ffa1077f6334055e2e886e1b7062dd8662067c7888fee5f3"
+    },
+    "narval-observations/492/hhw-controller-resumption-live-20261023-492.sh": {
+      "bytes": 6186,
+      "sha256": "e34fd2e1aa56a661ab02818d7b3763c3f27013f10c3c8bdc217084c298d68bd5"
+    },
+    "narval-observations/492/hhw-controller-resumption-live-20261023-492.txt": {
+      "bytes": 373115,
+      "sha256": "e65509a0ea4977823f71c383154e837fba1eaa9730049e939a4fea6718e6e5a2"
+    },
+    "narval-observations/492/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/handoff-contracts.xml": {
+      "bytes": 20448,
+      "sha256": "11e094dcde8bb1708f78d752667b7dc6f7990acb98d371c01fd217b1422f47cd"
+    },
+    "narval-observations/492/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/native-handoff-qualification.json": {
+      "bytes": 1323,
+      "sha256": "666f89af22652aec112d58867a6e0696ab3c80bb418da9c099fd3c8e3bd9037b"
+    },
+    "narval-observations/492/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/receipt.json": {
+      "bytes": 90428,
+      "sha256": "ec0e600e161f1546a8b40efe52304f20508323431d20cf2c2ada310b89a5f4ed"
+    },
+    "narval-observations/492/maintenance/study-af-registry-repair-support-v6-20261022/private-qualification.json": {
+      "bytes": 9223,
+      "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+    },
+    "narval-observations/492/maintenance/study-af-rolling-storage-census-v4-20261023/native-6864491/receipt.json": {
+      "bytes": 19020,
+      "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+    },
+    "narval-observations/492/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_budget-module-origins.json": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval-observations/492/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_pipeline-module-origins.json": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval-observations/492/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/primary_policy-module-origins.json": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval-observations/492/plans/primary-external-census-controllers-v1/plan.json": {
+      "bytes": 18687,
+      "sha256": "6a33e4ee89f4f4ef380e712aec7d488bdd7b5acfbb39d28301cabcb7c7e7cdf3"
+    },
+    "narval-observations/492/plans/primary-external-census-controllers-v1/primary-external-census-controller-0.sbatch": {
+      "bytes": 1958,
+      "sha256": "fbe69f82abce43e936a70be0aeb27835e7bb915fadb1cef59b1c06d2d39b4938"
+    },
+    "narval-observations/492/plans/primary-external-census-controllers-v1/primary-external-census-controller-1.sbatch": {
+      "bytes": 1958,
+      "sha256": "0831e0ec643aad2493f34475a62963cf6bffc8419b5ad2a538f9c33369d1539d"
+    },
+    "narval-observations/492/plans/primary-external-census-controllers-v1/primary-external-census-controller-2.sbatch": {
+      "bytes": 1958,
+      "sha256": "6fc9ba93d17242e2697cfa6a52a0ba5315902be7e596a3175289de520642ce89"
+    },
+    "narval-observations/492/plans/primary-external-census-controllers-v1/primary-external-census-controller-3.sbatch": {
+      "bytes": 1958,
+      "sha256": "04f55706c737a29b3ef1137c8605b74062346c2baae939bbed8061358d4fbaba"
+    },
+    "narval-observations/492/plans/recovery-support-20261021-490/plan.json": {
+      "bytes": 14132,
+      "sha256": "05139b295b85e6af6c889f82c369e1a29a3c88af8ced08f1ab427a0efa1f522c"
+    },
+    "narval-observations/492/plans/recovery-support-20261021-490/recovery-490.sbatch": {
+      "bytes": 1702,
+      "sha256": "2cd651ad52a5608615fc50bdf4fafc4f2d974194c5b6e5dc512635a989dba25f"
+    },
+    "narval-observations/492/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-0.sbatch": {
+      "bytes": 1953,
+      "sha256": "055fb82d5728aac6d5bf289d2ef7379d8119b1cb3b3366ac83071007fc33ca19"
+    },
+    "narval-observations/492/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-1.sbatch": {
+      "bytes": 1953,
+      "sha256": "6a64f85e578c660b210b16679651afbf7e7f2e270a0c9af3ace2f56ffe878d02"
+    },
+    "narval-observations/492/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-2.sbatch": {
+      "bytes": 1953,
+      "sha256": "0b8d01b14d45e7c45844ab27f9a2fc5f77f8750070240af82317556a7cdd69c4"
+    },
+    "narval-observations/492/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-3.sbatch": {
+      "bytes": 1953,
+      "sha256": "d01b6e5c5b31680e4f64c563317344ada283a7f758cf76316133755cfff5e4a4"
+    },
+    "narval-observations/492/plans/study-af-f2-external-census-controllers-v1-20261023/plan.json": {
+      "bytes": 18639,
+      "sha256": "33e8a9b97997caf3f50ef1b0c4e3deac6186fd7738cac8c326f49aeb46ee7f01"
+    },
+    "narval-observations/492/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-0.sbatch": {
+      "bytes": 1518,
+      "sha256": "d3d47df66f404ce8b5d24dc4a6012719c369c93200437c031333708fd2902571"
+    },
+    "narval-observations/492/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-1.sbatch": {
+      "bytes": 1518,
+      "sha256": "8ed1c4dd9ff819b06d2671506a389d85d65293bb765bbe94757dc5bcda6e1546"
+    },
+    "narval-observations/492/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-2.sbatch": {
+      "bytes": 1518,
+      "sha256": "c50d961f4e748bfbc2ec3e477b66755c0b0d2625eb9c85465e545e14f53dc455"
+    },
+    "narval-observations/492/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-3.sbatch": {
+      "bytes": 1518,
+      "sha256": "1b18e23f5c19334f06eb192b4ad3f9de3171cddb34274d9687963cc4c84a0e76"
+    },
+    "narval-observations/492/plans/study-af-f2-registry-r2-controllers-v1-20261022/plan.json": {
+      "bytes": 16978,
+      "sha256": "1851ec7ba5c29a4e6df5536136fbb4bd802d806511547e9d690eb3f0e0fef4e8"
+    },
+    "narval-observations/492/state/pipeline/20261013-829e3817bee1-0e2b1ebce8bf/status.json": {
+      "bytes": 5692,
+      "sha256": "1b27764ec39483f53d28edd4b24d0929c297f40939f8c58ef25ce1ebe816a920"
+    },
+    "narval-observations/492/state/primary-external-census-controllers-v1-submission.json": {
+      "bytes": 4205,
+      "sha256": "26efafe65339ec349a65773135d36502a3baa7d3f4523d56f704b16dba3c5be6"
+    },
+    "narval-observations/492/state/recovery-support-20261021-490-submission.json": {
+      "bytes": 2020,
+      "sha256": "acf7442e51e1a0de34bb8784e6aa63019f3608e38e8cc7d341c28ee26f22aaf8"
+    },
+    "narval-observations/492/state/study-af-f2-external-census-controllers-v1-20261023-submission.json": {
+      "bytes": 3163,
+      "sha256": "02c8d1f2cd74e8405c2a4fcee3b0c8d5c758dbd5f8f2a20910058680232dc728"
+    },
+    "narval-observations/492/state/study-af-f2-registry-r2-controllers-v1-20261022-submission.json": {
+      "bytes": 3115,
+      "sha256": "243c55d6d18002e9ec6d30eff6be41aab6b0c03c651d604c191f1ae8990b09f3"
+    },
+    "narval-observations/493/hhw-controller-resumption-live-20261023-493.json": {
+      "bytes": 106,
+      "sha256": "0de4478f6e7f284f3251dfb3f26ceb4cbe49baa4478e7888ae4fb82f45f6bb3e"
+    },
+    "narval-observations/493/hhw-controller-resumption-live-20261023-493.sh": {
+      "bytes": 6186,
+      "sha256": "e34fd2e1aa56a661ab02818d7b3763c3f27013f10c3c8bdc217084c298d68bd5"
+    },
+    "narval-observations/493/hhw-controller-resumption-live-20261023-493.txt": {
+      "bytes": 427169,
+      "sha256": "5c99f3682be6241817eb1dae301a0a1490330c63aaa9d89a9b22be913bdb3a26"
+    },
+    "narval-observations/493/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/handoff-contracts.xml": {
+      "bytes": 20448,
+      "sha256": "11e094dcde8bb1708f78d752667b7dc6f7990acb98d371c01fd217b1422f47cd"
+    },
+    "narval-observations/493/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/native-handoff-qualification.json": {
+      "bytes": 1323,
+      "sha256": "666f89af22652aec112d58867a6e0696ab3c80bb418da9c099fd3c8e3bd9037b"
+    },
+    "narval-observations/493/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/receipt.json": {
+      "bytes": 90428,
+      "sha256": "ec0e600e161f1546a8b40efe52304f20508323431d20cf2c2ada310b89a5f4ed"
+    },
+    "narval-observations/493/maintenance/study-af-registry-repair-support-v6-20261022/private-qualification.json": {
+      "bytes": 9223,
+      "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+    },
+    "narval-observations/493/maintenance/study-af-rolling-storage-census-v4-20261023/native-6864491/receipt.json": {
+      "bytes": 19020,
+      "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+    },
+    "narval-observations/493/maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/handoff-contracts.xml": {
+      "bytes": 36314,
+      "sha256": "2682df090943fc35e89b5a10b578eb79bf6056910e5e8e12ba05139a4e02bc16"
+    },
+    "narval-observations/493/maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/native-handoff-qualification.json": {
+      "bytes": 1345,
+      "sha256": "db4ced954789e1395fd42f9f2f2313727fb179f8035f13612f426a12f9231243"
+    },
+    "narval-observations/493/maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/native-selftest-intent.json": {
+      "bytes": 1296,
+      "sha256": "7b69c003f9a1945e932f889cd0ff981d16e0cd5767bee45b45198f6d485c8601"
+    },
+    "narval-observations/493/maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/native-selftest-stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "narval-observations/493/maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/native-selftest-stdout.txt": {
+      "bytes": 260,
+      "sha256": "eb7591e3bd328d50d548a8d00fde5fe19b695c9d78c996e4de3a2e8ec08fb7db"
+    },
+    "narval-observations/493/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_budget-module-origins.json": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval-observations/493/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_pipeline-module-origins.json": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval-observations/493/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/primary_policy-module-origins.json": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval-observations/493/plans/primary-external-census-controllers-v1/plan.json": {
+      "bytes": 18687,
+      "sha256": "6a33e4ee89f4f4ef380e712aec7d488bdd7b5acfbb39d28301cabcb7c7e7cdf3"
+    },
+    "narval-observations/493/plans/primary-external-census-controllers-v1/primary-external-census-controller-0.sbatch": {
+      "bytes": 1958,
+      "sha256": "fbe69f82abce43e936a70be0aeb27835e7bb915fadb1cef59b1c06d2d39b4938"
+    },
+    "narval-observations/493/plans/primary-external-census-controllers-v1/primary-external-census-controller-1.sbatch": {
+      "bytes": 1958,
+      "sha256": "0831e0ec643aad2493f34475a62963cf6bffc8419b5ad2a538f9c33369d1539d"
+    },
+    "narval-observations/493/plans/primary-external-census-controllers-v1/primary-external-census-controller-2.sbatch": {
+      "bytes": 1958,
+      "sha256": "6fc9ba93d17242e2697cfa6a52a0ba5315902be7e596a3175289de520642ce89"
+    },
+    "narval-observations/493/plans/primary-external-census-controllers-v1/primary-external-census-controller-3.sbatch": {
+      "bytes": 1958,
+      "sha256": "04f55706c737a29b3ef1137c8605b74062346c2baae939bbed8061358d4fbaba"
+    },
+    "narval-observations/493/plans/recovery-support-20261021-490/plan.json": {
+      "bytes": 14132,
+      "sha256": "05139b295b85e6af6c889f82c369e1a29a3c88af8ced08f1ab427a0efa1f522c"
+    },
+    "narval-observations/493/plans/recovery-support-20261021-490/recovery-490.sbatch": {
+      "bytes": 1702,
+      "sha256": "2cd651ad52a5608615fc50bdf4fafc4f2d974194c5b6e5dc512635a989dba25f"
+    },
+    "narval-observations/493/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-0.sbatch": {
+      "bytes": 1953,
+      "sha256": "055fb82d5728aac6d5bf289d2ef7379d8119b1cb3b3366ac83071007fc33ca19"
+    },
+    "narval-observations/493/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-1.sbatch": {
+      "bytes": 1953,
+      "sha256": "6a64f85e578c660b210b16679651afbf7e7f2e270a0c9af3ace2f56ffe878d02"
+    },
+    "narval-observations/493/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-2.sbatch": {
+      "bytes": 1953,
+      "sha256": "0b8d01b14d45e7c45844ab27f9a2fc5f77f8750070240af82317556a7cdd69c4"
+    },
+    "narval-observations/493/plans/study-af-f2-external-census-controllers-v1-20261023/af-f2-external-census-v1-controller-3.sbatch": {
+      "bytes": 1953,
+      "sha256": "d01b6e5c5b31680e4f64c563317344ada283a7f758cf76316133755cfff5e4a4"
+    },
+    "narval-observations/493/plans/study-af-f2-external-census-controllers-v1-20261023/plan.json": {
+      "bytes": 18639,
+      "sha256": "33e8a9b97997caf3f50ef1b0c4e3deac6186fd7738cac8c326f49aeb46ee7f01"
+    },
+    "narval-observations/493/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-0.sbatch": {
+      "bytes": 1518,
+      "sha256": "d3d47df66f404ce8b5d24dc4a6012719c369c93200437c031333708fd2902571"
+    },
+    "narval-observations/493/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-1.sbatch": {
+      "bytes": 1518,
+      "sha256": "8ed1c4dd9ff819b06d2671506a389d85d65293bb765bbe94757dc5bcda6e1546"
+    },
+    "narval-observations/493/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-2.sbatch": {
+      "bytes": 1518,
+      "sha256": "c50d961f4e748bfbc2ec3e477b66755c0b0d2625eb9c85465e545e14f53dc455"
+    },
+    "narval-observations/493/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-3.sbatch": {
+      "bytes": 1518,
+      "sha256": "1b18e23f5c19334f06eb192b4ad3f9de3171cddb34274d9687963cc4c84a0e76"
+    },
+    "narval-observations/493/plans/study-af-f2-registry-r2-controllers-v1-20261022/plan.json": {
+      "bytes": 16978,
+      "sha256": "1851ec7ba5c29a4e6df5536136fbb4bd802d806511547e9d690eb3f0e0fef4e8"
+    },
+    "narval-observations/493/state/pipeline/20261013-829e3817bee1-0e2b1ebce8bf/status.json": {
+      "bytes": 5692,
+      "sha256": "1b27764ec39483f53d28edd4b24d0929c297f40939f8c58ef25ce1ebe816a920"
+    },
+    "narval-observations/493/state/primary-external-census-controllers-v1-submission.json": {
+      "bytes": 4205,
+      "sha256": "26efafe65339ec349a65773135d36502a3baa7d3f4523d56f704b16dba3c5be6"
+    },
+    "narval-observations/493/state/recovery-support-20261021-490-submission.json": {
+      "bytes": 2020,
+      "sha256": "acf7442e51e1a0de34bb8784e6aa63019f3608e38e8cc7d341c28ee26f22aaf8"
+    },
+    "narval-observations/493/state/study-af-f2-external-census-controllers-v1-20261023-submission.json": {
+      "bytes": 3163,
+      "sha256": "02c8d1f2cd74e8405c2a4fcee3b0c8d5c758dbd5f8f2a20910058680232dc728"
+    },
+    "narval-observations/493/state/study-af-f2-registry-r2-controllers-v1-20261022-submission.json": {
+      "bytes": 3115,
+      "sha256": "243c55d6d18002e9ec6d30eff6be41aab6b0c03c651d604c191f1ae8990b09f3"
+    },
+    "narval-observations/494-v2/files/00d0b71297ae647b1900ec237b7c217852711c16f25cb1ab5aad346a8a5a19ad": {
+      "bytes": 36314,
+      "sha256": "2682df090943fc35e89b5a10b578eb79bf6056910e5e8e12ba05139a4e02bc16"
+    },
+    "narval-observations/494-v2/files/028521c7517e147dcb4a2c22fedbdadec2c3290f37ad4b87286c85f02a3d1840": {
+      "bytes": 1518,
+      "sha256": "8ed1c4dd9ff819b06d2671506a389d85d65293bb765bbe94757dc5bcda6e1546"
+    },
+    "narval-observations/494-v2/files/02fa44233427b1e3754a3ab094c91185fda728fe5f4d5a9b1ac2089ef83108ea": {
+      "bytes": 1296,
+      "sha256": "7b69c003f9a1945e932f889cd0ff981d16e0cd5767bee45b45198f6d485c8601"
+    },
+    "narval-observations/494-v2/files/0895db73b217f111afb965303b3679e436cc838178d4c427086d4a61eec27213": {
+      "bytes": 1953,
+      "sha256": "055fb82d5728aac6d5bf289d2ef7379d8119b1cb3b3366ac83071007fc33ca19"
+    },
+    "narval-observations/494-v2/files/13cdf646b7800bee17e4bc250b8518f5abd319fc8b66406435271fbc6f00299e": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval-observations/494-v2/files/22fedac1aadb2c2db20e2bc175567a76cebced3ed01ff8ee2cbb7f3adc5a8c99": {
+      "bytes": 2020,
+      "sha256": "acf7442e51e1a0de34bb8784e6aa63019f3608e38e8cc7d341c28ee26f22aaf8"
+    },
+    "narval-observations/494-v2/files/297d5bfb5f63d492146d06acd9b4b43d8a85173424c443d25778a6f112e077f8": {
+      "bytes": 3163,
+      "sha256": "02c8d1f2cd74e8405c2a4fcee3b0c8d5c758dbd5f8f2a20910058680232dc728"
+    },
+    "narval-observations/494-v2/files/2ac7921a9ccfeef5ba5a2d1c049bb583eb5f847a08f05ac78586ecdeebdb0676": {
+      "bytes": 19020,
+      "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+    },
+    "narval-observations/494-v2/files/2b7445ee47db2f0a0a55ec05ab42d8f64ba75807ddd02a3c711c1d4cc009aaed": {
+      "bytes": 383,
+      "sha256": "be0bc12b6b94e3d58000d86b470b6cbc48bee2cb0ff9f7175b863e177046259e"
+    },
+    "narval-observations/494-v2/files/2d7112bbab7acceb147d8529f5002ba2cab5eb224ff275bb4e104396201388df": {
+      "bytes": 383,
+      "sha256": "96c675797f436e02f2f7dac669bc05b174b8c960b5ed9061763b58f09dc9ef26"
+    },
+    "narval-observations/494-v2/files/2fe7b491068183b594cfde0c3b48db0e66df5c1569e03f2fcb574b6bed2f3d67": {
+      "bytes": 1953,
+      "sha256": "0b8d01b14d45e7c45844ab27f9a2fc5f77f8750070240af82317556a7cdd69c4"
+    },
+    "narval-observations/494-v2/files/3b1abf85056ee3198522b846ab6bfb5ad32ff41358b835c10db565b79d9e6f67": {
+      "bytes": 9223,
+      "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+    },
+    "narval-observations/494-v2/files/3ebe799a78d92c08898f05c8675f232fa559a774140b50b7c70517bbf15d92ee": {
+      "bytes": 260,
+      "sha256": "eb7591e3bd328d50d548a8d00fde5fe19b695c9d78c996e4de3a2e8ec08fb7db"
+    },
+    "narval-observations/494-v2/files/40d3733a6d1ff25dbcc7232ba048a6ce9b647b12764d2e7a8d40930248b03b18": {
+      "bytes": 18639,
+      "sha256": "33e8a9b97997caf3f50ef1b0c4e3deac6186fd7738cac8c326f49aeb46ee7f01"
+    },
+    "narval-observations/494-v2/files/479572cfe4a4f0e30efbf241e208bfdbbc2a5f6610303a19e309b24210ec2344": {
+      "bytes": 90428,
+      "sha256": "ec0e600e161f1546a8b40efe52304f20508323431d20cf2c2ada310b89a5f4ed"
+    },
+    "narval-observations/494-v2/files/4b50b617850dbdc575f6b89b47abd550b3f6c8c2272e62e3ec62ea266216ae55": {
+      "bytes": 397,
+      "sha256": "b22c739f3364f0ab40b35a21cda03e697b5123c90d694a824360c94e8eb585c9"
+    },
+    "narval-observations/494-v2/files/4cb5d80427fe6dd132eb8020a1fd5413c490bace771002e45e2c96b3788fa03d": {
+      "bytes": 14132,
+      "sha256": "05139b295b85e6af6c889f82c369e1a29a3c88af8ced08f1ab427a0efa1f522c"
+    },
+    "narval-observations/494-v2/files/5007ed1dfe3d92d7f237004ec57ae344f7eba0ec0eee5c42bfa0cc569db2508c": {
+      "bytes": 1518,
+      "sha256": "1b18e23f5c19334f06eb192b4ad3f9de3171cddb34274d9687963cc4c84a0e76"
+    },
+    "narval-observations/494-v2/files/50269d507a813ab2e31ec8df26b50a8d9f87960ee03c5cd10352099d3d3e0002": {
+      "bytes": 2500,
+      "sha256": "10471ad706367b9d39e3ed840260808f36b0a4fd597da1f09dd2d5928df8ef14"
+    },
+    "narval-observations/494-v2/files/512a0a183d9767a9e1a235eaf1f9b4ae675feb6793d71deaa654bc70266836e9": {
+      "bytes": 1958,
+      "sha256": "fbe69f82abce43e936a70be0aeb27835e7bb915fadb1cef59b1c06d2d39b4938"
+    },
+    "narval-observations/494-v2/files/55fca35df1552fbc4aab7300f073660ea294f4e7f1c9642e4ffb514e2655e9c5": {
+      "bytes": 16978,
+      "sha256": "1851ec7ba5c29a4e6df5536136fbb4bd802d806511547e9d690eb3f0e0fef4e8"
+    },
+    "narval-observations/494-v2/files/5e010fe965798fbbe48307ff2d8a0bbb7f955da41d56e633b92808b8a0f79514": {
+      "bytes": 2769,
+      "sha256": "4d1b6cb059217dff57f63f90932c30e454a1c2a21560cf95b85cf388a930d3a9"
+    },
+    "narval-observations/494-v2/files/5fb4849c4631e64e58b81a8b6173a4b8a60f051a908870fa043f8d39186f6c2a": {
+      "bytes": 1323,
+      "sha256": "666f89af22652aec112d58867a6e0696ab3c80bb418da9c099fd3c8e3bd9037b"
+    },
+    "narval-observations/494-v2/files/614c6006bad6df675cf5375a563a9e1fef9888974d1ab0e9c65f0e9267bc1d5f": {
+      "bytes": 1518,
+      "sha256": "c50d961f4e748bfbc2ec3e477b66755c0b0d2625eb9c85465e545e14f53dc455"
+    },
+    "narval-observations/494-v2/files/63b3a8ff924d0809d061319d24afae22ba934f65072bab5ea32da580f14d6646": {
+      "bytes": 2500,
+      "sha256": "b9ac49498ffb466493203de84e82403796e44726b819c63ea211c40183c57963"
+    },
+    "narval-observations/494-v2/files/66d5ef0db68ced0247505458a6ba24309f3b4f55953b90eb7faa6689db3a6fb1": {
+      "bytes": 383,
+      "sha256": "96089de48478d5eeb8533062daff88facc34ac91e98fc84873aaa6a1a1e241fa"
+    },
+    "narval-observations/494-v2/files/739903164b883d75bea4975bf378721891576040d45f09114c0429da65d5ec20": {
+      "bytes": 1958,
+      "sha256": "0831e0ec643aad2493f34475a62963cf6bffc8419b5ad2a538f9c33369d1539d"
+    },
+    "narval-observations/494-v2/files/777486da2218f6aee6d1a5a678082a0c4c36974151d566d69af9d1608937c93b": {
+      "bytes": 1953,
+      "sha256": "6a64f85e578c660b210b16679651afbf7e7f2e270a0c9af3ace2f56ffe878d02"
+    },
+    "narval-observations/494-v2/files/7a3343e9db20a199dd94780578e13663c127675be7186762aaac0802b2f4a04b": {
+      "bytes": 20448,
+      "sha256": "11e094dcde8bb1708f78d752667b7dc6f7990acb98d371c01fd217b1422f47cd"
+    },
+    "narval-observations/494-v2/files/7dac2682c19965ef202bbc0b3a26b69f5f6d1a03d709e16020c2dc24a5211128": {
+      "bytes": 1958,
+      "sha256": "04f55706c737a29b3ef1137c8605b74062346c2baae939bbed8061358d4fbaba"
+    },
+    "narval-observations/494-v2/files/8543cc17478511e71becc81077438e27ed63f80e5a94203f1c25be8deaeedd62": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "narval-observations/494-v2/files/93af700d56e1a772539cde8a81f1552e639d86e9ddf4c1bcfced26b400921eb3": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval-observations/494-v2/files/97bc6f6dab0c6b3ed58afd4d6140bc0edd4176622b73d594d007f25585e55ba1": {
+      "bytes": 397,
+      "sha256": "114116a08770b1672b18ba4154cb6771b23edd196695b1b9a66fd9e73c4d597f"
+    },
+    "narval-observations/494-v2/files/9d5a7518953d24e5e283c95400f38c2f9d8d76a6a14dc9ddf79f0932e2b3ba95": {
+      "bytes": 2477,
+      "sha256": "fa544fd76363c94f03fbf8f6403f8d8946f13ebcf028c05266ef05c1ebd38bda"
+    },
+    "narval-observations/494-v2/files/a261364ea772f64995cf5d3662e1c7cc26514f43c6b570cad8778f33a8763230": {
+      "bytes": 1345,
+      "sha256": "db4ced954789e1395fd42f9f2f2313727fb179f8035f13612f426a12f9231243"
+    },
+    "narval-observations/494-v2/files/a31598d9de99c7af1fe6a873e7bc048960d9d2bf1273979539d7f073795a3939": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval-observations/494-v2/files/b8aaa7ac698a2da23e8dd8d6041115328fc0b2e7ea8c86dc4cf8acb58b22b8bc": {
+      "bytes": 1958,
+      "sha256": "6fc9ba93d17242e2697cfa6a52a0ba5315902be7e596a3175289de520642ce89"
+    },
+    "narval-observations/494-v2/files/ba3b341c7db5ecec2d954bdf4323ef7ed8c759316d863077c9f0eec761039b42": {
+      "bytes": 3115,
+      "sha256": "243c55d6d18002e9ec6d30eff6be41aab6b0c03c651d604c191f1ae8990b09f3"
+    },
+    "narval-observations/494-v2/files/c0f2449c170e1232896e2668fcb05809d38e69d6251e82866433892fd551a78a": {
+      "bytes": 7633,
+      "sha256": "610a877809008f89a456fc812a3f1f639c5bc889b34134146cca2e36f943a78c"
+    },
+    "narval-observations/494-v2/files/ca0ce5e72054730bcda214657ffce13b0c5423309fea738257384ba7453e1bdf": {
+      "bytes": 1953,
+      "sha256": "d01b6e5c5b31680e4f64c563317344ada283a7f758cf76316133755cfff5e4a4"
+    },
+    "narval-observations/494-v2/files/d1e766507f03751ee88750b4a9e56966ad46d3e40c98b537d0f2d92348ac98f7": {
+      "bytes": 4205,
+      "sha256": "26efafe65339ec349a65773135d36502a3baa7d3f4523d56f704b16dba3c5be6"
+    },
+    "narval-observations/494-v2/files/d91cf94d7d96cccb9567a16ec9fa62d62efe4c48b2a26d8f8543d8ff3c21f1f0": {
+      "bytes": 397,
+      "sha256": "214a1acf6cae4b8c7a2057341da9c29c081fda6e594943d2b53f5ba8dbd9ed2a"
+    },
+    "narval-observations/494-v2/files/def9a5aec8ee0c04caaa1db3ebfca195eece28b8ee47d7f87397bd565c001596": {
+      "bytes": 18687,
+      "sha256": "6a33e4ee89f4f4ef380e712aec7d488bdd7b5acfbb39d28301cabcb7c7e7cdf3"
+    },
+    "narval-observations/494-v2/files/ef4f52e299a67b449860734b9fee9cbf6a1ce6f05853536648a8bf147b285db4": {
+      "bytes": 5692,
+      "sha256": "1b27764ec39483f53d28edd4b24d0929c297f40939f8c58ef25ce1ebe816a920"
+    },
+    "narval-observations/494-v2/files/f0aeaad413f9fa3c2d1d206680173901991ea96b48d1bc7a6046c5540c69ea9a": {
+      "bytes": 1702,
+      "sha256": "2cd651ad52a5608615fc50bdf4fafc4f2d974194c5b6e5dc512635a989dba25f"
+    },
+    "narval-observations/494-v2/files/f0bb0f550592b58bce39501461253141cb75e2ebd829708ab87098a5c3472733": {
+      "bytes": 1518,
+      "sha256": "d3d47df66f404ce8b5d24dc4a6012719c369c93200437c031333708fd2902571"
+    },
+    "narval-observations/494-v2/files/f5d4f607373a7020096a0055ef3dbbbecf263897fc685611aa325c74d08fe5d9": {
+      "bytes": 1341336,
+      "sha256": "673ec01bce7126aa2bf8aa2b2d8d692de8193e6168653acf1f89cd3d4f2ac02e"
+    },
+    "narval-observations/494-v2/hhw-controller-resumption-live-20261023-494.json": {
+      "bytes": 107,
+      "sha256": "d0474f4f9511272a1cfaa2c568b0fc96a12acc63c9040f3fd053745be4631574"
+    },
+    "narval-observations/494-v2/hhw-controller-resumption-live-20261023-494.sh": {
+      "bytes": 6186,
+      "sha256": "e34fd2e1aa56a661ab02818d7b3763c3f27013f10c3c8bdc217084c298d68bd5"
+    },
+    "narval-observations/494-v2/hhw-controller-resumption-live-20261023-494.txt": {
+      "bytes": 2244966,
+      "sha256": "bd5034159a7d3784ec7acd127932a9f6aed60b7404126b4e46f6ce4b10d54be8"
+    },
+    "narval-observations/494-v2/remote-path-index.json": {
+      "bytes": 16493,
+      "sha256": "3b448048d8cdd46e64497b1ff9d1888834b0fdd504e0fdd9928e448e539fa3e1"
+    },
+    "narval-observations/494/hhw-controller-resumption-live-20261023-494.json": {
+      "bytes": 107,
+      "sha256": "d0474f4f9511272a1cfaa2c568b0fc96a12acc63c9040f3fd053745be4631574"
+    },
+    "narval-observations/494/hhw-controller-resumption-live-20261023-494.sh": {
+      "bytes": 6186,
+      "sha256": "e34fd2e1aa56a661ab02818d7b3763c3f27013f10c3c8bdc217084c298d68bd5"
+    },
+    "narval-observations/494/hhw-controller-resumption-live-20261023-494.txt": {
+      "bytes": 2244966,
+      "sha256": "bd5034159a7d3784ec7acd127932a9f6aed60b7404126b4e46f6ce4b10d54be8"
+    },
+    "narval-observations/494/local-archive-failure.json": {
+      "bytes": 447,
+      "sha256": "f09ab8cb7e0ac16ced29984db5bd6911d7d5ef4ddb7f082243f161b5ca6cca30"
+    },
+    "narval-observations/494/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/native-handoff-qualification.json": {
+      "bytes": 1323,
+      "sha256": "666f89af22652aec112d58867a6e0696ab3c80bb418da9c099fd3c8e3bd9037b"
+    },
+    "narval-observations/494/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/receipt.json": {
+      "bytes": 90428,
+      "sha256": "ec0e600e161f1546a8b40efe52304f20508323431d20cf2c2ada310b89a5f4ed"
+    },
+    "narval-observations/494/maintenance/study-af-registry-repair-support-v6-20261022/private-qualification.json": {
+      "bytes": 9223,
+      "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+    },
+    "narval-observations/494/maintenance/study-af-rolling-storage-census-v4-20261023/native-6864491/receipt.json": {
+      "bytes": 19020,
+      "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+    },
+    "narval-observations/494/maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/native-handoff-qualification.json": {
+      "bytes": 1345,
+      "sha256": "db4ced954789e1395fd42f9f2f2313727fb179f8035f13612f426a12f9231243"
+    },
+    "narval-observations/494/maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/native-selftest-intent.json": {
+      "bytes": 1296,
+      "sha256": "7b69c003f9a1945e932f889cd0ff981d16e0cd5767bee45b45198f6d485c8601"
+    },
+    "narval-observations/494/maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/native-selftest-stderr.txt": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "narval-observations/494/maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/native-selftest-stdout.txt": {
+      "bytes": 260,
+      "sha256": "eb7591e3bd328d50d548a8d00fde5fe19b695c9d78c996e4de3a2e8ec08fb7db"
+    },
+    "narval-observations/494/maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/partial-all-held-preflight.json": {
+      "bytes": 7633,
+      "sha256": "610a877809008f89a456fc812a3f1f639c5bc889b34134146cca2e36f943a78c"
+    },
+    "narval-observations/494/maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/partial-reconciliation.json": {
+      "bytes": 2769,
+      "sha256": "4d1b6cb059217dff57f63f90932c30e454a1c2a21560cf95b85cf388a930d3a9"
+    },
+    "narval-observations/496-v2/files/00d0b71297ae647b1900ec237b7c217852711c16f25cb1ab5aad346a8a5a19ad": {
+      "bytes": 36314,
+      "sha256": "2682df090943fc35e89b5a10b578eb79bf6056910e5e8e12ba05139a4e02bc16"
+    },
+    "narval-observations/496-v2/files/028521c7517e147dcb4a2c22fedbdadec2c3290f37ad4b87286c85f02a3d1840": {
+      "bytes": 1518,
+      "sha256": "8ed1c4dd9ff819b06d2671506a389d85d65293bb765bbe94757dc5bcda6e1546"
+    },
+    "narval-observations/496-v2/files/02fa44233427b1e3754a3ab094c91185fda728fe5f4d5a9b1ac2089ef83108ea": {
+      "bytes": 1296,
+      "sha256": "7b69c003f9a1945e932f889cd0ff981d16e0cd5767bee45b45198f6d485c8601"
+    },
+    "narval-observations/496-v2/files/03530b5ce4af505cbf6518e0aa0707bacb9f509b392a17b9006d5367b0312526": {
+      "bytes": 4205,
+      "sha256": "0bd363318e2c4195de7f1a4bc5dc424555e26e8ff8251d4333c5c902649ce55c"
+    },
+    "narval-observations/496-v2/files/07743455ca03f136b8b7503a40e681f745c38b3990d21d49f6c2ae1525a395da": {
+      "bytes": 1342292,
+      "sha256": "03143627ea25febddf2eb7e56fde0ba599324eafa72a61963385b41eecd12bf8"
+    },
+    "narval-observations/496-v2/files/0895db73b217f111afb965303b3679e436cc838178d4c427086d4a61eec27213": {
+      "bytes": 1953,
+      "sha256": "055fb82d5728aac6d5bf289d2ef7379d8119b1cb3b3366ac83071007fc33ca19"
+    },
+    "narval-observations/496-v2/files/1353b790d323f2c82a4b89a8d41cc7bdff9e35356ffa3f0d804d467024309dc1": {
+      "bytes": 368,
+      "sha256": "a90883b6cdda2b2bf47b821c9ed98f61ad7c60b81a3a93e1941875c21d1f987e"
+    },
+    "narval-observations/496-v2/files/13b76d6f456434873a7c0cb8c62f87bb225f7775c276aa05383057a173127dca": {
+      "bytes": 2518,
+      "sha256": "6d02e54d47efa63f06493bc92186af82e4a2adb77fc2c12979d8d5bab08f912e"
+    },
+    "narval-observations/496-v2/files/13cdf646b7800bee17e4bc250b8518f5abd319fc8b66406435271fbc6f00299e": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval-observations/496-v2/files/19cc2c91cde0ecae97470fd49ba5fe979b9930cffca37469efa68139cb7f184a": {
+      "bytes": 2582,
+      "sha256": "85ca1cbd4ec628514d7d3e22c7b5a3635edeac0f25c6fc8d0edc11f5af3d43ef"
+    },
+    "narval-observations/496-v2/files/22fedac1aadb2c2db20e2bc175567a76cebced3ed01ff8ee2cbb7f3adc5a8c99": {
+      "bytes": 2020,
+      "sha256": "acf7442e51e1a0de34bb8784e6aa63019f3608e38e8cc7d341c28ee26f22aaf8"
+    },
+    "narval-observations/496-v2/files/297d5bfb5f63d492146d06acd9b4b43d8a85173424c443d25778a6f112e077f8": {
+      "bytes": 3163,
+      "sha256": "02c8d1f2cd74e8405c2a4fcee3b0c8d5c758dbd5f8f2a20910058680232dc728"
+    },
+    "narval-observations/496-v2/files/2ac7921a9ccfeef5ba5a2d1c049bb583eb5f847a08f05ac78586ecdeebdb0676": {
+      "bytes": 19020,
+      "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+    },
+    "narval-observations/496-v2/files/2b7445ee47db2f0a0a55ec05ab42d8f64ba75807ddd02a3c711c1d4cc009aaed": {
+      "bytes": 383,
+      "sha256": "be0bc12b6b94e3d58000d86b470b6cbc48bee2cb0ff9f7175b863e177046259e"
+    },
+    "narval-observations/496-v2/files/2d7112bbab7acceb147d8529f5002ba2cab5eb224ff275bb4e104396201388df": {
+      "bytes": 383,
+      "sha256": "96c675797f436e02f2f7dac669bc05b174b8c960b5ed9061763b58f09dc9ef26"
+    },
+    "narval-observations/496-v2/files/2fe7b491068183b594cfde0c3b48db0e66df5c1569e03f2fcb574b6bed2f3d67": {
+      "bytes": 1953,
+      "sha256": "0b8d01b14d45e7c45844ab27f9a2fc5f77f8750070240af82317556a7cdd69c4"
+    },
+    "narval-observations/496-v2/files/3165fae166ef484312a86163515296ba30d97a10bd29288af97aeb00b486f9db": {
+      "bytes": 18687,
+      "sha256": "2b5b77e7230b5365de91caf64f72484c456856b0526549a53400320ee7c32cb3"
+    },
+    "narval-observations/496-v2/files/31a785f53f7b906c887e81b169b51ce08bee020171edb79f6995ebac646f74b7": {
+      "bytes": 2516,
+      "sha256": "f31d9831016f4ad9bef90b8f21d999b9abab5cee818edeff8f73052cb2253639"
+    },
+    "narval-observations/496-v2/files/32ccc697e256ea4745009e4c6e3c814e824c5478d2b36df44b72c60f6c33a22b": {
+      "bytes": 397,
+      "sha256": "aa6fa7a0737f525b6982ebe0a21c0c1b2ea229192295626a2fba41b76323159e"
+    },
+    "narval-observations/496-v2/files/365f02825f58c4148c4d1e98233c8af4673573e6336c00100016a848f747f5e0": {
+      "bytes": 397,
+      "sha256": "64c282aee034f9f7ce5dda44ba1c07a84463c933285dea4d39328bbdacba5e1f"
+    },
+    "narval-observations/496-v2/files/3b1abf85056ee3198522b846ab6bfb5ad32ff41358b835c10db565b79d9e6f67": {
+      "bytes": 9223,
+      "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+    },
+    "narval-observations/496-v2/files/3de56180bc2e16d4be2a3a20e8e182c92ab58c1bb1fe70265732f3d4237fdf7a": {
+      "bytes": 2449,
+      "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+    },
+    "narval-observations/496-v2/files/3ebe799a78d92c08898f05c8675f232fa559a774140b50b7c70517bbf15d92ee": {
+      "bytes": 260,
+      "sha256": "eb7591e3bd328d50d548a8d00fde5fe19b695c9d78c996e4de3a2e8ec08fb7db"
+    },
+    "narval-observations/496-v2/files/40d3733a6d1ff25dbcc7232ba048a6ce9b647b12764d2e7a8d40930248b03b18": {
+      "bytes": 18639,
+      "sha256": "33e8a9b97997caf3f50ef1b0c4e3deac6186fd7738cac8c326f49aeb46ee7f01"
+    },
+    "narval-observations/496-v2/files/41c2b258ead52a3fb4c5eb746e6685eeeda8fdb406e643164dab9523b75fd87b": {
+      "bytes": 286,
+      "sha256": "aa51d49bb1bc6c365ec83498c117c9a5b77eafbeca50e5ed1dc83ed89207e5ca"
+    },
+    "narval-observations/496-v2/files/479572cfe4a4f0e30efbf241e208bfdbbc2a5f6610303a19e309b24210ec2344": {
+      "bytes": 90428,
+      "sha256": "ec0e600e161f1546a8b40efe52304f20508323431d20cf2c2ada310b89a5f4ed"
+    },
+    "narval-observations/496-v2/files/4b50b617850dbdc575f6b89b47abd550b3f6c8c2272e62e3ec62ea266216ae55": {
+      "bytes": 397,
+      "sha256": "b22c739f3364f0ab40b35a21cda03e697b5123c90d694a824360c94e8eb585c9"
+    },
+    "narval-observations/496-v2/files/4cb5d80427fe6dd132eb8020a1fd5413c490bace771002e45e2c96b3788fa03d": {
+      "bytes": 14132,
+      "sha256": "05139b295b85e6af6c889f82c369e1a29a3c88af8ced08f1ab427a0efa1f522c"
+    },
+    "narval-observations/496-v2/files/5007ed1dfe3d92d7f237004ec57ae344f7eba0ec0eee5c42bfa0cc569db2508c": {
+      "bytes": 1518,
+      "sha256": "1b18e23f5c19334f06eb192b4ad3f9de3171cddb34274d9687963cc4c84a0e76"
+    },
+    "narval-observations/496-v2/files/50269d507a813ab2e31ec8df26b50a8d9f87960ee03c5cd10352099d3d3e0002": {
+      "bytes": 2500,
+      "sha256": "10471ad706367b9d39e3ed840260808f36b0a4fd597da1f09dd2d5928df8ef14"
+    },
+    "narval-observations/496-v2/files/512a0a183d9767a9e1a235eaf1f9b4ae675feb6793d71deaa654bc70266836e9": {
+      "bytes": 1958,
+      "sha256": "fbe69f82abce43e936a70be0aeb27835e7bb915fadb1cef59b1c06d2d39b4938"
+    },
+    "narval-observations/496-v2/files/55fca35df1552fbc4aab7300f073660ea294f4e7f1c9642e4ffb514e2655e9c5": {
+      "bytes": 16978,
+      "sha256": "1851ec7ba5c29a4e6df5536136fbb4bd802d806511547e9d690eb3f0e0fef4e8"
+    },
+    "narval-observations/496-v2/files/5b92ab105887aa0d1fb9f95f1edde03de9fa4fb3119ed5414a3fcd5b89741264": {
+      "bytes": 2066,
+      "sha256": "a05ab5ae921596ce703a99246dfaea0932d1f166e4f5f495549b911e2da35d3c"
+    },
+    "narval-observations/496-v2/files/5e010fe965798fbbe48307ff2d8a0bbb7f955da41d56e633b92808b8a0f79514": {
+      "bytes": 2769,
+      "sha256": "4d1b6cb059217dff57f63f90932c30e454a1c2a21560cf95b85cf388a930d3a9"
+    },
+    "narval-observations/496-v2/files/5fb4849c4631e64e58b81a8b6173a4b8a60f051a908870fa043f8d39186f6c2a": {
+      "bytes": 1323,
+      "sha256": "666f89af22652aec112d58867a6e0696ab3c80bb418da9c099fd3c8e3bd9037b"
+    },
+    "narval-observations/496-v2/files/614c6006bad6df675cf5375a563a9e1fef9888974d1ab0e9c65f0e9267bc1d5f": {
+      "bytes": 1518,
+      "sha256": "c50d961f4e748bfbc2ec3e477b66755c0b0d2625eb9c85465e545e14f53dc455"
+    },
+    "narval-observations/496-v2/files/63b3a8ff924d0809d061319d24afae22ba934f65072bab5ea32da580f14d6646": {
+      "bytes": 2500,
+      "sha256": "b9ac49498ffb466493203de84e82403796e44726b819c63ea211c40183c57963"
+    },
+    "narval-observations/496-v2/files/66d5ef0db68ced0247505458a6ba24309f3b4f55953b90eb7faa6689db3a6fb1": {
+      "bytes": 383,
+      "sha256": "96089de48478d5eeb8533062daff88facc34ac91e98fc84873aaa6a1a1e241fa"
+    },
+    "narval-observations/496-v2/files/6838cd4244acb1a4a825976bbfdcecc95bf9618cca03a5ccbb09ffe776614859": {
+      "bytes": 9265,
+      "sha256": "2fdd3a0f8e74d852934290fae63b0dbca23cd31f6a584b3694d38e5a92e3f1ec"
+    },
+    "narval-observations/496-v2/files/6c3cb87babd5a622fc719e4d204526e088412b8e47a33d8fc83c6295e07b00b5": {
+      "bytes": 368,
+      "sha256": "ead2443cd31ce646c27e9aeb9272aca623e9f72ae7ee3f0ff8aff7d1d5f5bf4e"
+    },
+    "narval-observations/496-v2/files/739903164b883d75bea4975bf378721891576040d45f09114c0429da65d5ec20": {
+      "bytes": 1958,
+      "sha256": "0831e0ec643aad2493f34475a62963cf6bffc8419b5ad2a538f9c33369d1539d"
+    },
+    "narval-observations/496-v2/files/777486da2218f6aee6d1a5a678082a0c4c36974151d566d69af9d1608937c93b": {
+      "bytes": 1953,
+      "sha256": "6a64f85e578c660b210b16679651afbf7e7f2e270a0c9af3ace2f56ffe878d02"
+    },
+    "narval-observations/496-v2/files/7a3343e9db20a199dd94780578e13663c127675be7186762aaac0802b2f4a04b": {
+      "bytes": 20448,
+      "sha256": "11e094dcde8bb1708f78d752667b7dc6f7990acb98d371c01fd217b1422f47cd"
+    },
+    "narval-observations/496-v2/files/7bb6cbd20e733cc85cb9ecc26fa091dea85223ff6aae8a1aea27748b4b9e37d0": {
+      "bytes": 319,
+      "sha256": "3cb63f6277de871a12a6c229f6164f15427b6b1c8356fb21d8750966b78de3e0"
+    },
+    "narval-observations/496-v2/files/7dac2682c19965ef202bbc0b3a26b69f5f6d1a03d709e16020c2dc24a5211128": {
+      "bytes": 1958,
+      "sha256": "04f55706c737a29b3ef1137c8605b74062346c2baae939bbed8061358d4fbaba"
+    },
+    "narval-observations/496-v2/files/7fe951200df27a3dc8d8d023f0bdcfbfd36135d4dc6bd433b4b8719d40e4a3a6": {
+      "bytes": 286,
+      "sha256": "9469c5971e1cf3e3375f9a5db12651af77c4daf88e3f28ee941eed45d52226bb"
+    },
+    "narval-observations/496-v2/files/84904db7859bcb2b2747416f8192c551f3b436d512198244069dc81436317b2c": {
+      "bytes": 1346016,
+      "sha256": "8517adfb0a5c8e5867e8f94f64ce65facba072a55fb42d0240f15711063e94dd"
+    },
+    "narval-observations/496-v2/files/8543cc17478511e71becc81077438e27ed63f80e5a94203f1c25be8deaeedd62": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "narval-observations/496-v2/files/8e6e5a1356d30cf6d28d3eccf9c7e05d8253ee0ed7c3c9b5f944c439bb81084e": {
+      "bytes": 236,
+      "sha256": "5d04cc9dd5c8f08df4f40a3bfdc148baf945ef740336e21884a7138aa58ca96e"
+    },
+    "narval-observations/496-v2/files/9049fe9ddd2b8c5fa01aefbef82956547756801b8ea1d2fd7ffb842dd0159f24": {
+      "bytes": 368,
+      "sha256": "385e78c013d5cec4521801704346aa4e5e040a4491de7b3bbcdcfa3e5ef3e5b4"
+    },
+    "narval-observations/496-v2/files/93af700d56e1a772539cde8a81f1552e639d86e9ddf4c1bcfced26b400921eb3": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval-observations/496-v2/files/97bc6f6dab0c6b3ed58afd4d6140bc0edd4176622b73d594d007f25585e55ba1": {
+      "bytes": 397,
+      "sha256": "114116a08770b1672b18ba4154cb6771b23edd196695b1b9a66fd9e73c4d597f"
+    },
+    "narval-observations/496-v2/files/9d5a7518953d24e5e283c95400f38c2f9d8d76a6a14dc9ddf79f0932e2b3ba95": {
+      "bytes": 2477,
+      "sha256": "fa544fd76363c94f03fbf8f6403f8d8946f13ebcf028c05266ef05c1ebd38bda"
+    },
+    "narval-observations/496-v2/files/9d8d193cfe84da8960c0930a67f35dd4311b89f968d090a196213e2ab48e7db3": {
+      "bytes": 2582,
+      "sha256": "e539a212d60116776f93ea92273476d7e17c9147737d94b9c04657610ca747f5"
+    },
+    "narval-observations/496-v2/files/a106b3f6acf55a5e6bd98bbe57db3df9ed4e7c2c50de3a97b799e389143f71c1": {
+      "bytes": 1803,
+      "sha256": "0ee8473497fad87588ce93a4a20cdf551413eeb6a4dac5ac14bccca001f3882d"
+    },
+    "narval-observations/496-v2/files/a261364ea772f64995cf5d3662e1c7cc26514f43c6b570cad8778f33a8763230": {
+      "bytes": 1345,
+      "sha256": "db4ced954789e1395fd42f9f2f2313727fb179f8035f13612f426a12f9231243"
+    },
+    "narval-observations/496-v2/files/a31598d9de99c7af1fe6a873e7bc048960d9d2bf1273979539d7f073795a3939": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval-observations/496-v2/files/a859aac71340d2c72c040b75636473dda66a3432844049cfc15a3913c40e5bd3": {
+      "bytes": 8017,
+      "sha256": "742be13e9b271e5871269398181ca899d1c580aa79fea7eeebf1fe2778501670"
+    },
+    "narval-observations/496-v2/files/b6965a884f7129b15179efb7c56c614252cceb9e9aeac47b06e1c3a4f0875873": {
+      "bytes": 2066,
+      "sha256": "b5cfa87d46d747f15dcd2be6e3e5d991b222b854c6b9b211cf026af234486ff5"
+    },
+    "narval-observations/496-v2/files/b8aaa7ac698a2da23e8dd8d6041115328fc0b2e7ea8c86dc4cf8acb58b22b8bc": {
+      "bytes": 1958,
+      "sha256": "6fc9ba93d17242e2697cfa6a52a0ba5315902be7e596a3175289de520642ce89"
+    },
+    "narval-observations/496-v2/files/ba3b341c7db5ecec2d954bdf4323ef7ed8c759316d863077c9f0eec761039b42": {
+      "bytes": 3115,
+      "sha256": "243c55d6d18002e9ec6d30eff6be41aab6b0c03c651d604c191f1ae8990b09f3"
+    },
+    "narval-observations/496-v2/files/baca5edfbbb8b557bf297e072b0f462c630f9303dd9c95a0f97665269ae4b14d": {
+      "bytes": 2066,
+      "sha256": "69157d93af7578a3abbf0f9663a57d44975ab8675adc13867e5b5672d01fa1c5"
+    },
+    "narval-observations/496-v2/files/c01059d9b17cdb9e40c58c6e13aa238f7a5f9dfff909be5a898a92e21394c363": {
+      "bytes": 286,
+      "sha256": "85b7d7a6e859d258be7be37ac479843696cdfb3baa1d42994763d05b3d6a46f6"
+    },
+    "narval-observations/496-v2/files/c0f2449c170e1232896e2668fcb05809d38e69d6251e82866433892fd551a78a": {
+      "bytes": 7633,
+      "sha256": "610a877809008f89a456fc812a3f1f639c5bc889b34134146cca2e36f943a78c"
+    },
+    "narval-observations/496-v2/files/c3d1b5e7f1f65e8e3dfa4f36bfbd0753d5fa28de6f8aa81b339da37162a188e7": {
+      "bytes": 2066,
+      "sha256": "ec21853c8c3ea8b680a7ed1b8ab9652044504255e5e89c44574634e5961d8d7a"
+    },
+    "narval-observations/496-v2/files/c44b58a69293bb38a9fe3acd700acce24a4848fd480b043c63472912116efc23": {
+      "bytes": 2581,
+      "sha256": "0f2e553ac00aafcb758e06fbcf6bbf7da6617a70d6fe0eed79fea65301ece1cf"
+    },
+    "narval-observations/496-v2/files/ca0ce5e72054730bcda214657ffce13b0c5423309fea738257384ba7453e1bdf": {
+      "bytes": 1953,
+      "sha256": "d01b6e5c5b31680e4f64c563317344ada283a7f758cf76316133755cfff5e4a4"
+    },
+    "narval-observations/496-v2/files/cd03a712b2dab339274e046a3f75faca571698d7f77a664bd994511557f8f3a1": {
+      "bytes": 2518,
+      "sha256": "d0e8f6ad036da743f72dd3749f6658566f284ee3d371564b1fc0cb830a9a698e"
+    },
+    "narval-observations/496-v2/files/d1e766507f03751ee88750b4a9e56966ad46d3e40c98b537d0f2d92348ac98f7": {
+      "bytes": 4205,
+      "sha256": "26efafe65339ec349a65773135d36502a3baa7d3f4523d56f704b16dba3c5be6"
+    },
+    "narval-observations/496-v2/files/d5402408e675183595821a680c7ce07f79ad333808388f3d785be617cd667b28": {
+      "bytes": 2240,
+      "sha256": "9e525425ba063c824eed9fe40e15272d33be5ae88bc208850167b0e2d07523a1"
+    },
+    "narval-observations/496-v2/files/d91cf94d7d96cccb9567a16ec9fa62d62efe4c48b2a26d8f8543d8ff3c21f1f0": {
+      "bytes": 397,
+      "sha256": "214a1acf6cae4b8c7a2057341da9c29c081fda6e594943d2b53f5ba8dbd9ed2a"
+    },
+    "narval-observations/496-v2/files/def9a5aec8ee0c04caaa1db3ebfca195eece28b8ee47d7f87397bd565c001596": {
+      "bytes": 18687,
+      "sha256": "6a33e4ee89f4f4ef380e712aec7d488bdd7b5acfbb39d28301cabcb7c7e7cdf3"
+    },
+    "narval-observations/496-v2/files/e649efd7756ad528f284ee6489f74c9b1de78775e8daa4df6afb1d3fec352103": {
+      "bytes": 397,
+      "sha256": "5e855dd41f59d121f2348405fd810ab206dd6e02e686256441a97765f0874223"
+    },
+    "narval-observations/496-v2/files/ef4f52e299a67b449860734b9fee9cbf6a1ce6f05853536648a8bf147b285db4": {
+      "bytes": 5692,
+      "sha256": "1b27764ec39483f53d28edd4b24d0929c297f40939f8c58ef25ce1ebe816a920"
+    },
+    "narval-observations/496-v2/files/f0aeaad413f9fa3c2d1d206680173901991ea96b48d1bc7a6046c5540c69ea9a": {
+      "bytes": 1702,
+      "sha256": "2cd651ad52a5608615fc50bdf4fafc4f2d974194c5b6e5dc512635a989dba25f"
+    },
+    "narval-observations/496-v2/files/f0bb0f550592b58bce39501461253141cb75e2ebd829708ab87098a5c3472733": {
+      "bytes": 1518,
+      "sha256": "d3d47df66f404ce8b5d24dc4a6012719c369c93200437c031333708fd2902571"
+    },
+    "narval-observations/496-v2/files/f2453e8b6e70c71bbcce0929341d0f77a9e92dfeb476722429d4aca26ce50f6d": {
+      "bytes": 2518,
+      "sha256": "c1537a452d18d87714e9fb6f693cffade4c2bce652c9d4508325ef1e086eefef"
+    },
+    "narval-observations/496-v2/files/f5d4f607373a7020096a0055ef3dbbbecf263897fc685611aa325c74d08fe5d9": {
+      "bytes": 1341336,
+      "sha256": "673ec01bce7126aa2bf8aa2b2d8d692de8193e6168653acf1f89cd3d4f2ac02e"
+    },
+    "narval-observations/496-v2/files/f806a099470d6ccb1f002376569d940f8cf442731d0090d64db226857bfa06e9": {
+      "bytes": 8017,
+      "sha256": "33c41cbce1353ab2c719011ba3d032efc885b86ff0bac069c5fd32a78330301f"
+    },
+    "narval-observations/496-v2/files/fc9a3185d928ef47c719e2da781b40381b4e720d05fcccf6c3035a6b38f4d2c5": {
+      "bytes": 286,
+      "sha256": "511da6ebe6b5426495aedccb0f60e7ca93685a3d9db58d2753bc4a9a9a93186a"
+    },
+    "narval-observations/496-v2/hhw-controller-resumption-live-20261023-496.json": {
+      "bytes": 106,
+      "sha256": "b172516b7b772a7451d521faadd6367e5e8f57c39c7cc9752a54d0be9644ed05"
+    },
+    "narval-observations/496-v2/hhw-controller-resumption-live-20261023-496.sh": {
+      "bytes": 6186,
+      "sha256": "e34fd2e1aa56a661ab02818d7b3763c3f27013f10c3c8bdc217084c298d68bd5"
+    },
+    "narval-observations/496-v2/hhw-controller-resumption-live-20261023-496.txt": {
+      "bytes": 5952318,
+      "sha256": "88d98150271491ffa3c316e977b6bd726ce6fb64f918a44df17372c59b3e39d0"
+    },
+    "narval-observations/496-v2/remote-path-index.json": {
+      "bytes": 28344,
+      "sha256": "a46369ca55a071041f61bc64bc5525b0dc61a05aaec72c5cd6e171ce90e4dcb7"
+    },
+    "narval-observations/498-v2/files/00d0b71297ae647b1900ec237b7c217852711c16f25cb1ab5aad346a8a5a19ad": {
+      "bytes": 36314,
+      "sha256": "2682df090943fc35e89b5a10b578eb79bf6056910e5e8e12ba05139a4e02bc16"
+    },
+    "narval-observations/498-v2/files/028521c7517e147dcb4a2c22fedbdadec2c3290f37ad4b87286c85f02a3d1840": {
+      "bytes": 1518,
+      "sha256": "8ed1c4dd9ff819b06d2671506a389d85d65293bb765bbe94757dc5bcda6e1546"
+    },
+    "narval-observations/498-v2/files/02fa44233427b1e3754a3ab094c91185fda728fe5f4d5a9b1ac2089ef83108ea": {
+      "bytes": 1296,
+      "sha256": "7b69c003f9a1945e932f889cd0ff981d16e0cd5767bee45b45198f6d485c8601"
+    },
+    "narval-observations/498-v2/files/03530b5ce4af505cbf6518e0aa0707bacb9f509b392a17b9006d5367b0312526": {
+      "bytes": 4205,
+      "sha256": "0bd363318e2c4195de7f1a4bc5dc424555e26e8ff8251d4333c5c902649ce55c"
+    },
+    "narval-observations/498-v2/files/07743455ca03f136b8b7503a40e681f745c38b3990d21d49f6c2ae1525a395da": {
+      "bytes": 1342292,
+      "sha256": "03143627ea25febddf2eb7e56fde0ba599324eafa72a61963385b41eecd12bf8"
+    },
+    "narval-observations/498-v2/files/0895db73b217f111afb965303b3679e436cc838178d4c427086d4a61eec27213": {
+      "bytes": 1953,
+      "sha256": "055fb82d5728aac6d5bf289d2ef7379d8119b1cb3b3366ac83071007fc33ca19"
+    },
+    "narval-observations/498-v2/files/1353b790d323f2c82a4b89a8d41cc7bdff9e35356ffa3f0d804d467024309dc1": {
+      "bytes": 368,
+      "sha256": "a90883b6cdda2b2bf47b821c9ed98f61ad7c60b81a3a93e1941875c21d1f987e"
+    },
+    "narval-observations/498-v2/files/13b76d6f456434873a7c0cb8c62f87bb225f7775c276aa05383057a173127dca": {
+      "bytes": 2518,
+      "sha256": "6d02e54d47efa63f06493bc92186af82e4a2adb77fc2c12979d8d5bab08f912e"
+    },
+    "narval-observations/498-v2/files/13cdf646b7800bee17e4bc250b8518f5abd319fc8b66406435271fbc6f00299e": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval-observations/498-v2/files/19cc2c91cde0ecae97470fd49ba5fe979b9930cffca37469efa68139cb7f184a": {
+      "bytes": 2582,
+      "sha256": "85ca1cbd4ec628514d7d3e22c7b5a3635edeac0f25c6fc8d0edc11f5af3d43ef"
+    },
+    "narval-observations/498-v2/files/2098d4a407f35441a9a5c08307f98f87d8df9bb38c37c063f642111fdc0ca8a3": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/498-v2/files/22fedac1aadb2c2db20e2bc175567a76cebced3ed01ff8ee2cbb7f3adc5a8c99": {
+      "bytes": 2020,
+      "sha256": "acf7442e51e1a0de34bb8784e6aa63019f3608e38e8cc7d341c28ee26f22aaf8"
+    },
+    "narval-observations/498-v2/files/297d5bfb5f63d492146d06acd9b4b43d8a85173424c443d25778a6f112e077f8": {
+      "bytes": 3163,
+      "sha256": "02c8d1f2cd74e8405c2a4fcee3b0c8d5c758dbd5f8f2a20910058680232dc728"
+    },
+    "narval-observations/498-v2/files/2ac7921a9ccfeef5ba5a2d1c049bb583eb5f847a08f05ac78586ecdeebdb0676": {
+      "bytes": 19020,
+      "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+    },
+    "narval-observations/498-v2/files/2b7445ee47db2f0a0a55ec05ab42d8f64ba75807ddd02a3c711c1d4cc009aaed": {
+      "bytes": 383,
+      "sha256": "be0bc12b6b94e3d58000d86b470b6cbc48bee2cb0ff9f7175b863e177046259e"
+    },
+    "narval-observations/498-v2/files/2d7112bbab7acceb147d8529f5002ba2cab5eb224ff275bb4e104396201388df": {
+      "bytes": 383,
+      "sha256": "96c675797f436e02f2f7dac669bc05b174b8c960b5ed9061763b58f09dc9ef26"
+    },
+    "narval-observations/498-v2/files/2fe7b491068183b594cfde0c3b48db0e66df5c1569e03f2fcb574b6bed2f3d67": {
+      "bytes": 1953,
+      "sha256": "0b8d01b14d45e7c45844ab27f9a2fc5f77f8750070240af82317556a7cdd69c4"
+    },
+    "narval-observations/498-v2/files/30ead454d523fbdffc616649753b49ea7928b13e00db97efb35d9b7c8d59c7c9": {
+      "bytes": 431,
+      "sha256": "ea301f580d4c15027f4e056c974e3ee0f4c3ce1c4bcdee29d346051f2e105ab7"
+    },
+    "narval-observations/498-v2/files/3165fae166ef484312a86163515296ba30d97a10bd29288af97aeb00b486f9db": {
+      "bytes": 18687,
+      "sha256": "2b5b77e7230b5365de91caf64f72484c456856b0526549a53400320ee7c32cb3"
+    },
+    "narval-observations/498-v2/files/31a785f53f7b906c887e81b169b51ce08bee020171edb79f6995ebac646f74b7": {
+      "bytes": 2516,
+      "sha256": "f31d9831016f4ad9bef90b8f21d999b9abab5cee818edeff8f73052cb2253639"
+    },
+    "narval-observations/498-v2/files/32ccc697e256ea4745009e4c6e3c814e824c5478d2b36df44b72c60f6c33a22b": {
+      "bytes": 397,
+      "sha256": "aa6fa7a0737f525b6982ebe0a21c0c1b2ea229192295626a2fba41b76323159e"
+    },
+    "narval-observations/498-v2/files/365f02825f58c4148c4d1e98233c8af4673573e6336c00100016a848f747f5e0": {
+      "bytes": 397,
+      "sha256": "64c282aee034f9f7ce5dda44ba1c07a84463c933285dea4d39328bbdacba5e1f"
+    },
+    "narval-observations/498-v2/files/3b1abf85056ee3198522b846ab6bfb5ad32ff41358b835c10db565b79d9e6f67": {
+      "bytes": 9223,
+      "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+    },
+    "narval-observations/498-v2/files/3da4e01b891b02e146445c5545dd7da6ad6bb01dd911e753a450c91966615888": {
+      "bytes": 2530,
+      "sha256": "fe39df54d8e309acedad99cd45697a8a5b282bbe57e9238f70388c65696ba11c"
+    },
+    "narval-observations/498-v2/files/3de56180bc2e16d4be2a3a20e8e182c92ab58c1bb1fe70265732f3d4237fdf7a": {
+      "bytes": 2449,
+      "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+    },
+    "narval-observations/498-v2/files/3ebe799a78d92c08898f05c8675f232fa559a774140b50b7c70517bbf15d92ee": {
+      "bytes": 260,
+      "sha256": "eb7591e3bd328d50d548a8d00fde5fe19b695c9d78c996e4de3a2e8ec08fb7db"
+    },
+    "narval-observations/498-v2/files/40d3733a6d1ff25dbcc7232ba048a6ce9b647b12764d2e7a8d40930248b03b18": {
+      "bytes": 18639,
+      "sha256": "33e8a9b97997caf3f50ef1b0c4e3deac6186fd7738cac8c326f49aeb46ee7f01"
+    },
+    "narval-observations/498-v2/files/41c2b258ead52a3fb4c5eb746e6685eeeda8fdb406e643164dab9523b75fd87b": {
+      "bytes": 286,
+      "sha256": "aa51d49bb1bc6c365ec83498c117c9a5b77eafbeca50e5ed1dc83ed89207e5ca"
+    },
+    "narval-observations/498-v2/files/479572cfe4a4f0e30efbf241e208bfdbbc2a5f6610303a19e309b24210ec2344": {
+      "bytes": 90428,
+      "sha256": "ec0e600e161f1546a8b40efe52304f20508323431d20cf2c2ada310b89a5f4ed"
+    },
+    "narval-observations/498-v2/files/4b50b617850dbdc575f6b89b47abd550b3f6c8c2272e62e3ec62ea266216ae55": {
+      "bytes": 397,
+      "sha256": "b22c739f3364f0ab40b35a21cda03e697b5123c90d694a824360c94e8eb585c9"
+    },
+    "narval-observations/498-v2/files/4cb5d80427fe6dd132eb8020a1fd5413c490bace771002e45e2c96b3788fa03d": {
+      "bytes": 14132,
+      "sha256": "05139b295b85e6af6c889f82c369e1a29a3c88af8ced08f1ab427a0efa1f522c"
+    },
+    "narval-observations/498-v2/files/5007ed1dfe3d92d7f237004ec57ae344f7eba0ec0eee5c42bfa0cc569db2508c": {
+      "bytes": 1518,
+      "sha256": "1b18e23f5c19334f06eb192b4ad3f9de3171cddb34274d9687963cc4c84a0e76"
+    },
+    "narval-observations/498-v2/files/50269d507a813ab2e31ec8df26b50a8d9f87960ee03c5cd10352099d3d3e0002": {
+      "bytes": 2500,
+      "sha256": "10471ad706367b9d39e3ed840260808f36b0a4fd597da1f09dd2d5928df8ef14"
+    },
+    "narval-observations/498-v2/files/512a0a183d9767a9e1a235eaf1f9b4ae675feb6793d71deaa654bc70266836e9": {
+      "bytes": 1958,
+      "sha256": "fbe69f82abce43e936a70be0aeb27835e7bb915fadb1cef59b1c06d2d39b4938"
+    },
+    "narval-observations/498-v2/files/538075f769c6ac6c8d7bcfba9b0262bc2a781ff29866cad4ecb8d0f3ac49d670": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/498-v2/files/55fca35df1552fbc4aab7300f073660ea294f4e7f1c9642e4ffb514e2655e9c5": {
+      "bytes": 16978,
+      "sha256": "1851ec7ba5c29a4e6df5536136fbb4bd802d806511547e9d690eb3f0e0fef4e8"
+    },
+    "narval-observations/498-v2/files/5b92ab105887aa0d1fb9f95f1edde03de9fa4fb3119ed5414a3fcd5b89741264": {
+      "bytes": 2066,
+      "sha256": "a05ab5ae921596ce703a99246dfaea0932d1f166e4f5f495549b911e2da35d3c"
+    },
+    "narval-observations/498-v2/files/5e010fe965798fbbe48307ff2d8a0bbb7f955da41d56e633b92808b8a0f79514": {
+      "bytes": 2769,
+      "sha256": "4d1b6cb059217dff57f63f90932c30e454a1c2a21560cf95b85cf388a930d3a9"
+    },
+    "narval-observations/498-v2/files/5fb4849c4631e64e58b81a8b6173a4b8a60f051a908870fa043f8d39186f6c2a": {
+      "bytes": 1323,
+      "sha256": "666f89af22652aec112d58867a6e0696ab3c80bb418da9c099fd3c8e3bd9037b"
+    },
+    "narval-observations/498-v2/files/5ff80a47ae689b45166db7da9281b60e348125c950339bfe66459fc1f700d3b0": {
+      "bytes": 7047,
+      "sha256": "13ba3ed8639735e1e11cec91ae0551414400583019b964a4faccdf31cbfc6b59"
+    },
+    "narval-observations/498-v2/files/614c6006bad6df675cf5375a563a9e1fef9888974d1ab0e9c65f0e9267bc1d5f": {
+      "bytes": 1518,
+      "sha256": "c50d961f4e748bfbc2ec3e477b66755c0b0d2625eb9c85465e545e14f53dc455"
+    },
+    "narval-observations/498-v2/files/63b3a8ff924d0809d061319d24afae22ba934f65072bab5ea32da580f14d6646": {
+      "bytes": 2500,
+      "sha256": "b9ac49498ffb466493203de84e82403796e44726b819c63ea211c40183c57963"
+    },
+    "narval-observations/498-v2/files/66d5ef0db68ced0247505458a6ba24309f3b4f55953b90eb7faa6689db3a6fb1": {
+      "bytes": 383,
+      "sha256": "96089de48478d5eeb8533062daff88facc34ac91e98fc84873aaa6a1a1e241fa"
+    },
+    "narval-observations/498-v2/files/6838cd4244acb1a4a825976bbfdcecc95bf9618cca03a5ccbb09ffe776614859": {
+      "bytes": 9265,
+      "sha256": "2fdd3a0f8e74d852934290fae63b0dbca23cd31f6a584b3694d38e5a92e3f1ec"
+    },
+    "narval-observations/498-v2/files/689704460db0a8d832c95b35078164143d246ac09426bbd61382ec8f6dcac194": {
+      "bytes": 431,
+      "sha256": "24cfa4ae718cd5534d85432b28473218201159b343b15ad26bde4f993d9389bd"
+    },
+    "narval-observations/498-v2/files/6c3cb87babd5a622fc719e4d204526e088412b8e47a33d8fc83c6295e07b00b5": {
+      "bytes": 368,
+      "sha256": "ead2443cd31ce646c27e9aeb9272aca623e9f72ae7ee3f0ff8aff7d1d5f5bf4e"
+    },
+    "narval-observations/498-v2/files/739903164b883d75bea4975bf378721891576040d45f09114c0429da65d5ec20": {
+      "bytes": 1958,
+      "sha256": "0831e0ec643aad2493f34475a62963cf6bffc8419b5ad2a538f9c33369d1539d"
+    },
+    "narval-observations/498-v2/files/777486da2218f6aee6d1a5a678082a0c4c36974151d566d69af9d1608937c93b": {
+      "bytes": 1953,
+      "sha256": "6a64f85e578c660b210b16679651afbf7e7f2e270a0c9af3ace2f56ffe878d02"
+    },
+    "narval-observations/498-v2/files/7a3343e9db20a199dd94780578e13663c127675be7186762aaac0802b2f4a04b": {
+      "bytes": 20448,
+      "sha256": "11e094dcde8bb1708f78d752667b7dc6f7990acb98d371c01fd217b1422f47cd"
+    },
+    "narval-observations/498-v2/files/7bb6cbd20e733cc85cb9ecc26fa091dea85223ff6aae8a1aea27748b4b9e37d0": {
+      "bytes": 319,
+      "sha256": "3cb63f6277de871a12a6c229f6164f15427b6b1c8356fb21d8750966b78de3e0"
+    },
+    "narval-observations/498-v2/files/7dac2682c19965ef202bbc0b3a26b69f5f6d1a03d709e16020c2dc24a5211128": {
+      "bytes": 1958,
+      "sha256": "04f55706c737a29b3ef1137c8605b74062346c2baae939bbed8061358d4fbaba"
+    },
+    "narval-observations/498-v2/files/7fe951200df27a3dc8d8d023f0bdcfbfd36135d4dc6bd433b4b8719d40e4a3a6": {
+      "bytes": 286,
+      "sha256": "9469c5971e1cf3e3375f9a5db12651af77c4daf88e3f28ee941eed45d52226bb"
+    },
+    "narval-observations/498-v2/files/84904db7859bcb2b2747416f8192c551f3b436d512198244069dc81436317b2c": {
+      "bytes": 1346016,
+      "sha256": "8517adfb0a5c8e5867e8f94f64ce65facba072a55fb42d0240f15711063e94dd"
+    },
+    "narval-observations/498-v2/files/8543cc17478511e71becc81077438e27ed63f80e5a94203f1c25be8deaeedd62": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "narval-observations/498-v2/files/8e6e5a1356d30cf6d28d3eccf9c7e05d8253ee0ed7c3c9b5f944c439bb81084e": {
+      "bytes": 236,
+      "sha256": "5d04cc9dd5c8f08df4f40a3bfdc148baf945ef740336e21884a7138aa58ca96e"
+    },
+    "narval-observations/498-v2/files/9049fe9ddd2b8c5fa01aefbef82956547756801b8ea1d2fd7ffb842dd0159f24": {
+      "bytes": 368,
+      "sha256": "385e78c013d5cec4521801704346aa4e5e040a4491de7b3bbcdcfa3e5ef3e5b4"
+    },
+    "narval-observations/498-v2/files/93af700d56e1a772539cde8a81f1552e639d86e9ddf4c1bcfced26b400921eb3": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval-observations/498-v2/files/9730979d2456e65ded1bad4fab688668ed055e9fa3a4b1b1804127395c1aad55": {
+      "bytes": 250,
+      "sha256": "8217e3893b1f2ae5702246043e49cc5ee91ca5041652d9a2add6b2ec2f940655"
+    },
+    "narval-observations/498-v2/files/97bc6f6dab0c6b3ed58afd4d6140bc0edd4176622b73d594d007f25585e55ba1": {
+      "bytes": 397,
+      "sha256": "114116a08770b1672b18ba4154cb6771b23edd196695b1b9a66fd9e73c4d597f"
+    },
+    "narval-observations/498-v2/files/9d5a7518953d24e5e283c95400f38c2f9d8d76a6a14dc9ddf79f0932e2b3ba95": {
+      "bytes": 2477,
+      "sha256": "fa544fd76363c94f03fbf8f6403f8d8946f13ebcf028c05266ef05c1ebd38bda"
+    },
+    "narval-observations/498-v2/files/9d8d193cfe84da8960c0930a67f35dd4311b89f968d090a196213e2ab48e7db3": {
+      "bytes": 2582,
+      "sha256": "e539a212d60116776f93ea92273476d7e17c9147737d94b9c04657610ca747f5"
+    },
+    "narval-observations/498-v2/files/a106b3f6acf55a5e6bd98bbe57db3df9ed4e7c2c50de3a97b799e389143f71c1": {
+      "bytes": 1803,
+      "sha256": "0ee8473497fad87588ce93a4a20cdf551413eeb6a4dac5ac14bccca001f3882d"
+    },
+    "narval-observations/498-v2/files/a261364ea772f64995cf5d3662e1c7cc26514f43c6b570cad8778f33a8763230": {
+      "bytes": 1345,
+      "sha256": "db4ced954789e1395fd42f9f2f2313727fb179f8035f13612f426a12f9231243"
+    },
+    "narval-observations/498-v2/files/a31598d9de99c7af1fe6a873e7bc048960d9d2bf1273979539d7f073795a3939": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval-observations/498-v2/files/a859aac71340d2c72c040b75636473dda66a3432844049cfc15a3913c40e5bd3": {
+      "bytes": 8017,
+      "sha256": "742be13e9b271e5871269398181ca899d1c580aa79fea7eeebf1fe2778501670"
+    },
+    "narval-observations/498-v2/files/b5ce090aeee26e7b162a63063b1629a4fb57c814378edb3235a07e59304a4b53": {
+      "bytes": 298,
+      "sha256": "567ff41003556ffaf316db0d9d5499a20287ffb3fbe304537efac1bb745326ed"
+    },
+    "narval-observations/498-v2/files/b6965a884f7129b15179efb7c56c614252cceb9e9aeac47b06e1c3a4f0875873": {
+      "bytes": 2066,
+      "sha256": "b5cfa87d46d747f15dcd2be6e3e5d991b222b854c6b9b211cf026af234486ff5"
+    },
+    "narval-observations/498-v2/files/b8aaa7ac698a2da23e8dd8d6041115328fc0b2e7ea8c86dc4cf8acb58b22b8bc": {
+      "bytes": 1958,
+      "sha256": "6fc9ba93d17242e2697cfa6a52a0ba5315902be7e596a3175289de520642ce89"
+    },
+    "narval-observations/498-v2/files/ba3b341c7db5ecec2d954bdf4323ef7ed8c759316d863077c9f0eec761039b42": {
+      "bytes": 3115,
+      "sha256": "243c55d6d18002e9ec6d30eff6be41aab6b0c03c651d604c191f1ae8990b09f3"
+    },
+    "narval-observations/498-v2/files/baca5edfbbb8b557bf297e072b0f462c630f9303dd9c95a0f97665269ae4b14d": {
+      "bytes": 2066,
+      "sha256": "69157d93af7578a3abbf0f9663a57d44975ab8675adc13867e5b5672d01fa1c5"
+    },
+    "narval-observations/498-v2/files/bf7cb9435b0291e44d7a5bb501f868de9557fa204d25233c8e080708f4541f23": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/498-v2/files/c01059d9b17cdb9e40c58c6e13aa238f7a5f9dfff909be5a898a92e21394c363": {
+      "bytes": 286,
+      "sha256": "85b7d7a6e859d258be7be37ac479843696cdfb3baa1d42994763d05b3d6a46f6"
+    },
+    "narval-observations/498-v2/files/c0f2449c170e1232896e2668fcb05809d38e69d6251e82866433892fd551a78a": {
+      "bytes": 7633,
+      "sha256": "610a877809008f89a456fc812a3f1f639c5bc889b34134146cca2e36f943a78c"
+    },
+    "narval-observations/498-v2/files/c2dcd0551091a75ff30233d3a2c1976511281678e4743839ba47bbfffdfed318": {
+      "bytes": 431,
+      "sha256": "665401897297efdce3e3b49036ac814ca6bb8550c6759aa372e6bcabdbae6d6a"
+    },
+    "narval-observations/498-v2/files/c3d1b5e7f1f65e8e3dfa4f36bfbd0753d5fa28de6f8aa81b339da37162a188e7": {
+      "bytes": 2066,
+      "sha256": "ec21853c8c3ea8b680a7ed1b8ab9652044504255e5e89c44574634e5961d8d7a"
+    },
+    "narval-observations/498-v2/files/c44b58a69293bb38a9fe3acd700acce24a4848fd480b043c63472912116efc23": {
+      "bytes": 2581,
+      "sha256": "0f2e553ac00aafcb758e06fbcf6bbf7da6617a70d6fe0eed79fea65301ece1cf"
+    },
+    "narval-observations/498-v2/files/c7638e57983c942ae97aa24a184559ef249a6a6ba99472a984977066ef192c16": {
+      "bytes": 2612,
+      "sha256": "d9d8d765021eafb3e7c20e175c49aba3357c9c4c7dede3896c4900e4e332b3d2"
+    },
+    "narval-observations/498-v2/files/ca0ce5e72054730bcda214657ffce13b0c5423309fea738257384ba7453e1bdf": {
+      "bytes": 1953,
+      "sha256": "d01b6e5c5b31680e4f64c563317344ada283a7f758cf76316133755cfff5e4a4"
+    },
+    "narval-observations/498-v2/files/cd03a712b2dab339274e046a3f75faca571698d7f77a664bd994511557f8f3a1": {
+      "bytes": 2518,
+      "sha256": "d0e8f6ad036da743f72dd3749f6658566f284ee3d371564b1fc0cb830a9a698e"
+    },
+    "narval-observations/498-v2/files/d1e766507f03751ee88750b4a9e56966ad46d3e40c98b537d0f2d92348ac98f7": {
+      "bytes": 4205,
+      "sha256": "26efafe65339ec349a65773135d36502a3baa7d3f4523d56f704b16dba3c5be6"
+    },
+    "narval-observations/498-v2/files/d5402408e675183595821a680c7ce07f79ad333808388f3d785be617cd667b28": {
+      "bytes": 2240,
+      "sha256": "9e525425ba063c824eed9fe40e15272d33be5ae88bc208850167b0e2d07523a1"
+    },
+    "narval-observations/498-v2/files/d91cf94d7d96cccb9567a16ec9fa62d62efe4c48b2a26d8f8543d8ff3c21f1f0": {
+      "bytes": 397,
+      "sha256": "214a1acf6cae4b8c7a2057341da9c29c081fda6e594943d2b53f5ba8dbd9ed2a"
+    },
+    "narval-observations/498-v2/files/db2aa403d88f2d0511e350044b074b1d31e35d001be1b8532575a06b306bee2a": {
+      "bytes": 2530,
+      "sha256": "30105685d6536105a40ad04ee3961892c0aa7f83f791532df6401baa14a33298"
+    },
+    "narval-observations/498-v2/files/def9a5aec8ee0c04caaa1db3ebfca195eece28b8ee47d7f87397bd565c001596": {
+      "bytes": 18687,
+      "sha256": "6a33e4ee89f4f4ef380e712aec7d488bdd7b5acfbb39d28301cabcb7c7e7cdf3"
+    },
+    "narval-observations/498-v2/files/e649efd7756ad528f284ee6489f74c9b1de78775e8daa4df6afb1d3fec352103": {
+      "bytes": 397,
+      "sha256": "5e855dd41f59d121f2348405fd810ab206dd6e02e686256441a97765f0874223"
+    },
+    "narval-observations/498-v2/files/ef4f52e299a67b449860734b9fee9cbf6a1ce6f05853536648a8bf147b285db4": {
+      "bytes": 5692,
+      "sha256": "1b27764ec39483f53d28edd4b24d0929c297f40939f8c58ef25ce1ebe816a920"
+    },
+    "narval-observations/498-v2/files/f0aeaad413f9fa3c2d1d206680173901991ea96b48d1bc7a6046c5540c69ea9a": {
+      "bytes": 1702,
+      "sha256": "2cd651ad52a5608615fc50bdf4fafc4f2d974194c5b6e5dc512635a989dba25f"
+    },
+    "narval-observations/498-v2/files/f0bb0f550592b58bce39501461253141cb75e2ebd829708ab87098a5c3472733": {
+      "bytes": 1518,
+      "sha256": "d3d47df66f404ce8b5d24dc4a6012719c369c93200437c031333708fd2902571"
+    },
+    "narval-observations/498-v2/files/f2453e8b6e70c71bbcce0929341d0f77a9e92dfeb476722429d4aca26ce50f6d": {
+      "bytes": 2518,
+      "sha256": "c1537a452d18d87714e9fb6f693cffade4c2bce652c9d4508325ef1e086eefef"
+    },
+    "narval-observations/498-v2/files/f5d4f607373a7020096a0055ef3dbbbecf263897fc685611aa325c74d08fe5d9": {
+      "bytes": 1341336,
+      "sha256": "673ec01bce7126aa2bf8aa2b2d8d692de8193e6168653acf1f89cd3d4f2ac02e"
+    },
+    "narval-observations/498-v2/files/f806a099470d6ccb1f002376569d940f8cf442731d0090d64db226857bfa06e9": {
+      "bytes": 8017,
+      "sha256": "33c41cbce1353ab2c719011ba3d032efc885b86ff0bac069c5fd32a78330301f"
+    },
+    "narval-observations/498-v2/files/fc9a3185d928ef47c719e2da781b40381b4e720d05fcccf6c3035a6b38f4d2c5": {
+      "bytes": 286,
+      "sha256": "511da6ebe6b5426495aedccb0f60e7ca93685a3d9db58d2753bc4a9a9a93186a"
+    },
+    "narval-observations/498-v2/hhw-controller-resumption-live-20261023-498.json": {
+      "bytes": 107,
+      "sha256": "525a9b5a15991b54678a6ffcbb0b2faa3098d56285522d3d2f5f7567a8664669"
+    },
+    "narval-observations/498-v2/hhw-controller-resumption-live-20261023-498.sh": {
+      "bytes": 6446,
+      "sha256": "ee42477d89fecfcb146b224cb7742ef3d0015676592ffff277a187d1aca38894"
+    },
+    "narval-observations/498-v2/hhw-controller-resumption-live-20261023-498.txt": {
+      "bytes": 5977091,
+      "sha256": "04051354e497dc765b93c846f351fc4094f0959d6e83df05811baaa8253053d9"
+    },
+    "narval-observations/498-v2/remote-path-index.json": {
+      "bytes": 32646,
+      "sha256": "709d7c4079a40706e9a346966c65545c5229f60db268a6d332680b668dc32027"
+    },
+    "narval-observations/501-v2/files/028521c7517e147dcb4a2c22fedbdadec2c3290f37ad4b87286c85f02a3d1840": {
+      "bytes": 1518,
+      "sha256": "8ed1c4dd9ff819b06d2671506a389d85d65293bb765bbe94757dc5bcda6e1546"
+    },
+    "narval-observations/501-v2/files/03530b5ce4af505cbf6518e0aa0707bacb9f509b392a17b9006d5367b0312526": {
+      "bytes": 4205,
+      "sha256": "0bd363318e2c4195de7f1a4bc5dc424555e26e8ff8251d4333c5c902649ce55c"
+    },
+    "narval-observations/501-v2/files/03c2990939550192bbe50c73c7b2bc013a4e9ddd65cc69a6deaef1311516bd3a": {
+      "bytes": 14132,
+      "sha256": "58a6d3a7e5462b2c814ce600568815384ebb1d5c03aa7ffb8b8635febdbd6e5f"
+    },
+    "narval-observations/501-v2/files/0895db73b217f111afb965303b3679e436cc838178d4c427086d4a61eec27213": {
+      "bytes": 1953,
+      "sha256": "055fb82d5728aac6d5bf289d2ef7379d8119b1cb3b3366ac83071007fc33ca19"
+    },
+    "narval-observations/501-v2/files/13cdf646b7800bee17e4bc250b8518f5abd319fc8b66406435271fbc6f00299e": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval-observations/501-v2/files/2098d4a407f35441a9a5c08307f98f87d8df9bb38c37c063f642111fdc0ca8a3": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/501-v2/files/24a1322f2d1f077a407612f6f37ec9c84e53bdbd38bd448eb34e6720343e8e3c": {
+      "bytes": 2449,
+      "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+    },
+    "narval-observations/501-v2/files/297d5bfb5f63d492146d06acd9b4b43d8a85173424c443d25778a6f112e077f8": {
+      "bytes": 3163,
+      "sha256": "02c8d1f2cd74e8405c2a4fcee3b0c8d5c758dbd5f8f2a20910058680232dc728"
+    },
+    "narval-observations/501-v2/files/2ac7921a9ccfeef5ba5a2d1c049bb583eb5f847a08f05ac78586ecdeebdb0676": {
+      "bytes": 19020,
+      "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+    },
+    "narval-observations/501-v2/files/2fe7b491068183b594cfde0c3b48db0e66df5c1569e03f2fcb574b6bed2f3d67": {
+      "bytes": 1953,
+      "sha256": "0b8d01b14d45e7c45844ab27f9a2fc5f77f8750070240af82317556a7cdd69c4"
+    },
+    "narval-observations/501-v2/files/30ead454d523fbdffc616649753b49ea7928b13e00db97efb35d9b7c8d59c7c9": {
+      "bytes": 431,
+      "sha256": "ea301f580d4c15027f4e056c974e3ee0f4c3ce1c4bcdee29d346051f2e105ab7"
+    },
+    "narval-observations/501-v2/files/3165fae166ef484312a86163515296ba30d97a10bd29288af97aeb00b486f9db": {
+      "bytes": 18687,
+      "sha256": "2b5b77e7230b5365de91caf64f72484c456856b0526549a53400320ee7c32cb3"
+    },
+    "narval-observations/501-v2/files/3b1abf85056ee3198522b846ab6bfb5ad32ff41358b835c10db565b79d9e6f67": {
+      "bytes": 9223,
+      "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+    },
+    "narval-observations/501-v2/files/3da4e01b891b02e146445c5545dd7da6ad6bb01dd911e753a450c91966615888": {
+      "bytes": 2530,
+      "sha256": "fe39df54d8e309acedad99cd45697a8a5b282bbe57e9238f70388c65696ba11c"
+    },
+    "narval-observations/501-v2/files/3de56180bc2e16d4be2a3a20e8e182c92ab58c1bb1fe70265732f3d4237fdf7a": {
+      "bytes": 2449,
+      "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+    },
+    "narval-observations/501-v2/files/40d3733a6d1ff25dbcc7232ba048a6ce9b647b12764d2e7a8d40930248b03b18": {
+      "bytes": 18639,
+      "sha256": "33e8a9b97997caf3f50ef1b0c4e3deac6186fd7738cac8c326f49aeb46ee7f01"
+    },
+    "narval-observations/501-v2/files/422a7f35537410bb8f349f76ea8ac3d57d1f6b4a595478b3f862a3f583bd754d": {
+      "bytes": 4695,
+      "sha256": "9a0706642ac1660fb7f39fe68279ca34bdc10f89812a0c2397608d2a382cf464"
+    },
+    "narval-observations/501-v2/files/479572cfe4a4f0e30efbf241e208bfdbbc2a5f6610303a19e309b24210ec2344": {
+      "bytes": 90428,
+      "sha256": "ec0e600e161f1546a8b40efe52304f20508323431d20cf2c2ada310b89a5f4ed"
+    },
+    "narval-observations/501-v2/files/5007ed1dfe3d92d7f237004ec57ae344f7eba0ec0eee5c42bfa0cc569db2508c": {
+      "bytes": 1518,
+      "sha256": "1b18e23f5c19334f06eb192b4ad3f9de3171cddb34274d9687963cc4c84a0e76"
+    },
+    "narval-observations/501-v2/files/512a0a183d9767a9e1a235eaf1f9b4ae675feb6793d71deaa654bc70266836e9": {
+      "bytes": 1958,
+      "sha256": "fbe69f82abce43e936a70be0aeb27835e7bb915fadb1cef59b1c06d2d39b4938"
+    },
+    "narval-observations/501-v2/files/538075f769c6ac6c8d7bcfba9b0262bc2a781ff29866cad4ecb8d0f3ac49d670": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/501-v2/files/55fca35df1552fbc4aab7300f073660ea294f4e7f1c9642e4ffb514e2655e9c5": {
+      "bytes": 16978,
+      "sha256": "1851ec7ba5c29a4e6df5536136fbb4bd802d806511547e9d690eb3f0e0fef4e8"
+    },
+    "narval-observations/501-v2/files/5b92ab105887aa0d1fb9f95f1edde03de9fa4fb3119ed5414a3fcd5b89741264": {
+      "bytes": 2066,
+      "sha256": "a05ab5ae921596ce703a99246dfaea0932d1f166e4f5f495549b911e2da35d3c"
+    },
+    "narval-observations/501-v2/files/5fb4849c4631e64e58b81a8b6173a4b8a60f051a908870fa043f8d39186f6c2a": {
+      "bytes": 1323,
+      "sha256": "666f89af22652aec112d58867a6e0696ab3c80bb418da9c099fd3c8e3bd9037b"
+    },
+    "narval-observations/501-v2/files/5ff80a47ae689b45166db7da9281b60e348125c950339bfe66459fc1f700d3b0": {
+      "bytes": 7047,
+      "sha256": "13ba3ed8639735e1e11cec91ae0551414400583019b964a4faccdf31cbfc6b59"
+    },
+    "narval-observations/501-v2/files/614c6006bad6df675cf5375a563a9e1fef9888974d1ab0e9c65f0e9267bc1d5f": {
+      "bytes": 1518,
+      "sha256": "c50d961f4e748bfbc2ec3e477b66755c0b0d2625eb9c85465e545e14f53dc455"
+    },
+    "narval-observations/501-v2/files/689704460db0a8d832c95b35078164143d246ac09426bbd61382ec8f6dcac194": {
+      "bytes": 431,
+      "sha256": "24cfa4ae718cd5534d85432b28473218201159b343b15ad26bde4f993d9389bd"
+    },
+    "narval-observations/501-v2/files/739903164b883d75bea4975bf378721891576040d45f09114c0429da65d5ec20": {
+      "bytes": 1958,
+      "sha256": "0831e0ec643aad2493f34475a62963cf6bffc8419b5ad2a538f9c33369d1539d"
+    },
+    "narval-observations/501-v2/files/777486da2218f6aee6d1a5a678082a0c4c36974151d566d69af9d1608937c93b": {
+      "bytes": 1953,
+      "sha256": "6a64f85e578c660b210b16679651afbf7e7f2e270a0c9af3ace2f56ffe878d02"
+    },
+    "narval-observations/501-v2/files/7a3343e9db20a199dd94780578e13663c127675be7186762aaac0802b2f4a04b": {
+      "bytes": 20448,
+      "sha256": "11e094dcde8bb1708f78d752667b7dc6f7990acb98d371c01fd217b1422f47cd"
+    },
+    "narval-observations/501-v2/files/7dac2682c19965ef202bbc0b3a26b69f5f6d1a03d709e16020c2dc24a5211128": {
+      "bytes": 1958,
+      "sha256": "04f55706c737a29b3ef1137c8605b74062346c2baae939bbed8061358d4fbaba"
+    },
+    "narval-observations/501-v2/files/93af700d56e1a772539cde8a81f1552e639d86e9ddf4c1bcfced26b400921eb3": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval-observations/501-v2/files/9730979d2456e65ded1bad4fab688668ed055e9fa3a4b1b1804127395c1aad55": {
+      "bytes": 250,
+      "sha256": "8217e3893b1f2ae5702246043e49cc5ee91ca5041652d9a2add6b2ec2f940655"
+    },
+    "narval-observations/501-v2/files/a31598d9de99c7af1fe6a873e7bc048960d9d2bf1273979539d7f073795a3939": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval-observations/501-v2/files/a4b86cc21ca445d29586d3a4e89399b93441066ee9de8f1c82d89c4069c6a6e6": {
+      "bytes": 2418,
+      "sha256": "2b0e6ebaa0f1b511bca4343d4722d43702cf051f956cce59494ddccae656c517"
+    },
+    "narval-observations/501-v2/files/b5ce090aeee26e7b162a63063b1629a4fb57c814378edb3235a07e59304a4b53": {
+      "bytes": 298,
+      "sha256": "567ff41003556ffaf316db0d9d5499a20287ffb3fbe304537efac1bb745326ed"
+    },
+    "narval-observations/501-v2/files/b6965a884f7129b15179efb7c56c614252cceb9e9aeac47b06e1c3a4f0875873": {
+      "bytes": 2066,
+      "sha256": "b5cfa87d46d747f15dcd2be6e3e5d991b222b854c6b9b211cf026af234486ff5"
+    },
+    "narval-observations/501-v2/files/b8aaa7ac698a2da23e8dd8d6041115328fc0b2e7ea8c86dc4cf8acb58b22b8bc": {
+      "bytes": 1958,
+      "sha256": "6fc9ba93d17242e2697cfa6a52a0ba5315902be7e596a3175289de520642ce89"
+    },
+    "narval-observations/501-v2/files/ba3b341c7db5ecec2d954bdf4323ef7ed8c759316d863077c9f0eec761039b42": {
+      "bytes": 3115,
+      "sha256": "243c55d6d18002e9ec6d30eff6be41aab6b0c03c651d604c191f1ae8990b09f3"
+    },
+    "narval-observations/501-v2/files/baca5edfbbb8b557bf297e072b0f462c630f9303dd9c95a0f97665269ae4b14d": {
+      "bytes": 2066,
+      "sha256": "69157d93af7578a3abbf0f9663a57d44975ab8675adc13867e5b5672d01fa1c5"
+    },
+    "narval-observations/501-v2/files/bf7cb9435b0291e44d7a5bb501f868de9557fa204d25233c8e080708f4541f23": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/501-v2/files/c13b96498d092d0a41fb8c2d9e2fc61e15031e54aaf0d04d2795923b4c07e038": {
+      "bytes": 2020,
+      "sha256": "5e80484c08ffc2b8323b0ac13bebed3fea16a09f2e5af673ffefca6031c1ca35"
+    },
+    "narval-observations/501-v2/files/c2dcd0551091a75ff30233d3a2c1976511281678e4743839ba47bbfffdfed318": {
+      "bytes": 431,
+      "sha256": "665401897297efdce3e3b49036ac814ca6bb8550c6759aa372e6bcabdbae6d6a"
+    },
+    "narval-observations/501-v2/files/c3d1b5e7f1f65e8e3dfa4f36bfbd0753d5fa28de6f8aa81b339da37162a188e7": {
+      "bytes": 2066,
+      "sha256": "ec21853c8c3ea8b680a7ed1b8ab9652044504255e5e89c44574634e5961d8d7a"
+    },
+    "narval-observations/501-v2/files/c7638e57983c942ae97aa24a184559ef249a6a6ba99472a984977066ef192c16": {
+      "bytes": 2612,
+      "sha256": "d9d8d765021eafb3e7c20e175c49aba3357c9c4c7dede3896c4900e4e332b3d2"
+    },
+    "narval-observations/501-v2/files/ca0ce5e72054730bcda214657ffce13b0c5423309fea738257384ba7453e1bdf": {
+      "bytes": 1953,
+      "sha256": "d01b6e5c5b31680e4f64c563317344ada283a7f758cf76316133755cfff5e4a4"
+    },
+    "narval-observations/501-v2/files/d1e766507f03751ee88750b4a9e56966ad46d3e40c98b537d0f2d92348ac98f7": {
+      "bytes": 4205,
+      "sha256": "26efafe65339ec349a65773135d36502a3baa7d3f4523d56f704b16dba3c5be6"
+    },
+    "narval-observations/501-v2/files/d76a789a26de5b58086918e2b52b9c45880d5d423f0808b8c4f88f0b0f09af2e": {
+      "bytes": 1702,
+      "sha256": "a5def0c7da659cbc5b5c7ef72c9ecdf7a970d1f4f8d3356e38427c6f7705c102"
+    },
+    "narval-observations/501-v2/files/db2aa403d88f2d0511e350044b074b1d31e35d001be1b8532575a06b306bee2a": {
+      "bytes": 2530,
+      "sha256": "30105685d6536105a40ad04ee3961892c0aa7f83f791532df6401baa14a33298"
+    },
+    "narval-observations/501-v2/files/def9a5aec8ee0c04caaa1db3ebfca195eece28b8ee47d7f87397bd565c001596": {
+      "bytes": 18687,
+      "sha256": "6a33e4ee89f4f4ef380e712aec7d488bdd7b5acfbb39d28301cabcb7c7e7cdf3"
+    },
+    "narval-observations/501-v2/files/ef4f52e299a67b449860734b9fee9cbf6a1ce6f05853536648a8bf147b285db4": {
+      "bytes": 5692,
+      "sha256": "1b27764ec39483f53d28edd4b24d0929c297f40939f8c58ef25ce1ebe816a920"
+    },
+    "narval-observations/501-v2/files/f0bb0f550592b58bce39501461253141cb75e2ebd829708ab87098a5c3472733": {
+      "bytes": 1518,
+      "sha256": "d3d47df66f404ce8b5d24dc4a6012719c369c93200437c031333708fd2902571"
+    },
+    "narval-observations/501-v2/hhw-controller-resumption-live-20261023-501.json": {
+      "bytes": 107,
+      "sha256": "63db1acf769bae4ff563c68f119da0d76d0e146dc31d8eaa07b27febc87ffbbb"
+    },
+    "narval-observations/501-v2/hhw-controller-resumption-live-20261023-501.sh": {
+      "bytes": 7032,
+      "sha256": "3b3aecd3acc9868c40b2acc8c091b4ec5d9863d4b149026d54db6858a1978e68"
+    },
+    "narval-observations/501-v2/hhw-controller-resumption-live-20261023-501.txt": {
+      "bytes": 484560,
+      "sha256": "ef80d4ce3f92dcd53e9c15451ee8ed4b4fb8dbbbfde27d3e438ff3dac01912f6"
+    },
+    "narval-observations/501-v2/remote-path-index.json": {
+      "bytes": 17983,
+      "sha256": "8ecc844bb6570c395aa6196e522ade57ff44b1dc6ec42283a09750f2b68e3bcd"
+    },
+    "narval-observations/502-v2/files/028521c7517e147dcb4a2c22fedbdadec2c3290f37ad4b87286c85f02a3d1840": {
+      "bytes": 1518,
+      "sha256": "8ed1c4dd9ff819b06d2671506a389d85d65293bb765bbe94757dc5bcda6e1546"
+    },
+    "narval-observations/502-v2/files/03530b5ce4af505cbf6518e0aa0707bacb9f509b392a17b9006d5367b0312526": {
+      "bytes": 4205,
+      "sha256": "0bd363318e2c4195de7f1a4bc5dc424555e26e8ff8251d4333c5c902649ce55c"
+    },
+    "narval-observations/502-v2/files/03c2990939550192bbe50c73c7b2bc013a4e9ddd65cc69a6deaef1311516bd3a": {
+      "bytes": 14132,
+      "sha256": "58a6d3a7e5462b2c814ce600568815384ebb1d5c03aa7ffb8b8635febdbd6e5f"
+    },
+    "narval-observations/502-v2/files/0895db73b217f111afb965303b3679e436cc838178d4c427086d4a61eec27213": {
+      "bytes": 1953,
+      "sha256": "055fb82d5728aac6d5bf289d2ef7379d8119b1cb3b3366ac83071007fc33ca19"
+    },
+    "narval-observations/502-v2/files/13cdf646b7800bee17e4bc250b8518f5abd319fc8b66406435271fbc6f00299e": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval-observations/502-v2/files/1529dcaa362630ef65ed6de1245370692c5e138729eeca9d66bd4227ff0599fd": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "narval-observations/502-v2/files/2098d4a407f35441a9a5c08307f98f87d8df9bb38c37c063f642111fdc0ca8a3": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/502-v2/files/24a1322f2d1f077a407612f6f37ec9c84e53bdbd38bd448eb34e6720343e8e3c": {
+      "bytes": 2449,
+      "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+    },
+    "narval-observations/502-v2/files/297d5bfb5f63d492146d06acd9b4b43d8a85173424c443d25778a6f112e077f8": {
+      "bytes": 3163,
+      "sha256": "02c8d1f2cd74e8405c2a4fcee3b0c8d5c758dbd5f8f2a20910058680232dc728"
+    },
+    "narval-observations/502-v2/files/2ac7921a9ccfeef5ba5a2d1c049bb583eb5f847a08f05ac78586ecdeebdb0676": {
+      "bytes": 19020,
+      "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+    },
+    "narval-observations/502-v2/files/2c03bff57285f15d24a493587aa2be3dbead4f8e7033bd19705da1d0f5485112": {
+      "bytes": 1345,
+      "sha256": "6406a8745da24dafa77a13e5a94f3efcffb03dc2466bd902dea1a1c70fe2b6aa"
+    },
+    "narval-observations/502-v2/files/2fe7b491068183b594cfde0c3b48db0e66df5c1569e03f2fcb574b6bed2f3d67": {
+      "bytes": 1953,
+      "sha256": "0b8d01b14d45e7c45844ab27f9a2fc5f77f8750070240af82317556a7cdd69c4"
+    },
+    "narval-observations/502-v2/files/30ead454d523fbdffc616649753b49ea7928b13e00db97efb35d9b7c8d59c7c9": {
+      "bytes": 431,
+      "sha256": "ea301f580d4c15027f4e056c974e3ee0f4c3ce1c4bcdee29d346051f2e105ab7"
+    },
+    "narval-observations/502-v2/files/3165fae166ef484312a86163515296ba30d97a10bd29288af97aeb00b486f9db": {
+      "bytes": 18687,
+      "sha256": "2b5b77e7230b5365de91caf64f72484c456856b0526549a53400320ee7c32cb3"
+    },
+    "narval-observations/502-v2/files/3b1abf85056ee3198522b846ab6bfb5ad32ff41358b835c10db565b79d9e6f67": {
+      "bytes": 9223,
+      "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+    },
+    "narval-observations/502-v2/files/3da4e01b891b02e146445c5545dd7da6ad6bb01dd911e753a450c91966615888": {
+      "bytes": 2530,
+      "sha256": "fe39df54d8e309acedad99cd45697a8a5b282bbe57e9238f70388c65696ba11c"
+    },
+    "narval-observations/502-v2/files/3de56180bc2e16d4be2a3a20e8e182c92ab58c1bb1fe70265732f3d4237fdf7a": {
+      "bytes": 2449,
+      "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+    },
+    "narval-observations/502-v2/files/40d3733a6d1ff25dbcc7232ba048a6ce9b647b12764d2e7a8d40930248b03b18": {
+      "bytes": 18639,
+      "sha256": "33e8a9b97997caf3f50ef1b0c4e3deac6186fd7738cac8c326f49aeb46ee7f01"
+    },
+    "narval-observations/502-v2/files/422a7f35537410bb8f349f76ea8ac3d57d1f6b4a595478b3f862a3f583bd754d": {
+      "bytes": 4695,
+      "sha256": "9a0706642ac1660fb7f39fe68279ca34bdc10f89812a0c2397608d2a382cf464"
+    },
+    "narval-observations/502-v2/files/479572cfe4a4f0e30efbf241e208bfdbbc2a5f6610303a19e309b24210ec2344": {
+      "bytes": 90428,
+      "sha256": "ec0e600e161f1546a8b40efe52304f20508323431d20cf2c2ada310b89a5f4ed"
+    },
+    "narval-observations/502-v2/files/5007ed1dfe3d92d7f237004ec57ae344f7eba0ec0eee5c42bfa0cc569db2508c": {
+      "bytes": 1518,
+      "sha256": "1b18e23f5c19334f06eb192b4ad3f9de3171cddb34274d9687963cc4c84a0e76"
+    },
+    "narval-observations/502-v2/files/512a0a183d9767a9e1a235eaf1f9b4ae675feb6793d71deaa654bc70266836e9": {
+      "bytes": 1958,
+      "sha256": "fbe69f82abce43e936a70be0aeb27835e7bb915fadb1cef59b1c06d2d39b4938"
+    },
+    "narval-observations/502-v2/files/538075f769c6ac6c8d7bcfba9b0262bc2a781ff29866cad4ecb8d0f3ac49d670": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/502-v2/files/55fca35df1552fbc4aab7300f073660ea294f4e7f1c9642e4ffb514e2655e9c5": {
+      "bytes": 16978,
+      "sha256": "1851ec7ba5c29a4e6df5536136fbb4bd802d806511547e9d690eb3f0e0fef4e8"
+    },
+    "narval-observations/502-v2/files/5b92ab105887aa0d1fb9f95f1edde03de9fa4fb3119ed5414a3fcd5b89741264": {
+      "bytes": 2066,
+      "sha256": "a05ab5ae921596ce703a99246dfaea0932d1f166e4f5f495549b911e2da35d3c"
+    },
+    "narval-observations/502-v2/files/5fb4849c4631e64e58b81a8b6173a4b8a60f051a908870fa043f8d39186f6c2a": {
+      "bytes": 1323,
+      "sha256": "666f89af22652aec112d58867a6e0696ab3c80bb418da9c099fd3c8e3bd9037b"
+    },
+    "narval-observations/502-v2/files/5ff80a47ae689b45166db7da9281b60e348125c950339bfe66459fc1f700d3b0": {
+      "bytes": 7047,
+      "sha256": "13ba3ed8639735e1e11cec91ae0551414400583019b964a4faccdf31cbfc6b59"
+    },
+    "narval-observations/502-v2/files/614c6006bad6df675cf5375a563a9e1fef9888974d1ab0e9c65f0e9267bc1d5f": {
+      "bytes": 1518,
+      "sha256": "c50d961f4e748bfbc2ec3e477b66755c0b0d2625eb9c85465e545e14f53dc455"
+    },
+    "narval-observations/502-v2/files/689704460db0a8d832c95b35078164143d246ac09426bbd61382ec8f6dcac194": {
+      "bytes": 431,
+      "sha256": "24cfa4ae718cd5534d85432b28473218201159b343b15ad26bde4f993d9389bd"
+    },
+    "narval-observations/502-v2/files/739903164b883d75bea4975bf378721891576040d45f09114c0429da65d5ec20": {
+      "bytes": 1958,
+      "sha256": "0831e0ec643aad2493f34475a62963cf6bffc8419b5ad2a538f9c33369d1539d"
+    },
+    "narval-observations/502-v2/files/777486da2218f6aee6d1a5a678082a0c4c36974151d566d69af9d1608937c93b": {
+      "bytes": 1953,
+      "sha256": "6a64f85e578c660b210b16679651afbf7e7f2e270a0c9af3ace2f56ffe878d02"
+    },
+    "narval-observations/502-v2/files/7a1f0b33ba867fd2d9195ae6abfc0d2729e5973a38cc3af7e7aba0f39202e3f1": {
+      "bytes": 1296,
+      "sha256": "1d32e5aa803ba84db8a54d8296e60d1e5d4756eabc4c489ab28f68cb2ec528e8"
+    },
+    "narval-observations/502-v2/files/7a3343e9db20a199dd94780578e13663c127675be7186762aaac0802b2f4a04b": {
+      "bytes": 20448,
+      "sha256": "11e094dcde8bb1708f78d752667b7dc6f7990acb98d371c01fd217b1422f47cd"
+    },
+    "narval-observations/502-v2/files/7c863afccd7e2f3cc4409195d44f4c017e988c791c4edc042ad17814c96e56dc": {
+      "bytes": 260,
+      "sha256": "724f79755f89dcaf41ecb75a4df2f9f6e2c1a9b7f4333da51e5c2f0ae56d9e09"
+    },
+    "narval-observations/502-v2/files/7dac2682c19965ef202bbc0b3a26b69f5f6d1a03d709e16020c2dc24a5211128": {
+      "bytes": 1958,
+      "sha256": "04f55706c737a29b3ef1137c8605b74062346c2baae939bbed8061358d4fbaba"
+    },
+    "narval-observations/502-v2/files/93af700d56e1a772539cde8a81f1552e639d86e9ddf4c1bcfced26b400921eb3": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval-observations/502-v2/files/9730979d2456e65ded1bad4fab688668ed055e9fa3a4b1b1804127395c1aad55": {
+      "bytes": 250,
+      "sha256": "8217e3893b1f2ae5702246043e49cc5ee91ca5041652d9a2add6b2ec2f940655"
+    },
+    "narval-observations/502-v2/files/a31598d9de99c7af1fe6a873e7bc048960d9d2bf1273979539d7f073795a3939": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval-observations/502-v2/files/a4b86cc21ca445d29586d3a4e89399b93441066ee9de8f1c82d89c4069c6a6e6": {
+      "bytes": 2418,
+      "sha256": "2b0e6ebaa0f1b511bca4343d4722d43702cf051f956cce59494ddccae656c517"
+    },
+    "narval-observations/502-v2/files/b5ce090aeee26e7b162a63063b1629a4fb57c814378edb3235a07e59304a4b53": {
+      "bytes": 298,
+      "sha256": "567ff41003556ffaf316db0d9d5499a20287ffb3fbe304537efac1bb745326ed"
+    },
+    "narval-observations/502-v2/files/b6965a884f7129b15179efb7c56c614252cceb9e9aeac47b06e1c3a4f0875873": {
+      "bytes": 2066,
+      "sha256": "b5cfa87d46d747f15dcd2be6e3e5d991b222b854c6b9b211cf026af234486ff5"
+    },
+    "narval-observations/502-v2/files/b8aaa7ac698a2da23e8dd8d6041115328fc0b2e7ea8c86dc4cf8acb58b22b8bc": {
+      "bytes": 1958,
+      "sha256": "6fc9ba93d17242e2697cfa6a52a0ba5315902be7e596a3175289de520642ce89"
+    },
+    "narval-observations/502-v2/files/ba3b341c7db5ecec2d954bdf4323ef7ed8c759316d863077c9f0eec761039b42": {
+      "bytes": 3115,
+      "sha256": "243c55d6d18002e9ec6d30eff6be41aab6b0c03c651d604c191f1ae8990b09f3"
+    },
+    "narval-observations/502-v2/files/baca5edfbbb8b557bf297e072b0f462c630f9303dd9c95a0f97665269ae4b14d": {
+      "bytes": 2066,
+      "sha256": "69157d93af7578a3abbf0f9663a57d44975ab8675adc13867e5b5672d01fa1c5"
+    },
+    "narval-observations/502-v2/files/bf7cb9435b0291e44d7a5bb501f868de9557fa204d25233c8e080708f4541f23": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/502-v2/files/c13b96498d092d0a41fb8c2d9e2fc61e15031e54aaf0d04d2795923b4c07e038": {
+      "bytes": 2020,
+      "sha256": "5e80484c08ffc2b8323b0ac13bebed3fea16a09f2e5af673ffefca6031c1ca35"
+    },
+    "narval-observations/502-v2/files/c2dcd0551091a75ff30233d3a2c1976511281678e4743839ba47bbfffdfed318": {
+      "bytes": 431,
+      "sha256": "665401897297efdce3e3b49036ac814ca6bb8550c6759aa372e6bcabdbae6d6a"
+    },
+    "narval-observations/502-v2/files/c3d1b5e7f1f65e8e3dfa4f36bfbd0753d5fa28de6f8aa81b339da37162a188e7": {
+      "bytes": 2066,
+      "sha256": "ec21853c8c3ea8b680a7ed1b8ab9652044504255e5e89c44574634e5961d8d7a"
+    },
+    "narval-observations/502-v2/files/c7638e57983c942ae97aa24a184559ef249a6a6ba99472a984977066ef192c16": {
+      "bytes": 2612,
+      "sha256": "d9d8d765021eafb3e7c20e175c49aba3357c9c4c7dede3896c4900e4e332b3d2"
+    },
+    "narval-observations/502-v2/files/ca0ce5e72054730bcda214657ffce13b0c5423309fea738257384ba7453e1bdf": {
+      "bytes": 1953,
+      "sha256": "d01b6e5c5b31680e4f64c563317344ada283a7f758cf76316133755cfff5e4a4"
+    },
+    "narval-observations/502-v2/files/d1e766507f03751ee88750b4a9e56966ad46d3e40c98b537d0f2d92348ac98f7": {
+      "bytes": 4205,
+      "sha256": "26efafe65339ec349a65773135d36502a3baa7d3f4523d56f704b16dba3c5be6"
+    },
+    "narval-observations/502-v2/files/d76a789a26de5b58086918e2b52b9c45880d5d423f0808b8c4f88f0b0f09af2e": {
+      "bytes": 1702,
+      "sha256": "a5def0c7da659cbc5b5c7ef72c9ecdf7a970d1f4f8d3356e38427c6f7705c102"
+    },
+    "narval-observations/502-v2/files/db2aa403d88f2d0511e350044b074b1d31e35d001be1b8532575a06b306bee2a": {
+      "bytes": 2530,
+      "sha256": "30105685d6536105a40ad04ee3961892c0aa7f83f791532df6401baa14a33298"
+    },
+    "narval-observations/502-v2/files/def9a5aec8ee0c04caaa1db3ebfca195eece28b8ee47d7f87397bd565c001596": {
+      "bytes": 18687,
+      "sha256": "6a33e4ee89f4f4ef380e712aec7d488bdd7b5acfbb39d28301cabcb7c7e7cdf3"
+    },
+    "narval-observations/502-v2/files/ef4f52e299a67b449860734b9fee9cbf6a1ce6f05853536648a8bf147b285db4": {
+      "bytes": 5692,
+      "sha256": "1b27764ec39483f53d28edd4b24d0929c297f40939f8c58ef25ce1ebe816a920"
+    },
+    "narval-observations/502-v2/files/f0bb0f550592b58bce39501461253141cb75e2ebd829708ab87098a5c3472733": {
+      "bytes": 1518,
+      "sha256": "d3d47df66f404ce8b5d24dc4a6012719c369c93200437c031333708fd2902571"
+    },
+    "narval-observations/502-v2/files/f5df9c084c92efb1dde88bd61b89d00c6d67830e3e21ca5986852de949da317c": {
+      "bytes": 41039,
+      "sha256": "52e95e184ba942d97d27fb848fbf0fe09c8034e2e0da724e1781abc6d4b0c412"
+    },
+    "narval-observations/502-v2/hhw-controller-resumption-live-20261023-502.json": {
+      "bytes": 107,
+      "sha256": "f75ba4275649907a75c7a204c49ca74ba4ada94854e5a8e9b9ecd13c8492d42b"
+    },
+    "narval-observations/502-v2/hhw-controller-resumption-live-20261023-502.sh": {
+      "bytes": 7032,
+      "sha256": "3b3aecd3acc9868c40b2acc8c091b4ec5d9863d4b149026d54db6858a1978e68"
+    },
+    "narval-observations/502-v2/hhw-controller-resumption-live-20261023-502.txt": {
+      "bytes": 546260,
+      "sha256": "380d4d5c511d83f325cb9a63b4742a6ec3847d245e1ac141cfc7fda83721f282"
+    },
+    "narval-observations/502-v2/remote-path-index.json": {
+      "bytes": 19784,
+      "sha256": "b22cb59578253822561c712ae5d126dd8d70e59d6fbf6d60e0cd3d5c5da2fdf8"
+    },
+    "narval-observations/503-v2/files/028521c7517e147dcb4a2c22fedbdadec2c3290f37ad4b87286c85f02a3d1840": {
+      "bytes": 1518,
+      "sha256": "8ed1c4dd9ff819b06d2671506a389d85d65293bb765bbe94757dc5bcda6e1546"
+    },
+    "narval-observations/503-v2/files/03530b5ce4af505cbf6518e0aa0707bacb9f509b392a17b9006d5367b0312526": {
+      "bytes": 4205,
+      "sha256": "0bd363318e2c4195de7f1a4bc5dc424555e26e8ff8251d4333c5c902649ce55c"
+    },
+    "narval-observations/503-v2/files/03c2990939550192bbe50c73c7b2bc013a4e9ddd65cc69a6deaef1311516bd3a": {
+      "bytes": 14132,
+      "sha256": "58a6d3a7e5462b2c814ce600568815384ebb1d5c03aa7ffb8b8635febdbd6e5f"
+    },
+    "narval-observations/503-v2/files/0895db73b217f111afb965303b3679e436cc838178d4c427086d4a61eec27213": {
+      "bytes": 1953,
+      "sha256": "055fb82d5728aac6d5bf289d2ef7379d8119b1cb3b3366ac83071007fc33ca19"
+    },
+    "narval-observations/503-v2/files/0f64cf0a2c5b805e039d8b0de72eb711d0ea4939db06c7b5de0c2757fba7e471": {
+      "bytes": 236,
+      "sha256": "ad7cd845514b9aff8653fa3190699cec1e3a4efbe5dbd468dc96eaad19c03be2"
+    },
+    "narval-observations/503-v2/files/1031dbe4a1bf29a93a96f180edb55e5d9613b6c3c21a08f019c8eb585a43a871": {
+      "bytes": 1349340,
+      "sha256": "f20d528a2fd22bad0ce4f0cc7770170c46fb9f16afd2e74893e4243a51ff7461"
+    },
+    "narval-observations/503-v2/files/13cdf646b7800bee17e4bc250b8518f5abd319fc8b66406435271fbc6f00299e": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval-observations/503-v2/files/1529dcaa362630ef65ed6de1245370692c5e138729eeca9d66bd4227ff0599fd": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "narval-observations/503-v2/files/2098d4a407f35441a9a5c08307f98f87d8df9bb38c37c063f642111fdc0ca8a3": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/503-v2/files/23860770d8c5377cd1b175d77656e677549924af701d54e2eaba9684200a9688": {
+      "bytes": 286,
+      "sha256": "73685c33dc2b91c6b313f5984974e4bcf381be54476286cd8dd2c221d6b6623d"
+    },
+    "narval-observations/503-v2/files/24a1322f2d1f077a407612f6f37ec9c84e53bdbd38bd448eb34e6720343e8e3c": {
+      "bytes": 2449,
+      "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+    },
+    "narval-observations/503-v2/files/2786e358f589e58293db8ed6d07c05b66094ef92cd324b80ba93bd4abf2b8664": {
+      "bytes": 2092,
+      "sha256": "14c4eb32b110d5a2a0d83efee39889af57f12a8eaef87ec1bd3d1637b40fbdea"
+    },
+    "narval-observations/503-v2/files/278ba0093f6442d8f999218ae8c1d7b6bc48db31f3a052f56d51c65eecd20a50": {
+      "bytes": 2449,
+      "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+    },
+    "narval-observations/503-v2/files/297d5bfb5f63d492146d06acd9b4b43d8a85173424c443d25778a6f112e077f8": {
+      "bytes": 3163,
+      "sha256": "02c8d1f2cd74e8405c2a4fcee3b0c8d5c758dbd5f8f2a20910058680232dc728"
+    },
+    "narval-observations/503-v2/files/2ac7921a9ccfeef5ba5a2d1c049bb583eb5f847a08f05ac78586ecdeebdb0676": {
+      "bytes": 19020,
+      "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+    },
+    "narval-observations/503-v2/files/2b5389f3db25c33095bb7adc0ffcb2bfe107eaeb78ca651b108502a8556b0436": {
+      "bytes": 2074,
+      "sha256": "df23c2d53cc0c69ac19710b84ebff7d1094db6714957dac110e86db9a584d964"
+    },
+    "narval-observations/503-v2/files/2c03bff57285f15d24a493587aa2be3dbead4f8e7033bd19705da1d0f5485112": {
+      "bytes": 1345,
+      "sha256": "6406a8745da24dafa77a13e5a94f3efcffb03dc2466bd902dea1a1c70fe2b6aa"
+    },
+    "narval-observations/503-v2/files/2fe7b491068183b594cfde0c3b48db0e66df5c1569e03f2fcb574b6bed2f3d67": {
+      "bytes": 1953,
+      "sha256": "0b8d01b14d45e7c45844ab27f9a2fc5f77f8750070240af82317556a7cdd69c4"
+    },
+    "narval-observations/503-v2/files/30ead454d523fbdffc616649753b49ea7928b13e00db97efb35d9b7c8d59c7c9": {
+      "bytes": 431,
+      "sha256": "ea301f580d4c15027f4e056c974e3ee0f4c3ce1c4bcdee29d346051f2e105ab7"
+    },
+    "narval-observations/503-v2/files/3165fae166ef484312a86163515296ba30d97a10bd29288af97aeb00b486f9db": {
+      "bytes": 18687,
+      "sha256": "2b5b77e7230b5365de91caf64f72484c456856b0526549a53400320ee7c32cb3"
+    },
+    "narval-observations/503-v2/files/3b1abf85056ee3198522b846ab6bfb5ad32ff41358b835c10db565b79d9e6f67": {
+      "bytes": 9223,
+      "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+    },
+    "narval-observations/503-v2/files/3da4e01b891b02e146445c5545dd7da6ad6bb01dd911e753a450c91966615888": {
+      "bytes": 2530,
+      "sha256": "fe39df54d8e309acedad99cd45697a8a5b282bbe57e9238f70388c65696ba11c"
+    },
+    "narval-observations/503-v2/files/3de56180bc2e16d4be2a3a20e8e182c92ab58c1bb1fe70265732f3d4237fdf7a": {
+      "bytes": 2449,
+      "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+    },
+    "narval-observations/503-v2/files/40d3733a6d1ff25dbcc7232ba048a6ce9b647b12764d2e7a8d40930248b03b18": {
+      "bytes": 18639,
+      "sha256": "33e8a9b97997caf3f50ef1b0c4e3deac6186fd7738cac8c326f49aeb46ee7f01"
+    },
+    "narval-observations/503-v2/files/422a7f35537410bb8f349f76ea8ac3d57d1f6b4a595478b3f862a3f583bd754d": {
+      "bytes": 4695,
+      "sha256": "9a0706642ac1660fb7f39fe68279ca34bdc10f89812a0c2397608d2a382cf464"
+    },
+    "narval-observations/503-v2/files/4338cce1f0492811e6cd5a59d9f64c730b31052168b1609fd0e7ed64968aece3": {
+      "bytes": 18759,
+      "sha256": "7149e8a8311b497b3495c3e38ecdd51d7465d679c63e00f1e3ba5be81b60512c"
+    },
+    "narval-observations/503-v2/files/479572cfe4a4f0e30efbf241e208bfdbbc2a5f6610303a19e309b24210ec2344": {
+      "bytes": 90428,
+      "sha256": "ec0e600e161f1546a8b40efe52304f20508323431d20cf2c2ada310b89a5f4ed"
+    },
+    "narval-observations/503-v2/files/5007ed1dfe3d92d7f237004ec57ae344f7eba0ec0eee5c42bfa0cc569db2508c": {
+      "bytes": 1518,
+      "sha256": "1b18e23f5c19334f06eb192b4ad3f9de3171cddb34274d9687963cc4c84a0e76"
+    },
+    "narval-observations/503-v2/files/512a0a183d9767a9e1a235eaf1f9b4ae675feb6793d71deaa654bc70266836e9": {
+      "bytes": 1958,
+      "sha256": "fbe69f82abce43e936a70be0aeb27835e7bb915fadb1cef59b1c06d2d39b4938"
+    },
+    "narval-observations/503-v2/files/538075f769c6ac6c8d7bcfba9b0262bc2a781ff29866cad4ecb8d0f3ac49d670": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/503-v2/files/55fca35df1552fbc4aab7300f073660ea294f4e7f1c9642e4ffb514e2655e9c5": {
+      "bytes": 16978,
+      "sha256": "1851ec7ba5c29a4e6df5536136fbb4bd802d806511547e9d690eb3f0e0fef4e8"
+    },
+    "narval-observations/503-v2/files/5913ed96d8acc59216cd246457004d427e1970d3934f549925a7b7e34f240f84": {
+      "bytes": 4205,
+      "sha256": "35334a9eccbdf55cf15ff1563159af972996e933af498df612f731efaf38a49c"
+    },
+    "narval-observations/503-v2/files/5b92ab105887aa0d1fb9f95f1edde03de9fa4fb3119ed5414a3fcd5b89741264": {
+      "bytes": 2066,
+      "sha256": "a05ab5ae921596ce703a99246dfaea0932d1f166e4f5f495549b911e2da35d3c"
+    },
+    "narval-observations/503-v2/files/5fb4849c4631e64e58b81a8b6173a4b8a60f051a908870fa043f8d39186f6c2a": {
+      "bytes": 1323,
+      "sha256": "666f89af22652aec112d58867a6e0696ab3c80bb418da9c099fd3c8e3bd9037b"
+    },
+    "narval-observations/503-v2/files/5ff80a47ae689b45166db7da9281b60e348125c950339bfe66459fc1f700d3b0": {
+      "bytes": 7047,
+      "sha256": "13ba3ed8639735e1e11cec91ae0551414400583019b964a4faccdf31cbfc6b59"
+    },
+    "narval-observations/503-v2/files/614c6006bad6df675cf5375a563a9e1fef9888974d1ab0e9c65f0e9267bc1d5f": {
+      "bytes": 1518,
+      "sha256": "c50d961f4e748bfbc2ec3e477b66755c0b0d2625eb9c85465e545e14f53dc455"
+    },
+    "narval-observations/503-v2/files/63fff7d6f521e8d8e5c3e2eeb001ebc0776cdf3cd841728a9ddfacf91c3c2646": {
+      "bytes": 2520,
+      "sha256": "cf52eb256e5edc13b4de5bb78c26ec58bbc090e3b049615e22310b6b2386f262"
+    },
+    "narval-observations/503-v2/files/682e2001a487340965ddc49ea62d8996ba74b1d8737301951dad424fb9590b95": {
+      "bytes": 2074,
+      "sha256": "179403f786ab7dd34116dc83e59aad9edfdb53fb8d152c84783aff38e31446d2"
+    },
+    "narval-observations/503-v2/files/689704460db0a8d832c95b35078164143d246ac09426bbd61382ec8f6dcac194": {
+      "bytes": 431,
+      "sha256": "24cfa4ae718cd5534d85432b28473218201159b343b15ad26bde4f993d9389bd"
+    },
+    "narval-observations/503-v2/files/6c1b24fa244dca765f86b687e6799f609ff3965b2109425633e44d04416e99fd": {
+      "bytes": 1349341,
+      "sha256": "5e48a06864ae71c6fec7b16a94420524231054779a707a0896ceb2f6dd9dccd1"
+    },
+    "narval-observations/503-v2/files/739903164b883d75bea4975bf378721891576040d45f09114c0429da65d5ec20": {
+      "bytes": 1958,
+      "sha256": "0831e0ec643aad2493f34475a62963cf6bffc8419b5ad2a538f9c33369d1539d"
+    },
+    "narval-observations/503-v2/files/777486da2218f6aee6d1a5a678082a0c4c36974151d566d69af9d1608937c93b": {
+      "bytes": 1953,
+      "sha256": "6a64f85e578c660b210b16679651afbf7e7f2e270a0c9af3ace2f56ffe878d02"
+    },
+    "narval-observations/503-v2/files/79ed82ffe2152b1bea47c77842ac702685bddb165f7f949ee640e95197cb2aee": {
+      "bytes": 319,
+      "sha256": "5f733e033ea523d6a46f6175a067c6014ebdedccd471cc2d59b1068a0f13d00e"
+    },
+    "narval-observations/503-v2/files/7a1f0b33ba867fd2d9195ae6abfc0d2729e5973a38cc3af7e7aba0f39202e3f1": {
+      "bytes": 1296,
+      "sha256": "1d32e5aa803ba84db8a54d8296e60d1e5d4756eabc4c489ab28f68cb2ec528e8"
+    },
+    "narval-observations/503-v2/files/7a3343e9db20a199dd94780578e13663c127675be7186762aaac0802b2f4a04b": {
+      "bytes": 20448,
+      "sha256": "11e094dcde8bb1708f78d752667b7dc6f7990acb98d371c01fd217b1422f47cd"
+    },
+    "narval-observations/503-v2/files/7c863afccd7e2f3cc4409195d44f4c017e988c791c4edc042ad17814c96e56dc": {
+      "bytes": 260,
+      "sha256": "724f79755f89dcaf41ecb75a4df2f9f6e2c1a9b7f4333da51e5c2f0ae56d9e09"
+    },
+    "narval-observations/503-v2/files/7dac2682c19965ef202bbc0b3a26b69f5f6d1a03d709e16020c2dc24a5211128": {
+      "bytes": 1958,
+      "sha256": "04f55706c737a29b3ef1137c8605b74062346c2baae939bbed8061358d4fbaba"
+    },
+    "narval-observations/503-v2/files/93af700d56e1a772539cde8a81f1552e639d86e9ddf4c1bcfced26b400921eb3": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval-observations/503-v2/files/9730979d2456e65ded1bad4fab688668ed055e9fa3a4b1b1804127395c1aad55": {
+      "bytes": 250,
+      "sha256": "8217e3893b1f2ae5702246043e49cc5ee91ca5041652d9a2add6b2ec2f940655"
+    },
+    "narval-observations/503-v2/files/9954197bb35f718c342559ea68b582acb28b2fc000a275f46fe2d0d26dde6299": {
+      "bytes": 2074,
+      "sha256": "4b6832958de242479b127302e615bcc3e7a87c10e169176d5f39d53a70179d3c"
+    },
+    "narval-observations/503-v2/files/a31598d9de99c7af1fe6a873e7bc048960d9d2bf1273979539d7f073795a3939": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval-observations/503-v2/files/a4647af30f2a59d77faf1eae731048aa691782b3b296de4ccd136a96ad823994": {
+      "bytes": 2074,
+      "sha256": "40bba01fcac378d79bd3fc0fab35379744168482bec115eb589f27b2e6c02269"
+    },
+    "narval-observations/503-v2/files/a4b86cc21ca445d29586d3a4e89399b93441066ee9de8f1c82d89c4069c6a6e6": {
+      "bytes": 2418,
+      "sha256": "2b0e6ebaa0f1b511bca4343d4722d43702cf051f956cce59494ddccae656c517"
+    },
+    "narval-observations/503-v2/files/a80ecf3445db27b14a470f6ac226e0b478e5a43c7046e4f34162402061f8424d": {
+      "bytes": 1351001,
+      "sha256": "904d9ccd2e9892f4fb2541652bb1b19c552116339a57794618d0dd40b1b4a725"
+    },
+    "narval-observations/503-v2/files/ae42c4ab628bca15e21db31ec8b4b7d2b36f5df77b5281d30e21c1ca6bd262d6": {
+      "bytes": 286,
+      "sha256": "70b54512b959ce30e297ebad04b2281065242357592a9bf26c63a734da6fc672"
+    },
+    "narval-observations/503-v2/files/b5ce090aeee26e7b162a63063b1629a4fb57c814378edb3235a07e59304a4b53": {
+      "bytes": 298,
+      "sha256": "567ff41003556ffaf316db0d9d5499a20287ffb3fbe304537efac1bb745326ed"
+    },
+    "narval-observations/503-v2/files/b6965a884f7129b15179efb7c56c614252cceb9e9aeac47b06e1c3a4f0875873": {
+      "bytes": 2066,
+      "sha256": "b5cfa87d46d747f15dcd2be6e3e5d991b222b854c6b9b211cf026af234486ff5"
+    },
+    "narval-observations/503-v2/files/b8aaa7ac698a2da23e8dd8d6041115328fc0b2e7ea8c86dc4cf8acb58b22b8bc": {
+      "bytes": 1958,
+      "sha256": "6fc9ba93d17242e2697cfa6a52a0ba5315902be7e596a3175289de520642ce89"
+    },
+    "narval-observations/503-v2/files/ba3b341c7db5ecec2d954bdf4323ef7ed8c759316d863077c9f0eec761039b42": {
+      "bytes": 3115,
+      "sha256": "243c55d6d18002e9ec6d30eff6be41aab6b0c03c651d604c191f1ae8990b09f3"
+    },
+    "narval-observations/503-v2/files/baca5edfbbb8b557bf297e072b0f462c630f9303dd9c95a0f97665269ae4b14d": {
+      "bytes": 2066,
+      "sha256": "69157d93af7578a3abbf0f9663a57d44975ab8675adc13867e5b5672d01fa1c5"
+    },
+    "narval-observations/503-v2/files/bf7cb9435b0291e44d7a5bb501f868de9557fa204d25233c8e080708f4541f23": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/503-v2/files/c13b96498d092d0a41fb8c2d9e2fc61e15031e54aaf0d04d2795923b4c07e038": {
+      "bytes": 2020,
+      "sha256": "5e80484c08ffc2b8323b0ac13bebed3fea16a09f2e5af673ffefca6031c1ca35"
+    },
+    "narval-observations/503-v2/files/c2dcd0551091a75ff30233d3a2c1976511281678e4743839ba47bbfffdfed318": {
+      "bytes": 431,
+      "sha256": "665401897297efdce3e3b49036ac814ca6bb8550c6759aa372e6bcabdbae6d6a"
+    },
+    "narval-observations/503-v2/files/c3d1b5e7f1f65e8e3dfa4f36bfbd0753d5fa28de6f8aa81b339da37162a188e7": {
+      "bytes": 2066,
+      "sha256": "ec21853c8c3ea8b680a7ed1b8ab9652044504255e5e89c44574634e5961d8d7a"
+    },
+    "narval-observations/503-v2/files/c7638e57983c942ae97aa24a184559ef249a6a6ba99472a984977066ef192c16": {
+      "bytes": 2612,
+      "sha256": "d9d8d765021eafb3e7c20e175c49aba3357c9c4c7dede3896c4900e4e332b3d2"
+    },
+    "narval-observations/503-v2/files/ca0ce5e72054730bcda214657ffce13b0c5423309fea738257384ba7453e1bdf": {
+      "bytes": 1953,
+      "sha256": "d01b6e5c5b31680e4f64c563317344ada283a7f758cf76316133755cfff5e4a4"
+    },
+    "narval-observations/503-v2/files/cbab1a099372ef4cdc02fd61ae688223343601f603ef71ea6e29bc078d2a352c": {
+      "bytes": 4909,
+      "sha256": "6354cfbe705a7d4efcbb0d00cfa5183292fbf5af92420b66097daf6a328e8367"
+    },
+    "narval-observations/503-v2/files/d1e766507f03751ee88750b4a9e56966ad46d3e40c98b537d0f2d92348ac98f7": {
+      "bytes": 4205,
+      "sha256": "26efafe65339ec349a65773135d36502a3baa7d3f4523d56f704b16dba3c5be6"
+    },
+    "narval-observations/503-v2/files/d76a789a26de5b58086918e2b52b9c45880d5d423f0808b8c4f88f0b0f09af2e": {
+      "bytes": 1702,
+      "sha256": "a5def0c7da659cbc5b5c7ef72c9ecdf7a970d1f4f8d3356e38427c6f7705c102"
+    },
+    "narval-observations/503-v2/files/db2aa403d88f2d0511e350044b074b1d31e35d001be1b8532575a06b306bee2a": {
+      "bytes": 2530,
+      "sha256": "30105685d6536105a40ad04ee3961892c0aa7f83f791532df6401baa14a33298"
+    },
+    "narval-observations/503-v2/files/def9a5aec8ee0c04caaa1db3ebfca195eece28b8ee47d7f87397bd565c001596": {
+      "bytes": 18687,
+      "sha256": "6a33e4ee89f4f4ef380e712aec7d488bdd7b5acfbb39d28301cabcb7c7e7cdf3"
+    },
+    "narval-observations/503-v2/files/ef4f52e299a67b449860734b9fee9cbf6a1ce6f05853536648a8bf147b285db4": {
+      "bytes": 5692,
+      "sha256": "1b27764ec39483f53d28edd4b24d0929c297f40939f8c58ef25ce1ebe816a920"
+    },
+    "narval-observations/503-v2/files/f0bb0f550592b58bce39501461253141cb75e2ebd829708ab87098a5c3472733": {
+      "bytes": 1518,
+      "sha256": "d3d47df66f404ce8b5d24dc4a6012719c369c93200437c031333708fd2902571"
+    },
+    "narval-observations/503-v2/files/f5df9c084c92efb1dde88bd61b89d00c6d67830e3e21ca5986852de949da317c": {
+      "bytes": 41039,
+      "sha256": "52e95e184ba942d97d27fb848fbf0fe09c8034e2e0da724e1781abc6d4b0c412"
+    },
+    "narval-observations/503-v2/files/f87571bf57456efa16a37412b276402b33a250c4b518dde9ce9c1995d757fa15": {
+      "bytes": 9273,
+      "sha256": "fbefed8655bb75f9502b54dfc5bb4f6c689fe40f6264baa7d386d51e0c211573"
+    },
+    "narval-observations/503-v2/hhw-controller-resumption-live-20261023-503.json": {
+      "bytes": 107,
+      "sha256": "b16b1b43a13c5593cfeb3ee732d2c4c610dd74f36fee21f386a7ef0fbfb5defb"
+    },
+    "narval-observations/503-v2/hhw-controller-resumption-live-20261023-503.sh": {
+      "bytes": 7032,
+      "sha256": "3b3aecd3acc9868c40b2acc8c091b4ec5d9863d4b149026d54db6858a1978e68"
+    },
+    "narval-observations/503-v2/hhw-controller-resumption-live-20261023-503.txt": {
+      "bytes": 6022212,
+      "sha256": "390dc7c32c9fd1a8db2a310b33dc219921a411db84aa193e833da07d254574fb"
+    },
+    "narval-observations/503-v2/remote-path-index.json": {
+      "bytes": 26203,
+      "sha256": "8445e7e4e4f4258cb567d8068d7ae8cf282c484376b9892964e99c22a671b4b6"
+    },
+    "narval-observations/504-v2/files/028521c7517e147dcb4a2c22fedbdadec2c3290f37ad4b87286c85f02a3d1840": {
+      "bytes": 1518,
+      "sha256": "8ed1c4dd9ff819b06d2671506a389d85d65293bb765bbe94757dc5bcda6e1546"
+    },
+    "narval-observations/504-v2/files/03530b5ce4af505cbf6518e0aa0707bacb9f509b392a17b9006d5367b0312526": {
+      "bytes": 4205,
+      "sha256": "0bd363318e2c4195de7f1a4bc5dc424555e26e8ff8251d4333c5c902649ce55c"
+    },
+    "narval-observations/504-v2/files/03c2990939550192bbe50c73c7b2bc013a4e9ddd65cc69a6deaef1311516bd3a": {
+      "bytes": 14132,
+      "sha256": "58a6d3a7e5462b2c814ce600568815384ebb1d5c03aa7ffb8b8635febdbd6e5f"
+    },
+    "narval-observations/504-v2/files/0895db73b217f111afb965303b3679e436cc838178d4c427086d4a61eec27213": {
+      "bytes": 1953,
+      "sha256": "055fb82d5728aac6d5bf289d2ef7379d8119b1cb3b3366ac83071007fc33ca19"
+    },
+    "narval-observations/504-v2/files/0f64cf0a2c5b805e039d8b0de72eb711d0ea4939db06c7b5de0c2757fba7e471": {
+      "bytes": 236,
+      "sha256": "ad7cd845514b9aff8653fa3190699cec1e3a4efbe5dbd468dc96eaad19c03be2"
+    },
+    "narval-observations/504-v2/files/1031dbe4a1bf29a93a96f180edb55e5d9613b6c3c21a08f019c8eb585a43a871": {
+      "bytes": 1349340,
+      "sha256": "f20d528a2fd22bad0ce4f0cc7770170c46fb9f16afd2e74893e4243a51ff7461"
+    },
+    "narval-observations/504-v2/files/13cdf646b7800bee17e4bc250b8518f5abd319fc8b66406435271fbc6f00299e": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval-observations/504-v2/files/1529dcaa362630ef65ed6de1245370692c5e138729eeca9d66bd4227ff0599fd": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "narval-observations/504-v2/files/1f0dab34bb76fa4ffe4a410eebca59efaca813cbf87de91ac304cf5afa593af4": {
+      "bytes": 2596,
+      "sha256": "61891011279d8e05dd9385be1550ac715b40587c5c838beb28d7222c34bc6aa4"
+    },
+    "narval-observations/504-v2/files/2098d4a407f35441a9a5c08307f98f87d8df9bb38c37c063f642111fdc0ca8a3": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/504-v2/files/23860770d8c5377cd1b175d77656e677549924af701d54e2eaba9684200a9688": {
+      "bytes": 286,
+      "sha256": "73685c33dc2b91c6b313f5984974e4bcf381be54476286cd8dd2c221d6b6623d"
+    },
+    "narval-observations/504-v2/files/24a1322f2d1f077a407612f6f37ec9c84e53bdbd38bd448eb34e6720343e8e3c": {
+      "bytes": 2449,
+      "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+    },
+    "narval-observations/504-v2/files/2786e358f589e58293db8ed6d07c05b66094ef92cd324b80ba93bd4abf2b8664": {
+      "bytes": 2092,
+      "sha256": "14c4eb32b110d5a2a0d83efee39889af57f12a8eaef87ec1bd3d1637b40fbdea"
+    },
+    "narval-observations/504-v2/files/278ba0093f6442d8f999218ae8c1d7b6bc48db31f3a052f56d51c65eecd20a50": {
+      "bytes": 2449,
+      "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+    },
+    "narval-observations/504-v2/files/297d5bfb5f63d492146d06acd9b4b43d8a85173424c443d25778a6f112e077f8": {
+      "bytes": 3163,
+      "sha256": "02c8d1f2cd74e8405c2a4fcee3b0c8d5c758dbd5f8f2a20910058680232dc728"
+    },
+    "narval-observations/504-v2/files/2ac7921a9ccfeef5ba5a2d1c049bb583eb5f847a08f05ac78586ecdeebdb0676": {
+      "bytes": 19020,
+      "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+    },
+    "narval-observations/504-v2/files/2b5389f3db25c33095bb7adc0ffcb2bfe107eaeb78ca651b108502a8556b0436": {
+      "bytes": 2074,
+      "sha256": "df23c2d53cc0c69ac19710b84ebff7d1094db6714957dac110e86db9a584d964"
+    },
+    "narval-observations/504-v2/files/2c03bff57285f15d24a493587aa2be3dbead4f8e7033bd19705da1d0f5485112": {
+      "bytes": 1345,
+      "sha256": "6406a8745da24dafa77a13e5a94f3efcffb03dc2466bd902dea1a1c70fe2b6aa"
+    },
+    "narval-observations/504-v2/files/2fe7b491068183b594cfde0c3b48db0e66df5c1569e03f2fcb574b6bed2f3d67": {
+      "bytes": 1953,
+      "sha256": "0b8d01b14d45e7c45844ab27f9a2fc5f77f8750070240af82317556a7cdd69c4"
+    },
+    "narval-observations/504-v2/files/30ead454d523fbdffc616649753b49ea7928b13e00db97efb35d9b7c8d59c7c9": {
+      "bytes": 431,
+      "sha256": "ea301f580d4c15027f4e056c974e3ee0f4c3ce1c4bcdee29d346051f2e105ab7"
+    },
+    "narval-observations/504-v2/files/3165fae166ef484312a86163515296ba30d97a10bd29288af97aeb00b486f9db": {
+      "bytes": 18687,
+      "sha256": "2b5b77e7230b5365de91caf64f72484c456856b0526549a53400320ee7c32cb3"
+    },
+    "narval-observations/504-v2/files/3b1abf85056ee3198522b846ab6bfb5ad32ff41358b835c10db565b79d9e6f67": {
+      "bytes": 9223,
+      "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+    },
+    "narval-observations/504-v2/files/3da4e01b891b02e146445c5545dd7da6ad6bb01dd911e753a450c91966615888": {
+      "bytes": 2530,
+      "sha256": "fe39df54d8e309acedad99cd45697a8a5b282bbe57e9238f70388c65696ba11c"
+    },
+    "narval-observations/504-v2/files/3de56180bc2e16d4be2a3a20e8e182c92ab58c1bb1fe70265732f3d4237fdf7a": {
+      "bytes": 2449,
+      "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+    },
+    "narval-observations/504-v2/files/40d3733a6d1ff25dbcc7232ba048a6ce9b647b12764d2e7a8d40930248b03b18": {
+      "bytes": 18639,
+      "sha256": "33e8a9b97997caf3f50ef1b0c4e3deac6186fd7738cac8c326f49aeb46ee7f01"
+    },
+    "narval-observations/504-v2/files/422a7f35537410bb8f349f76ea8ac3d57d1f6b4a595478b3f862a3f583bd754d": {
+      "bytes": 4695,
+      "sha256": "9a0706642ac1660fb7f39fe68279ca34bdc10f89812a0c2397608d2a382cf464"
+    },
+    "narval-observations/504-v2/files/4338cce1f0492811e6cd5a59d9f64c730b31052168b1609fd0e7ed64968aece3": {
+      "bytes": 18759,
+      "sha256": "7149e8a8311b497b3495c3e38ecdd51d7465d679c63e00f1e3ba5be81b60512c"
+    },
+    "narval-observations/504-v2/files/435c99737caa7fada2ca8310da5f9e502ae3c313825cc38aca402a4898751d4c": {
+      "bytes": 286,
+      "sha256": "efce035708989b4d257899d12afdbe26b020095dbe542b7cebf9222380267ed2"
+    },
+    "narval-observations/504-v2/files/479572cfe4a4f0e30efbf241e208bfdbbc2a5f6610303a19e309b24210ec2344": {
+      "bytes": 90428,
+      "sha256": "ec0e600e161f1546a8b40efe52304f20508323431d20cf2c2ada310b89a5f4ed"
+    },
+    "narval-observations/504-v2/files/5007ed1dfe3d92d7f237004ec57ae344f7eba0ec0eee5c42bfa0cc569db2508c": {
+      "bytes": 1518,
+      "sha256": "1b18e23f5c19334f06eb192b4ad3f9de3171cddb34274d9687963cc4c84a0e76"
+    },
+    "narval-observations/504-v2/files/512a0a183d9767a9e1a235eaf1f9b4ae675feb6793d71deaa654bc70266836e9": {
+      "bytes": 1958,
+      "sha256": "fbe69f82abce43e936a70be0aeb27835e7bb915fadb1cef59b1c06d2d39b4938"
+    },
+    "narval-observations/504-v2/files/538075f769c6ac6c8d7bcfba9b0262bc2a781ff29866cad4ecb8d0f3ac49d670": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/504-v2/files/55fca35df1552fbc4aab7300f073660ea294f4e7f1c9642e4ffb514e2655e9c5": {
+      "bytes": 16978,
+      "sha256": "1851ec7ba5c29a4e6df5536136fbb4bd802d806511547e9d690eb3f0e0fef4e8"
+    },
+    "narval-observations/504-v2/files/5913ed96d8acc59216cd246457004d427e1970d3934f549925a7b7e34f240f84": {
+      "bytes": 4205,
+      "sha256": "35334a9eccbdf55cf15ff1563159af972996e933af498df612f731efaf38a49c"
+    },
+    "narval-observations/504-v2/files/5b92ab105887aa0d1fb9f95f1edde03de9fa4fb3119ed5414a3fcd5b89741264": {
+      "bytes": 2066,
+      "sha256": "a05ab5ae921596ce703a99246dfaea0932d1f166e4f5f495549b911e2da35d3c"
+    },
+    "narval-observations/504-v2/files/5dfb1c99d5191f8b9fc674223f49d4e53dc11680616dac2af4b6028af370ce52": {
+      "bytes": 2520,
+      "sha256": "c2bdc17f6cccd8ea47f3234420882520460e68442ed15f72e2da884d73c0ccc4"
+    },
+    "narval-observations/504-v2/files/5fb4849c4631e64e58b81a8b6173a4b8a60f051a908870fa043f8d39186f6c2a": {
+      "bytes": 1323,
+      "sha256": "666f89af22652aec112d58867a6e0696ab3c80bb418da9c099fd3c8e3bd9037b"
+    },
+    "narval-observations/504-v2/files/5ff80a47ae689b45166db7da9281b60e348125c950339bfe66459fc1f700d3b0": {
+      "bytes": 7047,
+      "sha256": "13ba3ed8639735e1e11cec91ae0551414400583019b964a4faccdf31cbfc6b59"
+    },
+    "narval-observations/504-v2/files/614c6006bad6df675cf5375a563a9e1fef9888974d1ab0e9c65f0e9267bc1d5f": {
+      "bytes": 1518,
+      "sha256": "c50d961f4e748bfbc2ec3e477b66755c0b0d2625eb9c85465e545e14f53dc455"
+    },
+    "narval-observations/504-v2/files/63fff7d6f521e8d8e5c3e2eeb001ebc0776cdf3cd841728a9ddfacf91c3c2646": {
+      "bytes": 2520,
+      "sha256": "cf52eb256e5edc13b4de5bb78c26ec58bbc090e3b049615e22310b6b2386f262"
+    },
+    "narval-observations/504-v2/files/682e2001a487340965ddc49ea62d8996ba74b1d8737301951dad424fb9590b95": {
+      "bytes": 2074,
+      "sha256": "179403f786ab7dd34116dc83e59aad9edfdb53fb8d152c84783aff38e31446d2"
+    },
+    "narval-observations/504-v2/files/689704460db0a8d832c95b35078164143d246ac09426bbd61382ec8f6dcac194": {
+      "bytes": 431,
+      "sha256": "24cfa4ae718cd5534d85432b28473218201159b343b15ad26bde4f993d9389bd"
+    },
+    "narval-observations/504-v2/files/6c1b24fa244dca765f86b687e6799f609ff3965b2109425633e44d04416e99fd": {
+      "bytes": 1349341,
+      "sha256": "5e48a06864ae71c6fec7b16a94420524231054779a707a0896ceb2f6dd9dccd1"
+    },
+    "narval-observations/504-v2/files/739903164b883d75bea4975bf378721891576040d45f09114c0429da65d5ec20": {
+      "bytes": 1958,
+      "sha256": "0831e0ec643aad2493f34475a62963cf6bffc8419b5ad2a538f9c33369d1539d"
+    },
+    "narval-observations/504-v2/files/777486da2218f6aee6d1a5a678082a0c4c36974151d566d69af9d1608937c93b": {
+      "bytes": 1953,
+      "sha256": "6a64f85e578c660b210b16679651afbf7e7f2e270a0c9af3ace2f56ffe878d02"
+    },
+    "narval-observations/504-v2/files/79ed82ffe2152b1bea47c77842ac702685bddb165f7f949ee640e95197cb2aee": {
+      "bytes": 319,
+      "sha256": "5f733e033ea523d6a46f6175a067c6014ebdedccd471cc2d59b1068a0f13d00e"
+    },
+    "narval-observations/504-v2/files/7a1f0b33ba867fd2d9195ae6abfc0d2729e5973a38cc3af7e7aba0f39202e3f1": {
+      "bytes": 1296,
+      "sha256": "1d32e5aa803ba84db8a54d8296e60d1e5d4756eabc4c489ab28f68cb2ec528e8"
+    },
+    "narval-observations/504-v2/files/7a3343e9db20a199dd94780578e13663c127675be7186762aaac0802b2f4a04b": {
+      "bytes": 20448,
+      "sha256": "11e094dcde8bb1708f78d752667b7dc6f7990acb98d371c01fd217b1422f47cd"
+    },
+    "narval-observations/504-v2/files/7c863afccd7e2f3cc4409195d44f4c017e988c791c4edc042ad17814c96e56dc": {
+      "bytes": 260,
+      "sha256": "724f79755f89dcaf41ecb75a4df2f9f6e2c1a9b7f4333da51e5c2f0ae56d9e09"
+    },
+    "narval-observations/504-v2/files/7dac2682c19965ef202bbc0b3a26b69f5f6d1a03d709e16020c2dc24a5211128": {
+      "bytes": 1958,
+      "sha256": "04f55706c737a29b3ef1137c8605b74062346c2baae939bbed8061358d4fbaba"
+    },
+    "narval-observations/504-v2/files/93af700d56e1a772539cde8a81f1552e639d86e9ddf4c1bcfced26b400921eb3": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval-observations/504-v2/files/9730979d2456e65ded1bad4fab688668ed055e9fa3a4b1b1804127395c1aad55": {
+      "bytes": 250,
+      "sha256": "8217e3893b1f2ae5702246043e49cc5ee91ca5041652d9a2add6b2ec2f940655"
+    },
+    "narval-observations/504-v2/files/9954197bb35f718c342559ea68b582acb28b2fc000a275f46fe2d0d26dde6299": {
+      "bytes": 2074,
+      "sha256": "4b6832958de242479b127302e615bcc3e7a87c10e169176d5f39d53a70179d3c"
+    },
+    "narval-observations/504-v2/files/a31598d9de99c7af1fe6a873e7bc048960d9d2bf1273979539d7f073795a3939": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval-observations/504-v2/files/a4647af30f2a59d77faf1eae731048aa691782b3b296de4ccd136a96ad823994": {
+      "bytes": 2074,
+      "sha256": "40bba01fcac378d79bd3fc0fab35379744168482bec115eb589f27b2e6c02269"
+    },
+    "narval-observations/504-v2/files/a4b86cc21ca445d29586d3a4e89399b93441066ee9de8f1c82d89c4069c6a6e6": {
+      "bytes": 2418,
+      "sha256": "2b0e6ebaa0f1b511bca4343d4722d43702cf051f956cce59494ddccae656c517"
+    },
+    "narval-observations/504-v2/files/a80ecf3445db27b14a470f6ac226e0b478e5a43c7046e4f34162402061f8424d": {
+      "bytes": 1351001,
+      "sha256": "904d9ccd2e9892f4fb2541652bb1b19c552116339a57794618d0dd40b1b4a725"
+    },
+    "narval-observations/504-v2/files/ae42c4ab628bca15e21db31ec8b4b7d2b36f5df77b5281d30e21c1ca6bd262d6": {
+      "bytes": 286,
+      "sha256": "70b54512b959ce30e297ebad04b2281065242357592a9bf26c63a734da6fc672"
+    },
+    "narval-observations/504-v2/files/b5ce090aeee26e7b162a63063b1629a4fb57c814378edb3235a07e59304a4b53": {
+      "bytes": 298,
+      "sha256": "567ff41003556ffaf316db0d9d5499a20287ffb3fbe304537efac1bb745326ed"
+    },
+    "narval-observations/504-v2/files/b6965a884f7129b15179efb7c56c614252cceb9e9aeac47b06e1c3a4f0875873": {
+      "bytes": 2066,
+      "sha256": "b5cfa87d46d747f15dcd2be6e3e5d991b222b854c6b9b211cf026af234486ff5"
+    },
+    "narval-observations/504-v2/files/b8aaa7ac698a2da23e8dd8d6041115328fc0b2e7ea8c86dc4cf8acb58b22b8bc": {
+      "bytes": 1958,
+      "sha256": "6fc9ba93d17242e2697cfa6a52a0ba5315902be7e596a3175289de520642ce89"
+    },
+    "narval-observations/504-v2/files/ba3b341c7db5ecec2d954bdf4323ef7ed8c759316d863077c9f0eec761039b42": {
+      "bytes": 3115,
+      "sha256": "243c55d6d18002e9ec6d30eff6be41aab6b0c03c651d604c191f1ae8990b09f3"
+    },
+    "narval-observations/504-v2/files/baca5edfbbb8b557bf297e072b0f462c630f9303dd9c95a0f97665269ae4b14d": {
+      "bytes": 2066,
+      "sha256": "69157d93af7578a3abbf0f9663a57d44975ab8675adc13867e5b5672d01fa1c5"
+    },
+    "narval-observations/504-v2/files/bf7cb9435b0291e44d7a5bb501f868de9557fa204d25233c8e080708f4541f23": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/504-v2/files/c13b96498d092d0a41fb8c2d9e2fc61e15031e54aaf0d04d2795923b4c07e038": {
+      "bytes": 2020,
+      "sha256": "5e80484c08ffc2b8323b0ac13bebed3fea16a09f2e5af673ffefca6031c1ca35"
+    },
+    "narval-observations/504-v2/files/c2dcd0551091a75ff30233d3a2c1976511281678e4743839ba47bbfffdfed318": {
+      "bytes": 431,
+      "sha256": "665401897297efdce3e3b49036ac814ca6bb8550c6759aa372e6bcabdbae6d6a"
+    },
+    "narval-observations/504-v2/files/c3d1b5e7f1f65e8e3dfa4f36bfbd0753d5fa28de6f8aa81b339da37162a188e7": {
+      "bytes": 2066,
+      "sha256": "ec21853c8c3ea8b680a7ed1b8ab9652044504255e5e89c44574634e5961d8d7a"
+    },
+    "narval-observations/504-v2/files/c7638e57983c942ae97aa24a184559ef249a6a6ba99472a984977066ef192c16": {
+      "bytes": 2612,
+      "sha256": "d9d8d765021eafb3e7c20e175c49aba3357c9c4c7dede3896c4900e4e332b3d2"
+    },
+    "narval-observations/504-v2/files/ca0ce5e72054730bcda214657ffce13b0c5423309fea738257384ba7453e1bdf": {
+      "bytes": 1953,
+      "sha256": "d01b6e5c5b31680e4f64c563317344ada283a7f758cf76316133755cfff5e4a4"
+    },
+    "narval-observations/504-v2/files/cbab1a099372ef4cdc02fd61ae688223343601f603ef71ea6e29bc078d2a352c": {
+      "bytes": 4909,
+      "sha256": "6354cfbe705a7d4efcbb0d00cfa5183292fbf5af92420b66097daf6a328e8367"
+    },
+    "narval-observations/504-v2/files/cfb4a6ddfb3fd804eb6de33fbef62c45211f54e464d8dbc568f559a9359a7860": {
+      "bytes": 2518,
+      "sha256": "e0184e01ebc56e5d73df30027e3229511ca9aa351bd0fae5a941862b7d0b9ad7"
+    },
+    "narval-observations/504-v2/files/d1e766507f03751ee88750b4a9e56966ad46d3e40c98b537d0f2d92348ac98f7": {
+      "bytes": 4205,
+      "sha256": "26efafe65339ec349a65773135d36502a3baa7d3f4523d56f704b16dba3c5be6"
+    },
+    "narval-observations/504-v2/files/d76a789a26de5b58086918e2b52b9c45880d5d423f0808b8c4f88f0b0f09af2e": {
+      "bytes": 1702,
+      "sha256": "a5def0c7da659cbc5b5c7ef72c9ecdf7a970d1f4f8d3356e38427c6f7705c102"
+    },
+    "narval-observations/504-v2/files/d8d281b2ec9c63aacdae92ef2789c232865ab4b6b92a1c80a3327a0ade3fd918": {
+      "bytes": 286,
+      "sha256": "dfe4002600a7e88a20209b7bb79da371b8455b9a3ee696839b5c3c6fef5720f7"
+    },
+    "narval-observations/504-v2/files/db2aa403d88f2d0511e350044b074b1d31e35d001be1b8532575a06b306bee2a": {
+      "bytes": 2530,
+      "sha256": "30105685d6536105a40ad04ee3961892c0aa7f83f791532df6401baa14a33298"
+    },
+    "narval-observations/504-v2/files/def9a5aec8ee0c04caaa1db3ebfca195eece28b8ee47d7f87397bd565c001596": {
+      "bytes": 18687,
+      "sha256": "6a33e4ee89f4f4ef380e712aec7d488bdd7b5acfbb39d28301cabcb7c7e7cdf3"
+    },
+    "narval-observations/504-v2/files/e069f4c1179da619a43d2649cc9de4fafa027d5e02babffe4a4b29daf6f479b2": {
+      "bytes": 2520,
+      "sha256": "329d2007cf9377be3ffab8ccd22f8c9dcb89a6b8effc5dfa0cce4f033264e573"
+    },
+    "narval-observations/504-v2/files/ef4f52e299a67b449860734b9fee9cbf6a1ce6f05853536648a8bf147b285db4": {
+      "bytes": 5692,
+      "sha256": "1b27764ec39483f53d28edd4b24d0929c297f40939f8c58ef25ce1ebe816a920"
+    },
+    "narval-observations/504-v2/files/f0bb0f550592b58bce39501461253141cb75e2ebd829708ab87098a5c3472733": {
+      "bytes": 1518,
+      "sha256": "d3d47df66f404ce8b5d24dc4a6012719c369c93200437c031333708fd2902571"
+    },
+    "narval-observations/504-v2/files/f5df9c084c92efb1dde88bd61b89d00c6d67830e3e21ca5986852de949da317c": {
+      "bytes": 41039,
+      "sha256": "52e95e184ba942d97d27fb848fbf0fe09c8034e2e0da724e1781abc6d4b0c412"
+    },
+    "narval-observations/504-v2/files/f87571bf57456efa16a37412b276402b33a250c4b518dde9ce9c1995d757fa15": {
+      "bytes": 9273,
+      "sha256": "fbefed8655bb75f9502b54dfc5bb4f6c689fe40f6264baa7d386d51e0c211573"
+    },
+    "narval-observations/504-v2/hhw-controller-resumption-live-20261023-504.json": {
+      "bytes": 107,
+      "sha256": "9171806148d9a08444d45af977e7c0a2bc45039b3f15a8a10b520194d7efea72"
+    },
+    "narval-observations/504-v2/hhw-controller-resumption-live-20261023-504.sh": {
+      "bytes": 7032,
+      "sha256": "3b3aecd3acc9868c40b2acc8c091b4ec5d9863d4b149026d54db6858a1978e68"
+    },
+    "narval-observations/504-v2/hhw-controller-resumption-live-20261023-504.txt": {
+      "bytes": 6038039,
+      "sha256": "dc13be25629ad6952c6f3599f71d54a16c98100608b515d60e1200ca861480ee"
+    },
+    "narval-observations/504-v2/remote-path-index.json": {
+      "bytes": 28372,
+      "sha256": "22ef09f4d38d6d3df5e6ad6e1ac69db9c077bdf5f3d9264c0091ccdb8e34a402"
+    },
+    "narval-observations/505-v2/files/028521c7517e147dcb4a2c22fedbdadec2c3290f37ad4b87286c85f02a3d1840": {
+      "bytes": 1518,
+      "sha256": "8ed1c4dd9ff819b06d2671506a389d85d65293bb765bbe94757dc5bcda6e1546"
+    },
+    "narval-observations/505-v2/files/03530b5ce4af505cbf6518e0aa0707bacb9f509b392a17b9006d5367b0312526": {
+      "bytes": 4205,
+      "sha256": "0bd363318e2c4195de7f1a4bc5dc424555e26e8ff8251d4333c5c902649ce55c"
+    },
+    "narval-observations/505-v2/files/03c2990939550192bbe50c73c7b2bc013a4e9ddd65cc69a6deaef1311516bd3a": {
+      "bytes": 14132,
+      "sha256": "58a6d3a7e5462b2c814ce600568815384ebb1d5c03aa7ffb8b8635febdbd6e5f"
+    },
+    "narval-observations/505-v2/files/0895db73b217f111afb965303b3679e436cc838178d4c427086d4a61eec27213": {
+      "bytes": 1953,
+      "sha256": "055fb82d5728aac6d5bf289d2ef7379d8119b1cb3b3366ac83071007fc33ca19"
+    },
+    "narval-observations/505-v2/files/0f64cf0a2c5b805e039d8b0de72eb711d0ea4939db06c7b5de0c2757fba7e471": {
+      "bytes": 236,
+      "sha256": "ad7cd845514b9aff8653fa3190699cec1e3a4efbe5dbd468dc96eaad19c03be2"
+    },
+    "narval-observations/505-v2/files/1031dbe4a1bf29a93a96f180edb55e5d9613b6c3c21a08f019c8eb585a43a871": {
+      "bytes": 1349340,
+      "sha256": "f20d528a2fd22bad0ce4f0cc7770170c46fb9f16afd2e74893e4243a51ff7461"
+    },
+    "narval-observations/505-v2/files/13cdf646b7800bee17e4bc250b8518f5abd319fc8b66406435271fbc6f00299e": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval-observations/505-v2/files/1529dcaa362630ef65ed6de1245370692c5e138729eeca9d66bd4227ff0599fd": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "narval-observations/505-v2/files/1f0dab34bb76fa4ffe4a410eebca59efaca813cbf87de91ac304cf5afa593af4": {
+      "bytes": 2596,
+      "sha256": "61891011279d8e05dd9385be1550ac715b40587c5c838beb28d7222c34bc6aa4"
+    },
+    "narval-observations/505-v2/files/2098d4a407f35441a9a5c08307f98f87d8df9bb38c37c063f642111fdc0ca8a3": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/505-v2/files/23860770d8c5377cd1b175d77656e677549924af701d54e2eaba9684200a9688": {
+      "bytes": 286,
+      "sha256": "73685c33dc2b91c6b313f5984974e4bcf381be54476286cd8dd2c221d6b6623d"
+    },
+    "narval-observations/505-v2/files/24a1322f2d1f077a407612f6f37ec9c84e53bdbd38bd448eb34e6720343e8e3c": {
+      "bytes": 2449,
+      "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+    },
+    "narval-observations/505-v2/files/2786e358f589e58293db8ed6d07c05b66094ef92cd324b80ba93bd4abf2b8664": {
+      "bytes": 2092,
+      "sha256": "14c4eb32b110d5a2a0d83efee39889af57f12a8eaef87ec1bd3d1637b40fbdea"
+    },
+    "narval-observations/505-v2/files/278ba0093f6442d8f999218ae8c1d7b6bc48db31f3a052f56d51c65eecd20a50": {
+      "bytes": 2449,
+      "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+    },
+    "narval-observations/505-v2/files/297d5bfb5f63d492146d06acd9b4b43d8a85173424c443d25778a6f112e077f8": {
+      "bytes": 3163,
+      "sha256": "02c8d1f2cd74e8405c2a4fcee3b0c8d5c758dbd5f8f2a20910058680232dc728"
+    },
+    "narval-observations/505-v2/files/2ac7921a9ccfeef5ba5a2d1c049bb583eb5f847a08f05ac78586ecdeebdb0676": {
+      "bytes": 19020,
+      "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+    },
+    "narval-observations/505-v2/files/2b5389f3db25c33095bb7adc0ffcb2bfe107eaeb78ca651b108502a8556b0436": {
+      "bytes": 2074,
+      "sha256": "df23c2d53cc0c69ac19710b84ebff7d1094db6714957dac110e86db9a584d964"
+    },
+    "narval-observations/505-v2/files/2c03bff57285f15d24a493587aa2be3dbead4f8e7033bd19705da1d0f5485112": {
+      "bytes": 1345,
+      "sha256": "6406a8745da24dafa77a13e5a94f3efcffb03dc2466bd902dea1a1c70fe2b6aa"
+    },
+    "narval-observations/505-v2/files/2fe7b491068183b594cfde0c3b48db0e66df5c1569e03f2fcb574b6bed2f3d67": {
+      "bytes": 1953,
+      "sha256": "0b8d01b14d45e7c45844ab27f9a2fc5f77f8750070240af82317556a7cdd69c4"
+    },
+    "narval-observations/505-v2/files/30ead454d523fbdffc616649753b49ea7928b13e00db97efb35d9b7c8d59c7c9": {
+      "bytes": 431,
+      "sha256": "ea301f580d4c15027f4e056c974e3ee0f4c3ce1c4bcdee29d346051f2e105ab7"
+    },
+    "narval-observations/505-v2/files/3165fae166ef484312a86163515296ba30d97a10bd29288af97aeb00b486f9db": {
+      "bytes": 18687,
+      "sha256": "2b5b77e7230b5365de91caf64f72484c456856b0526549a53400320ee7c32cb3"
+    },
+    "narval-observations/505-v2/files/3b1abf85056ee3198522b846ab6bfb5ad32ff41358b835c10db565b79d9e6f67": {
+      "bytes": 9223,
+      "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+    },
+    "narval-observations/505-v2/files/3da4e01b891b02e146445c5545dd7da6ad6bb01dd911e753a450c91966615888": {
+      "bytes": 2530,
+      "sha256": "fe39df54d8e309acedad99cd45697a8a5b282bbe57e9238f70388c65696ba11c"
+    },
+    "narval-observations/505-v2/files/3de56180bc2e16d4be2a3a20e8e182c92ab58c1bb1fe70265732f3d4237fdf7a": {
+      "bytes": 2449,
+      "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+    },
+    "narval-observations/505-v2/files/40d3733a6d1ff25dbcc7232ba048a6ce9b647b12764d2e7a8d40930248b03b18": {
+      "bytes": 18639,
+      "sha256": "33e8a9b97997caf3f50ef1b0c4e3deac6186fd7738cac8c326f49aeb46ee7f01"
+    },
+    "narval-observations/505-v2/files/422a7f35537410bb8f349f76ea8ac3d57d1f6b4a595478b3f862a3f583bd754d": {
+      "bytes": 4695,
+      "sha256": "9a0706642ac1660fb7f39fe68279ca34bdc10f89812a0c2397608d2a382cf464"
+    },
+    "narval-observations/505-v2/files/4338cce1f0492811e6cd5a59d9f64c730b31052168b1609fd0e7ed64968aece3": {
+      "bytes": 18759,
+      "sha256": "7149e8a8311b497b3495c3e38ecdd51d7465d679c63e00f1e3ba5be81b60512c"
+    },
+    "narval-observations/505-v2/files/435c99737caa7fada2ca8310da5f9e502ae3c313825cc38aca402a4898751d4c": {
+      "bytes": 286,
+      "sha256": "efce035708989b4d257899d12afdbe26b020095dbe542b7cebf9222380267ed2"
+    },
+    "narval-observations/505-v2/files/479572cfe4a4f0e30efbf241e208bfdbbc2a5f6610303a19e309b24210ec2344": {
+      "bytes": 90428,
+      "sha256": "ec0e600e161f1546a8b40efe52304f20508323431d20cf2c2ada310b89a5f4ed"
+    },
+    "narval-observations/505-v2/files/4ba6e11c47aca32c09761b6976d2773de440f5162ae774595656f386bbf2c103": {
+      "bytes": 184,
+      "sha256": "d5488cadc01a77ed3d5a87672c7719e8755cf658d5317b55ed7bd71efb4e49e6"
+    },
+    "narval-observations/505-v2/files/5007ed1dfe3d92d7f237004ec57ae344f7eba0ec0eee5c42bfa0cc569db2508c": {
+      "bytes": 1518,
+      "sha256": "1b18e23f5c19334f06eb192b4ad3f9de3171cddb34274d9687963cc4c84a0e76"
+    },
+    "narval-observations/505-v2/files/512a0a183d9767a9e1a235eaf1f9b4ae675feb6793d71deaa654bc70266836e9": {
+      "bytes": 1958,
+      "sha256": "fbe69f82abce43e936a70be0aeb27835e7bb915fadb1cef59b1c06d2d39b4938"
+    },
+    "narval-observations/505-v2/files/538075f769c6ac6c8d7bcfba9b0262bc2a781ff29866cad4ecb8d0f3ac49d670": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/505-v2/files/55fca35df1552fbc4aab7300f073660ea294f4e7f1c9642e4ffb514e2655e9c5": {
+      "bytes": 16978,
+      "sha256": "1851ec7ba5c29a4e6df5536136fbb4bd802d806511547e9d690eb3f0e0fef4e8"
+    },
+    "narval-observations/505-v2/files/5913ed96d8acc59216cd246457004d427e1970d3934f549925a7b7e34f240f84": {
+      "bytes": 4205,
+      "sha256": "35334a9eccbdf55cf15ff1563159af972996e933af498df612f731efaf38a49c"
+    },
+    "narval-observations/505-v2/files/5b92ab105887aa0d1fb9f95f1edde03de9fa4fb3119ed5414a3fcd5b89741264": {
+      "bytes": 2066,
+      "sha256": "a05ab5ae921596ce703a99246dfaea0932d1f166e4f5f495549b911e2da35d3c"
+    },
+    "narval-observations/505-v2/files/5dfb1c99d5191f8b9fc674223f49d4e53dc11680616dac2af4b6028af370ce52": {
+      "bytes": 2520,
+      "sha256": "c2bdc17f6cccd8ea47f3234420882520460e68442ed15f72e2da884d73c0ccc4"
+    },
+    "narval-observations/505-v2/files/5fb4849c4631e64e58b81a8b6173a4b8a60f051a908870fa043f8d39186f6c2a": {
+      "bytes": 1323,
+      "sha256": "666f89af22652aec112d58867a6e0696ab3c80bb418da9c099fd3c8e3bd9037b"
+    },
+    "narval-observations/505-v2/files/5ff80a47ae689b45166db7da9281b60e348125c950339bfe66459fc1f700d3b0": {
+      "bytes": 7047,
+      "sha256": "13ba3ed8639735e1e11cec91ae0551414400583019b964a4faccdf31cbfc6b59"
+    },
+    "narval-observations/505-v2/files/614c6006bad6df675cf5375a563a9e1fef9888974d1ab0e9c65f0e9267bc1d5f": {
+      "bytes": 1518,
+      "sha256": "c50d961f4e748bfbc2ec3e477b66755c0b0d2625eb9c85465e545e14f53dc455"
+    },
+    "narval-observations/505-v2/files/63fff7d6f521e8d8e5c3e2eeb001ebc0776cdf3cd841728a9ddfacf91c3c2646": {
+      "bytes": 2520,
+      "sha256": "cf52eb256e5edc13b4de5bb78c26ec58bbc090e3b049615e22310b6b2386f262"
+    },
+    "narval-observations/505-v2/files/682e2001a487340965ddc49ea62d8996ba74b1d8737301951dad424fb9590b95": {
+      "bytes": 2074,
+      "sha256": "179403f786ab7dd34116dc83e59aad9edfdb53fb8d152c84783aff38e31446d2"
+    },
+    "narval-observations/505-v2/files/689704460db0a8d832c95b35078164143d246ac09426bbd61382ec8f6dcac194": {
+      "bytes": 431,
+      "sha256": "24cfa4ae718cd5534d85432b28473218201159b343b15ad26bde4f993d9389bd"
+    },
+    "narval-observations/505-v2/files/6c1b24fa244dca765f86b687e6799f609ff3965b2109425633e44d04416e99fd": {
+      "bytes": 1349341,
+      "sha256": "5e48a06864ae71c6fec7b16a94420524231054779a707a0896ceb2f6dd9dccd1"
+    },
+    "narval-observations/505-v2/files/739903164b883d75bea4975bf378721891576040d45f09114c0429da65d5ec20": {
+      "bytes": 1958,
+      "sha256": "0831e0ec643aad2493f34475a62963cf6bffc8419b5ad2a538f9c33369d1539d"
+    },
+    "narval-observations/505-v2/files/777486da2218f6aee6d1a5a678082a0c4c36974151d566d69af9d1608937c93b": {
+      "bytes": 1953,
+      "sha256": "6a64f85e578c660b210b16679651afbf7e7f2e270a0c9af3ace2f56ffe878d02"
+    },
+    "narval-observations/505-v2/files/79ed82ffe2152b1bea47c77842ac702685bddb165f7f949ee640e95197cb2aee": {
+      "bytes": 319,
+      "sha256": "5f733e033ea523d6a46f6175a067c6014ebdedccd471cc2d59b1068a0f13d00e"
+    },
+    "narval-observations/505-v2/files/7a1f0b33ba867fd2d9195ae6abfc0d2729e5973a38cc3af7e7aba0f39202e3f1": {
+      "bytes": 1296,
+      "sha256": "1d32e5aa803ba84db8a54d8296e60d1e5d4756eabc4c489ab28f68cb2ec528e8"
+    },
+    "narval-observations/505-v2/files/7a3343e9db20a199dd94780578e13663c127675be7186762aaac0802b2f4a04b": {
+      "bytes": 20448,
+      "sha256": "11e094dcde8bb1708f78d752667b7dc6f7990acb98d371c01fd217b1422f47cd"
+    },
+    "narval-observations/505-v2/files/7c863afccd7e2f3cc4409195d44f4c017e988c791c4edc042ad17814c96e56dc": {
+      "bytes": 260,
+      "sha256": "724f79755f89dcaf41ecb75a4df2f9f6e2c1a9b7f4333da51e5c2f0ae56d9e09"
+    },
+    "narval-observations/505-v2/files/7dac2682c19965ef202bbc0b3a26b69f5f6d1a03d709e16020c2dc24a5211128": {
+      "bytes": 1958,
+      "sha256": "04f55706c737a29b3ef1137c8605b74062346c2baae939bbed8061358d4fbaba"
+    },
+    "narval-observations/505-v2/files/7db42d4fe99a4b74beaa8eb90db92b10e7bdb0c786a256e50d0c8d7b1eb8e956": {
+      "bytes": 3348,
+      "sha256": "d04158970224ade99127dbed764216df13e41b7ee68faae7ea95fae20df0d32e"
+    },
+    "narval-observations/505-v2/files/93af700d56e1a772539cde8a81f1552e639d86e9ddf4c1bcfced26b400921eb3": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval-observations/505-v2/files/9730979d2456e65ded1bad4fab688668ed055e9fa3a4b1b1804127395c1aad55": {
+      "bytes": 250,
+      "sha256": "8217e3893b1f2ae5702246043e49cc5ee91ca5041652d9a2add6b2ec2f940655"
+    },
+    "narval-observations/505-v2/files/9954197bb35f718c342559ea68b582acb28b2fc000a275f46fe2d0d26dde6299": {
+      "bytes": 2074,
+      "sha256": "4b6832958de242479b127302e615bcc3e7a87c10e169176d5f39d53a70179d3c"
+    },
+    "narval-observations/505-v2/files/a31598d9de99c7af1fe6a873e7bc048960d9d2bf1273979539d7f073795a3939": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval-observations/505-v2/files/a4647af30f2a59d77faf1eae731048aa691782b3b296de4ccd136a96ad823994": {
+      "bytes": 2074,
+      "sha256": "40bba01fcac378d79bd3fc0fab35379744168482bec115eb589f27b2e6c02269"
+    },
+    "narval-observations/505-v2/files/a4b86cc21ca445d29586d3a4e89399b93441066ee9de8f1c82d89c4069c6a6e6": {
+      "bytes": 2418,
+      "sha256": "2b0e6ebaa0f1b511bca4343d4722d43702cf051f956cce59494ddccae656c517"
+    },
+    "narval-observations/505-v2/files/a80ecf3445db27b14a470f6ac226e0b478e5a43c7046e4f34162402061f8424d": {
+      "bytes": 1351001,
+      "sha256": "904d9ccd2e9892f4fb2541652bb1b19c552116339a57794618d0dd40b1b4a725"
+    },
+    "narval-observations/505-v2/files/ae42c4ab628bca15e21db31ec8b4b7d2b36f5df77b5281d30e21c1ca6bd262d6": {
+      "bytes": 286,
+      "sha256": "70b54512b959ce30e297ebad04b2281065242357592a9bf26c63a734da6fc672"
+    },
+    "narval-observations/505-v2/files/b5ce090aeee26e7b162a63063b1629a4fb57c814378edb3235a07e59304a4b53": {
+      "bytes": 298,
+      "sha256": "567ff41003556ffaf316db0d9d5499a20287ffb3fbe304537efac1bb745326ed"
+    },
+    "narval-observations/505-v2/files/b6965a884f7129b15179efb7c56c614252cceb9e9aeac47b06e1c3a4f0875873": {
+      "bytes": 2066,
+      "sha256": "b5cfa87d46d747f15dcd2be6e3e5d991b222b854c6b9b211cf026af234486ff5"
+    },
+    "narval-observations/505-v2/files/b8aaa7ac698a2da23e8dd8d6041115328fc0b2e7ea8c86dc4cf8acb58b22b8bc": {
+      "bytes": 1958,
+      "sha256": "6fc9ba93d17242e2697cfa6a52a0ba5315902be7e596a3175289de520642ce89"
+    },
+    "narval-observations/505-v2/files/ba3b341c7db5ecec2d954bdf4323ef7ed8c759316d863077c9f0eec761039b42": {
+      "bytes": 3115,
+      "sha256": "243c55d6d18002e9ec6d30eff6be41aab6b0c03c651d604c191f1ae8990b09f3"
+    },
+    "narval-observations/505-v2/files/baca5edfbbb8b557bf297e072b0f462c630f9303dd9c95a0f97665269ae4b14d": {
+      "bytes": 2066,
+      "sha256": "69157d93af7578a3abbf0f9663a57d44975ab8675adc13867e5b5672d01fa1c5"
+    },
+    "narval-observations/505-v2/files/bf7cb9435b0291e44d7a5bb501f868de9557fa204d25233c8e080708f4541f23": {
+      "bytes": 53,
+      "sha256": "294f7f7e34ec006b2ac83d7b89346cda9e43e9a065e5d85d5b3b653bcedeccfe"
+    },
+    "narval-observations/505-v2/files/c13b96498d092d0a41fb8c2d9e2fc61e15031e54aaf0d04d2795923b4c07e038": {
+      "bytes": 2020,
+      "sha256": "5e80484c08ffc2b8323b0ac13bebed3fea16a09f2e5af673ffefca6031c1ca35"
+    },
+    "narval-observations/505-v2/files/c2dcd0551091a75ff30233d3a2c1976511281678e4743839ba47bbfffdfed318": {
+      "bytes": 431,
+      "sha256": "665401897297efdce3e3b49036ac814ca6bb8550c6759aa372e6bcabdbae6d6a"
+    },
+    "narval-observations/505-v2/files/c3d1b5e7f1f65e8e3dfa4f36bfbd0753d5fa28de6f8aa81b339da37162a188e7": {
+      "bytes": 2066,
+      "sha256": "ec21853c8c3ea8b680a7ed1b8ab9652044504255e5e89c44574634e5961d8d7a"
+    },
+    "narval-observations/505-v2/files/c7638e57983c942ae97aa24a184559ef249a6a6ba99472a984977066ef192c16": {
+      "bytes": 2612,
+      "sha256": "d9d8d765021eafb3e7c20e175c49aba3357c9c4c7dede3896c4900e4e332b3d2"
+    },
+    "narval-observations/505-v2/files/ca0ce5e72054730bcda214657ffce13b0c5423309fea738257384ba7453e1bdf": {
+      "bytes": 1953,
+      "sha256": "d01b6e5c5b31680e4f64c563317344ada283a7f758cf76316133755cfff5e4a4"
+    },
+    "narval-observations/505-v2/files/cbab1a099372ef4cdc02fd61ae688223343601f603ef71ea6e29bc078d2a352c": {
+      "bytes": 4909,
+      "sha256": "6354cfbe705a7d4efcbb0d00cfa5183292fbf5af92420b66097daf6a328e8367"
+    },
+    "narval-observations/505-v2/files/cfb4a6ddfb3fd804eb6de33fbef62c45211f54e464d8dbc568f559a9359a7860": {
+      "bytes": 2518,
+      "sha256": "e0184e01ebc56e5d73df30027e3229511ca9aa351bd0fae5a941862b7d0b9ad7"
+    },
+    "narval-observations/505-v2/files/d1e766507f03751ee88750b4a9e56966ad46d3e40c98b537d0f2d92348ac98f7": {
+      "bytes": 4205,
+      "sha256": "26efafe65339ec349a65773135d36502a3baa7d3f4523d56f704b16dba3c5be6"
+    },
+    "narval-observations/505-v2/files/d76a789a26de5b58086918e2b52b9c45880d5d423f0808b8c4f88f0b0f09af2e": {
+      "bytes": 1702,
+      "sha256": "a5def0c7da659cbc5b5c7ef72c9ecdf7a970d1f4f8d3356e38427c6f7705c102"
+    },
+    "narval-observations/505-v2/files/d8d281b2ec9c63aacdae92ef2789c232865ab4b6b92a1c80a3327a0ade3fd918": {
+      "bytes": 286,
+      "sha256": "dfe4002600a7e88a20209b7bb79da371b8455b9a3ee696839b5c3c6fef5720f7"
+    },
+    "narval-observations/505-v2/files/db2aa403d88f2d0511e350044b074b1d31e35d001be1b8532575a06b306bee2a": {
+      "bytes": 2530,
+      "sha256": "30105685d6536105a40ad04ee3961892c0aa7f83f791532df6401baa14a33298"
+    },
+    "narval-observations/505-v2/files/def9a5aec8ee0c04caaa1db3ebfca195eece28b8ee47d7f87397bd565c001596": {
+      "bytes": 18687,
+      "sha256": "6a33e4ee89f4f4ef380e712aec7d488bdd7b5acfbb39d28301cabcb7c7e7cdf3"
+    },
+    "narval-observations/505-v2/files/e069f4c1179da619a43d2649cc9de4fafa027d5e02babffe4a4b29daf6f479b2": {
+      "bytes": 2520,
+      "sha256": "329d2007cf9377be3ffab8ccd22f8c9dcb89a6b8effc5dfa0cce4f033264e573"
+    },
+    "narval-observations/505-v2/files/ef4f52e299a67b449860734b9fee9cbf6a1ce6f05853536648a8bf147b285db4": {
+      "bytes": 5692,
+      "sha256": "1b27764ec39483f53d28edd4b24d0929c297f40939f8c58ef25ce1ebe816a920"
+    },
+    "narval-observations/505-v2/files/f0bb0f550592b58bce39501461253141cb75e2ebd829708ab87098a5c3472733": {
+      "bytes": 1518,
+      "sha256": "d3d47df66f404ce8b5d24dc4a6012719c369c93200437c031333708fd2902571"
+    },
+    "narval-observations/505-v2/files/f5df9c084c92efb1dde88bd61b89d00c6d67830e3e21ca5986852de949da317c": {
+      "bytes": 41039,
+      "sha256": "52e95e184ba942d97d27fb848fbf0fe09c8034e2e0da724e1781abc6d4b0c412"
+    },
+    "narval-observations/505-v2/files/f87571bf57456efa16a37412b276402b33a250c4b518dde9ce9c1995d757fa15": {
+      "bytes": 9273,
+      "sha256": "fbefed8655bb75f9502b54dfc5bb4f6c689fe40f6264baa7d386d51e0c211573"
+    },
+    "narval-observations/505-v2/hhw-controller-resumption-live-20261023-505.json": {
+      "bytes": 106,
+      "sha256": "15147fe0f34aa806d4988a3e05960e79f9ef96addac9c83483367197dbcdb8c2"
+    },
+    "narval-observations/505-v2/hhw-controller-resumption-live-20261023-505.sh": {
+      "bytes": 7032,
+      "sha256": "3b3aecd3acc9868c40b2acc8c091b4ec5d9863d4b149026d54db6858a1978e68"
+    },
+    "narval-observations/505-v2/hhw-controller-resumption-live-20261023-505.txt": {
+      "bytes": 6059368,
+      "sha256": "a10e4bce465cd4ccdc43b284a9e2f74359fb04ee87a5d6a98bf5adf409560443"
+    },
+    "narval-observations/505-v2/remote-path-index.json": {
+      "bytes": 29081,
+      "sha256": "a710f707ea3aee8de4ff995ed384839f9323ba090e6c86f38b0505a5e3104bc1"
+    },
+    "operator-actions/495/hhw-primary-descriptor-prestart-stop-20261023-495.json": {
+      "bytes": 112,
+      "sha256": "b4c35c0fd1ef405a2d606db7fcade41ce2f509c2f870ba90db49d5fca980e620"
+    },
+    "operator-actions/495/hhw-primary-descriptor-prestart-stop-20261023-495.sh": {
+      "bytes": 2450,
+      "sha256": "1d4a72583754142202c3d9662ee717d8f89c7969b5f4e8b0baba1e079e381ef5"
+    },
+    "operator-actions/495/hhw-primary-descriptor-prestart-stop-20261023-495.txt": {
+      "bytes": 172,
+      "sha256": "af05cdab006d355e84fb5bc4e8cd61c99fc1ef2b2b6bb70a1188d17b42f9bce3"
+    },
+    "operator-actions/497/hhw-primary-descriptor-prestart-reconciliation-20261023-497.json": {
+      "bytes": 122,
+      "sha256": "3c73994a3911a1a1f36cb85a83ffe8626d94f27121dc3dca41b5f6c656f4cdc9"
+    },
+    "operator-actions/497/hhw-primary-descriptor-prestart-reconciliation-20261023-497.sh": {
+      "bytes": 6237,
+      "sha256": "df1403601df9e14592ad336b12fac70d7fb02430bf91aec5f13583c8993f18bc"
+    },
+    "operator-actions/497/hhw-primary-descriptor-prestart-reconciliation-20261023-497.txt": {
+      "bytes": 151,
+      "sha256": "8d8b17e9e3cd7bccf6738acfd894ff89e70c13f5e969aa040e97f1bf984c1dfe"
+    },
+    "registration-490/hhw-recovery-stage-20261021-490-bridge-completion.json": {
+      "bytes": 95,
+      "sha256": "4cc51ddc89063981f338301cfd3e2af7f8aaf264953bf2a6a6d77f339e556522"
+    },
+    "registration-490/hhw-recovery-stage-20261021-490-bridge-output.txt": {
+      "bytes": 311,
+      "sha256": "94efd0c2e0e271bb32dd756fc12c3a887c9a61fb4c882558cd79110cefca2458"
+    },
+    "registration-490/hhw-recovery-stage-20261021-490.sh": {
+      "bytes": 77308,
+      "sha256": "952df0247fcde43612f812657518ce7616ea679aeb02036c068aee963ca6dd5f"
+    },
+    "registration-490/registration-local-evidence.json": {
+      "bytes": 956,
+      "sha256": "1eb2c15f8d92582063d076335459c7aeffb4d79f97cc7ea5d85525e0d5f5d26d"
+    },
+    "registration-490/source-manifest.json": {
+      "bytes": 960,
+      "sha256": "20546c50b8cb68d698878ee3b143fa122c8b01107c07493ab226d07995f21a5c"
+    },
+    "registration-500/hhw-recovery-stage-20261021-500-bridge-completion.json": {
+      "bytes": 95,
+      "sha256": "8d9226797cae1fb02eb8904748edd9462bde7c05ae591add999843398e69950f"
+    },
+    "registration-500/hhw-recovery-stage-20261021-500-bridge-output.txt": {
+      "bytes": 311,
+      "sha256": "48ad8411f6dbfca5a0231a881988ae312f26bf6d9ac104b0468b88482993c662"
+    },
+    "registration-500/hhw-recovery-stage-20261021-500.sh": {
+      "bytes": 108515,
+      "sha256": "5a33d262a11d63b33ab055f62d92e423907185fda7d81600d4b9a7752834d9dc"
+    },
+    "registration-500/registration-local-evidence.json": {
+      "bytes": 956,
+      "sha256": "1c3dd0725811b7ea480b2b3d3920b527e223c44d3ca72696e352deed0dbaa2f0"
+    },
+    "registration-500/source-manifest.json": {
+      "bytes": 960,
+      "sha256": "ff1d16932df8c535885506e4cc5de65f87e891041ffec453565f87ae8a77a67e"
+    },
+    "source-mirror-482/build-scratch-source-mirror-482.py": {
+      "bytes": 1812,
+      "sha256": "9a06d940a082704f7c30b835002ec12e9ff7444c405be51c5acfb9d2cb78f30e"
+    },
+    "source-mirror-482/hhw-af-reviewed-source-mirror-20261023-482.json": {
+      "bytes": 106,
+      "sha256": "1bf5a9edeefff0ca90c5177ecd9db25185d9b95a8657dda20d40bb4961f727f7"
+    },
+    "source-mirror-482/hhw-af-reviewed-source-mirror-20261023-482.release.json": {
+      "bytes": 12175,
+      "sha256": "27310c4f3204874cade19faa73d92e006227e4ca297794467e28c0aacc21a62d"
+    },
+    "source-mirror-482/hhw-af-reviewed-source-mirror-20261023-482.txt": {
+      "bytes": 643,
+      "sha256": "3ce05888aa8c6dd7fee25d2d10ffd33a9c2a5036f42fad21b51ec609ba180689"
+    },
+    "source-v4/build-primary-external-census-handoff-500.py": {
+      "bytes": 12319,
+      "sha256": "e42e7b332da3aef651bb34cd48f4660f26051ed3b8947129f8cf506e965b3a97"
+    },
+    "source-v4/core-candidate-first.xml": {
+      "bytes": 38032,
+      "sha256": "7495a98229b6c36eca380441792cb026700c65b24a042a9f7ddd8368e50e2221"
+    },
+    "source-v4/handoff-contracts-local-final.xml": {
+      "bytes": 34519,
+      "sha256": "814d74c37315e7bc5178db1cab55d4832aff91e85fb3191fa8eefbc9dc523ffd"
+    },
+    "source-v4/handoff-primary-external-census-v1-20261023.py": {
+      "bytes": 63478,
+      "sha256": "2a28f1b476a42959febbb445824f043521e74713b9f25dee3e9e13db92699381"
+    },
+    "source-v4/handoff-tests-local-freeze.json": {
+      "bytes": 2213,
+      "sha256": "527d653053d66efe0e23454cb1e89b703906082e6df7d18e244f057ce2cc583a"
+    },
+    "source-v4/primary-v4-independent-review-20261023.json": {
+      "bytes": 7508,
+      "sha256": "02ebe96afc012544c08c9ab800b364623182151447911a9a013fe66179d0cf58"
+    },
+    "source-v4/primary500-builder-local.xml": {
+      "bytes": 2198,
+      "sha256": "7c450cdddcc202236abdb1acafda286b118760ea6af7a99e14094990a44b3b55"
+    },
+    "source-v4/seal-primary-native-reconciliation-capsule-20261023.py": {
+      "bytes": 1278,
+      "sha256": "49a8bd6b3a4d29efa26221b94e86c1ccd8f73a661ac1acd27e4233b3eb5fd9db"
+    },
+    "source-v4/source-derivation.json": {
+      "bytes": 1773,
+      "sha256": "cacf902a48796178382b5a5ee3143050235f2aa6a492e17c02c7ab2c79741d33"
+    },
+    "source-v4/source-freeze.json": {
+      "bytes": 1190,
+      "sha256": "4150f24ee3f422607a136ae60a8387fc358b568ef97a86ba4ec9132723515633"
+    },
+    "source-v4/source-manifest.json": {
+      "bytes": 960,
+      "sha256": "ff1d16932df8c535885506e4cc5de65f87e891041ffec453565f87ae8a77a67e"
+    },
+    "source-v4/test_build_primary_external_census_handoff_500.py": {
+      "bytes": 5482,
+      "sha256": "c94a33d5d257ec43ea35cea51496ea53d66abc3f981a2f77a3e169dd351a43c5"
+    },
+    "source-v4/test_handoff_primary_external_census_v1_20261023.py": {
+      "bytes": 144484,
+      "sha256": "e754fb2ce469efeed1f10dadb15213077ea604daf7f5d7b3025d4db2ff903ef1"
+    },
+    "source/archive-primary-live-observation-20261023.py": {
+      "bytes": 1580,
+      "sha256": "b35ffd20f952941e5df5e5cee4c8cea6a0af7268579ff39019e03b5e4e4b41b1"
+    },
+    "source/archive-primary-live-observation-v2-20261023.py": {
+      "bytes": 1891,
+      "sha256": "aad47098a522ff7ff8338d0bad889b57650b8be66c0a855cd486ffb4146d276b"
+    },
+    "source/build-primary-external-census-handoff-490.py": {
+      "bytes": 12724,
+      "sha256": "252e0012d5f386b2897033add03ca3b3ec96785c8c218917deb044b47081e9a1"
+    },
+    "source/build-scratch-source-mirror-499.py": {
+      "bytes": 1812,
+      "sha256": "aced43b533728e7b8a6dfa67977c4cedea7f94de060f0da68a3b66d8ad9e3cd3"
+    },
+    "source/handoff-contracts-local-final.xml": {
+      "bytes": 30512,
+      "sha256": "6b41eed54fdf4ccf4d03983bb4b77e28dd84eb6ca51e8fff31a25484c99c2adc"
+    },
+    "source/handoff-primary-external-census-v1-20261023.py": {
+      "bytes": 51364,
+      "sha256": "0d37f96bd93dd96266eb3f46eb66bf7bd1ecb929b1e8474f3153b1624fda50f3"
+    },
+    "source/handoff-tests-local-freeze.json": {
+      "bytes": 2194,
+      "sha256": "994de38f14f6f993064f9b2d294fb6310b68edbf270af85d7c2a7b8e24c0c99c"
+    },
+    "source/primary-v3-independent-review-20261023.json": {
+      "bytes": 7131,
+      "sha256": "8a21d517c43884ffeb43f9cee0ca505167e46ab2ad86cc70ac5eb782ae3c05d4"
+    },
+    "source/primary490-builder-local-final.xml": {
+      "bytes": 2199,
+      "sha256": "f0acdc46ca9a622a29f1c458d83aef72c7d86aade7d271bd26accd8744ec5541"
+    },
+    "source/scancel-filter-reference.json": {
+      "bytes": 439,
+      "sha256": "e9efdadd9cc359c21019e95c92fa49fdb6538038fd718cbcbfd6f9ede36d93c8"
+    },
+    "source/source-derivation.json": {
+      "bytes": 1806,
+      "sha256": "b3bfefed54f114ded60524ca1d432502871af18b970a197753dcb85b3e57ab8e"
+    },
+    "source/source-freeze.json": {
+      "bytes": 1187,
+      "sha256": "9a540a871fcf50a9ad0a7e40f248bbed922ef8c68d1dbabbc1ff950366c2ed9b"
+    },
+    "source/source-manifest.json": {
+      "bytes": 960,
+      "sha256": "20546c50b8cb68d698878ee3b143fa122c8b01107c07493ab226d07995f21a5c"
+    },
+    "source/test_build_primary_external_census_handoff_490.py": {
+      "bytes": 5287,
+      "sha256": "721fabea2bde9f09adddf9cb0fa03d01d6494513ebac79e2ecdf46c6a1066864"
+    },
+    "source/test_handoff_primary_external_census_v1_20261023.py": {
+      "bytes": 107382,
+      "sha256": "14674660061d3162d33f56d8e01e4a5c23084fd09f9a9da54ddbad6e3b9488fe"
+    },
+    "source/verify-reviewed-release-bytes-20261021.py": {
+      "bytes": 2453,
+      "sha256": "c0ba879510786f6d4a3f7380d8764e755881cf8a3975a167aa7c4664fecf5f6f"
+    }
+  },
+  "kind": "primary_native_handoff_reconciliation_source_capsule_v1",
+  "scientific_source_sha256": "f047ce12b0a4a31312f2b4f5b6cff144342a12950f2e84fe1d444c8ea3a9b68c"
+}

@@ -1,0 +1,15 @@
+{
+  "command": [
+    "sacct",
+    "--array",
+    "-j",
+    "6870632",
+    "--format=JobID%64,JobIDRaw%64,State,ExitCode,ElapsedRaw,AllocCPUS,AllocTRES,NodeList%128,Start,End,User,Account,MaxRSS",
+    "--units=K",
+    "--noheader",
+    "--parsable2"
+  ],
+  "cpu_core_hours": 0,
+  "raw": "6870632|6870632|CANCELLED by 3164768|0:0|0|0||None assigned|None|2026-10-23T12:27:13|pwa209|def-ptewarie_cpu|\n",
+  "scientific_result": false
+}

@@ -1,0 +1,3 @@
+{"source_verified": true, "sha256": "f047ce12b0a4a31312f2b4f5b6cff144342a12950f2e84fe1d444c8ea3a9b68c"}
+DEPLOYMENT_RECEIPT {"source_only": true, "placement_reason": "Personal scratch immutable execution source", "status": "deployed", "release": "/scratch/pwa209/horsehair-worm/releases/20261023-4d5c3c07664d-f047ce12b0a4", "release_id": "20261023-4d5c3c07664d-f047ce12b0a4", "git_commit": "4d5c3c07664d601358d5fce27d0da374184a5c0c", "source_sha256": "f047ce12b0a4a31312f2b4f5b6cff144342a12950f2e84fe1d444c8ea3a9b68c", "config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35", "created_unix": 1792755229.6850605}
+

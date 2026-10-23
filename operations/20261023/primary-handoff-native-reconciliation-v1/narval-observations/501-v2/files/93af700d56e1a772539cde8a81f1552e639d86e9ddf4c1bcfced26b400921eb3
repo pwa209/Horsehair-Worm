@@ -1,0 +1,13 @@
+{
+  "after": {
+    "horsehair": "/lustre06/project/6101854/pwa209/horsehair-worm/releases/20261021-57e0eb8c4c6c-d89b31180d4c/src/horsehair/__init__.py",
+    "horsehair.budget": "/lustre06/project/6101854/pwa209/horsehair-worm/releases/20261021-57e0eb8c4c6c-d89b31180d4c/src/horsehair/budget.py",
+    "horsehair.core": "/lustre06/project/6101854/pwa209/horsehair-worm/releases/20261021-57e0eb8c4c6c-d89b31180d4c/src/horsehair/core.py",
+    "horsehair.storage_artifacts": "/lustre06/project/6101854/pwa209/horsehair-worm/releases/20261021-57e0eb8c4c6c-d89b31180d4c/src/horsehair/storage_artifacts.py"
+  },
+  "before": {
+    "horsehair": "/lustre06/project/6101854/pwa209/horsehair-worm/releases/20261021-57e0eb8c4c6c-d89b31180d4c/src/horsehair/__init__.py",
+    "horsehair.core": "/lustre06/project/6101854/pwa209/horsehair-worm/releases/20261021-57e0eb8c4c6c-d89b31180d4c/src/horsehair/core.py"
+  },
+  "mixed_release_modules": false
+}

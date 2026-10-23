@@ -1,0 +1,19 @@
+{
+  "backoff_seconds": [
+    2,
+    4
+  ],
+  "command": [
+    "scontrol",
+    "show",
+    "job",
+    "6868884",
+    "-o"
+  ],
+  "max_attempts": 3,
+  "metadata_parser_changed": false,
+  "operation": "read-only exact scontrol show job",
+  "records_merged_or_selected": false,
+  "started_unix": 1792755294.0770483,
+  "timeout_per_attempt_seconds": 60
+}

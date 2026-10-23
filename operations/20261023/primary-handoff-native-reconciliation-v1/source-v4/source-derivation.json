@@ -1,0 +1,42 @@
+{
+  "base": {
+    "path": "work\\primary-handoff-v3\\handoff-primary-external-census-v1-20261023.py",
+    "sha256": "0d37f96bd93dd96266eb3f46eb66bf7bd1ecb929b1e8474f3153b1624fda50f3"
+  },
+  "changed_functions": [
+    "orchestrate"
+  ],
+  "changes": [
+    "Fresh SUPPORT v4 and controller PHASE v3",
+    "Actual emitted policy descriptor is confined to PRIMARY_SUPPORT/handoffs/native-job and verified by the unchanged qualified primary policy_sources before every scheduler mutation",
+    "Complete prior source/script/native/receipt lineage is verified read-only after separately completed administrative cleanup",
+    "Original retirement is verified and never repeated; real four-second failed allocation remains accounted",
+    "All new controllers remain held and source-bound before reverse release"
+  ],
+  "evidence": [
+    {
+      "path": "work\\narval-deployment\\hhw-controller-resumption-live-20261023-496.txt",
+      "sha256": "88d98150271491ffa3c316e977b6bd726ce6fb64f918a44df17372c59b3e39d0"
+    },
+    {
+      "path": "work\\narval-deployment\\hhw-controller-resumption-live-20261023-498.txt",
+      "sha256": "04051354e497dc765b93c846f351fc4094f0959d6e83df05811baaa8253053d9"
+    }
+  ],
+  "historical_scheduler_mutations_performed": false,
+  "kind": "primary-handoff-v4-source-derivation-v1",
+  "native_execution_claimed": false,
+  "new_functions": [
+    "prior_bindings",
+    "prior_terminal",
+    "run_descriptor",
+    "verify_prior_handoff"
+  ],
+  "original_scientific_sources_changed": false,
+  "python_3_11_grammar_valid": true,
+  "source": {
+    "path": "work\\primary-handoff-v4\\handoff-primary-external-census-v1-20261023.py",
+    "sha256": "2a28f1b476a42959febbb445824f043521e74713b9f25dee3e9e13db92699381"
+  },
+  "unchanged_function_count": 34
+}

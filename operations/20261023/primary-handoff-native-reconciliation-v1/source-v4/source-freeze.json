@@ -1,0 +1,30 @@
+{
+  "errors": 0,
+  "failures": 0,
+  "files": {
+    "handoff-primary-external-census-v1-20261023.py": "2a28f1b476a42959febbb445824f043521e74713b9f25dee3e9e13db92699381",
+    "test_handoff_primary_external_census_v1_20261023.py": "e754fb2ce469efeed1f10dadb15213077ea604daf7f5d7b3025d4db2ff903ef1"
+  },
+  "frozen_v1_v2_v3_unchanged": true,
+  "junit": {
+    "path": "work\\primary-handoff-v4\\handoff-contracts-local-final.xml",
+    "sha256": "814d74c37315e7bc5178db1cab55d4832aff91e85fb3191fa8eefbc9dc523ffd"
+  },
+  "kind": "primary-handoff-v4-local-source-freeze-v1",
+  "native_execution_claimed": false,
+  "primary_qualification_coverage_claimed_for_handoff": false,
+  "python_3_11_grammar_valid": true,
+  "skipped": 0,
+  "source_derivation": {
+    "path": "work\\primary-handoff-v4\\source-derivation.json",
+    "sha256": "cacf902a48796178382b5a5ee3143050235f2aa6a492e17c02c7ab2c79741d33"
+  },
+  "source_manifest": {
+    "path": "work\\primary-handoff-v4\\source-manifest.json",
+    "sha256": "ff1d16932df8c535885506e4cc5de65f87e891041ffec453565f87ae8a77a67e"
+  },
+  "tests": {
+    "count": 172,
+    "roster_sha256": "e95b890f5ca232b6ea50a9696c6e8036a307ad80e05599f362c8aede872cae3c"
+  }
+}

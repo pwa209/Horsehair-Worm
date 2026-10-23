@@ -1,0 +1,49 @@
+{
+  "base": {
+    "path": "work\\primary-handoff-v2\\handoff-primary-external-census-v1-20261023.py",
+    "sha256": "de582b45b5c3f813673f6f0bcaa3aca32659c3b57a75b10511e2409fabb015c9"
+  },
+  "changed_functions": [
+    "await_retired",
+    "freeze_new",
+    "orchestrate",
+    "terminal_old",
+    "tres"
+  ],
+  "changes": [
+    "New immutable SUPPORT namespace and fresh controller PHASE",
+    "Exact source-bound reconciliation of failed partial phase before fresh registration",
+    "Strict scalar zero-allocation cancellation contract from the unchanged real native parser",
+    "Exact K resource quantity equivalents for real sacct accounting",
+    "Immutable SBATCH and highest-precedence CLI chdir to resolved D89; strict native WorkDir gate retained"
+  ],
+  "evidence": [
+    {
+      "path": "work\\narval-deployment\\hhw-primary-held-failure-proof-20261023-488.txt",
+      "sha256": "9620784d90463d08d0ce6186073cb99e8350753df4de8314d066dc4bef03cb4f"
+    },
+    {
+      "path": "work\\primary-reconciliation-491-native-raw.txt",
+      "sha256": "bf0e83b0f1aa02f6a9fdde520ccca5f14f6f8f494bb73876dbe951dd580ce9a7"
+    }
+  ],
+  "kind": "primary-handoff-v3-source-derivation-v1",
+  "native_registration_or_execution_claimed": false,
+  "new_functions": [
+    "partial_bindings",
+    "partial_pending",
+    "partial_terminal",
+    "reconcile_partial",
+    "unused_cancelled"
+  ],
+  "preserved_files": [
+    "work\\primary-handoff-v2\\handoff-primary-external-census-v1-20261023.py",
+    "work\\handoff-primary-external-census-v1-20261023.py"
+  ],
+  "python_3_11_grammar_valid": true,
+  "source": {
+    "path": "work\\primary-handoff-v3\\handoff-primary-external-census-v1-20261023.py",
+    "sha256": "0d37f96bd93dd96266eb3f46eb66bf7bd1ecb929b1e8474f3153b1624fda50f3"
+  },
+  "unchanged_function_count": 25
+}

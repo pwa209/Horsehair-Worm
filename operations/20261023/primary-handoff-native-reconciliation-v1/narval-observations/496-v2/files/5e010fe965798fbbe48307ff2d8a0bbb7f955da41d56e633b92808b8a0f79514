@@ -1,0 +1,90 @@
+{
+  "admission_authority": false,
+  "already_cancelled_job_not_mutated": "6868884",
+  "automatic_replay_permitted": false,
+  "canonical_science_changed": false,
+  "failed_phase_bytes_preserved": true,
+  "freshness_timestamp_rewritten": false,
+  "ledger": {
+    "path": "/scratch/pwa209/horsehair-worm/state/primary-external-census-controllers-v1-submission.json",
+    "sha256": "26efafe65339ec349a65773135d36502a3baa7d3f4523d56f704b16dba3c5be6"
+  },
+  "native": {
+    "6868884": {
+      "account": "def-ptewarie_cpu",
+      "alloc_tres": "",
+      "cpus": 0,
+      "elapsed_seconds": 0,
+      "end": "2026-10-23T11:35:08",
+      "exit_code": "0:0",
+      "identity_basis": "Unique scalar native job; zero-allocation queue record",
+      "job_id_raw": "6868884",
+      "max_rss": "",
+      "node_list": "None assigned",
+      "start": "None",
+      "state": "CANCELLED",
+      "unallocated_metadata": false,
+      "user": "pwa209"
+    },
+    "6868886": {
+      "account": "def-ptewarie_cpu",
+      "alloc_tres": "",
+      "cpus": 0,
+      "elapsed_seconds": 0,
+      "end": "2026-10-23T12:14:04",
+      "exit_code": "0:0",
+      "identity_basis": "Unique scalar native job; zero-allocation queue record",
+      "job_id_raw": "6868886",
+      "max_rss": "",
+      "node_list": "None assigned",
+      "start": "None",
+      "state": "CANCELLED",
+      "unallocated_metadata": false,
+      "user": "pwa209"
+    },
+    "6868888": {
+      "account": "def-ptewarie_cpu",
+      "alloc_tres": "",
+      "cpus": 0,
+      "elapsed_seconds": 0,
+      "end": "2026-10-23T12:13:41",
+      "exit_code": "0:0",
+      "identity_basis": "Unique scalar native job; zero-allocation queue record",
+      "job_id_raw": "6868888",
+      "max_rss": "",
+      "node_list": "None assigned",
+      "start": "None",
+      "state": "CANCELLED",
+      "unallocated_metadata": false,
+      "user": "pwa209"
+    },
+    "6868889": {
+      "account": "def-ptewarie_cpu",
+      "alloc_tres": "",
+      "cpus": 0,
+      "elapsed_seconds": 0,
+      "end": "2026-10-23T12:13:18",
+      "exit_code": "0:0",
+      "identity_basis": "Unique scalar native job; zero-allocation queue record",
+      "job_id_raw": "6868889",
+      "max_rss": "",
+      "node_list": "None assigned",
+      "start": "None",
+      "state": "CANCELLED",
+      "unallocated_metadata": false,
+      "user": "pwa209"
+    }
+  },
+  "plan": {
+    "path": "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v1/plan.json",
+    "sha256": "6a33e4ee89f4f4ef380e712aec7d488bdd7b5acfbb39d28301cabcb7c7e7cdf3"
+  },
+  "retirement_order": [
+    "6868889",
+    "6868888",
+    "6868886"
+  ],
+  "scientific_gates_cleared": false,
+  "scientific_result": false,
+  "status": "exact_failed_partial_phase_retired_without_allocation"
+}

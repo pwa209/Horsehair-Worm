@@ -1,0 +1,13 @@
+6632164|6632164|FAILED|1:0|161695|1|billing=2000,cpu=1,mem=8388608K,node=1|nc11005|2026-10-21T10:49:58|2026-10-23T07:44:53|pwa209|def-ptewarie_cpu|
+6632164.batch|6632164.batch|FAILED|1:0|161695|1|cpu=1,mem=8388608K,node=1|nc11005|2026-10-21T10:49:58|2026-10-23T07:44:53||def-ptewarie_cpu|8386136K
+6632164.extern|6632164.extern|COMPLETED|0:0|161695|1|billing=2000,cpu=1,mem=8388608K,node=1|nc11005|2026-10-21T10:49:58|2026-10-23T07:44:53||def-ptewarie_cpu|
+6632209|6632209|PENDING|0:0|0|0||None assigned|Unknown|Unknown|pwa209|def-ptewarie_cpu|
+6632225|6632225|PENDING|0:0|0|0||None assigned|Unknown|Unknown|pwa209|def-ptewarie_cpu|
+6632239|6632239|PENDING|0:0|0|0||None assigned|Unknown|Unknown|pwa209|def-ptewarie_cpu|
+6868176|6868176|FAILED|1:0|864|4|billing=4000,cpu=4,mem=16777216K,node=1|nc31109|2026-10-23T11:20:40|2026-10-23T11:35:04|pwa209|def-ptewarie_cpu|
+6868176.batch|6868176.batch|FAILED|1:0|864|4|cpu=4,mem=16777216K,node=1|nc31109|2026-10-23T11:20:40|2026-10-23T11:35:04||def-ptewarie_cpu|85520K
+6868176.extern|6868176.extern|COMPLETED|0:0|864|4|billing=4000,cpu=4,mem=16777216K,node=1|nc31109|2026-10-23T11:20:40|2026-10-23T11:35:04||def-ptewarie_cpu|
+6868884|6868884|CANCELLED|0:0|0|0||None assigned|None|2026-10-23T11:35:08|pwa209|def-ptewarie_cpu|
+6868886|6868886|PENDING|0:0|0|0||None assigned|Unknown|Unknown|pwa209|def-ptewarie_cpu|
+6868888|6868888|PENDING|0:0|0|0||None assigned|Unknown|Unknown|pwa209|def-ptewarie_cpu|
+6868889|6868889|PENDING|0:0|0|0||None assigned|Unknown|Unknown|pwa209|def-ptewarie_cpu|

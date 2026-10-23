@@ -1,0 +1,145 @@
+{
+  "actual_scalar_native_proof": {
+    "actual_parent_alloc_tres": "billing=4000,cpu=4,mem=16777216K,node=1",
+    "cancelled_job_id": "6868884",
+    "capture": {
+      "path": "work/narval-deployment/hhw-primary-reconciliation-native-preflight-20261023-491.txt",
+      "sha256": "a7b7e79a884e5c3f775ece5e2a48d03bdcd1e00d7ae3f12d7ce9018edeeb9526"
+    },
+    "captured_stdout_sha256": "bf0e83b0f1aa02f6a9fdde520ccca5f14f6f8f494bb73876dbe951dd580ce9a7",
+    "exact_K_equivalent_replay_passed": true,
+    "independent_pure_replay_passed": true,
+    "parser_source": {
+      "path": "src/horsehair/repair.py",
+      "sha256": "f189d515acdcba105fda56dd8d52c08044db736c8de9176fa5488931d428e7aa"
+    },
+    "parser_source_matches_actual_q469_release_identity": true,
+    "q469_identity_capture": {
+      "path": "work/narval-deployment/hhw-primary-qualification-live-20261023-477.txt",
+      "sha256": "89b9fa5b812af1a323c8f16b3417ed02239c56d53fc83ccfe7f9d1cee1e4afd4"
+    },
+    "required_identity_basis": "Unique scalar native job; zero-allocation queue record",
+    "required_markers": [
+      "CANCELLED",
+      "0:0",
+      "zero CPUs",
+      "zero elapsed",
+      "empty AllocTRES",
+      "None assigned node",
+      "None/Unknown start",
+      "zero/empty RSS",
+      "dated end",
+      "exact scalar ID and owner/account"
+    ],
+    "required_unallocated_metadata": false
+  },
+  "actual_workdir_failure": {
+    "capture": {
+      "path": "work/narval-deployment/hhw-primary-held-failure-proof-20261023-488.txt",
+      "sha256": "9620784d90463d08d0ce6186073cb99e8350753df4de8314d066dc4bef03cb4f"
+    },
+    "captured_native_response": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/new-native-000004/attempt-1-stdout.txt",
+      "sha256": "51758a668fa1a70dd105c6a4f3ef7d7d57a46ff250797ea53d6cbcde03b32115"
+    },
+    "conclusion": "Body cd does not establish Slurm WorkDir; v3 binds both SBATCH header and highest-precedence CLI chdir to resolved D89 and retains the exact native check.",
+    "header_chdir_absent": true,
+    "historical_script": {
+      "path": "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v1/primary-external-census-controller-0.sbatch",
+      "sha256": "fbe69f82abce43e936a70be0aeb27835e7bb915fadb1cef59b1c06d2d39b4938"
+    },
+    "job_id": "6868884",
+    "native_pending_held_no_allocation_at_check": true,
+    "native_workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e",
+    "script_body_cd": "/lustre06/project/6101854/pwa209/horsehair-worm/releases/20261021-57e0eb8c4c6c-d89b31180d4c",
+    "submitline_chdir_absent": true
+  },
+  "factory490": {
+    "junit": {
+      "errors": 0,
+      "failures": 0,
+      "path": "work/primary490-builder-local-final.xml",
+      "sha256": "f0acdc46ca9a622a29f1c458d83aef72c7d86aade7d271bd26accd8744ec5541",
+      "skipped": 0,
+      "tests": 14
+    },
+    "keeps_Q469_native_dependency": true,
+    "requires_fresh_phase_v2_and_preserved_partial_phase_v1": true,
+    "resolved_finding": "Removed false current phase-absence claims from historical470 evidence; current preserved partial phase is separately byte-bound.",
+    "source": {
+      "path": "work/build-primary-external-census-handoff-490.py",
+      "sha256": "252e0012d5f386b2897033add03ca3b3ec96785c8c218917deb044b47081e9a1"
+    },
+    "test_source": {
+      "path": "work/test_build_primary_external_census_handoff_490.py",
+      "sha256": "721fabea2bde9f09adddf9cb0fa03d01d6494513ebac79e2ecdf46c6a1066864"
+    }
+  },
+  "helper": {
+    "path": "work/primary-handoff-v3/handoff-primary-external-census-v1-20261023.py",
+    "sha256": "0d37f96bd93dd96266eb3f46eb66bf7bd1ecb929b1e8474f3153b1624fda50f3"
+  },
+  "kind": "primary-handoff-v3-independent-review-v1",
+  "limits": {
+    "actual_native_selfqualification_and_final_native_completion_still_required": true,
+    "agent_helper_test_or_builder_edits_by_reviewer": false,
+    "local_XML_independently_parsed_not_rerun_by_reviewer": true,
+    "native_v3_qualification_claimed": false,
+    "scheduler_SSH_Git_actions_by_reviewer": false
+  },
+  "local_freeze": {
+    "path": "work/primary-handoff-v3/handoff-tests-local-freeze.json",
+    "sha256": "994de38f14f6f993064f9b2d294fb6310b68edbf270af85d7c2a7b8e24c0c99c"
+  },
+  "local_junit": {
+    "elapsed_seconds_reported_by_test_author": 200.68,
+    "errors": 0,
+    "failures": 0,
+    "path": "work/primary-handoff-v3/handoff-contracts-local-final.xml",
+    "roster_sha256": "960fb1ad9679f0c740b6a560a44f497495f9f2db60b9ab34b6009fa5c65af3c2",
+    "sha256": "6b41eed54fdf4ccf4d03983bb4b77e28dd84eb6ca51e8fff31a25484c99c2adc",
+    "skipped": 0,
+    "tests": 153
+  },
+  "new_handoff_review": {
+    "actual_Q469_positive_completion_and_exact_receipt_required": true,
+    "all_four_source_bound_native_held_before_original_three_retired": true,
+    "bounded_native_allocation_command_timeouts_and_terminal_polling": true,
+    "external_source_allowlist_remains_exact_two_original_baselines_with_fixed_pins": true,
+    "first_dependency": "afterok current handoff allocation and first provider6864491; an already completed provider edge requires positive finalized proof",
+    "fresh_controller_phase": "primary-external-census-controllers-v2",
+    "fresh_support_namespace": "study-primary-external-census-handoff-v3-20261023",
+    "native_workdir_contract": "/lustre06/project/6101854/pwa209/horsehair-worm/releases/20261021-57e0eb8c4c6c-d89b31180d4c",
+    "original_D89_primary_lease_and_science_retained": true,
+    "original_active_controller_refused": true,
+    "successor_dependency": "afterany previous new controller"
+  },
+  "partial_reconciliation_review": {
+    "active_unknown_or_ambiguous_state_stops_without_replay": true,
+    "actual_native_selftests_and_permanent_AF_lock_required": true,
+    "all_four_script_sha256_matched_actual_488": true,
+    "all_three_exact_held_preflight_before_mutation": true,
+    "already_cancelled_read_only_job": "6868884",
+    "descriptor_raw_sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267",
+    "failed_parent": "6868176",
+    "failed_parent_contract": "Owned FAILED/1:0, 4CPU16G, 864 seconds; exact preserved source and registered arguments/DAG",
+    "fresh_precheck_and_post_RPC_zero_allocation_proof_before_next_mutation": true,
+    "historical_phase_bytes_preserved": true,
+    "ledger_raw_sha256": "26efafe65339ec349a65773135d36502a3baa7d3f4523d56f704b16dba3c5be6",
+    "no_orphan_release_rewire_or_reuse": true,
+    "only_orphan_mutation_order": [
+      "6868889",
+      "6868888",
+      "6868886"
+    ],
+    "plan_raw_sha256": "6a33e4ee89f4f4ef380e712aec7d488bdd7b5acfbb39d28301cabcb7c7e7cdf3",
+    "server_pending_owner_name_and_scalar_ID_filters": true
+  },
+  "python_3_11_grammar_checked": true,
+  "review_date": "2026-10-23",
+  "status": "no_remaining_material_source_or_local_contract_findings",
+  "test_source": {
+    "path": "work/primary-handoff-v3/test_handoff_primary_external_census_v1_20261023.py",
+    "sha256": "14674660061d3162d33f56d8e01e4a5c23084fd09f9a9da54ddbad6e3b9488fe"
+  }
+}

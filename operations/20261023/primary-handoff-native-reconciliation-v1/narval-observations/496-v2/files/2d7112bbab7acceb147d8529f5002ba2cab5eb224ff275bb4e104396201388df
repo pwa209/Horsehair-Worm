@@ -1,0 +1,16 @@
+{
+  "admission_authority": false,
+  "automatic_replay_permitted": false,
+  "canonical_science_changed": false,
+  "command": [
+    "scancel",
+    "--ctld",
+    "--state=PENDING",
+    "--user=pwa209",
+    "--name=hhw-primary-external-census-controller-2",
+    "6868888"
+  ],
+  "freshness_timestamp_rewritten": false,
+  "scientific_gates_cleared": false,
+  "scientific_result": false
+}

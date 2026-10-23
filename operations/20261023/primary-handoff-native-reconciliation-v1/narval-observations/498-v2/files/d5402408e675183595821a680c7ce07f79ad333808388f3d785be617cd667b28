@@ -1,0 +1,52 @@
+{
+  "admission_authority": false,
+  "canonical_plan_ledger_scripts_modified": false,
+  "canonical_science_changed": false,
+  "first_provider_afterok": "6864491",
+  "freshness_timestamp_rewritten": false,
+  "ledger": {
+    "path": "/scratch/pwa209/horsehair-worm/state/primary-external-census-controllers-v2-submission.json",
+    "sha256": "0bd363318e2c4195de7f1a4bc5dc424555e26e8ff8251d4333c5c902649ce55c"
+  },
+  "native_handoff_completion_required_before_new_controllers_start": true,
+  "native_job_id": "6870245",
+  "native_selftests": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/native-handoff-qualification.json",
+    "sha256": "db4ced954789e1395fd42f9f2f2313727fb179f8035f13612f426a12f9231243"
+  },
+  "new_jobs": [
+    "6870608",
+    "6870610",
+    "6870628",
+    "6870632"
+  ],
+  "old_jobs": [
+    "6632164",
+    "6632209",
+    "6632225",
+    "6632239"
+  ],
+  "original_primary_lease_limits_retained": true,
+  "partial_reconciliation": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/partial-reconciliation.json",
+    "sha256": "4d1b6cb059217dff57f63f90932c30e454a1c2a21560cf95b85cf388a930d3a9"
+  },
+  "plan": {
+    "path": "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v2/plan.json",
+    "sha256": "2b5b77e7230b5365de91caf64f72484c456856b0526549a53400320ee7c32cb3"
+  },
+  "policy_descriptor": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/run-policy.json",
+    "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+  },
+  "primary_qualification_coverage_claimed_for_handoff": false,
+  "qualification": {
+    "job_id": "6866457",
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/qualification.json",
+    "sha256": "d7966afe00498ebc4c1e23c34da8b75407fc0fb691afb488b11ed98e0c53f711"
+  },
+  "scientific_gates_cleared": false,
+  "scientific_result": false,
+  "status": "three_unstarted_primary_successors_retired_and_four_source_bound_controllers_released",
+  "workers_or_journals_modified": false
+}

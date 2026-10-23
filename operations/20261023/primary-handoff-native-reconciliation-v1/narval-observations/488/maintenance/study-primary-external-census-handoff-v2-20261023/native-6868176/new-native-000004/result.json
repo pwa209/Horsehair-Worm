@@ -1,0 +1,8 @@
+{
+  "attempts": 1,
+  "finished_unix": 1792755298.668227,
+  "metadata_parsed": false,
+  "records_merged_or_selected": false,
+  "returned_response": true,
+  "status": "scheduler_read_complete"
+}

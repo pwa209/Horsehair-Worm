@@ -1,0 +1,204 @@
+{
+  "activation_qualification": {
+    "helper": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/activate-f2-prestart-three-v1-20261022.py",
+      "sha256": "586bbf301ef69621cc1132b8b25a9c243f29a2e918b54d564e84be816af2d2eb"
+    },
+    "junit": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/native-qualification/activation64.xml",
+      "sha256": "26beff95f8d4ff7c9b8c441e5e8cd29234bbae143af70c6380d93208b5d57641"
+    },
+    "test_counts": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 64
+    },
+    "test_roster_sha256": "c2b3dcf5200995bc40a549ab172e60273e11f120ef3d3e36ed09dfc804ba03be",
+    "test_source": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/test_activate_f2_prestart_three_v1_20261022.py",
+      "sha256": "7969911a11d54c71c33c41f9888f4d3889db5326489ff6468399823640d54964"
+    }
+  },
+  "admission_authority": false,
+  "allocation": {
+    "Account": "def-ptewarie_cpu",
+    "AccrueTime": "2026-10-23T11:05:36",
+    "AllocTRES": "cpu=4,mem=16G,node=1,billing=4000",
+    "BatchFlag": "1",
+    "BatchHost": "nc31001",
+    "Command": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-431/recovery-431.sbatch",
+    "Contiguous": "0",
+    "CoreSpec": "*",
+    "Deadline": "N/A",
+    "DelayBoot": "00:00:00",
+    "Dependency": "(null)",
+    "EligibleTime": "2026-10-23T11:05:36",
+    "EndTime": "2026-10-23T12:07:41",
+    "ExcNodeList": "(null)",
+    "ExitCode": "0:0",
+    "Features": "[rome|milan|genoa]",
+    "GroupId": "pwa209(3164768)",
+    "JobId": "6865525",
+    "JobName": "hhw-recovery-431",
+    "JobState": "RUNNING",
+    "LastSchedEval": "2026-10-23T11:07:41",
+    "Licenses": "(null)",
+    "LicensesAlloc": "(null)",
+    "MCS_label": "N/A",
+    "MinCPUsNode": "4",
+    "MinMemoryNode": "16G",
+    "MinTmpDiskNode": "0",
+    "Network": "(null)",
+    "Nice": "0",
+    "NodeList": "nc31001",
+    "NumCPUs": "4",
+    "NumNodes": "1",
+    "NumTasks": "1",
+    "OverSubscribe": "OK",
+    "Partition": "cpubase_bycore_b1",
+    "Priority": "1784042",
+    "QOS": "normal",
+    "Reason": "None",
+    "Reboot": "0",
+    "ReqNodeList": "(null)",
+    "ReqTRES": "cpu=4,mem=16G,node=1,billing=4000",
+    "Requeue": "0",
+    "Restarts": "0",
+    "RunTime": "00:00:09",
+    "Scheduler": "Backfill",
+    "SecsPreSuspend": "0",
+    "StartTime": "2026-10-23T11:07:41",
+    "StdErr": "",
+    "StdIn": "/dev/null",
+    "StdOut": "/scratch/pwa209/horsehair-worm/logs/recovery-431-6865525_4294967294.log",
+    "SubmitLine": "sbatch",
+    "SubmitTime": "2026-10-23T10:20:49",
+    "SuspendTime": "None",
+    "TimeLimit": "01:00:00",
+    "TimeMin": "N/A",
+    "TresPerTask": "cpu=4",
+    "UserId": "pwa209(3164768)",
+    "WorkDir": "/lustre06/project/6101854/pwa209/horsehair-worm/releases/20261016-5c3ae6df532d-91c8824f2adb"
+  },
+  "config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+  "controller_sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866",
+  "junit": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/native-qualification/overlay172.xml",
+    "sha256": "7e9b524d64db5f8af1fdbc62bb9b02a7cd68e22686da7e37f6b89cefa0eb1c50"
+  },
+  "migration_qualification": {
+    "helper": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/recover-f2-training0000-state-20261021.py",
+      "sha256": "504eb2764073a5b614d986827ccacad3189ea4be5988313ead47ab41805fe26a"
+    },
+    "junit": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/native-qualification/migration42.xml",
+      "sha256": "29994d5741f72d5dd8d438c77a9be46504df24c9717702a9cde6414b164a7925"
+    },
+    "test_counts": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 42
+    },
+    "test_source": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/test_recover_f2_training0000_state_20261021.py",
+      "sha256": "6cb7fdcc55f12164d81666f70e545b6efd610a1299baef66e483a271fbbe1673"
+    }
+  },
+  "native_registration": {
+    "ledger": {
+      "path": "/scratch/pwa209/horsehair-worm/state/recovery-support-20261021-431-submission.json",
+      "sha256": "f7f34bbc166462f81ad9ff09193f5bd4a5b7ffa396a8c7b71f547678078d6efb"
+    },
+    "native_job_id": "6865525",
+    "plan": {
+      "path": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-431/plan.json",
+      "sha256": "252abb0366e402067dda8efd20cfb0c12494b67b4d4c830aab54e0cb6e3e4ea6"
+    },
+    "script": {
+      "path": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-431/recovery-431.sbatch",
+      "sha256": "24d5c598dd610b0edc8a0a8f16fb811f27f9206ad24b6ae44d6ce7b18cc91c99"
+    },
+    "task_name": "recovery-431"
+  },
+  "new_recovery_qualification": {
+    "helper": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/recover-f2-prestart-three-state-v1-20261022.py",
+      "sha256": "7151017a3579694228b1ba78f14da9cdda3e4a4608d98f9f257d2d2c4b26807d"
+    },
+    "junit": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/native-qualification/prestart-recovery86.xml",
+      "sha256": "0d946a6a5e1b2a189df32fa54b9ae7e4db611fc2d7524949a310199746784dbb"
+    },
+    "test_counts": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 86
+    },
+    "test_roster_sha256": "a0bc49565ca6163d108de11ef76ec882a71745cb9075768d5f0347bca237cfaa",
+    "test_source": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/test_recover_f2_prestart_three_state_v1_20261022.py",
+      "sha256": "dddccdc4d800110ecfbdf72f8a3fb25f7726a858d80272c016cce3c233b4253d"
+    }
+  },
+  "qualification_helper_sha256": "875ec697466351b21718eded61a6e81ac23d74ce0902ce481ebc970012261020",
+  "registry_guard_sha256": "7bd2bf562d0a81887ef1afd308ddd9265e5cadb23ba4b2e5946980b659505431",
+  "resource_policy": {
+    "approval": {
+      "approved_at_utc": "2026-10-21T18:06:12.965619+00:00",
+      "authorizes_cpu_gpu_resource_amendment": true,
+      "evidence_reference": "Current user instruction, 21 October 2026, complete ABCDEF and lift CPU/GPU restrictions",
+      "identity_verification": "instruction_provenance_only",
+      "source": "current_user",
+      "statement": "I want you to complete ABCDEF. you can lift the restrictions on cpu or gpu. for any unsupported stuff, try to create possibilities of completing them, including but not limited to new data acquisition etc."
+    },
+    "authority_basis": "Recorded current-user instruction provenance; not cryptographic identity verification",
+    "base_config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+    "execution_source_sha256": "4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1",
+    "limits": {
+      "cpu_ceiling": 256,
+      "cpu_core_hours_cap": null,
+      "gpu_concurrency": 4,
+      "gpu_hours_cap": null,
+      "max_native_hours": 168,
+      "scratch_budget_bytes": 6000000000000,
+      "scratch_budget_files": 250000,
+      "scratch_reserve_bytes": 2000000000000
+    },
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/execution-resource-policies/af-expanded-20261021-v1/policy.json",
+    "policy_id": "af-expanded-20261021-v1",
+    "primary_scientific_source_sha256": "0e2b1ebce8bffe10799470b3ac20828e621f1415f3a18bca8cd67d502f1e8630",
+    "scientific_gates_changed": false,
+    "sha256": "f4445fb72d6a0fd8e62fb9a3c5ef43a6a6b1e7bf5a369254ff40d617e992b4e5"
+  },
+  "returncode": 0,
+  "scientific_result": false,
+  "slurm_job_id": "6865525",
+  "source_sha256": "4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1",
+  "status": "complete_f2_registry_overlay_qualification",
+  "test_counts": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 172
+  },
+  "test_roster_sha256": "cae9f3349cf709af939c6953b626cf54e9d7ef1a4a0a711874960d89e939195b",
+  "test_sources": {
+    "test_af_agent_controller_registry_v6_20261022.py": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/test_af_agent_controller_registry_v6_20261022.py",
+      "sha256": "da703c4cc8b172a2ea79067a8f5c5e9d0976853823a8ed230e3fb1a721633a3d"
+    },
+    "test_f00d_worker_registry_overlay_20261021.py": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/test_f00d_worker_registry_overlay_20261021.py",
+      "sha256": "2fdcf83a1abc796f82e86d3d3014fd785d195bf7ca4dc6457f2d6dd5db9b3968"
+    },
+    "test_registered_snapshot_read_guard_v5_20261022.py": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/test_registered_snapshot_read_guard_v5_20261022.py",
+      "sha256": "934196d84276299ce2b567bef6925515e4656978401a0dd4f49c8bd2d1339d72"
+    }
+  },
+  "worker_shim_sha256": "dd39905ce44f89f7f8bbdd325d1a0f1d5ec7950dd89d0e3bb267f6fdfe77a09a"
+}

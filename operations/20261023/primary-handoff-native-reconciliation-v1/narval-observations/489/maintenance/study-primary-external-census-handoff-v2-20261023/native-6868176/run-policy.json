@@ -1,0 +1,47 @@
+{
+  "census": {
+    "policy_source": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-af-agent-controller-census-policy-v1-20261023.py",
+      "sha256": "120f02d098b6c9afa0ea0df54f590ae381b4227d4892ba0f9ee4acc93e6fec0f"
+    },
+    "provider_schedule": {
+      "case_root": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-storage-census-v4-20261023",
+      "helper": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+        "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+      },
+      "ledger": {
+        "path": "/scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json",
+        "sha256": "7eac4140a4a31405360ad001b115517203ce57bcb57de0ed8018e3157cffb192"
+      },
+      "plan": {
+        "path": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json",
+        "sha256": "a848dfdd01b148b0bf68c59b0fe6a881d8284ce30d49282e157ca88fd17c36cc"
+      },
+      "qualification": {
+        "job_id": "6863966",
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json",
+        "sha256": "8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c"
+      },
+      "source_manifest": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+        "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+      }
+    },
+    "qualification": {
+      "job_id": "6863966",
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json",
+      "sha256": "8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c"
+    }
+  },
+  "kind": "primary-external-census-policy-v1",
+  "qualification": {
+    "job_id": "6866457",
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/qualification.json",
+    "sha256": "d7966afe00498ebc4c1e23c34da8b75407fc0fb691afb488b11ed98e0c53f711"
+  },
+  "source_manifest": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/source-manifest.json",
+    "sha256": "fd5d7b951b2df0094e82c7c670d6e578a30efa913b4dcc6923cf335627d1dde9"
+  }
+}

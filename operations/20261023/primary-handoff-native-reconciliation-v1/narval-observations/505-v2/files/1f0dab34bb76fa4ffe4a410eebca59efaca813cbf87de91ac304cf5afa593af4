@@ -1,0 +1,60 @@
+{
+  "admission_authority": false,
+  "canonical_plan_ledger_scripts_modified": false,
+  "canonical_science_changed": false,
+  "first_provider_afterok": "6864491",
+  "freshness_timestamp_rewritten": false,
+  "ledger": {
+    "path": "/scratch/pwa209/horsehair-worm/state/primary-external-census-controllers-v3-submission.json",
+    "sha256": "35334a9eccbdf55cf15ff1563159af972996e933af498df612f731efaf38a49c"
+  },
+  "native_handoff_completion_required_before_new_controllers_start": true,
+  "native_job_id": "6872985",
+  "native_selftests": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/native-handoff-qualification.json",
+    "sha256": "6406a8745da24dafa77a13e5a94f3efcffb03dc2466bd902dea1a1c70fe2b6aa"
+  },
+  "new_jobs": [
+    "6873101",
+    "6873102",
+    "6873105",
+    "6873107"
+  ],
+  "old_jobs": [
+    "6632164",
+    "6632209",
+    "6632225",
+    "6632239"
+  ],
+  "original_primary_lease_limits_retained": true,
+  "original_retirement_performed_by_this_handoff": false,
+  "plan": {
+    "path": "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v3/plan.json",
+    "sha256": "7149e8a8311b497b3495c3e38ecdd51d7465d679c63e00f1e3ba5be81b60512c"
+  },
+  "policy_descriptor": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/handoffs/native-6872985/run-policy.json",
+    "sha256": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267"
+  },
+  "primary_qualification_coverage_claimed_for_handoff": false,
+  "prior_handoff": {
+    "native_job_id": "6870245",
+    "receipt": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/receipt.json",
+      "sha256": "9e525425ba063c824eed9fe40e15272d33be5ae88bc208850167b0e2d07523a1"
+    }
+  },
+  "prior_handoff_proof": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v4-20261023/native-6872985/prior-handoff-preserved.json",
+    "sha256": "6354cfbe705a7d4efcbb0d00cfa5183292fbf5af92420b66097daf6a328e8367"
+  },
+  "qualification": {
+    "job_id": "6866457",
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/qualification.json",
+    "sha256": "d7966afe00498ebc4c1e23c34da8b75407fc0fb691afb488b11ed98e0c53f711"
+  },
+  "scientific_gates_cleared": false,
+  "scientific_result": false,
+  "status": "four_source_bound_primary_controllers_released_after_prior_terminal_handoff",
+  "workers_or_journals_modified": false
+}

@@ -1,0 +1,7 @@
+{
+  "afterok_first_provider": "6864491",
+  "afterok_handoff": "6870245",
+  "automatic_replay_permitted": false,
+  "ledger": "/scratch/pwa209/horsehair-worm/state/primary-external-census-controllers-v2-submission.json",
+  "plan": "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v2/plan.json"
+}

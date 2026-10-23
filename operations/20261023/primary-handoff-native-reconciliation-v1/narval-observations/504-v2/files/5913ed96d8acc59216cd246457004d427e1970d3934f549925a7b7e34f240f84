@@ -1,0 +1,103 @@
+{
+  "config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+  "environment_job": null,
+  "excluded_nodes": [],
+  "plan_sha256": "d1eb0278b140f9318cefdb683e8b256cf80f7b032db3706aff2fc06273530126",
+  "schema_version": 2,
+  "source_sha256": "d89b31180d4c4ffe9c4023dc5534b96f2d157a3a8e3aecaff30849283d00a705",
+  "tasks": {
+    "primary-external-census-controller-0": {
+      "command": [
+        "sbatch",
+        "--parsable",
+        "--dependency=afterok:6872985",
+        "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v3/primary-external-census-controller-0.sbatch"
+      ],
+      "completed_native_dependencies": [
+        {
+          "array": null,
+          "basis": "Positive persisted final sacct records for every declared task; require COMPLETED/0:0 for afterok",
+          "completion_proof_sha256": "3856b31e028e7b7eae0a088cc358bd5d10d3a972444fa895be748481f40dad0a",
+          "dependency_kind": "afterok",
+          "job_id": "6864491",
+          "native_records": {
+            "6864491": {
+              "basis": "sacct final allocated wall time",
+              "cpu_core_hours": 6.166666666666667,
+              "cpus": 8,
+              "elapsed_seconds": 2775,
+              "exit_code": "0:0",
+              "gpu_hours": 0.0,
+              "gpus": 0,
+              "job_id": "6864491",
+              "job_id_raw": "6864491",
+              "state": "COMPLETED"
+            }
+          },
+          "native_records_sha256": "a2a6f49dce4f487de911e16059c20cad07aecb6c60c99ec21cec30b2f798b2f3",
+          "source_file_sha256_at_capture": "e8b47239f9a6f039db5cc2a0296027a5cf2fc1552a0363b09048ab0cc9dbede5",
+          "source_path": "/scratch/pwa209/horsehair-worm/state/resource-budget.json"
+        }
+      ],
+      "dependency_kind": "afterok",
+      "dependency_resolution_sha256": "318e89df5b421fdc7df63cfc64dc1fee60ab8b0767fc23a888eaa4756961cf9e",
+      "issued_native_dependencies": [
+        "6872985"
+      ],
+      "job_id": "6873101",
+      "script_sha256": "a1f5c58fd1666c16136aba28172fefa333e6b2c5b73b6e464d6db8254db49deb",
+      "state": "submitted"
+    },
+    "primary-external-census-controller-1": {
+      "command": [
+        "sbatch",
+        "--parsable",
+        "--dependency=afterany:6873101",
+        "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v3/primary-external-census-controller-1.sbatch"
+      ],
+      "completed_native_dependencies": [],
+      "dependency_kind": "afterany",
+      "dependency_resolution_sha256": "fe99813ffab1b7ba0859f4e591b1bff4b84fadadcb01ff5d1c39e2c6338eb227",
+      "issued_native_dependencies": [
+        "6873101"
+      ],
+      "job_id": "6873102",
+      "script_sha256": "46bae252a5e677ea9b09ea37fe8769fd33e12d0f6e66524b3ba1e498d731cee6",
+      "state": "submitted"
+    },
+    "primary-external-census-controller-2": {
+      "command": [
+        "sbatch",
+        "--parsable",
+        "--dependency=afterany:6873102",
+        "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v3/primary-external-census-controller-2.sbatch"
+      ],
+      "completed_native_dependencies": [],
+      "dependency_kind": "afterany",
+      "dependency_resolution_sha256": "e0eaa83b5b8213879053127321b8fb42d36b2657aa80a161f6a52093db5eae22",
+      "issued_native_dependencies": [
+        "6873102"
+      ],
+      "job_id": "6873105",
+      "script_sha256": "f2599825ade400c109375fa036c3960b2479755a2171ff433ffc2e66d24eb553",
+      "state": "submitted"
+    },
+    "primary-external-census-controller-3": {
+      "command": [
+        "sbatch",
+        "--parsable",
+        "--dependency=afterany:6873105",
+        "/scratch/pwa209/horsehair-worm/plans/primary-external-census-controllers-v3/primary-external-census-controller-3.sbatch"
+      ],
+      "completed_native_dependencies": [],
+      "dependency_kind": "afterany",
+      "dependency_resolution_sha256": "b9184bd065f5582ed2a64e99c5ff0f303fe5b11e3ad3fcd9e7eaa42dc1ed7ca1",
+      "issued_native_dependencies": [
+        "6873105"
+      ],
+      "job_id": "6873107",
+      "script_sha256": "9862f69e9dd02837aa717c04726856b79408a8b6113e4d404faa11e7caefd9db",
+      "state": "submitted"
+    }
+  }
+}

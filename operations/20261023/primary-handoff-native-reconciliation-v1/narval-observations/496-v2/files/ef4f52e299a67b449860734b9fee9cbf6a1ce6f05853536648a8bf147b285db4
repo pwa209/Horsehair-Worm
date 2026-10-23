@@ -1,0 +1,143 @@
+{
+  "auxiliary_analyses_complete": false,
+  "auxiliary_readiness": {
+    "assays": {
+      "mantis_choice": {
+        "fit_status": "complete",
+        "pending": [
+          "Deposited choice endpoint ambiguity remains unresolved",
+          "Independent choice validation/confirmatory readiness remains pending",
+          "Choice source-ambiguity sensitivity does not establish reconciled inputs"
+        ],
+        "ready": false,
+        "validation_status": "pending_source_reconciliation"
+      },
+      "mantis_mating": {
+        "pending": [
+          "Mating individual reuse/independence remains unresolved"
+        ],
+        "ready": false
+      }
+    },
+    "pending": [
+      "mantis_choice: Deposited choice endpoint ambiguity remains unresolved",
+      "mantis_choice: Independent choice validation/confirmatory readiness remains pending",
+      "mantis_choice: Choice source-ambiguity sensitivity does not establish reconciled inputs",
+      "mantis_mating: Mating individual reuse/independence remains unresolved"
+    ],
+    "ready": false,
+    "required_assays": [
+      "mantis_choice",
+      "mantis_mating"
+    ],
+    "source_result_hashes": {
+      "/scratch/pwa209/horsehair-worm/results/behaviour/mantis_choice_canonical.parquet": "31d3c896cb289d22b2de5394952552966fb85c878fa05b25fd757bb680b6ae87",
+      "/scratch/pwa209/horsehair-worm/results/behaviour/mantis_choice_sensitivity.json": "6f2ace85c4905e9fd4b5723ff8f9b6dae1dfcbea121d5b99b7872efd018e0267",
+      "/scratch/pwa209/horsehair-worm/results/behaviour/mantis_choice_validation.json": "c5e2d2aa9fbf2d2b1635040e71c5344e29724572d32e608088770aa859f35957",
+      "/scratch/pwa209/horsehair-worm/results/behaviour/mantis_mating_canonical.parquet": "30e7c5dc9cd9dde84220eda90dc20d448e9e71febbbe8a2c4d4198ec89739eed",
+      "/scratch/pwa209/horsehair-worm/results/behaviour/mantis_models.json": "b6302319c403cbdba261b62a2440cf38683cb7e2ecb92e9d58ab114d5a0864b9",
+      "/scratch/pwa209/horsehair-worm/results/behaviour/mantis_source_audit.json": "dfb487054edb482594826490750055354dececbc7a06ecde4616bd74e0e2bbcb",
+      "/scratch/pwa209/horsehair-worm/results/behaviour/mantis_statistical_design_audit.json": "33d6190f500204b8e4058db5a94377a35a35dfaa5653c89a41d0ef603a75f5bf"
+    },
+    "status": "pending"
+  },
+  "checked_unix": 1792741115.9113882,
+  "config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+  "controller_job_id": "6632164",
+  "failed_native_stages": [],
+  "initial_tasks": {
+    "agent-benchmark-aggregate": "complete",
+    "agent-benchmark-evaluation": "complete",
+    "agent-benchmark-training": "complete",
+    "gpu-qualification": "complete",
+    "mantis-behaviour": "complete",
+    "molecular-pilot": "complete",
+    "molecular-runtime": "complete",
+    "qualification": "complete",
+    "r-qualification": "complete",
+    "rna-pilot-0": "complete",
+    "rna-pilot-1": "complete",
+    "rna-reference": "complete",
+    "source-audit": "complete",
+    "source-replication": "complete",
+    "source-verification-fly": "complete",
+    "source-verification-mantis": "complete",
+    "source-verification-rna": "complete",
+    "source-verification-tools": "complete",
+    "transfer-wait-rna": "complete"
+  },
+  "phase_graph_complete": false,
+  "phases": {
+    "agents-development": {
+      "ledger": "/scratch/pwa209/horsehair-worm/state/20261013-829e3817bee1-0e2b1ebce8bf-agents-development-submission.json",
+      "status": "complete"
+    },
+    "agents-final": {
+      "reasons": [
+        "CPU evaluation grid contains explicit unavailable numerical evidence; complete finite cost coverage is pending"
+      ],
+      "status": "resource_pending"
+    },
+    "behaviour": {
+      "dependencies": [
+        "behaviour-benchmark"
+      ],
+      "status": "waiting_for_dependencies"
+    },
+    "behaviour-benchmark": {
+      "ledger": "/scratch/pwa209/horsehair-worm/state/20261013-829e3817bee1-0e2b1ebce8bf-behaviour-benchmark-submission.json",
+      "reason": "Full numerical workload coverage has not been measured",
+      "status": "pending_scientific_completion"
+    },
+    "interventions": {
+      "dependencies": [
+        "behaviour"
+      ],
+      "status": "waiting_for_dependencies"
+    },
+    "molecular-benchmark": {
+      "dependencies": [
+        "screen"
+      ],
+      "status": "waiting_for_dependencies"
+    },
+    "molecular-corroboration": {
+      "ledger": "/scratch/pwa209/horsehair-worm/state/20261013-829e3817bee1-0e2b1ebce8bf-molecular-corroboration-submission.json",
+      "status": "complete"
+    },
+    "molecular-transfer": {
+      "dependencies": [
+        "molecular-benchmark"
+      ],
+      "status": "waiting_for_dependencies"
+    },
+    "rna-full": {
+      "ledger": "/scratch/pwa209/horsehair-worm/state/20261013-829e3817bee1-0e2b1ebce8bf-rna-full-submission.json",
+      "status": "complete"
+    },
+    "screen": {
+      "dependencies": [
+        "behaviour"
+      ],
+      "status": "waiting_for_dependencies"
+    },
+    "synthesis": {
+      "dependencies": [
+        "behaviour",
+        "interventions",
+        "molecular-transfer",
+        "agents-final"
+      ],
+      "status": "waiting_for_dependencies"
+    }
+  },
+  "previous_checked_unix": 1792741034.8610458,
+  "primary_analyses_complete": false,
+  "publication_ready": false,
+  "release_id": "20261013-829e3817bee1-0e2b1ebce8bf",
+  "schema_version": 1,
+  "scientific_results_complete": false,
+  "scope": "All declared phase controllers are deployed; scientific jobs launch only after native dependency, source-readiness and measured resource admission checks",
+  "source_sha256": "0e2b1ebce8bffe10799470b3ac20828e621f1415f3a18bca8cd67d502f1e8630",
+  "status": "active"
+}

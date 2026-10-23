@@ -1,0 +1,30 @@
+{
+  "admission_authority": false,
+  "canonical_science_changed": false,
+  "command": [
+    "/home/pwa209/hhw-environment/bin/python",
+    "-s",
+    "-m",
+    "pytest",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v3-20261023/test_handoff_primary_external_census_v1_20261023.py",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "--basetemp",
+    "/localscratch/pwa209.6870245.0/hhw-external-census-handoff-6870245",
+    "--junitxml",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/handoff-contracts.xml"
+  ],
+  "freshness_timestamp_rewritten": false,
+  "primary_q_coverage_claimed_for_handoff": false,
+  "scientific_gates_cleared": false,
+  "scientific_result": false,
+  "source": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v3-20261023/handoff-primary-external-census-v1-20261023.py",
+    "sha256": "0d37f96bd93dd96266eb3f46eb66bf7bd1ecb929b1e8474f3153b1624fda50f3"
+  },
+  "test_source": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v3-20261023/test_handoff_primary_external_census_v1_20261023.py",
+    "sha256": "14674660061d3162d33f56d8e01e4a5c23084fd09f9a9da54ddbad6e3b9488fe"
+  }
+}

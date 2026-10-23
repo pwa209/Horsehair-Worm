@@ -1,0 +1,7 @@
+{
+  "failed_relative_path": "maintenance/study-primary-external-census-handoff-v3-20261023/native-6870245/primary-handoff-finalized-qualification-accounting.json",
+  "kind": "local_evidence_path_limit",
+  "remote_job_or_source_modified": false,
+  "resolution": "Complete native bytes are re-archived under bounded hash filenames with a full remote-path index in sibling 494-v2",
+  "status": "preserved_partial_archive_with_complete_raw_capture"
+}
