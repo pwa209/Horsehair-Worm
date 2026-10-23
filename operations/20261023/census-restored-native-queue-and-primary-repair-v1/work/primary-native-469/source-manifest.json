@@ -1,0 +1,27 @@
+{
+  "files": {
+    "run-primary-external-census-v1-20261023.py": "dd5f8d2aec90896fdcfe190971ea8b6c32a94158a3684566c2b8405748e7c794",
+    "test_primary_external_census_v1_20261023.py": "031ecb0cd1364952241decbb5d88f0c1cd8b313373a5630672910d37a1e4390e"
+  },
+  "kind": "primary-external-census-source-manifest-v1",
+  "suites": {
+    "baseline_budget": {
+      "roster_sha256": "a29d0c2854dafc41da5b6bcb7e31a03545bcad6134612b52a5f64c166bb52e7e",
+      "source": "tests/test_budget.py",
+      "source_sha256": "9ea7346e98203bc098121689f7a4ac4a45c2ef488bd2472d894cc0beee0d65de",
+      "tests": 46
+    },
+    "baseline_pipeline": {
+      "roster_sha256": "04695509cdbaf380d7e69885df7988d1e7dce955d2e8bb121c1bcd896adb1120",
+      "source": "tests/test_pipeline.py",
+      "source_sha256": "5e0c052c596765a32ff4443d8668ba3b627dbeb1d7f7f954479048bbc5a14936",
+      "tests": 97
+    },
+    "primary_policy": {
+      "roster_sha256": "b464be17d38203d70a33ec6d7c5695c0088a58acb74a2961af17a2182fec350b",
+      "source": "test_primary_external_census_v1_20261023.py",
+      "source_sha256": "031ecb0cd1364952241decbb5d88f0c1cd8b313373a5630672910d37a1e4390e",
+      "tests": 59
+    }
+  }
+}

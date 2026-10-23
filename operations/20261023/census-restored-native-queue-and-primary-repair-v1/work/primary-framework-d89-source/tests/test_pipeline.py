@@ -1,0 +1,941 @@
+"""Controller safety with generated fixtures and a mocked native scheduler.
+
+No fixture is a biological/scientific result and no command reaches Slurm.
+"""
+import copy
+import itertools
+import random
+import os
+import subprocess
+import sys
+import signal
+from datetime import datetime, timezone
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+
+from horsehair import pipeline
+from horsehair.core import atomic_json, canonical_hash, digest, read_json, source_identity
+from horsehair.slurm import submit
+
+
+def state(value="COMPLETED", exit_code="0:0"):
+    return {"state":value,"exit_code":exit_code}
+
+
+@pytest.mark.parametrize('proof_valid',[True,False])
+def test_mantis_amendment_requires_validated_adapter_and_consumed_proteome(tmp_path,monkeypatch,proof_valid):
+    from horsehair import mantis_recovery
+    root=tmp_path/'study';config={'paths':{'root':str(root)}};identity='a'*64
+    guard={'manifest_path':'reviewed-manifest','manifest_sha256':'b'*64}
+    atomic_json(root/'plans/primary-molecular-corroboration/plan.json',
+        {'dag_amendments':[{'mantis_reference_recovery':guard}]})
+    path=root/'data/molecular/orthology_mantis/gene_orthology.tsv'
+    path.parent.mkdir(parents=True);path.write_text('fixture only\n')
+    monkeypatch.setattr(pipeline,'_check_result',lambda *args,**kwargs:(True,'verified fixture'))
+    calls=[]
+    def validate(*args):
+        calls.append(args)
+        if not proof_valid:raise ValueError('Consumed mantis proteome differs from registered adapter')
+        return {'status':'validated'}
+    monkeypatch.setattr(mantis_recovery,'validate_completed_phase',validate)
+    valid,reason=pipeline._phase_outputs('molecular-corroboration',config,root,identity,'primary')
+    assert valid is proof_valid and calls==[(guard,config,root,identity)]
+    if not proof_valid:assert 'Consumed mantis proteome' in reason
+
+
+def task(name, cpus=2, gpu=False, array=None, depends=(), external=()):
+    resources = {"cpus":cpus,"gpu":gpu}
+    if array is not None:
+        resources["array"] = array
+    return {"name":name,"resources":resources,"depends":list(depends),"external_dependencies":list(external)}
+
+
+def brute_antichain(weights, edges):
+    reachable = {key:set() for key in weights}
+    for left,right in edges:
+        reachable[left].add(right)
+    changed = True
+    while changed:
+        before = {key:set(value) for key,value in reachable.items()}
+        for key in weights:
+            reachable[key] |= set().union(*(before[child] for child in before[key])) if before[key] else set()
+        changed = before != reachable
+    best = 0
+    keys = list(weights)
+    for size in range(len(keys)+1):
+        for chosen in itertools.combinations(keys,size):
+            if all(right not in reachable[left] and left not in reachable[right] for left,right in itertools.combinations(chosen,2)):
+                best = max(best,sum(weights[key] for key in chosen))
+    return best
+
+
+def test_weighted_antichain_matches_exhaustive_random_dags_and_detects_cycles():
+    for seed in range(80):
+        rng = random.Random(seed)
+        keys = [str(i) for i in range(7)]
+        edges = [(a,b) for i,a in enumerate(keys) for b in keys[i+1:] if rng.random()<.3]
+        rng.shuffle(keys)
+        weights = {key:rng.randrange(0,13) for key in keys}
+        assert pipeline._weighted_antichain(weights,edges)==brute_antichain(weights,edges)
+    assert pipeline._weighted_antichain({},[])==0
+    with pytest.raises(ValueError,match="Cyclic"):
+        pipeline._weighted_antichain({"a":2,"b":3},[("a","b"),("b","a")])
+
+
+def test_prospective_capacity_uses_dependencies_arrays_and_external_native_edges():
+    plans = {"one":{"tasks":[task("a",6,True),task("b",4,array="0-3%2",depends=["a"]),
+                             task("c",8,True,depends=["a"]),task("d",10,True,depends=["b","c"])]}}
+    assert pipeline.prospective_capacity(plans,{}, {})=={"cpus":16,"gpus":1}
+    plans = {"one":{"tasks":[task("a",8,True)]},"two":{"tasks":[task("b",6,True,external=["100"])]}}
+    ledgers = {"one":{"tasks":{"a":{"state":"submitted","job_id":"100"}}}}
+    assert pipeline.prospective_capacity(plans,ledgers,{"100":state("RUNNING")})=={"cpus":8,"gpus":1}
+    plans["two"]["tasks"][0]["external_dependencies"] = []
+    assert pipeline.prospective_capacity(plans,ledgers,{"100":state("RUNNING")})=={"cpus":14,"gpus":2}
+
+
+@pytest.mark.parametrize("expression,expected",[("0-5",6),("0-5%2",2),("0-0%99",1),("0-8:2,11%3",3)])
+def test_array_capacity_never_assumes_unthrottled_array_is_one_task(expression,expected):
+    plans = {"fixture":{"tasks":[task("array",4,True,array=expression)]}}
+    assert pipeline.prospective_capacity(plans,{}, {})=={"cpus":4*expected,"gpus":expected}
+
+
+def test_array_completion_requires_every_planned_child_and_successful_exit():
+    planned = task("array",4,array="0-3%2")
+    submitted = {"state":"submitted","job_id":"500"}
+    partial = {"500":state(),"500_0":state(),"500_1":state()}
+    assert pipeline._task_status(submitted,partial,planned)=="awaiting_native_accounting"
+    complete = {**partial,"500_2":state(),"500_3":state()}
+    assert pipeline._task_status(submitted,complete,planned)=="complete"
+    complete["500_3"] = state("RUNNING")
+    assert pipeline._task_status(submitted,complete,planned)=="running"
+    complete["500_3"] = state("COMPLETED","1:0")
+    assert pipeline._task_status(submitted,complete,planned)=="failed"
+
+
+def test_partial_submission_ledger_never_completes_an_unsubmitted_planned_task():
+    plan = {"tasks":[task("first"),task("never-submitted",depends=["first"])]}
+    ledger = {"tasks":{"first":{"state":"submitted","job_id":"600"}}}
+    assert pipeline._phase_status(ledger,{"600":state()},plan)=="ambiguous_submission"
+
+
+def test_failed_array_retains_capacity_until_every_member_is_native_terminal():
+    planned = task("array",4,array="0-3%2")
+    plans = {"fixture":{"tasks":[planned]}}
+    ledgers = {"fixture":{"tasks":{"array":{"state":"submitted","job_id":"500"}}}}
+    partial = {"500_0":state("FAILED","1:0"),"500_1":state("RUNNING")}
+    assert pipeline.prospective_capacity(plans,ledgers,partial)["cpus"]==8
+    terminal = {"500_0":state("FAILED","1:0"),"500_1":state(),"500_2":state("CANCELLED","0:15"),"500_3":state()}
+    assert pipeline.prospective_capacity(plans,ledgers,terminal)=={"cpus":0,"gpus":0}
+
+
+def test_native_state_reader_keeps_array_ids_ignores_steps_and_refuses_unavailable_accounting():
+    calls = []
+    def runner(command,**kwargs):
+        calls.append(command)
+        return SimpleNamespace(returncode=0,stdout="800_0|901|COMPLETED|0:0\n800_0.batch|901.batch|COMPLETED|0:0\n800_1|800|CANCELLED+ by 1|0:15\n")
+    result = pipeline._native_states(["800","800"],runner=runner)
+    assert set(result)=={"800_0","800_1"} and result["800_1"]["state"]=="CANCELLED"
+    assert calls[0][calls[0].index("-j")+1]=="800"
+    assert '--format=JobID%64,JobIDRaw%64,State,ExitCode' in calls[0]
+    assert result['800_0']['job_id_raw']=='901' and result['800_1']['job_id_raw']=='800'
+    planned = task('array',4,array='0-1%1')
+    assert pipeline._task_status({'state':'submitted','job_id':'800'},result,planned)=='failed'
+    with pytest.raises(RuntimeError,match="unavailable"):
+        pipeline._native_states(["800"],runner=lambda *a,**k:SimpleNamespace(returncode=1,stdout=""))
+    with pytest.raises(ValueError,match="Invalid native"):
+        pipeline._native_states(["800; sbatch arbitrary"],runner=runner)
+
+
+@pytest.fixture
+def controller_fixture(tmp_path,monkeypatch):
+    root,release = tmp_path/"study",tmp_path/"release"
+    config = {"schema_version":1,"paths":{"root":str(root)},"resources":{"cpu_ceiling":8,"gpu_concurrency":1,"cpu_core_hours_cap":20000,"gpu_hours_cap":400,"scratch_budget_files":250000,"scratch_reserve_bytes":2000000000000},"agents":{}}
+    atomic_json(release/"configs/study.json",config)
+    source = release/"src/horsehair/pipeline.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("# Generated controller QA fixture; never scientific evidence\n")
+    identity = source_identity(release)
+    atomic_json(release/"release.json",{"release_id":"qa-release","source_identity":identity,"config_sha256":canonical_hash(config)})
+    initial_plan = {"phase":"managed-initial","config_sha256":canonical_hash(config),"release_identity":identity,"tasks":[task("ready",1)]}
+    atomic_json(root/"plans/qa-release-managed-initial/plan.json",initial_plan)
+    initial_ledger = {"plan_sha256":canonical_hash(initial_plan),"source_sha256":identity["sha256"],
+                      "tasks":{"ready":{"state":"submitted","job_id":"100"}}}
+    atomic_json(root/"state/qa-release-managed-initial-submission.json",initial_ledger)
+    monkeypatch.setattr(pipeline,"NODES",(("phase-a",("initial:ready",),None),("phase-b",("phase-a",),None)))
+    planned,submitted = [],[]
+    def planner(cfg,rel,directory,phase):
+        planned.append(phase)
+        directory.mkdir(parents=True)
+        script = directory/"work.sbatch"
+        script.write_text("#!/bin/bash\n# Generated scheduler QA fixture\ntrue\n")
+        entry = task("work",2)
+        entry.update(script=str(script),script_sha256=canonical_hash(script.read_text()))
+        record = {"phase":phase,"config_sha256":canonical_hash(cfg),"release_identity":source_identity(rel),"tasks":[entry]}
+        atomic_json(directory/"plan.json",record)
+        return record
+    def submitter(plan,ledger):
+        def scheduler(command,**kwargs):
+            submitted.append(command)
+            return SimpleNamespace(returncode=0,stdout=str(199+len(submitted))+"\n",stderr="")
+        return submit(plan,ledger,runner=scheduler)
+    def tick(native,**kwargs):
+        return pipeline.tick(config,root,release,native=native,planner=planner,submitter=submitter,
+                             readiness=lambda *a:(True,[]),**kwargs)
+    return SimpleNamespace(root=root,release=release,config=config,identity=identity,initial_plan=initial_plan,
+                           initial_ledger=initial_ledger,planner=planner,submitter=submitter,tick=tick,
+                           planned=planned,submitted=submitted)
+
+
+def test_controller_submits_each_phase_once_and_waits_for_native_dependencies(controller_fixture):
+    fixture = controller_fixture
+    first = fixture.tick({"100":state()})
+    assert first["phases"]["phase-a"]["status"]=="queued"
+    assert first["phases"]["phase-b"]["status"]=="waiting_for_dependencies"
+    second = fixture.tick({"100":state(),"200":state("PENDING")})
+    assert len(fixture.submitted)==1 and len(fixture.planned)==1
+    assert second["phases"]["phase-a"]["status"]=="queued"
+    third = fixture.tick({"100":state(),"200":state()})
+    assert len(fixture.submitted)==2 and third["phases"]["phase-b"]["status"]=="queued"
+    final = fixture.tick({"100":state(),"200":state(),"201":state()})
+    assert final["status"]=="waiting_for_primary_scientific_evidence" and final['phase_graph_complete']
+    assert not final['primary_analyses_complete'] and not final["scientific_results_complete"]
+    assert not final["publication_ready"] and len(fixture.submitted)==2
+
+
+def test_native_graph_completion_cannot_complete_pending_auxiliary_science(controller_fixture,monkeypatch):
+    from horsehair import report
+    fixture=controller_fixture
+    names=('behaviour','interventions','molecular-transfer','agents-final')
+    monkeypatch.setattr(pipeline,'NODES',tuple((name,('initial:ready',),None) for name in names))
+    # Claim-validation and auxiliary statistical contracts have their own actual
+    # file/hash tests. This fixture isolates the scheduler completion boundary.
+    monkeypatch.setattr(pipeline,'_phase_outputs',lambda *a,**k:(True,None))
+    auxiliary={'ready':False,'status':'pending','required_assays':['mantis_choice'],'assays':{},
+               'pending':['mantis_choice: original source ambiguity remains'],'source_result_hashes':{}}
+    monkeypatch.setattr(report,'auxiliary_readiness',lambda *a,**k:auxiliary)
+    fixture.tick({'100':state()})
+    assert len(fixture.submitted)==4
+    native={'100':state(),**{str(200+i):state() for i in range(4)}}
+    final=fixture.tick(native)
+    assert final['phase_graph_complete'] and final['primary_analyses_complete']
+    assert not final['auxiliary_analyses_complete'] and not final['scientific_results_complete']
+    assert final['status']=='waiting_for_auxiliary_scientific_inputs' and not final['failed_native_stages']
+    assert not final['publication_ready']
+
+
+def test_completed_numeric_H4_receipt_with_pending_claim_cannot_complete_scientific_phase(controller_fixture,monkeypatch):
+    from horsehair import report
+    fixture=controller_fixture
+    path=fixture.root/'results/inference/H4.json'
+    atomic_json(path,{'claim_id':'H4','status':'complete','claim_status':'pending',
+                     'config_sha256':canonical_hash(fixture.config),'source_sha256':fixture.identity['sha256']})
+    monkeypatch.setattr(report,'validate_result',lambda *a:None)
+    valid,reason=pipeline._phase_outputs('agents-final',fixture.config,fixture.root,fixture.identity['sha256'])
+    assert not valid and 'qualification remains pending' in reason
+
+
+def add_capacity_guard(fixture):
+    fixture.initial_plan["tasks"].append(task("guard",8))
+    fixture.initial_ledger["tasks"]["guard"] = {"state":"submitted","job_id":"101"}
+    fixture.initial_ledger["plan_sha256"] = canonical_hash(fixture.initial_plan)
+    atomic_json(fixture.root/"plans/qa-release-managed-initial/plan.json",fixture.initial_plan)
+    atomic_json(fixture.root/"state/qa-release-managed-initial-submission.json",fixture.initial_ledger)
+
+
+def test_frozen_capacity_wait_plan_is_reused_once_after_capacity_releases(controller_fixture):
+    fixture = controller_fixture
+    add_capacity_guard(fixture)
+    first = fixture.tick({"100":state(),"101":state("RUNNING")})
+    assert first["phases"]["phase-a"]["status"]=="waiting_for_study_capacity"
+    assert len(fixture.planned)==1 and not fixture.submitted
+    journal = read_json(fixture.root/"state/pipeline/qa-release/phase-a-plan-journal.json")
+    assert journal["state"]=="plan_frozen"
+    fixture.tick({"100":state(),"101":state()})
+    fixture.tick({"100":state(),"101":state(),"200":state("PENDING")})
+    assert len(fixture.planned)==1 and len(fixture.submitted)==1
+
+
+def test_ambiguous_submit_outcome_is_never_automatically_replayed(controller_fixture):
+    fixture = controller_fixture
+    def disconnected(plan,ledger):
+        raise RuntimeError("Generated lost acknowledgement fixture")
+    with pytest.raises(RuntimeError,match="lost acknowledgement"):
+        pipeline.tick(fixture.config,fixture.root,fixture.release,native={"100":state()},planner=fixture.planner,
+                      submitter=disconnected,readiness=lambda *a:(True,[]))
+    journal = read_json(fixture.root/"state/pipeline/qa-release/phase-a-plan-journal.json")
+    assert journal["state"]=="submitting"
+    next_tick = fixture.tick({"100":state()})
+    assert next_tick["phases"]["phase-a"]["status"]=="requires_submission_review"
+    assert len(fixture.planned)==1 and not fixture.submitted
+
+
+@pytest.mark.parametrize("field",["config","source","journal-source","ledger-hash"])
+def test_foreign_frozen_plan_or_ledger_cannot_launch(controller_fixture,field):
+    fixture = controller_fixture
+    add_capacity_guard(fixture)
+    fixture.tick({"100":state(),"101":state("RUNNING")})
+    path = fixture.root/"plans/qa-release-phase-a/plan.json"
+    journal_path = fixture.root/"state/pipeline/qa-release/phase-a-plan-journal.json"
+    candidate,journal = read_json(path),read_json(journal_path)
+    if field=="config":
+        candidate["config_sha256"] = "0"*64
+    elif field=="source":
+        candidate["release_identity"] = {"files":{},"sha256":"0"*64}
+    elif field=="journal-source":
+        journal["source_sha256"] = "0"*64
+    else:
+        atomic_json(fixture.root/"state/qa-release-phase-a-submission.json",{"plan_sha256":"0"*64,"tasks":{"work":{"state":"submitted","job_id":"300"}}})
+    atomic_json(path,candidate)
+    journal["plan_sha256"] = canonical_hash(candidate)
+    atomic_json(journal_path,journal)
+    if field=="journal-source":
+        outcome = fixture.tick({"100":state(),"101":state()})
+        assert outcome["phases"]["phase-a"]["status"]=="requires_submission_review"
+    else:
+        with pytest.raises(ValueError,match="different|differs"):
+            fixture.tick({"100":state(),"101":state()})
+    assert not fixture.submitted
+
+
+@pytest.mark.parametrize("change",["config","source"])
+def test_release_change_refuses_all_controller_actions(controller_fixture,change):
+    fixture = controller_fixture
+    if change=="config":
+        fixture.config["resources"]["cpu_ceiling"] = 7
+    else:
+        (fixture.release/"src/horsehair/pipeline.py").write_text("# Modified generated release fixture\n")
+    with pytest.raises(ValueError,match="changed"):
+        fixture.tick({"100":state()})
+    assert not fixture.submitted and not fixture.planned
+
+
+def configure_lock_run(fixture,monkeypatch):
+    from horsehair import budget
+    monkeypatch.setattr(pipeline,"__file__",str(fixture.release/"src/horsehair/pipeline.py"))
+    monkeypatch.setenv("SLURM_JOB_ID","800")
+    # The generated controller allocation has no relation to the host's own
+    # Slurm end time when this fixture runs inside native qualification.
+    monkeypatch.delenv("SLURM_JOB_END_TIME",raising=False)
+    monkeypatch.delenv("SLURM_ARRAY_JOB_ID",raising=False)
+    monkeypatch.delenv("SLURM_ARRAY_TASK_ID",raising=False)
+    monkeypatch.setattr(budget,"native_accounting",lambda *a:None)
+    monkeypatch.setattr(budget,"storage_snapshot",lambda *a:None)
+    monkeypatch.setattr(budget,"require_storage_headroom",lambda *a,**k:{'ready':True,'status':'ready'})
+    monkeypatch.setattr(pipeline,"tick",lambda *a,**k:{"status":"complete","phases":{},"initial_tasks":{},"failed_native_stages":[]})
+    path = fixture.root/"state/pipeline/qa-release/controller.lock"
+    atomic_json(path,{"job_id":"700","segment":0,"started_unix":1.})
+    return path
+
+
+def test_controller_runtime_limit_keeps_original_bound_and_explicit_short_runs():
+    assert pipeline._controller_runtime_limit(None)==140*3600
+    assert pipeline._controller_runtime_limit(180*3600)==140*3600
+    assert pipeline._controller_runtime_limit(60)==60
+
+
+def test_backfilled_controller_preserves_four_hour_finalization_margin():
+    now=1000.
+    assert pipeline._controller_runtime_limit(None,allocation_end=now+143*3600,now=now)==139*3600
+    assert pipeline._controller_runtime_limit(None,allocation_end=now+142*3600,now=now)==138*3600
+    assert pipeline._controller_runtime_limit(None,allocation_end=now+144*3600,now=now)==140*3600
+    assert pipeline._controller_runtime_limit(60,allocation_end=now+142*3600,now=now)==60
+
+
+@pytest.mark.parametrize('end',[float('nan'),float('inf'),'invalid',1000.,1000.+4*3600+29])
+def test_invalid_or_exhausted_native_controller_window_admits_no_loop(end):
+    with pytest.raises(ValueError):
+        pipeline._controller_runtime_limit(None,allocation_end=end,now=1000.)
+
+
+@pytest.mark.parametrize('requested',[float('nan'),float('inf'),0,-1,29])
+def test_invalid_controller_runtime_request_is_rejected_before_allocation(requested):
+    with pytest.raises(ValueError):pipeline._controller_runtime_limit(requested)
+
+
+def cached_storage_fixture(root, measured=100000.):
+    """Generated quota/occupancy evidence, never a biological result."""
+    quota = root / 'state/quota-100000000000000.txt'
+    quota.parent.mkdir(parents=True, exist_ok=True)
+    quota.write_text('Generated native quota evidence fixture\n', encoding='utf8')
+    record = {'status': 'measured', 'root': str(root.resolve()), 'measured_unix': measured,
+              'captured_utc': datetime.fromtimestamp(measured, timezone.utc).isoformat(),
+              'study_bytes': 1000, 'study_files': 10, 'personal_available_bytes': 5000,
+              'personal_available_files': 100, 'native_source_paths': [str(quota.resolve())],
+              'native_source_hashes': {str(quota.resolve()): digest(quota)}}
+    path = root / 'state/storage-budget.json'
+    atomic_json(path, record)
+    return path, quota, record
+
+
+def test_recent_storage_cache_preserves_original_receipt_and_deadline(tmp_path):
+    path, quota, record = cached_storage_fixture(tmp_path)
+    original = path.read_bytes()
+    observed = pipeline._cached_storage_snapshot(tmp_path, now=100060.)
+    assert observed['age_seconds'] == 60
+    assert observed['refresh_due_unix'] == 121600
+    assert observed['receipt_sha256'] == digest(path)
+    assert observed['native_source_hashes'] == {str(quota.resolve()): digest(quota)}
+    assert path.read_bytes() == original
+
+
+@pytest.mark.parametrize('change', ['stale', 'future', 'nan', 'string-time', 'boolean-time',
+    'naive-utc', 'future-utc', 'different-stamp', 'wrong-root', 'pending-status', 'zero-bytes',
+    'infinite-quota', 'negative-files', 'fractional-files', 'missing-pins', 'extra-pin',
+    'changed-native', 'missing-native', 'external-native', 'unrecognized-native', 'malformed-receipt'])
+def test_invalid_storage_cache_requires_fresh_measurement(tmp_path, change):
+    path, quota, record = cached_storage_fixture(tmp_path)
+    now = 100060.
+    if change == 'stale':
+        now = record['measured_unix'] + pipeline.STORAGE_REFRESH_SECONDS
+    elif change == 'future':
+        now = record['measured_unix'] - 1
+    elif change in {'nan', 'string-time', 'boolean-time'}:
+        # Deliberately malformed JSON can contain NaN; no receipt writer accepts it.
+        record['measured_unix'] = {'nan': float('nan'), 'string-time': '100000', 'boolean-time': True}[change]
+    elif change == 'naive-utc':
+        record['captured_utc'] = '1970-01-02T03:46:40'
+    elif change == 'future-utc':
+        record['captured_utc'] = datetime.fromtimestamp(now + 1, timezone.utc).isoformat()
+    elif change == 'different-stamp':
+        record['captured_utc'] = datetime.fromtimestamp(99990., timezone.utc).isoformat()
+    elif change == 'wrong-root':
+        record['root'] = str(tmp_path.parent)
+    elif change == 'pending-status':
+        record['status'] = 'pending'
+    elif change == 'zero-bytes':
+        record['study_bytes'] = 0
+    elif change == 'infinite-quota':
+        record['personal_available_bytes'] = float('inf')
+    elif change == 'negative-files':
+        record['personal_available_files'] = -1
+    elif change == 'fractional-files':
+        record['study_files'] = 10.5
+    elif change == 'missing-pins':
+        record['native_source_hashes'] = {}
+    elif change == 'extra-pin':
+        record['native_source_hashes']['unrelated-file'] = '0' * 64
+    elif change == 'changed-native':
+        quota.write_text('Changed generated quota evidence\n')
+    elif change == 'missing-native':
+        quota.unlink()
+    elif change in {'external-native', 'unrecognized-native'}:
+        other = tmp_path.parent / 'quota-100000.txt' if change == 'external-native' else quota.with_name('forecast.txt')
+        other.write_text('Generated other evidence fixture\n')
+        record['native_source_paths'] = [str(other.resolve())]
+        record['native_source_hashes'] = {str(other.resolve()): digest(other)}
+    elif change == 'malformed-receipt':
+        path.write_text('[]')
+        assert pipeline._cached_storage_snapshot(tmp_path, now=now) is None
+        return
+    path.write_text(__import__('json').dumps(record))
+    assert pipeline._cached_storage_snapshot(tmp_path, now=now) is None
+
+
+@pytest.mark.parametrize('fresh', [True, False])
+def test_restart_uses_valid_cache_but_refreshes_invalid_before_tick(controller_fixture, monkeypatch, fresh):
+    from horsehair import budget
+    fixture = controller_fixture
+    lock = configure_lock_run(fixture, monkeypatch)
+    monkeypatch.setattr(pipeline, '_native_states', lambda *a: {'700': state()})
+    path, quota, record = cached_storage_fixture(fixture.root)
+    original = path.read_bytes()
+    now = 100060. if fresh else 121600.
+    monkeypatch.setattr(pipeline.time, 'time', lambda: now)
+    monkeypatch.setattr(pipeline.time, 'monotonic', lambda: 1000.)
+    calls = []
+    monkeypatch.setattr(budget, 'storage_snapshot', lambda *a: calls.append('refresh'))
+    def tick(*args, **kwargs):
+        calls.append('tick')
+        return {'status': 'complete', 'phases': {}, 'initial_tasks': {}, 'failed_native_stages': []}
+    monkeypatch.setattr(pipeline, 'tick', tick)
+    result = pipeline.run(fixture.config, fixture.root, max_seconds=30)
+    assert result['status'] == 'complete' and not lock.exists()
+    assert calls == (['tick'] if fresh else ['refresh', 'tick'])
+    assert path.read_bytes() == original
+    journal = lock.parent / 'storage-cache-use-800.json'
+    assert journal.exists() is fresh
+    if fresh:
+        assert read_json(journal)['measured_unix'] == record['measured_unix']
+        assert read_json(journal)['receipt_sha256'] == digest(path)
+
+
+def test_restart_cache_expires_at_original_deadline_without_six_hour_extension(controller_fixture, monkeypatch):
+    from horsehair import budget
+    fixture = controller_fixture
+    configure_lock_run(fixture, monkeypatch)
+    monkeypatch.setattr(pipeline, '_native_states', lambda *a: {'700': state()})
+    cached_storage_fixture(fixture.root)
+    clock = [0.]
+    monkeypatch.setattr(pipeline.time, 'time', lambda: 121570. + clock[0])
+    monkeypatch.setattr(pipeline.time, 'monotonic', lambda: clock[0])
+    monkeypatch.setattr(pipeline.time, 'sleep', lambda duration: clock.__setitem__(0, clock[0] + duration))
+    calls = []
+    monkeypatch.setattr(budget, 'storage_snapshot', lambda *a: calls.append(('refresh', clock[0])))
+    def tick(*args, **kwargs):
+        calls.append(('tick', clock[0]))
+        return {'status': 'active', 'phases': {}, 'initial_tasks': {}, 'failed_native_stages': []}
+    monkeypatch.setattr(pipeline, 'tick', tick)
+    pipeline.run(fixture.config, fixture.root, max_seconds=60, interval=30)
+    assert calls == [('tick', 0.), ('refresh', 30.), ('tick', 30.)]
+
+
+def test_live_census_races_pause_submission_and_resume_after_complete_measurement(controller_fixture,monkeypatch):
+    from horsehair import budget
+    from horsehair.storage_artifacts import StorageArtifactRace
+    fixture=controller_fixture;lock=configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'_native_states',lambda *a:{'700':state()})
+    clock=[0.];scans=[];ticks=[];pauses=[]
+    monkeypatch.setattr(pipeline.time,'monotonic',lambda:clock[0])
+    def sleep(seconds):
+        pauses.append(read_json(lock.parent/'status.json'))
+        clock[0]+=seconds
+    monkeypatch.setattr(pipeline.time,'sleep',sleep)
+    def measure(*args):
+        scans.append(clock[0])
+        if len(scans)<3:
+            raise StorageArtifactRace(fixture.root/'logs/controller.log','Entry grew beyond its observed EOF boundary',attempts=3)
+    def tick(*args,**kwargs):
+        ticks.append(clock[0])
+        return {'status':'complete','phases':{},'initial_tasks':{},'failed_native_stages':[]}
+    monkeypatch.setattr(budget,'storage_snapshot',measure)
+    monkeypatch.setattr(pipeline,'tick',tick)
+    result=pipeline.run(fixture.config,fixture.root,max_seconds=300,interval=30)
+    assert scans==[0.,30.,90.] and ticks==[90.] and result['status']=='complete'
+    assert [item['retry_after_seconds'] for item in pauses]==[30,60]
+    assert all(item['status']=='pending_storage_census' and item['scheduling_paused'] for item in pauses)
+    assert all(not item['scientific_results_complete'] for item in pauses)
+    assert all(item['storage_census_race']['size_admitted'] is False for item in pauses)
+    assert not lock.exists() and not fixture.submitted
+
+
+def test_persistent_census_races_back_off_with_cap_and_finite_deadline(controller_fixture,monkeypatch):
+    from horsehair import budget
+    from horsehair.storage_artifacts import StorageArtifactRace
+    fixture=controller_fixture;lock=configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'_native_states',lambda *a:{'700':state()})
+    clock=[0.];delays=[];scans=[]
+    monkeypatch.setattr(pipeline.time,'monotonic',lambda:clock[0])
+    def sleep(seconds):delays.append(seconds);clock[0]+=seconds
+    monkeypatch.setattr(pipeline.time,'sleep',sleep)
+    def measure(*args):
+        scans.append(clock[0]);raise StorageArtifactRace(fixture.root/'active.tmp','Entry changed',attempts=3)
+    monkeypatch.setattr(budget,'storage_snapshot',measure)
+    monkeypatch.setattr(pipeline,'tick',lambda *a,**k:pytest.fail('Incomplete census must never dispatch work'))
+    result=pipeline.run(fixture.config,fixture.root,max_seconds=4000,interval=60)
+    assert delays==[60,120,240,480,900,900,900,400]
+    assert max(delays)==pipeline.STORAGE_CENSUS_RETRY_MAX_SECONDS and clock[0]==4000
+    assert result['status']=='pending_storage_census' and result['segment_status']=='finite_segment_finished'
+    assert result['storage_census_warning_count']==len(scans)==8
+    assert result['scheduling_paused'] and not lock.exists()
+
+
+@pytest.mark.parametrize('failure',[OSError('native storage I/O failed'),ValueError('invalid storage proof')])
+def test_controller_does_not_hide_nonrace_storage_failures(controller_fixture,monkeypatch,failure):
+    from horsehair import budget
+    fixture=controller_fixture;lock=configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'_native_states',lambda *a:{'700':state()})
+    def measure(*args):raise failure
+    monkeypatch.setattr(budget,'storage_snapshot',measure)
+    monkeypatch.setattr(pipeline.time,'sleep',lambda *a:pytest.fail('A nonrace failure must not be retried'))
+    with pytest.raises(type(failure)) as caught:
+        pipeline.run(fixture.config,fixture.root,max_seconds=60,interval=30)
+    assert caught.value is failure and not lock.exists()
+
+
+def inode_shortage():
+    return {'status':'pending','ready':False,'reasons':['Personal scratch inode headroom is insufficient: 560 available'],
+            'personal_available_files':560,'personal_available_bytes':20_000_000_000_000}
+
+
+def test_recent_census_never_bypasses_fresh_personal_inode_guard(controller_fixture,monkeypatch):
+    from horsehair import budget
+    fixture=controller_fixture;lock=configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'_native_states',lambda *a:{'700':state()})
+    cached_storage_fixture(fixture.root)
+    clock=[0.];calls=[]
+    monkeypatch.setattr(pipeline.time,'time',lambda:100060.+clock[0])
+    monkeypatch.setattr(pipeline.time,'monotonic',lambda:clock[0])
+    monkeypatch.setattr(pipeline.time,'sleep',lambda seconds:clock.__setitem__(0,clock[0]+seconds))
+    def guard(root,**demand):
+        calls.append(demand);raise budget.StorageHeadroomError(inode_shortage())
+    monkeypatch.setattr(budget,'require_storage_headroom',guard)
+    monkeypatch.setattr(budget,'native_accounting',lambda *a:pytest.fail('Blocked quota must precede receipt/accounting writes'))
+    monkeypatch.setattr(pipeline,'tick',lambda *a,**k:pytest.fail('Cached headroom must not admit new jobs'))
+    result=pipeline.run(fixture.config,fixture.root,max_seconds=60,interval=30)
+    assert result['status']=='pending_personal_storage' and result['segment_status']=='finite_segment_finished'
+    assert len(calls)==2 and clock[0]==60 and not lock.exists()
+    assert all(demand=={'required_files':0,'required_bytes':0,'reserve_files':250000,'reserve_bytes':2000000000000} for demand in calls)
+    assert result['scheduling_paused'] and not result['scientific_results_complete']
+    assert 'inode headroom' in result['reasons'][0] and not fixture.submitted
+
+
+def test_controller_resumes_only_after_fresh_inode_headroom_returns(controller_fixture,monkeypatch):
+    from horsehair import budget
+    fixture=controller_fixture;lock=configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'_native_states',lambda *a:{'700':state()})
+    clock=[0.];checks=[];ticks=[]
+    monkeypatch.setattr(pipeline.time,'monotonic',lambda:clock[0])
+    monkeypatch.setattr(pipeline.time,'sleep',lambda seconds:clock.__setitem__(0,clock[0]+seconds))
+    def guard(*a,**k):
+        checks.append(clock[0])
+        if len(checks)==1:raise budget.StorageHeadroomError(inode_shortage())
+        return {'status':'ready','ready':True}
+    def tick(*a,**k):
+        ticks.append(clock[0]);assert callable(k['storage_guard'])
+        return {'status':'complete','phases':{},'initial_tasks':{},'failed_native_stages':[]}
+    monkeypatch.setattr(budget,'require_storage_headroom',guard);monkeypatch.setattr(pipeline,'tick',tick)
+    result=pipeline.run(fixture.config,fixture.root,max_seconds=90,interval=30)
+    assert checks==[0.,30.] and ticks==[30.] and result['status']=='complete'
+    assert not lock.exists() and not fixture.submitted
+
+
+def test_storage_loss_during_planning_defers_submission_and_preserves_frozen_plan(controller_fixture):
+    from horsehair import budget
+    fixture=controller_fixture;checks=[]
+    def guard():
+        checks.append('fresh')
+        if len(checks)==2:raise budget.StorageHeadroomError(inode_shortage())
+    with pytest.raises(budget.StorageHeadroomError):
+        fixture.tick({'100':state()},storage_guard=guard)
+    assert len(checks)==2 and fixture.planned==['phase-a'] and not fixture.submitted
+    journal=fixture.root/'state/pipeline/qa-release/phase-a-plan-journal.json'
+    assert read_json(journal)['state']=='plan_frozen'
+    outcome=fixture.tick({'100':state()},storage_guard=lambda:None)
+    assert fixture.planned==['phase-a'] and len(fixture.submitted)==1
+    assert outcome['phases']['phase-a']['status']=='queued'
+
+
+def test_native_storage_guard_rechecks_exact_phase_forecast_before_submission(controller_fixture,monkeypatch):
+    fixture=controller_fixture;checks=[];assessment=[]
+    monkeypatch.setattr(pipeline,'NODES',(('phase-a',('initial:ready',),'rna-full'),))
+    forecast={'status':'admitted','additional_bytes':615855581617,'additional_files':1860}
+    def guard(value=None):checks.append(value)
+    def assessor(*a,**k):
+        assessment.append(len(checks));return {'rna-full':forecast}
+    result=fixture.tick({'100':state()},assessor=assessor,storage_guard=guard)
+    assert assessment==[1] and checks==[None,forecast,forecast]
+    assert result['phases']['phase-a']['status']=='queued' and len(fixture.submitted)==1
+
+
+def test_native_controller_quota_io_failure_is_not_retried_as_receipt_contention(controller_fixture,monkeypatch):
+    import errno
+    from horsehair import budget
+    fixture=controller_fixture;lock=configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'_native_states',lambda *a:{'700':state()})
+    checks=[];error=OSError(errno.EDQUOT,'Native personal file quota reached')
+    def guard(*a,**k):checks.append(1);raise error
+    monkeypatch.setattr(budget,'require_storage_headroom',guard)
+    with pytest.raises(OSError) as caught:
+        pipeline.run(fixture.config,fixture.root,max_seconds=60,interval=30)
+    assert caught.value is error and checks==[1] and not lock.exists() and not fixture.submitted
+
+
+def maintenance_framework_fixture(fixture, monkeypatch):
+    framework = fixture.release.with_name('maintenance-framework')
+    atomic_json(framework/'configs/study.json', fixture.config)
+    source = framework/'src/horsehair/pipeline.py'
+    source.parent.mkdir(parents=True)
+    source.write_text('# Distinct generated framework fixture; never scientific evidence\n')
+    identity = source_identity(framework)
+    atomic_json(framework/'release.json', {'release_id': 'qa-framework', 'source_identity': identity,
+                'config_sha256': canonical_hash(fixture.config)})
+    monkeypatch.setattr(pipeline, '__file__', str(source))
+    return framework, identity
+
+
+def test_maintenance_controller_uses_primary_tick_namespace_and_distinct_framework_journal(controller_fixture, monkeypatch):
+    fixture = controller_fixture
+    lock = configure_lock_run(fixture, monkeypatch)
+    monkeypatch.setattr(pipeline, '_native_states', lambda *a: {'700': state()})
+    framework, framework_identity = maintenance_framework_fixture(fixture, monkeypatch)
+    observed = []
+    def tick(config, root, release, **kwargs):
+        observed.append(release)
+        return {'status': 'complete', 'phases': {}, 'initial_tasks': {}, 'failed_native_stages': []}
+    monkeypatch.setattr(pipeline, 'tick', tick)
+    pipeline.run(fixture.config, fixture.root, primary_release=fixture.release, max_seconds=30)
+    assert observed == [fixture.release.resolve()]
+    assert not lock.exists() and not (fixture.root/'state/pipeline/qa-framework').exists()
+    record = read_json(lock.parent/'controller-framework-800.json')
+    assert record['primary_source_identity'] == fixture.identity
+    assert record['framework_source_identity'] == framework_identity != fixture.identity
+    assert record['primary_release'] == str(fixture.release.resolve())
+    assert record['framework_release'] == str(framework.resolve())
+
+
+@pytest.mark.parametrize('admitted', [False, True])
+def test_maintenance_tick_routes_default_assessment_and_planning_to_primary(controller_fixture,monkeypatch,admitted):
+    from horsehair import admission,slurm
+    fixture=controller_fixture
+    maintenance_framework_fixture(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'NODES',(('agents-final',('initial:ready',),'agents-final'),))
+    monkeypatch.setattr(admission,'assess_admission',lambda *a,**k:pytest.fail('Do not import framework scientific assessment'))
+    monkeypatch.setattr(slurm,'plan',lambda *a,**k:pytest.fail('Do not construct scientific plans in framework context'))
+    observed=[]
+    def primary(config,root,release,action,phase,directory=None):
+        assert config==fixture.config and Path(root).resolve()==fixture.root.resolve()
+        assert Path(release).resolve()==fixture.release.resolve()
+        observed.append(action)
+        if action=='admission':
+            return {phase:{'status':'admitted' if admitted else 'pending','reasons':[] if admitted else ['Actual CPU grid unavailable']}}
+        return fixture.planner(config,release,directory,phase)
+    monkeypatch.setattr(pipeline,'_primary_execution',primary)
+    result=pipeline.tick(fixture.config,fixture.root,fixture.release,native={'100':state()},
+                         submitter=fixture.submitter,readiness=lambda *a:(True,[]))
+    assert observed==(['admission','plan'] if admitted else ['admission'])
+    assert result['phases']['agents-final']['status']==('queued' if admitted else 'resource_pending')
+    assert bool(fixture.submitted)==admitted
+
+
+@pytest.mark.parametrize('fault', ['missing-primary', 'primary-source', 'framework-source', 'primary-config',
+                                 'framework-config', 'wrong-root'])
+def test_maintenance_controller_rejects_changed_release_or_full_configuration_before_lock_claim(controller_fixture, monkeypatch, fault):
+    fixture = controller_fixture
+    lock = configure_lock_run(fixture, monkeypatch)
+    framework, framework_identity = maintenance_framework_fixture(fixture, monkeypatch)
+    primary = fixture.release
+    if fault == 'missing-primary':
+        primary = framework.with_name('absent-primary')
+    elif fault.endswith('source'):
+        target = primary if fault == 'primary-source' else framework
+        (target/'src/horsehair/pipeline.py').write_text('# Changed generated fixture\n')
+    elif fault.endswith('config'):
+        target = primary if fault == 'primary-config' else framework
+        altered = copy.deepcopy(fixture.config)
+        altered['resources']['cpu_ceiling'] += 1
+        atomic_json(target/'configs/study.json', altered)
+        record = read_json(target/'release.json')
+        record['source_identity'] = source_identity(target)
+        record['config_sha256'] = canonical_hash(altered)
+        atomic_json(target/'release.json', record)
+    else:
+        fixture.config['paths']['root'] = str(fixture.root.parent)
+    original = lock.read_bytes()
+    with pytest.raises((ValueError, FileNotFoundError)):
+        pipeline.run(fixture.config, fixture.root, primary_release=primary, max_seconds=30)
+    assert lock.read_bytes() == original and not list(lock.parent.glob('controller-framework-*.json'))
+
+
+def test_controller_defers_live_receipt_guard_and_recovers_without_replaying(controller_fixture,monkeypatch):
+    from horsehair import budget
+    from horsehair.core import ReceiptLockTimeout
+    fixture=controller_fixture;path=configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'_native_states',lambda *a:{'700':state()})
+    now=[0.];monkeypatch.setattr(pipeline.time,'monotonic',lambda:now[0])
+    monkeypatch.setattr(pipeline.time,'sleep',lambda duration:now.__setitem__(0,now[0]+duration))
+    calls=[]
+    def accounting(*args):
+        calls.append(args)
+        if len(calls)==1:
+            raise ReceiptLockTimeout(fixture.root/'state/resource-budget.mutex',30.,{'pid':123,'state':'held'})
+    monkeypatch.setattr(budget,'native_accounting',accounting)
+    result=pipeline.run(fixture.config,fixture.root,max_seconds=90,interval=30)
+    assert result['status']=='complete' and len(calls)==2 and not path.exists()
+    warning=read_json(path.parent/'receipt-guard-warning.json')
+    assert warning['warning_count']==1 and warning['last_known_holder']['pid']==123
+    assert warning['owner_metadata_is_authoritative'] is False
+    assert not fixture.submitted
+
+
+def test_repeated_receipt_guard_contention_cannot_exceed_finite_controller_window(controller_fixture,monkeypatch):
+    from horsehair import budget
+    from horsehair.core import ReceiptLockTimeout
+    fixture=controller_fixture;path=configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,'_native_states',lambda *a:{'700':state()})
+    now=[0.];monkeypatch.setattr(pipeline.time,'monotonic',lambda:now[0])
+    monkeypatch.setattr(pipeline.time,'sleep',lambda duration:now.__setitem__(0,now[0]+duration))
+    calls=[]
+    def accounting(*args):
+        calls.append(args)
+        raise ReceiptLockTimeout(fixture.root/'state/resource-budget.mutex',30.,{'pid':123,'state':'held'})
+    monkeypatch.setattr(budget,'native_accounting',accounting)
+    result=pipeline.run(fixture.config,fixture.root,max_seconds=60,interval=30)
+    assert result['status']=='waiting_for_receipt_guard' and result['segment_status']=='finite_segment_finished'
+    assert result['receipt_guard_warning_count']==2 and len(calls)==2 and now[0]==60
+    assert not result['scientific_results_complete'] and not path.exists() and not fixture.submitted
+
+
+@pytest.mark.parametrize("native_proof",[{}, {"700":state("RUNNING")}, {"700":state("PENDING")}])
+def test_controller_never_removes_lock_without_terminal_native_proof(controller_fixture,monkeypatch,native_proof):
+    fixture = controller_fixture
+    path = configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,"_native_states",lambda *a:native_proof)
+    with pytest.raises(RuntimeError,match="terminal proof"):
+        pipeline.run(fixture.config,fixture.root,max_seconds=30)
+    assert read_json(path)["job_id"]=="700"
+    assert not list(path.parent.glob("controller-lock-700-*.json"))
+
+
+@pytest.mark.parametrize("terminal",["COMPLETED","FAILED","TIMEOUT"])
+def test_controller_archives_terminal_native_lock_proof_before_recovery(controller_fixture,monkeypatch,terminal):
+    fixture = controller_fixture
+    path = configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,"_native_states",lambda *a:{"700":state(terminal)})
+    result = pipeline.run(fixture.config,fixture.root,max_seconds=30)
+    assert result["status"]=="complete" and not path.exists()
+    archived = list(path.parent.glob("controller-lock-700-*.json"))
+    assert len(archived)==1
+    assert read_json(archived[0])["native_terminal_proof"]["state"]==terminal
+
+
+def test_controller_lock_replacement_during_native_query_is_not_deleted(controller_fixture,monkeypatch):
+    fixture = controller_fixture
+    path = configure_lock_run(fixture,monkeypatch)
+    def scheduler_query(*args):
+        atomic_json(path,{"job_id":"701","segment":1,"started_unix":2.})
+        return {"700":state()}
+    monkeypatch.setattr(pipeline,"_native_states",scheduler_query)
+    with pytest.raises(RuntimeError):
+        pipeline.run(fixture.config,fixture.root,max_seconds=30)
+    assert path.exists() and read_json(path)["job_id"]=="701"
+
+
+def test_controller_recovery_guard_old_file_contents_do_not_block_new_terminal_recovery(controller_fixture,monkeypatch):
+    fixture = controller_fixture
+    path = configure_lock_run(fixture,monkeypatch)
+    guard = path.parent/"controller-recovery.lock"
+    guard.write_text('{"job_id":"699","generated_fixture":"previous crash"}')
+    monkeypatch.setattr(pipeline,"_native_states",lambda *a:{"700":state()})
+    result = pipeline.run(fixture.config,fixture.root,max_seconds=30)
+    assert result["status"]=="complete" and guard.exists() and not path.exists()
+
+
+def test_os_recovery_lock_rejects_competing_process_and_releases_after_crash(tmp_path):
+    """Actual process death, not a mocked finally, must release the OS mutex."""
+    guard = tmp_path/"generated-os-lock-fixture.lock"
+    source_root = Path(pipeline.__file__).resolve().parents[1]
+    environment = dict(os.environ,PYTHONPATH=str(source_root)+os.pathsep+os.environ.get("PYTHONPATH",""))
+    code = "from pathlib import Path; import sys,time,os; from horsehair.pipeline import _recovery_guard\nwith _recovery_guard(Path(sys.argv[1])):\n print('held:'+str(os.getpid()),flush=True)\n time.sleep(120)\n"
+    process = subprocess.Popen([sys.executable,"-c",code,str(guard)],stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+                               text=True,env=environment,creationflags=subprocess.CREATE_NO_WINDOW if os.name=="nt" else 0)
+    child_pid = None
+    try:
+        acknowledgement = process.stdout.readline().strip()
+        assert acknowledgement.startswith("held:")
+        child_pid = int(acknowledgement.split(":")[1])
+        assert child_pid>0 and child_pid!=os.getpid()
+        with pytest.raises((OSError,RuntimeError)):
+            with pipeline._recovery_guard(guard):
+                pytest.fail("Concurrent controller recovery acquired another process's OS lock")
+        # Windows venv launchers can spawn the actual interpreter; terminate
+        # the PID reported by our helper, rather than leave an orphaned holder.
+        os.kill(child_pid,signal.SIGTERM)
+        process.wait(timeout=10)
+        with pipeline._recovery_guard(guard):
+            assert guard.exists()
+    finally:
+        if process.poll() is None:
+            if child_pid is not None:
+                try:
+                    os.kill(child_pid,signal.SIGTERM)
+                except OSError:
+                    pass
+            process.kill()
+        process.communicate(timeout=10)
+
+
+def test_controller_cleanup_preserves_replaced_main_lock_owner(controller_fixture,monkeypatch):
+    fixture = controller_fixture
+    path = configure_lock_run(fixture,monkeypatch)
+    monkeypatch.setattr(pipeline,"_native_states",lambda *a:{"700":state()})
+    def replaced(*args,**kwargs):
+        atomic_json(path,{"job_id":"702","generated_fixture":"changed during tick"})
+        return {"status":"complete","phases":{},"initial_tasks":{},"failed_native_stages":[]}
+    monkeypatch.setattr(pipeline,"tick",replaced)
+    pipeline.run(fixture.config,fixture.root,max_seconds=30)
+    assert read_json(path)["job_id"]=="702"
+
+
+@pytest.mark.parametrize("status",["pending","rejected"])
+def test_resource_admission_refusal_cannot_create_plan_or_submit(controller_fixture,monkeypatch,status):
+    fixture = controller_fixture
+    monkeypatch.setattr(pipeline,"NODES",(("phase-a",("initial:ready",),"agents-development"),))
+    outcome = fixture.tick({"100":state()},assessor=lambda *a,**k:{"agents-development":{"status":status,"reasons":["Generated resource fixture"]}})
+    assert outcome["phases"]["phase-a"]["status"]=="resource_"+status
+    assert not fixture.planned and not fixture.submitted
+
+
+def test_missing_scientific_inputs_cannot_create_plan_or_submit(controller_fixture):
+    fixture = controller_fixture
+    outcome = pipeline.tick(fixture.config,fixture.root,fixture.release,native={"100":state()},planner=fixture.planner,
+                            submitter=fixture.submitter,readiness=lambda *a:(False,["Generated missing metadata fixture"]))
+    assert outcome["phases"]["phase-a"]["status"]=="waiting_for_scientific_inputs"
+    assert not fixture.planned and not fixture.submitted
+
+
+def test_registered_budget_reserves_every_unfinished_array_member_including_missing_records():
+    entry = task("training", 6, True, array="0-5%1")
+    entry["resources"]["hours"] = 12
+    plans = {"qa":{"tasks":[entry]}}
+    ledgers = {"qa":{"tasks":{"training":{"state":"submitted","job_id":"500"}}}}
+    native = {"500_0":state(), "500_1":state("FAILED","1:0"),
+              "500_2":state("RUNNING"), "500_3":state("PENDING")}
+    accounting = {"spent_cpu_core_hours":22, "spent_gpu_hours":3}
+    result = pipeline.prospective_registered_budget(plans, ledgers, native, accounting)
+    # Four unfinished children remain reserved despite the one-GPU throttle.
+    # The failed child's consumed allocation remains in native spent hours.
+    assert result["cpu_core_hours"] == 22+4*6*12
+    assert result["gpu_hours"] == 3+4*12
+    native.update({"500_2":state(), "500_3":state("CANCELLED","0:15"),
+                   "500_4":state(), "500_5":state()})
+    final = pipeline.prospective_registered_budget(plans, ledgers, native, accounting)
+    assert final["cpu_core_hours"] == 22 and final["gpu_hours"] == 3
+
+
+def test_registered_budget_does_not_add_active_lease_bound_twice():
+    gpu = task("running", 6, True); gpu["resources"]["hours"] = 12
+    cpu = task("pending", 4, array="0-1%2"); cpu["resources"]["hours"] = 2
+    plans = {"gpu":{"tasks":[gpu]}, "cpu":{"tasks":[cpu]}}
+    ledgers = {"gpu":{"tasks":{"running":{"state":"submitted","job_id":"600"}}}}
+    accounting = {"spent_cpu_core_hours":5, "spent_gpu_hours":.5,
+                  "leases":{"600":{"state":"running","cpus":6,"gpus":1,"max_hours":12}}}
+    result = pipeline.prospective_registered_budget(plans, ledgers, {"600":state("RUNNING")}, accounting)
+    assert result["cpu_core_hours"] == 5+6*12+2*4*2
+    assert result["gpu_hours"] == .5+12
+
+
+def test_unsubmitted_sequential_phases_reserve_full_allocation_not_only_concurrent_weight():
+    gpu = task("training", 6, True, array="0-1%1"); gpu["resources"]["hours"] = 2
+    finish = task("freeze", 2, depends=["training"]); finish["resources"]["hours"] = 1
+    plans = {"qa":{"tasks":[gpu,finish]}}
+    result = pipeline.prospective_registered_budget(plans, {}, {},
+        {"spent_cpu_core_hours":10,"spent_gpu_hours":2})
+    assert pipeline.prospective_capacity(plans, {}, {}) == {"cpus":6,"gpus":1}
+    assert result["cpu_core_hours"] == 10+2*6*2+2
+    assert result["gpu_hours"] == 2+2*2
+
+
+def test_independent_phase_budget_wait_retries_frozen_plan_after_actual_cost_releases_bound(controller_fixture,monkeypatch):
+    fixture = controller_fixture
+    fixture.config["resources"]["cpu_core_hours_cap"] = 6
+    atomic_json(fixture.release/"configs/study.json",fixture.config)
+    fixture.identity = source_identity(fixture.release)
+    atomic_json(fixture.release/"release.json",{"release_id":"qa-release","source_identity":fixture.identity,
+        "config_sha256":canonical_hash(fixture.config)})
+    fixture.initial_plan.update(config_sha256=canonical_hash(fixture.config),release_identity=fixture.identity)
+    fixture.initial_ledger.update(plan_sha256=canonical_hash(fixture.initial_plan),source_sha256=fixture.identity["sha256"])
+    atomic_json(fixture.root/"plans/qa-release-managed-initial/plan.json",fixture.initial_plan)
+    atomic_json(fixture.root/"state/qa-release-managed-initial-submission.json",fixture.initial_ledger)
+    monkeypatch.setattr(pipeline,"NODES",(("phase-a",("initial:ready",),None),("phase-b",("initial:ready",),None)))
+    accounting = fixture.root/"state/resource-budget.json"
+    atomic_json(accounting,{"spent_cpu_core_hours":1,"spent_gpu_hours":0})
+    first = fixture.tick({"100":state()})
+    assert first["phases"]["phase-a"]["status"] == "queued"
+    assert first["phases"]["phase-b"]["status"] == "waiting_for_registered_resource_budget"
+    assert first["phases"]["phase-b"]["prospective_registered_budget"]["cpu_core_hours"] == 9
+    assert len(fixture.planned) == 2 and len(fixture.submitted) == 1
+    journal_path = fixture.root/"state/pipeline/qa-release/phase-b-plan-journal.json"
+    frozen = read_json(journal_path)
+    assert frozen["state"] == "plan_frozen"
+    # Phase A actually cost one core-hour rather than its four-hour bound.
+    # The remaining phase now exactly meets the six-hour cap.
+    atomic_json(accounting,{"spent_cpu_core_hours":2,"spent_gpu_hours":0})
+    second = fixture.tick({"100":state(),"200":state()})
+    assert second["phases"]["phase-b"]["status"] == "queued"
+    assert len(fixture.planned) == 2 and len(fixture.submitted) == 2
+    assert read_json(journal_path)["plan_sha256"] == frozen["plan_sha256"]
+    fixture.tick({"100":state(),"200":state(),"201":state("PENDING")})
+    assert len(fixture.submitted) == 2
+

@@ -1,0 +1,35 @@
+{
+  "complete_primary_policy_sources_closure_exercised": true,
+  "files": {
+    "handoff-contracts-local-final.xml": {
+      "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\primary-handoff-v2\\handoff-contracts-local-final.xml",
+      "sha256": "7199350670152702a0d0949959a8a9befbfbd1e37c5c990f5cab299a73b24b75"
+    },
+    "handoff-primary-external-census-v1-20261023.py": {
+      "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\primary-handoff-v2\\handoff-primary-external-census-v1-20261023.py",
+      "sha256": "de582b45b5c3f813673f6f0bcaa3aca32659c3b57a75b10511e2409fabb015c9"
+    },
+    "test_handoff_primary_external_census_v1_20261023.py": {
+      "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\primary-handoff-v2\\test_handoff_primary_external_census_v1_20261023.py",
+      "sha256": "0bd09ef4ec8fc62c4e5cc98e26698e3a1fc0da462b1891a8f0fc907dd73e7ed5"
+    }
+  },
+  "kind": "primary-external-census-handoff-v2-local-contract-freeze-v1",
+  "native_qualification_claimed": false,
+  "python_311_grammar": "passed",
+  "source_delta": {
+    "changed_functions": [
+      "packet"
+    ],
+    "unchanged_functions": 29,
+    "v1_source_and_test_preserved": {
+      "handoff-primary-external-census-v1-20261023.py": "f299f6be9684e7f5d5ad4e28cd92870f9f8ee4c72774eef876251be9f9123584",
+      "test_handoff_primary_external_census_v1_20261023.py": "fbe9651e6e01edb109f8fae9fd2e97e1e6a510d022e30776be4ac6c5cade8119"
+    }
+  },
+  "status": "125_local_contracts_passed_native_qualification_pending",
+  "tests": {
+    "count": 125,
+    "roster_sha256": "9a8c3cf8cda5aaa01878c50f0638135147c269353de86bda091c3d568cf5c3f6"
+  }
+}

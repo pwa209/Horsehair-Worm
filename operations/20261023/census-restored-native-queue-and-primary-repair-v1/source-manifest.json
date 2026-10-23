@@ -1,0 +1,1293 @@
+{
+  "files": {
+    "README.md": {
+      "bytes": 9728,
+      "sha256": "f6ae9fc3793984f370e9340b6f65436976a5a6c720aabf839a35a377a8282625"
+    },
+    "narval-observations/480/maintenance/study-primary-external-census-handoff-v1-20261023/native-6867492/handoff-contracts.xml": {
+      "bytes": 26753,
+      "sha256": "c7646723c35e23728ca53acbaeb2ff30ab0c5cf48720ca8f5038dbe0c7fce330"
+    },
+    "narval-observations/480/maintenance/study-primary-external-census-handoff-v1-20261023/native-6867492/native-handoff-qualification.json": {
+      "bytes": 1345,
+      "sha256": "48b52ce7ceea1660e317fd5130db698bf6af64e9f47ca60164533d44d343a111"
+    },
+    "narval-observations/480/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_budget-module-origins.json": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval-observations/480/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_pipeline-module-origins.json": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval-observations/480/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/primary_policy-module-origins.json": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval-observations/480/plans/recovery-support-20261021-470/plan.json": {
+      "bytes": 14132,
+      "sha256": "cf259af7668ce0504fc242822564d67aa4c0a2963a29ebd92f42169b8e2ce08d"
+    },
+    "narval-observations/480/plans/recovery-support-20261021-470/recovery-470.sbatch": {
+      "bytes": 1702,
+      "sha256": "30baab3ab6aa5aac9448e4c1c3afbc1da8247bd0bea6ba35cd0f33708a6c2b46"
+    },
+    "narval-observations/480/state/recovery-support-20261021-470-submission.json": {
+      "bytes": 2020,
+      "sha256": "8b016e238ca61395ae9250ea6fe7ddd8716244b487f1dfeda804e1a474548b2b"
+    },
+    "narval-observations/481/maintenance/study-af-rolling-storage-census-v4-20261023/native-6864491/receipt.json": {
+      "bytes": 19020,
+      "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+    },
+    "narval-observations/481/maintenance/study-primary-external-census-handoff-v1-20261023/native-6867492/handoff-contracts.xml": {
+      "bytes": 26753,
+      "sha256": "c7646723c35e23728ca53acbaeb2ff30ab0c5cf48720ca8f5038dbe0c7fce330"
+    },
+    "narval-observations/481/maintenance/study-primary-external-census-handoff-v1-20261023/native-6867492/native-handoff-qualification.json": {
+      "bytes": 1345,
+      "sha256": "48b52ce7ceea1660e317fd5130db698bf6af64e9f47ca60164533d44d343a111"
+    },
+    "narval-observations/481/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_budget-module-origins.json": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval-observations/481/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_pipeline-module-origins.json": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval-observations/481/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/primary_policy-module-origins.json": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval-observations/481/plans/recovery-support-20261021-470/plan.json": {
+      "bytes": 14132,
+      "sha256": "cf259af7668ce0504fc242822564d67aa4c0a2963a29ebd92f42169b8e2ce08d"
+    },
+    "narval-observations/481/plans/recovery-support-20261021-470/recovery-470.sbatch": {
+      "bytes": 1702,
+      "sha256": "30baab3ab6aa5aac9448e4c1c3afbc1da8247bd0bea6ba35cd0f33708a6c2b46"
+    },
+    "narval-observations/481/state/recovery-support-20261021-470-submission.json": {
+      "bytes": 2020,
+      "sha256": "8b016e238ca61395ae9250ea6fe7ddd8716244b487f1dfeda804e1a474548b2b"
+    },
+    "narval-observations/484/maintenance/study-af-registry-repair-support-v6-20261022/private-qualification.json": {
+      "bytes": 9223,
+      "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+    },
+    "narval-observations/484/maintenance/study-af-rolling-storage-census-v4-20261023/native-6864491/receipt.json": {
+      "bytes": 19020,
+      "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+    },
+    "narval-observations/484/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_budget-module-origins.json": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval-observations/484/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_pipeline-module-origins.json": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval-observations/484/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/primary_policy-module-origins.json": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval-observations/484/plans/recovery-support-20261021-483/plan.json": {
+      "bytes": 14132,
+      "sha256": "b312f0b88a7d4bdfc63ce247de2cbf6a73fbc5aae8c984a3060e8ac3f4ae6ff0"
+    },
+    "narval-observations/484/plans/recovery-support-20261021-483/recovery-483.sbatch": {
+      "bytes": 1702,
+      "sha256": "e0a7b20a913bbbcaf8814813aaf683edd8278a6dbf8e4374114670ab84b87450"
+    },
+    "narval-observations/484/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-0.sbatch": {
+      "bytes": 1518,
+      "sha256": "d3d47df66f404ce8b5d24dc4a6012719c369c93200437c031333708fd2902571"
+    },
+    "narval-observations/484/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-1.sbatch": {
+      "bytes": 1518,
+      "sha256": "8ed1c4dd9ff819b06d2671506a389d85d65293bb765bbe94757dc5bcda6e1546"
+    },
+    "narval-observations/484/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-2.sbatch": {
+      "bytes": 1518,
+      "sha256": "c50d961f4e748bfbc2ec3e477b66755c0b0d2625eb9c85465e545e14f53dc455"
+    },
+    "narval-observations/484/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-3.sbatch": {
+      "bytes": 1518,
+      "sha256": "1b18e23f5c19334f06eb192b4ad3f9de3171cddb34274d9687963cc4c84a0e76"
+    },
+    "narval-observations/484/plans/study-af-f2-registry-r2-controllers-v1-20261022/plan.json": {
+      "bytes": 16978,
+      "sha256": "1851ec7ba5c29a4e6df5536136fbb4bd802d806511547e9d690eb3f0e0fef4e8"
+    },
+    "narval-observations/484/state/recovery-support-20261021-483-submission.json": {
+      "bytes": 2020,
+      "sha256": "f15d1bbb16b0161c6fa6b8482f69827278f260a317a030def4ba1dbcddf26c47"
+    },
+    "narval-observations/484/state/study-af-f2-registry-r2-controllers-v1-20261022-submission.json": {
+      "bytes": 3115,
+      "sha256": "243c55d6d18002e9ec6d30eff6be41aab6b0c03c651d604c191f1ae8990b09f3"
+    },
+    "narval-observations/485/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/native-handoff-qualification.json": {
+      "bytes": 1323,
+      "sha256": "666f89af22652aec112d58867a6e0696ab3c80bb418da9c099fd3c8e3bd9037b"
+    },
+    "narval-observations/485/maintenance/study-af-registry-repair-support-v6-20261022/private-qualification.json": {
+      "bytes": 9223,
+      "sha256": "c388a0f2a32b73dc817915c2594c5cbe01d4c3877dffc4fdceff620b3df7f014"
+    },
+    "narval-observations/485/maintenance/study-af-rolling-storage-census-v4-20261023/native-6864491/receipt.json": {
+      "bytes": 19020,
+      "sha256": "660ecdd8407d219a9c3b2ea09ae085c46050075ffa7009c560ff14b4c55d371a"
+    },
+    "narval-observations/485/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/handoff-contracts.xml": {
+      "bytes": 29510,
+      "sha256": "bf72f9ee11315874b3f166920494f7e11534d70e45f55a990c607286acdf6615"
+    },
+    "narval-observations/485/maintenance/study-primary-external-census-handoff-v2-20261023/native-6868176/native-handoff-qualification.json": {
+      "bytes": 1345,
+      "sha256": "fad78280119d94e5b49db4770cd3198dd33d64b3fd6d7b84c998fd1a31161fc6"
+    },
+    "narval-observations/485/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_budget-module-origins.json": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval-observations/485/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_pipeline-module-origins.json": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval-observations/485/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/primary_policy-module-origins.json": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval-observations/485/plans/recovery-support-20261021-483/plan.json": {
+      "bytes": 14132,
+      "sha256": "b312f0b88a7d4bdfc63ce247de2cbf6a73fbc5aae8c984a3060e8ac3f4ae6ff0"
+    },
+    "narval-observations/485/plans/recovery-support-20261021-483/recovery-483.sbatch": {
+      "bytes": 1702,
+      "sha256": "e0a7b20a913bbbcaf8814813aaf683edd8278a6dbf8e4374114670ab84b87450"
+    },
+    "narval-observations/485/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-0.sbatch": {
+      "bytes": 1518,
+      "sha256": "d3d47df66f404ce8b5d24dc4a6012719c369c93200437c031333708fd2902571"
+    },
+    "narval-observations/485/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-1.sbatch": {
+      "bytes": 1518,
+      "sha256": "8ed1c4dd9ff819b06d2671506a389d85d65293bb765bbe94757dc5bcda6e1546"
+    },
+    "narval-observations/485/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-2.sbatch": {
+      "bytes": 1518,
+      "sha256": "c50d961f4e748bfbc2ec3e477b66755c0b0d2625eb9c85465e545e14f53dc455"
+    },
+    "narval-observations/485/plans/study-af-f2-registry-r2-controllers-v1-20261022/af-f2-registry-r2-v1-controller-3.sbatch": {
+      "bytes": 1518,
+      "sha256": "1b18e23f5c19334f06eb192b4ad3f9de3171cddb34274d9687963cc4c84a0e76"
+    },
+    "narval-observations/485/plans/study-af-f2-registry-r2-controllers-v1-20261022/plan.json": {
+      "bytes": 16978,
+      "sha256": "1851ec7ba5c29a4e6df5536136fbb4bd802d806511547e9d690eb3f0e0fef4e8"
+    },
+    "narval-observations/485/state/recovery-support-20261021-483-submission.json": {
+      "bytes": 2020,
+      "sha256": "f15d1bbb16b0161c6fa6b8482f69827278f260a317a030def4ba1dbcddf26c47"
+    },
+    "narval-observations/485/state/study-af-f2-registry-r2-controllers-v1-20261022-submission.json": {
+      "bytes": 3115,
+      "sha256": "243c55d6d18002e9ec6d30eff6be41aab6b0c03c651d604c191f1ae8990b09f3"
+    },
+    "narval/maintenance/study-af-rolling-census-registration-v4-20261023/receipt.json": {
+      "bytes": 7884,
+      "sha256": "2d9c1820ed52fc5dc4be9a3d908ad1bd5cfc380270e662f8571abec0a4cc1de4"
+    },
+    "narval/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_budget-module-origins.json": {
+      "bytes": 934,
+      "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+    },
+    "narval/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_budget.xml": {
+      "bytes": 7128,
+      "sha256": "4a7f167d97f99d145a3a32f85f912c0d5bb83667578fcf4fd88af069c5b07495"
+    },
+    "narval/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_pipeline-module-origins.json": {
+      "bytes": 1830,
+      "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+    },
+    "narval/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_pipeline.xml": {
+      "bytes": 13624,
+      "sha256": "d47957393851b7d3db521adc12f4b336241a9c68e80de08306559b792aa5f8f1"
+    },
+    "narval/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/completion.json": {
+      "bytes": 406,
+      "sha256": "19c417a6d59bbf3b2a1c771d3277a5d31321a34b3bab2a504876aa2b48315fce"
+    },
+    "narval/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/native-bindings.json": {
+      "bytes": 3024,
+      "sha256": "333b34e06536569d89018ac6dd847fa91ee442600b588fcee19e5e446ef51ca8"
+    },
+    "narval/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/primary_policy-module-origins.json": {
+      "bytes": 916,
+      "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+    },
+    "narval/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/primary_policy.xml": {
+      "bytes": 9233,
+      "sha256": "ff72eace94144bcf8b4c3e52c5613ecbe29c1199b5644ef843ea79f9696013af"
+    },
+    "narval/maintenance/study-primary-external-census-policy-v1-20261023/qualification.json": {
+      "bytes": 8998,
+      "sha256": "d7966afe00498ebc4c1e23c34da8b75407fc0fb691afb488b11ed98e0c53f711"
+    },
+    "narval/plans/recovery-support-20261021-429/plan.json": {
+      "bytes": 172599,
+      "sha256": "a848dfdd01b148b0bf68c59b0fe6a881d8284ce30d49282e157ca88fd17c36cc"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-01.sbatch": {
+      "bytes": 2352,
+      "sha256": "00fc5a5fc1a5ee36bc312d92de6cb1076af15934865f3afd126eaf0644ef912d"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-02.sbatch": {
+      "bytes": 2352,
+      "sha256": "a9107a6c1861c143bd9d886ae461878eb089928977c483ef5dc965d127adeb50"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-03.sbatch": {
+      "bytes": 2352,
+      "sha256": "fa5e540dff264faf1838b410dab7de3f2055c6597ff20143cb09a6d36b819fee"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-04.sbatch": {
+      "bytes": 2352,
+      "sha256": "6bddbd2af08dfacf54a7b98366800600e79b976161f8553be60f87ed0deb94be"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-05.sbatch": {
+      "bytes": 2352,
+      "sha256": "def11dfe25f6f21193c6720d1975a4c8853ae9e377d418a552aa2951577b9a15"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-06.sbatch": {
+      "bytes": 2352,
+      "sha256": "de55c3ddb9080c1637618ed4f3048cf48d7bf6af1328449c1038a5abd2b7e546"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-07.sbatch": {
+      "bytes": 2352,
+      "sha256": "2406dbd224dc27107d52bcff9a3727e1819d9c0aed5c5b91a76a4c250c6b4c18"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-08.sbatch": {
+      "bytes": 2352,
+      "sha256": "cd494c7488d3e5be31f44b20f96c765159af0cac597d7a93667b42e0cd89a94e"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-09.sbatch": {
+      "bytes": 2352,
+      "sha256": "e12c5fc40b96a65739eea18f7f43a5881ab78f039c4e69630e73fbf19f136dd5"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-10.sbatch": {
+      "bytes": 2352,
+      "sha256": "31afeea126e0b1d93d6283ec20a96c06540710ed5bb1958275c27c1fdd30bcbd"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-11.sbatch": {
+      "bytes": 2352,
+      "sha256": "4f2ed1c4e4205ae5d0265146c1b2926af5e451c974a0f854c1c129bcb196191c"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-12.sbatch": {
+      "bytes": 2352,
+      "sha256": "b29258e84663ccee62ff1e6fccecaf4d38cf8010ce31ff3ba066b0c215f85cf1"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-13.sbatch": {
+      "bytes": 2352,
+      "sha256": "507d7226d55ee0f5716546ecb9a364642a5ed864f4651bc7f34dfed75108edf3"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-14.sbatch": {
+      "bytes": 2352,
+      "sha256": "dc28a10d863ad1f0df510ee48cf07b54574cb0386c2fc5e5ca1516211d9d1fa9"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-15.sbatch": {
+      "bytes": 2352,
+      "sha256": "435ee7a22e0449d2b10cbb1d4a2758468537a63b127b1c57c8b62d75cb384356"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-16.sbatch": {
+      "bytes": 2352,
+      "sha256": "e6b185d992c99430774394c2f68fb3079d1f91f00322486e7fbe2a7d50bdae89"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-17.sbatch": {
+      "bytes": 2352,
+      "sha256": "14c64504f3c5990eb04bb9cf3c4a4a6feb99aeb5f7bb3dd75f3133cd4a9ac1cc"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-18.sbatch": {
+      "bytes": 2352,
+      "sha256": "4618e17465f442c6565dbc2be76d700bdc240694210563ab5d4344bdc2847a8a"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-19.sbatch": {
+      "bytes": 2352,
+      "sha256": "dc4b282b52d236e5899afb02aaccd8a5a23467dbe106e94777a8bb2fd6a38d3a"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-20.sbatch": {
+      "bytes": 2352,
+      "sha256": "0f37715c17667dc21515dbfa852af07586ae1c24cbac214e3d8be0fe93e8b692"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-21.sbatch": {
+      "bytes": 2352,
+      "sha256": "2766155eb227e908477b383d5dfc0eee32602ce6c5bf94e58d4213911831b75d"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-22.sbatch": {
+      "bytes": 2352,
+      "sha256": "c24d516830b957ee3e0b62896a628ad71242168a7983997ec19038c7433de672"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-23.sbatch": {
+      "bytes": 2352,
+      "sha256": "dd5176c3eb1ccc102d88917752c9eb80b82bc93c64d6af7c712522c074f4c925"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-24.sbatch": {
+      "bytes": 2352,
+      "sha256": "f770cf0de2e930f7efc66bb2c2c5d8a6cb32d4f43c98e082305ae22486d351e9"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-25.sbatch": {
+      "bytes": 2352,
+      "sha256": "8ad8fc7734952a6fff27bf3c6ae9c95730ef0fe33135b31a56b80d25a37b6e9c"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-26.sbatch": {
+      "bytes": 2352,
+      "sha256": "fb8ed0a3c43b66de6af07e83eeccb848d79e1432faec81dd58e1f59f003d7368"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-27.sbatch": {
+      "bytes": 2352,
+      "sha256": "0313123972b90caed2b56270a059372baa1dd08d5264106ebf7e361e99eb15d8"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-28.sbatch": {
+      "bytes": 2352,
+      "sha256": "95659af9e0874d4643b47460ca952f47a45f821721b60c925083c4b3eb244116"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-29.sbatch": {
+      "bytes": 2352,
+      "sha256": "e16dcf559c8711a429b230ba1a8db0a5649235182d40d3fb5aeaeb893154dbbb"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-30.sbatch": {
+      "bytes": 2352,
+      "sha256": "80b461d17e9dcaccf09e95721933ef1953557e2c389e76843aed7020bc7e4e9b"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-31.sbatch": {
+      "bytes": 2352,
+      "sha256": "2d3b448fe16db5d9f1d179557d4bd4c34577981c69c0b73ebb3a097f177504e9"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-32.sbatch": {
+      "bytes": 2352,
+      "sha256": "2235db77fcbc66c746ee4727b2fa986ad2ce88e27630bea194d9cc5c97e21f4d"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-33.sbatch": {
+      "bytes": 2352,
+      "sha256": "c2d4514ca364d5e0184243e706a9783d54c270af739d890dbf885c2d70075d87"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-34.sbatch": {
+      "bytes": 2352,
+      "sha256": "ee32c38baf946c044e52fd2c35fdc64671e85ca412ccc0e5df1de1e7cc452eb9"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-35.sbatch": {
+      "bytes": 2352,
+      "sha256": "299e6a80bc0658701b6250db8613eb92de39331ed8a4f1e903cdb9c7b17ff88e"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-36.sbatch": {
+      "bytes": 2352,
+      "sha256": "c80688563aa5dc30a1f10486725f360327d279ff29679dc586f9ab3eb512cc63"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-37.sbatch": {
+      "bytes": 2352,
+      "sha256": "250ce40b2afcb64f006967f526eb18f28bc8d0b9a1b7cdca0ebbdebe2e89b138"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-38.sbatch": {
+      "bytes": 2352,
+      "sha256": "8f32e8b4dcda2449281bef0f7c190325987cce22da5e0c8ed6e010b88915c2d7"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-39.sbatch": {
+      "bytes": 2352,
+      "sha256": "ac3a93fb45a2949f51c8489c68fad3c577fe1ab99d816bffedf9e875ea4797a3"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-40.sbatch": {
+      "bytes": 2352,
+      "sha256": "b5a3e78cd5df6b0c40c805b0215d8b281cdff35bac9702c7eb7ad257b6831470"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-41.sbatch": {
+      "bytes": 2352,
+      "sha256": "5da0988162c7ae7adc58223bcf07fae042a0962636ff5a6e3b55609008b0019b"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-42.sbatch": {
+      "bytes": 2352,
+      "sha256": "d3151abc9e1331619540a03ce0958ae12654d93387c66f3e9fecd7af6daaa51a"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-43.sbatch": {
+      "bytes": 2352,
+      "sha256": "88f1d017ea08442108274802ee858823fa85b525b5a4b40c524b60bca29fbc32"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-44.sbatch": {
+      "bytes": 2352,
+      "sha256": "d69a32627f0650c5521d1140ae3e1b196c28e0c0918c77ba1fea42c5d60241ea"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-45.sbatch": {
+      "bytes": 2352,
+      "sha256": "d9fdd33908470520dd0b2dbdf75fa6d959a7ee5063395535b7f8c0b0e541cbd3"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-46.sbatch": {
+      "bytes": 2352,
+      "sha256": "48e878d2f59aa4f19b7301c59d6e4779129bfec3f49233bfee9cae8405484c23"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-47.sbatch": {
+      "bytes": 2352,
+      "sha256": "d5d424e32ad4bc0c039b161973d5f0b9b6184b86c9b063cbc03dbff60cddbe57"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-48.sbatch": {
+      "bytes": 2352,
+      "sha256": "c8c9d9326f5dbacae3ecc6bdda2c4d1b9985be5b344ff4c88096caea2d17b195"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-49.sbatch": {
+      "bytes": 2352,
+      "sha256": "eabefb6a7d8f26d8102896f381f1bc80d2c2322f10205f15b7223084b6bbaaac"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-50.sbatch": {
+      "bytes": 2352,
+      "sha256": "e3964b948804d43afadef575e6faf5b532c0bb4e2c9ed1b15ff508e66cce7d6f"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-51.sbatch": {
+      "bytes": 2352,
+      "sha256": "a473182ca25a8711b17461cfc44cd124963efa500752591ad220cf36846a7924"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-52.sbatch": {
+      "bytes": 2352,
+      "sha256": "4c09d0d3f0025673b8d6a9241eeaf945b27713ddef7dc529919fc4a1a215ea79"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-53.sbatch": {
+      "bytes": 2352,
+      "sha256": "0d84dadfb628ba11012f8986e84d6f13190146e02ee0faffe32c64155ecfc3a7"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-54.sbatch": {
+      "bytes": 2352,
+      "sha256": "9f54f8a7dc47f9bba9ef398fd264c5882956c3a1995cbe3cad9f628fe99b1e00"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-55.sbatch": {
+      "bytes": 2352,
+      "sha256": "5dbace8e84396242a05ec53ef9ad3a5f06c44cc839cb523556f5ae695d8e0a7f"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-56.sbatch": {
+      "bytes": 2352,
+      "sha256": "234470c0c5ad5609c6457c60e589da945bb9e4192da596736228e87bb756e386"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-57.sbatch": {
+      "bytes": 2352,
+      "sha256": "b79357d6750f19d2234013d2af00a27fba7e6e5a9203a2bfc3849d2f573d41aa"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-58.sbatch": {
+      "bytes": 2352,
+      "sha256": "8c8068cd424949ce69c96d309b0f57fcdb07ea3b2a0b6569dff6115882f34115"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-59.sbatch": {
+      "bytes": 2352,
+      "sha256": "5d6096fbbced8394b876e8266a45011d163a426177db952fee7ef17535b46f0b"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-60.sbatch": {
+      "bytes": 2352,
+      "sha256": "1a1ab547c69301b02dada5f249ddd768f1b9c90f72801207865bf96131e24723"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-61.sbatch": {
+      "bytes": 2352,
+      "sha256": "b558029e092d94b996e0d5a68ebf8a5c357774d5834fb0321659c643595c90c5"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-62.sbatch": {
+      "bytes": 2352,
+      "sha256": "e1f9430b73946ef706209677489701989ec0ec02cca27922104f1a91fe0520a1"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-63.sbatch": {
+      "bytes": 2352,
+      "sha256": "0f8d60de590bb53ffe50575ca92e068d0937cdf50aa1f94eaabce75042ae230e"
+    },
+    "narval/plans/recovery-support-20261021-429/rolling-storage-census-64.sbatch": {
+      "bytes": 2352,
+      "sha256": "d00401d3bce6012c691d5e1cce27faee099cc0a835520d603d73c26d9a094c01"
+    },
+    "narval/plans/recovery-support-20261021-430/plan.json": {
+      "bytes": 13285,
+      "sha256": "1d4eae278185b50a18abf1c9cdbbaff3cf55cbcbb9272aa4e7a0973c4477c474"
+    },
+    "narval/plans/recovery-support-20261021-430/recovery-430.sbatch": {
+      "bytes": 1470,
+      "sha256": "12c23c59779494925ca8d04746149ab8f64179da15ac8f41c6a935a0961c0de1"
+    },
+    "narval/plans/recovery-support-20261021-431/plan.json": {
+      "bytes": 13285,
+      "sha256": "252abb0366e402067dda8efd20cfb0c12494b67b4d4c830aab54e0cb6e3e4ea6"
+    },
+    "narval/plans/recovery-support-20261021-431/recovery-431.sbatch": {
+      "bytes": 1470,
+      "sha256": "24d5c598dd610b0edc8a0a8f16fb811f27f9206ad24b6ae44d6ce7b18cc91c99"
+    },
+    "narval/plans/recovery-support-20261021-432/plan.json": {
+      "bytes": 13668,
+      "sha256": "11b79dfea219eca6950665555d3d3370e47c9046ff635c7112db8600c61bfad3"
+    },
+    "narval/plans/recovery-support-20261021-432/recovery-432.sbatch": {
+      "bytes": 4192,
+      "sha256": "f3294bac899af1c0c1360c1a0c9297f36f14ecb227fd2b76b8844f5e173b7e86"
+    },
+    "narval/plans/recovery-support-20261021-433/plan.json": {
+      "bytes": 13533,
+      "sha256": "c30a1a2d3afd84315328ca31fe08782608781bde6096458a35a3bf97b245fdbc"
+    },
+    "narval/plans/recovery-support-20261021-433/recovery-433.sbatch": {
+      "bytes": 1140,
+      "sha256": "8ddcd7fb1d22b7960a398c371214dede399bc03d0265c7dd2ad326a7f4fd8f7f"
+    },
+    "narval/plans/recovery-support-20261021-434/plan.json": {
+      "bytes": 14382,
+      "sha256": "ee5c7547f5db3f0ff1dd8d496ef8c98481e6d4aae4b5a1bb5cae8868ea40a09d"
+    },
+    "narval/plans/recovery-support-20261021-434/recovery-434.sbatch": {
+      "bytes": 2548,
+      "sha256": "530e07ef7dc3ed8fbd32f6e4330d3fd733b74475107d52421d98f0f47af1ae87"
+    },
+    "narval/plans/recovery-support-20261021-451/plan.json": {
+      "bytes": 14094,
+      "sha256": "0f96bb64d42ac2ae95e08b4f9f64c0e296be59ae030e5f5492b7769bb862dc0a"
+    },
+    "narval/plans/recovery-support-20261021-451/recovery-451.sbatch": {
+      "bytes": 1687,
+      "sha256": "782585f5bcbcd445b4856d7763e3e7bdc048ec380d66d68595b0d2032052c350"
+    },
+    "narval/plans/recovery-support-20261021-469/plan.json": {
+      "bytes": 14182,
+      "sha256": "eb100ade4309fe3656ed7b3e34f9d7ce63a0deca7fea4c6cd9de92d3c8d784fc"
+    },
+    "narval/plans/recovery-support-20261021-469/recovery-469.sbatch": {
+      "bytes": 1732,
+      "sha256": "50734d94eab535f315088581dc16d147757109f6922df249343a57cea0e964b1"
+    },
+    "narval/plans/recovery-support-20261021-470/plan.json": {
+      "bytes": 14132,
+      "sha256": "cf259af7668ce0504fc242822564d67aa4c0a2963a29ebd92f42169b8e2ce08d"
+    },
+    "narval/plans/recovery-support-20261021-470/recovery-470.sbatch": {
+      "bytes": 1702,
+      "sha256": "30baab3ab6aa5aac9448e4c1c3afbc1da8247bd0bea6ba35cd0f33708a6c2b46"
+    },
+    "narval/state/recovery-support-20261021-429-submission.json": {
+      "bytes": 43310,
+      "sha256": "7eac4140a4a31405360ad001b115517203ce57bcb57de0ed8018e3157cffb192"
+    },
+    "narval/state/recovery-support-20261021-430-submission.json": {
+      "bytes": 982,
+      "sha256": "d2c91b636248dbc31f0655964c8999df744c1cdc54e3bdd5c226dcdf3dc3e369"
+    },
+    "narval/state/recovery-support-20261021-431-submission.json": {
+      "bytes": 982,
+      "sha256": "f7f34bbc166462f81ad9ff09193f5bd4a5b7ffa396a8c7b71f547678078d6efb"
+    },
+    "narval/state/recovery-support-20261021-432-submission.json": {
+      "bytes": 1009,
+      "sha256": "df376601316e0eb5a4af33724302bd5913ec250d70b077d978bc596ce232eb87"
+    },
+    "narval/state/recovery-support-20261021-433-submission.json": {
+      "bytes": 982,
+      "sha256": "e519c98cab059596a1a904d7588ecb9374af9d34babadc351e22976de4cfde9e"
+    },
+    "narval/state/recovery-support-20261021-434-submission.json": {
+      "bytes": 1009,
+      "sha256": "c5bbf34b77f19761b4bd13590f3fb52228d5e653b86c159fb93fe83cd8702a43"
+    },
+    "narval/state/recovery-support-20261021-451-submission.json": {
+      "bytes": 982,
+      "sha256": "8cbe99dcefbdddcf20099ab9d6aed73fcc429f11f44074c4a392af5300672f49"
+    },
+    "narval/state/recovery-support-20261021-469-submission.json": {
+      "bytes": 2019,
+      "sha256": "0a248a14e1eb3a29e4a656abfef05e1450651f48df746db81c9757c8cea9ebb8"
+    },
+    "narval/state/recovery-support-20261021-470-submission.json": {
+      "bytes": 2020,
+      "sha256": "8b016e238ca61395ae9250ea6fe7ddd8716244b487f1dfeda804e1a474548b2b"
+    },
+    "restored-queue-observation.json": {
+      "bytes": 766,
+      "sha256": "3f21f32c89cd684262ed4da1600a73ff7d7051cf92b0ae3cf5f1683e37d58f0a"
+    },
+    "work/build-primary-external-census-handoff-470.py": {
+      "bytes": 9763,
+      "sha256": "0aa1f48764e358eaec7538f2d59e3779236c322b0766239473b6e70a044845c7"
+    },
+    "work/build-primary-external-census-handoff-483.py": {
+      "bytes": 11156,
+      "sha256": "e7d54320fcfdd0045f64a9a2790b22a5eea2203fcaf024f3018ad8c17105fabd"
+    },
+    "work/build-primary-external-census-qualification-469.py": {
+      "bytes": 11884,
+      "sha256": "d7e73467a2a5a2fe590f3bf540130fba4feb090c9277c6677e2837104c15c608"
+    },
+    "work/build-scratch-source-mirror-482.py": {
+      "bytes": 1812,
+      "sha256": "9a06d940a082704f7c30b835002ec12e9ff7444c405be51c5acfb9d2cb78f30e"
+    },
+    "work/handoff-primary-external-census-v1-20261023.py": {
+      "bytes": 41444,
+      "sha256": "f299f6be9684e7f5d5ad4e28cd92870f9f8ee4c72774eef876251be9f9123584"
+    },
+    "work/hhw-census-and-budget-live-20261023-473.sh": {
+      "bytes": 1989,
+      "sha256": "543d53e9fb80831129511b528d9922b9fbff4abf20993daa068c569ce10d408e"
+    },
+    "work/hhw-census-and-budget-live-20261023-474.sh": {
+      "bytes": 1989,
+      "sha256": "543d53e9fb80831129511b528d9922b9fbff4abf20993daa068c569ce10d408e"
+    },
+    "work/hhw-census-restoration-live-20261023-471.sh": {
+      "bytes": 3555,
+      "sha256": "3afd1aace251046b837c46af5cd18cc731033c5731d0ec8b5882f16cfd326628"
+    },
+    "work/hhw-controller-resumption-live-20261023-484.sh": {
+      "bytes": 4168,
+      "sha256": "9676302e68d195cf0fee84fd0c170330d5d4239878455783a0d4987f8785815b"
+    },
+    "work/hhw-controller-resumption-live-20261023-485.sh": {
+      "bytes": 4408,
+      "sha256": "37fa059ad1ccafea7b7cedd27985bee2b3cadc95806d55f4afd52386de7ee706"
+    },
+    "work/hhw-primary-framework-source-20261023-450.sh": {
+      "bytes": 798,
+      "sha256": "7bc9d4bee374d65f05facf17528632ce33c780f320d236d54e4791def98830b9"
+    },
+    "work/hhw-primary-handoff-live-20261023-478.sh": {
+      "bytes": 3998,
+      "sha256": "f97000465f32d49c2bebac93a09ec2843664baaa25f664c5b50e51494af5e36b"
+    },
+    "work/hhw-primary-handoff-live-20261023-479.sh": {
+      "bytes": 4029,
+      "sha256": "e59d8279c109d3b65787aaad0c3c4b724668d4b515b6dbc91cbef7cad3eb92ed"
+    },
+    "work/hhw-primary-handoff-live-20261023-480.sh": {
+      "bytes": 4047,
+      "sha256": "7ddec73365ed1dde9ab1b43f29e10ce74bd8f77608efd460ddfca5bfec66297a"
+    },
+    "work/hhw-primary-handoff-live-20261023-481.sh": {
+      "bytes": 4047,
+      "sha256": "7ddec73365ed1dde9ab1b43f29e10ce74bd8f77608efd460ddfca5bfec66297a"
+    },
+    "work/hhw-primary-qualification-live-20261023-475.sh": {
+      "bytes": 2350,
+      "sha256": "39574357d15689cc2a20c4f438216b523591ed65c0512b462eccb52e50f97b23"
+    },
+    "work/hhw-primary-qualification-live-20261023-476.sh": {
+      "bytes": 2350,
+      "sha256": "39574357d15689cc2a20c4f438216b523591ed65c0512b462eccb52e50f97b23"
+    },
+    "work/hhw-primary-qualification-live-20261023-477.sh": {
+      "bytes": 2350,
+      "sha256": "39574357d15689cc2a20c4f438216b523591ed65c0512b462eccb52e50f97b23"
+    },
+    "work/hhw-restored-native-proof-20261023-472.sh": {
+      "bytes": 2168,
+      "sha256": "0f7077512f738c1339a311776e6780defe6fef44ddabd0cbaf0c446f54044b35"
+    },
+    "work/narval-deployment/hhw-af-reviewed-source-mirror-20261023-463-bridge-completion.json": {
+      "bytes": 106,
+      "sha256": "37225fc9331cae75e3f21db7129b8b988e310d162b2bb935d5354e84c739d839"
+    },
+    "work/narval-deployment/hhw-af-reviewed-source-mirror-20261023-463-bridge-output.txt": {
+      "bytes": 642,
+      "sha256": "d26f77848ccc233a0f2cacc8f416699986e98635837966f008580b3f3e0faaed"
+    },
+    "work/narval-deployment/hhw-census-and-budget-live-20261023-473.json": {
+      "bytes": 103,
+      "sha256": "07ac05952180e29c2698b0acbf663c14b80caac49dedfef4e4baad08da814332"
+    },
+    "work/narval-deployment/hhw-census-and-budget-live-20261023-473.txt": {
+      "bytes": 28770,
+      "sha256": "58271de6631a2e65fa0f1b38bdaa919e89468821c2b025588a825812cbfe3c4b"
+    },
+    "work/narval-deployment/hhw-census-and-budget-live-20261023-474.json": {
+      "bytes": 103,
+      "sha256": "53b28d5be834070f858fb9cd4af8a5fdd1d0daaf324956ca34e2b703cfce3b1f"
+    },
+    "work/narval-deployment/hhw-census-and-budget-live-20261023-474.txt": {
+      "bytes": 31742,
+      "sha256": "11592c1e39a66b5863938ea5c2ab7c2c7fb61f0b7af39ffc5d49962775b6ea65"
+    },
+    "work/narval-deployment/hhw-census-restoration-live-20261023-471.json": {
+      "bytes": 104,
+      "sha256": "bec9e11bfcf9a95cbb86e543d11464974869de055166512a555ff03ccfe063f6"
+    },
+    "work/narval-deployment/hhw-census-restoration-live-20261023-471.txt": {
+      "bytes": 95445,
+      "sha256": "b178103ad1181be030d2cf7ae1ef986210245639827e38d83cfd86d46c97dfaa"
+    },
+    "work/narval-deployment/hhw-controller-resumption-live-20261023-484.json": {
+      "bytes": 107,
+      "sha256": "68209e77cbd857fab926dbb005f8bf5f3bcd4b1d126ba8888b55b6066ccace03"
+    },
+    "work/narval-deployment/hhw-controller-resumption-live-20261023-484.txt": {
+      "bytes": 129302,
+      "sha256": "6a75961dc849f64e03c17c0d04a7292ca77239eaa9e64cbfd3e8b026c418091b"
+    },
+    "work/narval-deployment/hhw-controller-resumption-live-20261023-485.json": {
+      "bytes": 107,
+      "sha256": "3ddfd4729c21613751e7b835f69faa85a553c78f517955e849401b4acc56ef10"
+    },
+    "work/narval-deployment/hhw-controller-resumption-live-20261023-485.txt": {
+      "bytes": 174242,
+      "sha256": "da785db1c278f3f26f0a6177ea9fd31896dbf9d8cbc766c5f1e9cecd7cda862a"
+    },
+    "work/narval-deployment/hhw-primary-framework-source-20261023-450.json": {
+      "bytes": 105,
+      "sha256": "9d242e5dd36d2bd9370ca0ff3d37e2d31a568f3650ad01161bf9ed05b99aaec3"
+    },
+    "work/narval-deployment/hhw-primary-framework-source-20261023-450.txt": {
+      "bytes": 141776,
+      "sha256": "effa1f1d1c22e02a34751835ccd02c5472b3efd80a9bcbd784b2a713c219b7e9"
+    },
+    "work/narval-deployment/hhw-primary-handoff-live-20261023-478.json": {
+      "bytes": 101,
+      "sha256": "47d4c719301c0334006bc7868df6d2fbd81fdc8201b19c481fd9c17eb484ad7d"
+    },
+    "work/narval-deployment/hhw-primary-handoff-live-20261023-478.txt": {
+      "bytes": 803,
+      "sha256": "91e87d3821a84d94757ab8fd804d4ed9999ae6229749e8a9733ea53902759281"
+    },
+    "work/narval-deployment/hhw-primary-handoff-live-20261023-479.json": {
+      "bytes": 100,
+      "sha256": "78a45a5889f5760d8196dda662d4ab75f4e1dae4886c36ff92577112611acc97"
+    },
+    "work/narval-deployment/hhw-primary-handoff-live-20261023-479.txt": {
+      "bytes": 52642,
+      "sha256": "fbc3c7b98c70089b78143dc73c528168df543bfeea1177f6b7e7a3681553799c"
+    },
+    "work/narval-deployment/hhw-primary-handoff-live-20261023-480.json": {
+      "bytes": 100,
+      "sha256": "8e627a28b06f4a8b1156bc9d3635f26e23fa24bb9e03fa3ddc7e3d32a3ef26ce"
+    },
+    "work/narval-deployment/hhw-primary-handoff-live-20261023-480.txt": {
+      "bytes": 91227,
+      "sha256": "9619433d990cc5fffaf1a110742a1925f78966ec29b419b10a7d5af6f87a84f8"
+    },
+    "work/narval-deployment/hhw-primary-handoff-live-20261023-481.json": {
+      "bytes": 100,
+      "sha256": "d42497c4724104ed6ec23484ccf3e338580cb4e0ce59e7ed91b2c73eb2e7c8ca"
+    },
+    "work/narval-deployment/hhw-primary-handoff-live-20261023-481.txt": {
+      "bytes": 118175,
+      "sha256": "5c4fba890c8e03e664c9f066aaa75c4bdea1b22a6e9307a1c09dc61691dc8bad"
+    },
+    "work/narval-deployment/hhw-primary-qualification-live-20261023-475.json": {
+      "bytes": 107,
+      "sha256": "0dbc9e01d7ae84bf7bc498140dbfcfd7d1b62e506d6dbd39b29f47067186a657"
+    },
+    "work/narval-deployment/hhw-primary-qualification-live-20261023-475.txt": {
+      "bytes": 37968,
+      "sha256": "9a390910d84e9cb4ca61e74eb440146faee6665f6ba6240f82c328f4663e109d"
+    },
+    "work/narval-deployment/hhw-primary-qualification-live-20261023-476.json": {
+      "bytes": 107,
+      "sha256": "a2a2bbd1df33b412808b9f24c1aeba69a749efdea8d0f21b5252dc44b5f21153"
+    },
+    "work/narval-deployment/hhw-primary-qualification-live-20261023-476.txt": {
+      "bytes": 38796,
+      "sha256": "9185369b9135026e93e556620ab5d8e65c7e831e0909af81099725c486528355"
+    },
+    "work/narval-deployment/hhw-primary-qualification-live-20261023-477.json": {
+      "bytes": 106,
+      "sha256": "cdbf391adebad9c4b21db55764b1cd27718c3559c2936dbc07e0b40fa62573bb"
+    },
+    "work/narval-deployment/hhw-primary-qualification-live-20261023-477.txt": {
+      "bytes": 101444,
+      "sha256": "89b9fa5b812af1a323c8f16b3417ed02239c56d53fc83ccfe7f9d1cee1e4afd4"
+    },
+    "work/narval-deployment/hhw-recovery-stage-20261021-469-bridge-completion.json": {
+      "bytes": 94,
+      "sha256": "6ba13d889e44cd9e3883d364bfe9f3061b9b02161a37d4d518c79e03b237bb98"
+    },
+    "work/narval-deployment/hhw-recovery-stage-20261021-469-bridge-output.txt": {
+      "bytes": 310,
+      "sha256": "0a5f5dabe74ba5e49efc34ef04f202d5a39c64beb22776f7495c04770f9335e0"
+    },
+    "work/narval-deployment/hhw-recovery-stage-20261021-469-request-transport.json": {
+      "bytes": 211,
+      "sha256": "fdb8a80b5ff905c93da661bab498ad735f211f7c84fd49550dc89c4e0c36a023"
+    },
+    "work/narval-deployment/hhw-recovery-stage-20261021-470-bridge-completion.json": {
+      "bytes": 95,
+      "sha256": "78b9e2eb6a1f65e453e37d964d294ffa10b10533619ade89d119c67dd296be52"
+    },
+    "work/narval-deployment/hhw-recovery-stage-20261021-470-bridge-output.txt": {
+      "bytes": 311,
+      "sha256": "02c06aee5ef9eac0a2a479f81a59104fbf611607c8c063fdb1df903f60adea6f"
+    },
+    "work/narval-deployment/hhw-recovery-stage-20261021-470-request-transport.json": {
+      "bytes": 212,
+      "sha256": "134009c17738138350170c22587295d58880f86580d830ea0df284eea718cc19"
+    },
+    "work/narval-deployment/hhw-recovery-stage-20261021-483-bridge-completion.json": {
+      "bytes": 95,
+      "sha256": "0f728020d3db408ac35e46016c0d020673563a1536192ec86aff7d2266a79228"
+    },
+    "work/narval-deployment/hhw-recovery-stage-20261021-483-bridge-output.txt": {
+      "bytes": 311,
+      "sha256": "e78c715169e3e2c854ae3e3720f59b46e13204de60db449e33ecadd53326805e"
+    },
+    "work/narval-deployment/hhw-recovery-stage-20261021-483-request-transport.json": {
+      "bytes": 212,
+      "sha256": "46f383ae02a1a0a4c792b211213fc51cfcd9d85c7c8969b967edb6542745d1ab"
+    },
+    "work/narval-deployment/hhw-restored-native-proof-20261023-472.json": {
+      "bytes": 102,
+      "sha256": "cfcbb15b7440d9a605d0460aa24690c8bd1cec6629e1837d6814caac3eda5741"
+    },
+    "work/narval-deployment/hhw-restored-native-proof-20261023-472.txt": {
+      "bytes": 666528,
+      "sha256": "b70c6518937be72727069ed701476a745ae96d865d11c027b36b6db1e266ba40"
+    },
+    "work/prepare-restored-queue-evidence-20261023.py": {
+      "bytes": 7925,
+      "sha256": "a115e774bedfd9336de6312d5bb245e42a0881e0d49455254778782cc2023eea"
+    },
+    "work/primary-external-census-d89-final-local-20261023.xml": {
+      "bytes": 34666,
+      "sha256": "cc1d4885d33026f2a358d24f5c207006b6552f26aba2e21eb821610c55f906d5"
+    },
+    "work/primary-external-census-source-manifest-20261023.json": {
+      "bytes": 1173,
+      "sha256": "fd5d7b951b2df0094e82c7c670d6e578a30efa913b4dcc6923cf335627d1dde9"
+    },
+    "work/primary-external-census-v1-20261023-freeze.json": {
+      "bytes": 25559,
+      "sha256": "ff28931fabf30b794aefeb537cb53f3c087ab118bbef7c9cbf87d2ee0eb85e80"
+    },
+    "work/primary-framework-d89-source/configs/study.json": {
+      "bytes": 4470,
+      "sha256": "b872f121b6cef11a7726fc56b4c237c714fab41bbafa2a6090d7e2c1e2f91353"
+    },
+    "work/primary-framework-d89-source/pyproject.toml": {
+      "bytes": 700,
+      "sha256": "74d68b5a8682dea07e4d848749ed7fbf23244262deb6f7af1ec7585f6644e338"
+    },
+    "work/primary-framework-d89-source/release.json": {
+      "bytes": 8461,
+      "sha256": "30346a3264cbd14ae97e2e8028a8f8ee09f8bfcaec593955df51cbacf1e95380"
+    },
+    "work/primary-framework-d89-source/requirements-narval.txt": {
+      "bytes": 176,
+      "sha256": "1645d77de6b705a18267bc4e615965b8a361bf2fccb7383354c29fbb5f55c38b"
+    },
+    "work/primary-framework-d89-source/scripts/amend_pipeline.py": {
+      "bytes": 523,
+      "sha256": "cc7eed2c1bb73d9f8ecac88ca1d5fe16579d14a958e3a946e03baad874cf21a4"
+    },
+    "work/primary-framework-d89-source/scripts/bootstrap_narval.sh": {
+      "bytes": 2377,
+      "sha256": "d9266a470158b4ec00a340ae6840cb650f7f820ad884c1f6b905937f5f26c3eb"
+    },
+    "work/primary-framework-d89-source/scripts/build_bootstrap_request.py": {
+      "bytes": 3143,
+      "sha256": "9ca497fa9e49c5ab14fd4c15a209c6120c1c9c5a94d3fc905b59e16b68482ad5"
+    },
+    "work/primary-framework-d89-source/scripts/build_release.py": {
+      "bytes": 9581,
+      "sha256": "39a3fe054742cd1bbb0bfd44b5323d61b49516954df90a099ca4e6c4fdeea8a6"
+    },
+    "work/primary-framework-d89-source/scripts/narval_transport.py": {
+      "bytes": 2617,
+      "sha256": "e8414a55d816686334441673dd6faa4dd27b0e3c67de454e27482b90c360d0f7"
+    },
+    "work/primary-framework-d89-source/scripts/qualify_r.py": {
+      "bytes": 3998,
+      "sha256": "7319fbd4c0a9cbefeacd806b1e7d15d9afec3b72607f94c4edee5c029bdb0351"
+    },
+    "work/primary-framework-d89-source/scripts/repair_transfer.py": {
+      "bytes": 4331,
+      "sha256": "d9262d032401a2cf420dd9628971e44ad9d585ce9a85cabc363dbe43614cf789"
+    },
+    "work/primary-framework-d89-source/scripts/rna_counts.R": {
+      "bytes": 11449,
+      "sha256": "980f9b8119fa1b025ac316ad44d3668009e7789758d64e9d3c5a98927cdcfd4c"
+    },
+    "work/primary-framework-d89-source/scripts/start_transfers.py": {
+      "bytes": 2840,
+      "sha256": "fec0939e508c7ea44773caaefb35421d9715d3e42858989e0e643e453260d06f"
+    },
+    "work/primary-framework-d89-source/scripts/transfer_rna_curl.py": {
+      "bytes": 26585,
+      "sha256": "941a8e57d3e9be37fe43b3f64edb554b86793b518c00a79b2496a137bf08445b"
+    },
+    "work/primary-framework-d89-source/scripts/transfer_rna_ftp.py": {
+      "bytes": 88840,
+      "sha256": "01bf03dd65b615f5e152a0f76c21c651e904c5526814be03834783c4d491d1fd"
+    },
+    "work/primary-framework-d89-source/scripts/transfer_sources.py": {
+      "bytes": 3309,
+      "sha256": "491602f8265725068dbf879bf40e02b81da05d9d8acece03574bd1340fe24dc8"
+    },
+    "work/primary-framework-d89-source/src/horsehair/__init__.py": {
+      "bytes": 116,
+      "sha256": "a521a5a0f8d4d364b8ac324b8a66d0544e35b75583f537aeeeacda7a9b8c80fd"
+    },
+    "work/primary-framework-d89-source/src/horsehair/acquire.py": {
+      "bytes": 48443,
+      "sha256": "a8b4ae0cd8b39e2a4efc82caac99bc6853a4bacf6747cf541969662765d952f3"
+    },
+    "work/primary-framework-d89-source/src/horsehair/admission.py": {
+      "bytes": 31159,
+      "sha256": "8daebfd3f5df00c54bfd01fb0821cbb77aa57921db51b14cd43e006367a21c71"
+    },
+    "work/primary-framework-d89-source/src/horsehair/agent_analysis.py": {
+      "bytes": 35556,
+      "sha256": "25b21cf14abd9691279e770e12f7b31cbd18f0bd2abd6b394925dc287480af06"
+    },
+    "work/primary-framework-d89-source/src/horsehair/agents.py": {
+      "bytes": 101284,
+      "sha256": "fbc98bc5765b2d1b2fc9f46b48b104da2cfba7a211e696f7b23e23745e67ac14"
+    },
+    "work/primary-framework-d89-source/src/horsehair/archive.py": {
+      "bytes": 18685,
+      "sha256": "2d04119c51bcbc5149718e9f963a523fc4b439fc0c83cceed76b3d12e7bc09f7"
+    },
+    "work/primary-framework-d89-source/src/horsehair/batched_duration.py": {
+      "bytes": 4139,
+      "sha256": "d9421e33f77e44bd17a59df132dedd9223863b8a0f18602587441b97c29bc71a"
+    },
+    "work/primary-framework-d89-source/src/horsehair/behaviour.py": {
+      "bytes": 221211,
+      "sha256": "76a7a508ab021ae78d89f5f574bb2f267133ca102d510736cb0d0282a1b37940"
+    },
+    "work/primary-framework-d89-source/src/horsehair/behaviour_workload.py": {
+      "bytes": 20927,
+      "sha256": "9f285cb074e688b7fa8e3f9492841c11567ba9003b25ddff879c80e78afad8f1"
+    },
+    "work/primary-framework-d89-source/src/horsehair/budget.py": {
+      "bytes": 29565,
+      "sha256": "59c0eabaac4e63077b3c567d2ec8f6895940a46305ea3d81f8ddf3ce48bf0745"
+    },
+    "work/primary-framework-d89-source/src/horsehair/cli.py": {
+      "bytes": 30405,
+      "sha256": "c6674e416a39bc14ba9a71f6224b28f00f1d3cfb9cee5fa244cbe2ef8ad4a26d"
+    },
+    "work/primary-framework-d89-source/src/horsehair/core.py": {
+      "bytes": 10567,
+      "sha256": "1fa8eadfb7206d21ead617bd5c0eee28147d8e27271ea55bbaf2b957b8bbba70"
+    },
+    "work/primary-framework-d89-source/src/horsehair/inference.py": {
+      "bytes": 3554,
+      "sha256": "9bd921a23806b0ea26f1beaf49ef0f9fc6268bde0ff4b754295136f84124fb13"
+    },
+    "work/primary-framework-d89-source/src/horsehair/interventions.py": {
+      "bytes": 54726,
+      "sha256": "19379a68b6f9bae2c39506584845020cdb53e3d8cdf69a59341750b4fc4a9f43"
+    },
+    "work/primary-framework-d89-source/src/horsehair/mantis_recovery.py": {
+      "bytes": 37263,
+      "sha256": "02a3f1ac36161cded25a4af8d7104e66fe86f93a1818a7af86e061596cf582b3"
+    },
+    "work/primary-framework-d89-source/src/horsehair/molecular.py": {
+      "bytes": 149413,
+      "sha256": "e8fef634335cb3778f7beb4c1871f163ff32f037dd2cf055b81e01495f425379"
+    },
+    "work/primary-framework-d89-source/src/horsehair/molecular_pipeline.py": {
+      "bytes": 45618,
+      "sha256": "58c58d04eb599cc5d5cf4f1c514ddfccae363bafa2c7d12da4a033a3da4d2bdc"
+    },
+    "work/primary-framework-d89-source/src/horsehair/pipeline.py": {
+      "bytes": 70029,
+      "sha256": "ef954fe249e376e0d911b64b67fae16290216b62f2efb93ecace25598fbcc575"
+    },
+    "work/primary-framework-d89-source/src/horsehair/repair.py": {
+      "bytes": 69366,
+      "sha256": "be11f6239875d06eaa34919c96f692c3301459707453f0e76d93f9c129581617"
+    },
+    "work/primary-framework-d89-source/src/horsehair/report.py": {
+      "bytes": 40938,
+      "sha256": "5ffce4c6ec679901fc63c54e24acc99e899731eb258667b8fa22b6f5686027a8"
+    },
+    "work/primary-framework-d89-source/src/horsehair/rna_followup.py": {
+      "bytes": 19809,
+      "sha256": "827b08e90a6a82ad0eb3e9bb395f553634b0b3550d919193f5051ef2ea262dcc"
+    },
+    "work/primary-framework-d89-source/src/horsehair/rna_recovery.py": {
+      "bytes": 43370,
+      "sha256": "ec350aa44d86c661c49534f71b2207e3bafbe7366ba2b41985fc97aef566771a"
+    },
+    "work/primary-framework-d89-source/src/horsehair/semimarkov.py": {
+      "bytes": 38481,
+      "sha256": "d997a358b968a924082d43eaf3f4192d57c0fa2f8df0a3ab4f1c675abbce0c1b"
+    },
+    "work/primary-framework-d89-source/src/horsehair/slurm.py": {
+      "bytes": 30479,
+      "sha256": "19473528d9684bbbc9a241a621283b105beb8bfa1352f168bf21e628327e8d37"
+    },
+    "work/primary-framework-d89-source/src/horsehair/storage_artifacts.py": {
+      "bytes": 26357,
+      "sha256": "c2e1cbe785027f92fb30833a9fdfb58e7cdee9c3907a1d2eefb6deb8efa11968"
+    },
+    "work/primary-framework-d89-source/tests/conftest.py": {
+      "bytes": 377,
+      "sha256": "35b7de8dc1bf174325264334d337b171f7296c275524a8c44d902f49d7a595e8"
+    },
+    "work/primary-framework-d89-source/tests/test_acquire.py": {
+      "bytes": 21929,
+      "sha256": "79b5a357d99633420c5046e0d8d540f3b86e2eb5c276c94cb8640b4a0d0ab38a"
+    },
+    "work/primary-framework-d89-source/tests/test_admission.py": {
+      "bytes": 31301,
+      "sha256": "e795dddcc2abc771bf2727a964887cf32348dba2118fcd2690586e62a35a639f"
+    },
+    "work/primary-framework-d89-source/tests/test_agent_analysis.py": {
+      "bytes": 14235,
+      "sha256": "69921d64181ec46f69afd75be1e13dc31af77e10cdee18028cb1586cae175ce1"
+    },
+    "work/primary-framework-d89-source/tests/test_agents.py": {
+      "bytes": 29857,
+      "sha256": "d444c523e177ea6d0207bac5fa8a8dae1ce7d89cc824519d608ef701a0225624"
+    },
+    "work/primary-framework-d89-source/tests/test_archive.py": {
+      "bytes": 10825,
+      "sha256": "5ec0bedbd6ae2632c24ba45092a3e0f67fdb2fcd186be4c4203f2736373826f5"
+    },
+    "work/primary-framework-d89-source/tests/test_batched_duration.py": {
+      "bytes": 3630,
+      "sha256": "d134d7d2ac33bf1486310477ed156aa8905355f9242d026a6c2e46701d5e08d0"
+    },
+    "work/primary-framework-d89-source/tests/test_behaviour.py": {
+      "bytes": 56238,
+      "sha256": "2347a512bb1be89e390e847b3d7aa91e56a787399d614f0b3fc9d19fde2aa4c0"
+    },
+    "work/primary-framework-d89-source/tests/test_behaviour_workload.py": {
+      "bytes": 6749,
+      "sha256": "5a6285a50c44ae8b7268a0500f5bf10ecb94e804889f5922f72183b87b4f35db"
+    },
+    "work/primary-framework-d89-source/tests/test_budget.py": {
+      "bytes": 26607,
+      "sha256": "9ea7346e98203bc098121689f7a4ac4a45c2ef488bd2472d894cc0beee0d65de"
+    },
+    "work/primary-framework-d89-source/tests/test_core.py": {
+      "bytes": 5472,
+      "sha256": "ff5ee441e55cd9b2b608e246bfc379070c616543334b18d1f9c779bc0dbc3f4b"
+    },
+    "work/primary-framework-d89-source/tests/test_deployment.py": {
+      "bytes": 1587,
+      "sha256": "91c998d36faeb87db3f70f47e80bb22ab8fd2c0a0e3c9c1c04b3fab4b9086a12"
+    },
+    "work/primary-framework-d89-source/tests/test_inference.py": {
+      "bytes": 956,
+      "sha256": "8cd75533b590c8f455b99bfe936ca32a21905df65dc925c9265383ca61de165b"
+    },
+    "work/primary-framework-d89-source/tests/test_mantis_recovery.py": {
+      "bytes": 19030,
+      "sha256": "b088f5644ade2dde9ba318e1014af5e3a50a6767514a6b742244e3070e0c0baf"
+    },
+    "work/primary-framework-d89-source/tests/test_mantis_repair.py": {
+      "bytes": 18321,
+      "sha256": "07c499d9fd0dfee017e6ea80ef549bfaae0e01e82c5a794db0e9367cb9eab3d2"
+    },
+    "work/primary-framework-d89-source/tests/test_molecular.py": {
+      "bytes": 35411,
+      "sha256": "0cf04f45b0a99e1f21fd8c4d2e9a1bc8e590bdadd5a34f4ebc12187e31ea8287"
+    },
+    "work/primary-framework-d89-source/tests/test_molecular_pipeline.py": {
+      "bytes": 10489,
+      "sha256": "b17061f1ba1e044e900af1208b60a8f1ad54a753ca0d0e7dd6469fde602a3106"
+    },
+    "work/primary-framework-d89-source/tests/test_pipeline.py": {
+      "bytes": 53272,
+      "sha256": "5e0c052c596765a32ff4443d8668ba3b627dbeb1d7f7f954479048bbc5a14936"
+    },
+    "work/primary-framework-d89-source/tests/test_qualification.py": {
+      "bytes": 9448,
+      "sha256": "cdbed86dad2dc9d4815d17ea0ff4851d450f9d71f076a765fc341e2a3eca238a"
+    },
+    "work/primary-framework-d89-source/tests/test_repair.py": {
+      "bytes": 42937,
+      "sha256": "d7b73165798687f8a56cb225887dd782e90a126733363b6bd1400f6ad0edba96"
+    },
+    "work/primary-framework-d89-source/tests/test_report.py": {
+      "bytes": 25152,
+      "sha256": "69b45c4e69ce8423723772004aa5c4b99006e26ef52ec444049850b9c554cfef"
+    },
+    "work/primary-framework-d89-source/tests/test_rna_followup.py": {
+      "bytes": 16702,
+      "sha256": "ee5c020c91228036a79c121b96b9164277f708e45aa91cbaa95306497a545bc9"
+    },
+    "work/primary-framework-d89-source/tests/test_rna_recovery.py": {
+      "bytes": 29003,
+      "sha256": "f573a7b514f0cf8d5701f1ebcf8454fe8311dfd120585cbeb537a682b90f349d"
+    },
+    "work/primary-framework-d89-source/tests/test_rna_recovery_registration.py": {
+      "bytes": 12562,
+      "sha256": "2b341c54a9a408f26a8143db77a8d2be7d9b481a5a0a54b296f1712a34506baa"
+    },
+    "work/primary-framework-d89-source/tests/test_rna_recovery_stability.py": {
+      "bytes": 4586,
+      "sha256": "543b3cea3b4ad4c576a0f630c294e691e1498b9b6c504f84a483c37b994c24e7"
+    },
+    "work/primary-framework-d89-source/tests/test_semimarkov.py": {
+      "bytes": 6851,
+      "sha256": "113ed93c9c0ee1f08bc2aea624f6b0ab984e142be82181a417fcb62bcc117030"
+    },
+    "work/primary-framework-d89-source/tests/test_slurm.py": {
+      "bytes": 10846,
+      "sha256": "b805fe9b58c765b8fdd16f6f6efa7dce45ab57c8e6659a190cb12763f7d4ce5e"
+    },
+    "work/primary-framework-d89-source/tests/test_slurm_exclusions.py": {
+      "bytes": 8002,
+      "sha256": "7be0e56b7763514d9ee57cec296387aa28c3c21cedf318fd0ea5c30ccd99feb9"
+    },
+    "work/primary-framework-d89-source/tests/test_slurm_placement.py": {
+      "bytes": 5671,
+      "sha256": "e9214519ff626d0daa42f712cf77923038734dca726ed42e9108ed04ea580980"
+    },
+    "work/primary-framework-d89-source/tests/test_source_replication.py": {
+      "bytes": 10367,
+      "sha256": "70ce073abb1ad56dbadd0369039faee2768731ea4002fc6310d387f05f0360bf"
+    },
+    "work/primary-framework-d89-source/tests/test_storage_artifact_cache.py": {
+      "bytes": 11315,
+      "sha256": "19921beee77beea62c649e34f0a129bdd07a0255c9d1c65f7cc779e56c8d9065"
+    },
+    "work/primary-framework-d89-source/tests/test_storage_artifacts.py": {
+      "bytes": 37248,
+      "sha256": "a6ec2fb94323f4388ec7862a7c334c4bb2f0d56dfbe5bcc5f8e993c816f2c12b"
+    },
+    "work/primary-framework-d89-source/tests/test_storage_boundary_cache.py": {
+      "bytes": 10119,
+      "sha256": "49400961147f65f26f2e7f6596e0f282d50498eb4590356d39dfc44be5fffea6"
+    },
+    "work/primary-framework-d89-source/tests/test_storage_snapshot_artifacts.py": {
+      "bytes": 4418,
+      "sha256": "591d700b7968db248efbb7af46ed28dbd9ef6b3ff3fff1659c55c5e0decdbd28"
+    },
+    "work/primary-framework-d89-source/tests/test_storage_snapshot_boundary.py": {
+      "bytes": 6387,
+      "sha256": "831e82054a12aa28cbdb50f24f135fa16d590e806546e389b76085848f5653f2"
+    },
+    "work/primary-framework-d89-source/tests/test_transfer_rna_curl.py": {
+      "bytes": 18210,
+      "sha256": "29a658ef6ff86f73c1e7b238530ae754afa036a3a264b47de864bf8caf65887c"
+    },
+    "work/primary-framework-d89-source/tests/test_transfer_rna_ftp.py": {
+      "bytes": 89522,
+      "sha256": "24e64e0e2f572c6e7056a1326b3b8f652cf50279957f09cab6aa69a8fcc19a53"
+    },
+    "work/primary-handoff-v2/build-primary483-before-filename-fix.py.evidence": {
+      "bytes": 11156,
+      "sha256": "75ab50ba07a36e5c6d95a6f02ba4ce0b288a25e7a00d4cbc4ce034a6662a060f"
+    },
+    "work/primary-handoff-v2/handoff-contracts-local-final.xml": {
+      "bytes": 24769,
+      "sha256": "7199350670152702a0d0949959a8a9befbfbd1e37c5c990f5cab299a73b24b75"
+    },
+    "work/primary-handoff-v2/handoff-primary-external-census-v1-20261023.py": {
+      "bytes": 41958,
+      "sha256": "de582b45b5c3f813673f6f0bcaa3aca32659c3b57a75b10511e2409fabb015c9"
+    },
+    "work/primary-handoff-v2/handoff-tests-local-freeze.json": {
+      "bytes": 1664,
+      "sha256": "b4c479b4ff73cd67d53815960bc1ead02953261ec04123f118b8d85f6a51890d"
+    },
+    "work/primary-handoff-v2/source-derivation.json": {
+      "bytes": 626,
+      "sha256": "4bd88e4afcb8c7b2cd825ccab2bf19a20d0d38d296f85ec61e7ba0c1241ca41c"
+    },
+    "work/primary-handoff-v2/test_handoff_primary_external_census_v1_20261023.py": {
+      "bytes": 39873,
+      "sha256": "0bd09ef4ec8fc62c4e5cc98e26698e3a1fc0da462b1891a8f0fc907dd73e7ed5"
+    },
+    "work/primary-native-469/builder-local-freeze.json": {
+      "bytes": 4564,
+      "sha256": "3983f69d02abc6f8c64f1e9da082a8587249cd9cb23b24947ba6d40732e7957c"
+    },
+    "work/primary-native-469/hhw-recovery-stage-20261021-469.sh": {
+      "bytes": 42631,
+      "sha256": "1382eb0be0b820fd931af0e19f54715c2320fae3e262c788dbc58d8f6d4cc84f"
+    },
+    "work/primary-native-469/qualification-policy.json": {
+      "bytes": 2216,
+      "sha256": "b597cd76d14a668e35a36a8a9745e0f034fc47981e29e3ddab779e6e4f011d18"
+    },
+    "work/primary-native-469/registration-local-evidence.json": {
+      "bytes": 816,
+      "sha256": "9f38ab2b677f816e1352ba0ada72b9a7022bca9dd6c3eafd862d4aea3ab4b22c"
+    },
+    "work/primary-native-469/source-manifest.json": {
+      "bytes": 1173,
+      "sha256": "fd5d7b951b2df0094e82c7c670d6e578a30efa913b4dcc6923cf335627d1dde9"
+    },
+    "work/primary-native-470/hhw-recovery-stage-20261021-470.sh": {
+      "bytes": 43970,
+      "sha256": "12cb7f22a92131a4bba78ed05139763fc74e2588ec61c110f765c426fdb94cfd"
+    },
+    "work/primary-native-470/registration-local-evidence.json": {
+      "bytes": 937,
+      "sha256": "77df40cd042c11350ec87c0aa6a562698a676bb8dc5eaa3167953d510c48ecb4"
+    },
+    "work/primary-native-470/source-manifest.json": {
+      "bytes": 960,
+      "sha256": "4159f3d3224b106773e4fea8704c1cece39460f27b1acf79130c6dfc94092444"
+    },
+    "work/primary-native-483/hhw-recovery-stage-20261021-483.sh": {
+      "bytes": 47780,
+      "sha256": "9abad9772fd8de7637974e28aa5b75695528ad49b7b93fc2fdf007e1c5ed5fed"
+    },
+    "work/primary-native-483/registration-local-evidence.json": {
+      "bytes": 956,
+      "sha256": "601b294c2cceeedc0e44755fa5a170e0a44a0416f3f7c9e1f203d83002c9afbc"
+    },
+    "work/primary-native-483/source-manifest.json": {
+      "bytes": 960,
+      "sha256": "b18ffe9eeda7ce66758766407e60f03ba5362981b847e00fbaae0abd1e6e9a0a"
+    },
+    "work/primary469-builder-local.xml": {
+      "bytes": 4415,
+      "sha256": "c7e630c4ea361561d1056238bbc3187dbfa15edc8e018218187632150a72260a"
+    },
+    "work/primary470-builder-local.xml": {
+      "bytes": 1888,
+      "sha256": "9d97b7472da175ccf8f7b0c8fa8305c684bb63538d9abb7d3227a71e4064adb9"
+    },
+    "work/primary470-handoff-local-final.xml": {
+      "bytes": 20321,
+      "sha256": "95491f33b0563530a7ca8549d69f919942cb1ea57d381d9aaea3338d4367f463"
+    },
+    "work/primary470-handoff-local-freeze.json": {
+      "bytes": 1141,
+      "sha256": "efb5eb1cd9d79aaa1025f586c1344659c40d5d23855e3886f01449954d8220cc"
+    },
+    "work/primary483-builder-local-final.xml": {
+      "bytes": 2037,
+      "sha256": "4257dd4cbcb79901630f73f07540d7991132982e18cf40e746228501b8fa866d"
+    },
+    "work/primary483-builder-local.xml": {
+      "bytes": 1888,
+      "sha256": "699e9f44bea0e14b808687607e0645038a128ea3b50b3f7e573c479536355a35"
+    },
+    "work/rolling-native-v5/source-manifest.json": {
+      "bytes": 5644,
+      "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+    },
+    "work/run-primary-external-census-v1-20261023.py": {
+      "bytes": 43926,
+      "sha256": "dd5f8d2aec90896fdcfe190971ea8b6c32a94158a3684566c2b8405748e7c794"
+    },
+    "work/seal-restored-queue-capsule-20261023.py": {
+      "bytes": 1069,
+      "sha256": "aa4860117c6b44bf511abfc8264949897feaaa7870f1c228f1a4de9ba28b592a"
+    },
+    "work/test_build_primary_external_census_handoff_470.py": {
+      "bytes": 3809,
+      "sha256": "75833485f00929bc8c5906bb383617372fc94afa8353523a2712ad1796531266"
+    },
+    "work/test_build_primary_external_census_handoff_483.py": {
+      "bytes": 4319,
+      "sha256": "23e03ca4e2f678368ef495f1df8cd49526097de039cf4f71b7480e1c95ac930a"
+    },
+    "work/test_build_primary_external_census_qualification_469.py": {
+      "bytes": 8417,
+      "sha256": "96375ef5e39a70575a47cb9de63ede4c23aa3a399cea15a5352efbc27420b7e2"
+    },
+    "work/test_handoff_primary_external_census_v1_20261023.py": {
+      "bytes": 33381,
+      "sha256": "fbe9651e6e01edb109f8fae9fd2e97e1e6a510d022e30776be4ac6c5cade8119"
+    },
+    "work/test_primary_external_census_v1_20261023.py": {
+      "bytes": 20500,
+      "sha256": "031ecb0cd1364952241decbb5d88f0c1cd8b313373a5630672910d37a1e4390e"
+    },
+    "work/verify-reviewed-release-bytes-20261021.py": {
+      "bytes": 2390,
+      "sha256": "3b8dd0d0e02a82e92c651e12e67874e08a93a609c32a26ad1e5ea983ad5c41e7"
+    }
+  },
+  "kind": "restored_census_native_queue_and_primary_repair_source_capsule_v1"
+}

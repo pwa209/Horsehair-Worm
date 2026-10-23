@@ -1,0 +1,16 @@
+{
+  "after_sha256": "de582b45b5c3f813673f6f0bcaa3aca32659c3b57a75b10511e2409fabb015c9",
+  "before_sha256": "f299f6be9684e7f5d5ad4e28cd92870f9f8ee4c72774eef876251be9f9123584",
+  "changed_assignment": "SUPPORT",
+  "changed_function": "packet",
+  "every_other_statement_ast_identical": true,
+  "full_D89_source_identity_check_retained": true,
+  "kind": "primary-handoff-v2-two-source-namespace-repair-v1",
+  "mandatory_fixed_expected_pin": true,
+  "ordinary_canonical_and_symlink_checks_retained": true,
+  "outside_ROOT_source_names": [
+    "tests/test_pipeline.py",
+    "tests/test_budget.py"
+  ],
+  "scheduler_called": false
+}

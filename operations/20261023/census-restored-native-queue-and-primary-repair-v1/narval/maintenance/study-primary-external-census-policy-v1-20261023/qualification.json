@@ -1,0 +1,200 @@
+{
+  "admission_authority": false,
+  "allocation": {
+    "Account": "def-ptewarie_cpu",
+    "AccrueTime": "2026-10-23T10:41:10",
+    "AllocNode:Sid": "narval3:2976727",
+    "AllocTRES": "cpu=4,mem=64G,node=1,billing=16000",
+    "BatchFlag": "1",
+    "BatchHost": "nc10205",
+    "CPUs/Task": "4",
+    "Command": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-469/recovery-469.sbatch",
+    "Contiguous": "0",
+    "CoreSpec": "*",
+    "Deadline": "N/A",
+    "DelayBoot": "00:00:00",
+    "Dependency": "(null)",
+    "EligibleTime": "2026-10-23T10:41:10",
+    "EndTime": "2026-10-23T11:45:48",
+    "ExcNodeList": "(null)",
+    "ExitCode": "0:0",
+    "Features": "[rome|milan|genoa]",
+    "GroupId": "pwa209(3164768)",
+    "JobId": "6866457",
+    "JobName": "hhw-recovery-469",
+    "JobState": "RUNNING",
+    "LastSchedEval": "2026-10-23T10:45:48",
+    "Licenses": "(null)",
+    "LicensesAlloc": "(null)",
+    "MCS_label": "N/A",
+    "MinCPUsNode": "4",
+    "MinMemoryNode": "64G",
+    "MinTmpDiskNode": "0",
+    "Network": "(null)",
+    "Nice": "0",
+    "NodeList": "nc10205",
+    "NtasksPerN:B:S:C": "0:0:*:*",
+    "NumCPUs": "4",
+    "NumNodes": "1",
+    "NumTasks": "1",
+    "OverSubscribe": "OK",
+    "Partition": "cpubase_bycore_b1",
+    "Priority": "1784047",
+    "QOS": "normal",
+    "Reason": "None",
+    "Reboot": "0",
+    "ReqB:S:C:T": "0:0:*:*",
+    "ReqNodeList": "(null)",
+    "ReqTRES": "cpu=4,mem=64G,node=1,billing=16000",
+    "Requeue": "0",
+    "Restarts": "0",
+    "RunTime": "00:00:20",
+    "Scheduler": "Backfill",
+    "SecsPreSuspend": "0",
+    "Socks/Node": "*",
+    "StartTime": "2026-10-23T10:45:48",
+    "StdErr": "",
+    "StdIn": "/dev/null",
+    "StdOut": "/scratch/pwa209/horsehair-worm/logs/recovery-469-6866457_4294967294.log",
+    "SubmitLine": "sbatch --parsable /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-469/recovery-469.sbatch",
+    "SubmitTime": "2026-10-23T10:41:10",
+    "SuspendTime": "None",
+    "TimeLimit": "01:00:00",
+    "TimeMin": "N/A",
+    "TresPerTask": "cpu=4",
+    "UserId": "pwa209(3164768)",
+    "WorkDir": "/lustre06/project/6101854/pwa209/horsehair-worm/releases/20261016-5c3ae6df532d-91c8824f2adb"
+  },
+  "canonical_science_changed": false,
+  "census": {
+    "policy_source": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-af-agent-controller-census-policy-v1-20261023.py",
+      "sha256": "120f02d098b6c9afa0ea0df54f590ae381b4227d4892ba0f9ee4acc93e6fec0f"
+    },
+    "provider_schedule": {
+      "case_root": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-storage-census-v4-20261023",
+      "helper": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+        "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+      },
+      "ledger": {
+        "path": "/scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json",
+        "sha256": "7eac4140a4a31405360ad001b115517203ce57bcb57de0ed8018e3157cffb192"
+      },
+      "plan": {
+        "path": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json",
+        "sha256": "a848dfdd01b148b0bf68c59b0fe6a881d8284ce30d49282e157ca88fd17c36cc"
+      },
+      "qualification": {
+        "job_id": "6863966",
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json",
+        "sha256": "8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c"
+      },
+      "source_manifest": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+        "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+      }
+    },
+    "qualification": {
+      "job_id": "6863966",
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json",
+      "sha256": "8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c"
+    }
+  },
+  "config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+  "d89_primary_lease_retained": true,
+  "freshness_timestamp_rewritten": false,
+  "maximum_verifier_checks_per_segment": 24000,
+  "native_census_prerequisites": {
+    "actual_provider_completed": false,
+    "admission_authority": false,
+    "canonical_science_changed": false,
+    "freshness_timestamp_rewritten": false,
+    "job_id": "6866457",
+    "reason": "External complete fresh census pending: Original global quota clocks are stale or invalid",
+    "scientific_gates_cleared": false,
+    "scientific_result": false,
+    "status": "qualified_operational_prerequisites_provider_integration_pending"
+  },
+  "native_completion_required": true,
+  "native_job_id": "6866457",
+  "native_registration": {
+    "ledger": {
+      "path": "/scratch/pwa209/horsehair-worm/state/recovery-support-20261021-469-submission.json",
+      "sha256": "0a248a14e1eb3a29e4a656abfef05e1450651f48df746db81c9757c8cea9ebb8"
+    },
+    "native_job_id": "6866457",
+    "plan": {
+      "path": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-469/plan.json",
+      "sha256": "eb100ade4309fe3656ed7b3e34f9d7ce63a0deca7fea4c6cd9de92d3c8d784fc"
+    },
+    "script": {
+      "path": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-469/recovery-469.sbatch",
+      "sha256": "50734d94eab535f315088581dc16d147757109f6922df249343a57cea0e964b1"
+    },
+    "task_name": "recovery-469"
+  },
+  "old_framework_source_sha256": "d89b31180d4c4ffe9c4023dc5534b96f2d157a3a8e3aecaff30849283d00a705",
+  "original_primary_cpu_core_hours_cap": 20000,
+  "original_primary_gpu_hours_cap": 400,
+  "primary_source_sha256": "0e2b1ebce8bffe10799470b3ac20828e621f1415f3a18bca8cd67d502f1e8630",
+  "provider_integration": {
+    "actual_provider_completed": false,
+    "admission_authority": false,
+    "canonical_science_changed": false,
+    "freshness_timestamp_rewritten": false,
+    "job_id": "6866457",
+    "reason": "External complete fresh census pending: Original global quota clocks are stale or invalid",
+    "scientific_gates_cleared": false,
+    "scientific_result": false,
+    "status": "qualified_operational_prerequisites_provider_integration_pending"
+  },
+  "provider_integration_required_before_run": true,
+  "scientific_gates_cleared": false,
+  "scientific_result": false,
+  "source_manifest": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/source-manifest.json",
+    "sha256": "fd5d7b951b2df0094e82c7c670d6e578a30efa913b4dcc6923cf335627d1dde9"
+  },
+  "status": "complete_primary_external_census_qualification",
+  "suites": [
+    {
+      "junit": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_budget.xml",
+        "sha256": "4a7f167d97f99d145a3a32f85f912c0d5bb83667578fcf4fd88af069c5b07495"
+      },
+      "module_origins": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_budget-module-origins.json",
+        "sha256": "82d21d05fa7a886db3aa7584b09b295b02f7fd587eed328fda5cc33864f56fff"
+      },
+      "scope": "baseline_budget",
+      "source_sha256": "9ea7346e98203bc098121689f7a4ac4a45c2ef488bd2472d894cc0beee0d65de"
+    },
+    {
+      "junit": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_pipeline.xml",
+        "sha256": "d47957393851b7d3db521adc12f4b336241a9c68e80de08306559b792aa5f8f1"
+      },
+      "module_origins": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/baseline_pipeline-module-origins.json",
+        "sha256": "1974987d7fea37d948d1a4544cff329de8858efa88391cf91b2aba956969c659"
+      },
+      "scope": "baseline_pipeline",
+      "source_sha256": "5e0c052c596765a32ff4443d8668ba3b627dbeb1d7f7f954479048bbc5a14936"
+    },
+    {
+      "junit": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/primary_policy.xml",
+        "sha256": "ff72eace94144bcf8b4c3e52c5613ecbe29c1199b5644ef843ea79f9696013af"
+      },
+      "module_origins": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/native-6866457/primary_policy-module-origins.json",
+        "sha256": "af91beb5d3853e20e64562d5bfcd670965b85f06d4954d966d1925e1572e4cc1"
+      },
+      "scope": "primary_policy",
+      "source_sha256": "031ecb0cd1364952241decbb5d88f0c1cd8b313373a5630672910d37a1e4390e"
+    }
+  ],
+  "verifier_exhaustion_pauses_without_more_reads": true,
+  "verifier_framework_source_sha256": "4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1"
+}

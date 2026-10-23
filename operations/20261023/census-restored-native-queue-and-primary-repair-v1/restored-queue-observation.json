@@ -1,0 +1,24 @@
+{
+  "campaign": {
+    "revision": 405,
+    "sha256": "d44aa7c09bcd09c007009d9d5af58c2976f1d53eabbdd93c8f0daf92d9afa684"
+  },
+  "cancelled_replacements": {
+    "6819399": "6865503",
+    "6822432": "6865525",
+    "6822568": "6865619",
+    "6822730": "6865674",
+    "6824584": "6865697"
+  },
+  "census_native_job_id": "6864491",
+  "checked_utc": "2026-10-23T10:29:01.554753+00:00",
+  "coordinator_completed": true,
+  "coordinator_native_job_id": "6864084",
+  "external_census_controller_handoff_job_id": "6865706",
+  "full_study_complete": false,
+  "kind": "restored-native-queue-observation-v1",
+  "native_census_status": "RUNNING",
+  "partial_progress_is_admission_authority": false,
+  "replacement_controllers_healthy_claimed": false,
+  "scientific_result": false
+}

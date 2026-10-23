@@ -1,0 +1,30 @@
+{
+  "admission_authority": false,
+  "canonical_science_changed": false,
+  "freshness_timestamp_rewritten": false,
+  "junit": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v1-20261023/native-6867492/handoff-contracts.xml",
+    "sha256": "c7646723c35e23728ca53acbaeb2ff30ab0c5cf48720ca8f5038dbe0c7fce330"
+  },
+  "native_completion_required_before_controllers_start": true,
+  "native_job_id": "6867492",
+  "primary_q_coverage_claimed_for_handoff": false,
+  "scientific_gates_cleared": false,
+  "scientific_result": false,
+  "source": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v1-20261023/handoff-primary-external-census-v1-20261023.py",
+    "sha256": "f299f6be9684e7f5d5ad4e28cd92870f9f8ee4c72774eef876251be9f9123584"
+  },
+  "status": "complete_native_handoff_contracts_completion_pending",
+  "test_counts": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 113
+  },
+  "test_roster_sha256": "0d5edba1d786594ce531cf5c987e444976401d0fc8d5a445da1bde22cc021261",
+  "test_source": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-handoff-v1-20261023/test_handoff_primary_external_census_v1_20261023.py",
+    "sha256": "fbe9651e6e01edb109f8fae9fd2e97e1e6a510d022e30776be4ac6c5cade8119"
+  }
+}

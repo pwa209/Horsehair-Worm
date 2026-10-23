@@ -1,0 +1,2128 @@
+{
+  "config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+  "cpu_ceiling": 256,
+  "gpu_concurrency": 4,
+  "maximum_simultaneous_resources": {
+    "cpus": 8,
+    "gpus": 0
+  },
+  "phase": "study-af-rolling-storage-census-v4-20261023",
+  "release_identity": {
+    "files": {
+      "configs/study.json": "b872f121b6cef11a7726fc56b4c237c714fab41bbafa2a6090d7e2c1e2f91353",
+      "pyproject.toml": "74d68b5a8682dea07e4d848749ed7fbf23244262deb6f7af1ec7585f6644e338",
+      "requirements-narval.txt": "1645d77de6b705a18267bc4e615965b8a361bf2fccb7383354c29fbb5f55c38b",
+      "scripts/amend_pipeline.py": "cc7eed2c1bb73d9f8ecac88ca1d5fe16579d14a958e3a946e03baad874cf21a4",
+      "scripts/audit_dataverse_metadata.py": "b38a89cce65f1c448810964fbb2a2376d83a7a878549470719a5fe8187c5a641",
+      "scripts/bootstrap_narval.sh": "d9266a470158b4ec00a340ae6840cb650f7f820ad884c1f6b905937f5f26c3eb",
+      "scripts/build_bootstrap_request.py": "9ca497fa9e49c5ab14fd4c15a209c6120c1c9c5a94d3fc905b59e16b68482ad5",
+      "scripts/build_release.py": "39a3fe054742cd1bbb0bfd44b5323d61b49516954df90a099ca4e6c4fdeea8a6",
+      "scripts/narval_transport.py": "e8414a55d816686334441673dd6faa4dd27b0e3c67de454e27482b90c360d0f7",
+      "scripts/qualify_r.py": "7319fbd4c0a9cbefeacd806b1e7d15d9afec3b72607f94c4edee5c029bdb0351",
+      "scripts/repair_transfer.py": "d9262d032401a2cf420dd9628971e44ad9d585ce9a85cabc363dbe43614cf789",
+      "scripts/rna_counts.R": "980f9b8119fa1b025ac316ad44d3668009e7789758d64e9d3c5a98927cdcfd4c",
+      "scripts/start_transfers.py": "fec0939e508c7ea44773caaefb35421d9715d3e42858989e0e643e453260d06f",
+      "scripts/transfer_rna_curl.py": "941a8e57d3e9be37fe43b3f64edb554b86793b518c00a79b2496a137bf08445b",
+      "scripts/transfer_rna_ftp.py": "01bf03dd65b615f5e152a0f76c21c651e904c5526814be03834783c4d491d1fd",
+      "scripts/transfer_sources.py": "491602f8265725068dbf879bf40e02b81da05d9d8acece03574bd1340fe24dc8",
+      "src/horsehair/__init__.py": "a521a5a0f8d4d364b8ac324b8a66d0544e35b75583f537aeeeacda7a9b8c80fd",
+      "src/horsehair/acquire.py": "a8b4ae0cd8b39e2a4efc82caac99bc6853a4bacf6747cf541969662765d952f3",
+      "src/horsehair/admission.py": "8daebfd3f5df00c54bfd01fb0821cbb77aa57921db51b14cd43e006367a21c71",
+      "src/horsehair/agent_analysis.py": "25b21cf14abd9691279e770e12f7b31cbd18f0bd2abd6b394925dc287480af06",
+      "src/horsehair/agent_campaign.py": "70f28e57f0e4a2eee3ebfef2699e751569fe048b550a94fa36a5461269493070",
+      "src/horsehair/agent_cost_envelope.py": "7bc5016a01b12466186d287bf9864c9b00b39b13ac00428f41cf966595509372",
+      "src/horsehair/agent_execution_v2.py": "a83b89a987aad050afc09439d32aaf3398f61404e1b93c6784ae3a286a507bc0",
+      "src/horsehair/agents.py": "fbc98bc5765b2d1b2fc9f46b48b104da2cfba7a211e696f7b23e23745e67ac14",
+      "src/horsehair/archive.py": "2d04119c51bcbc5149718e9f963a523fc4b439fc0c83cceed76b3d12e7bc09f7",
+      "src/horsehair/batched_duration.py": "d9421e33f77e44bd17a59df132dedd9223863b8a0f18602587441b97c29bc71a",
+      "src/horsehair/behaviour.py": "76a7a508ab021ae78d89f5f574bb2f267133ca102d510736cb0d0282a1b37940",
+      "src/horsehair/behaviour_feasibility.py": "cdfb82fe468d37b8dbde9d2662d6f0dd76131c5a2e3b2333bfb9ba7089c49696",
+      "src/horsehair/behaviour_workload.py": "9f285cb074e688b7fa8e3f9492841c11567ba9003b25ddff879c80e78afad8f1",
+      "src/horsehair/budget.py": "49509a7fc9484d9c0859ce1ef7501e4a0b57b4d29864496dc599fa76d18e269c",
+      "src/horsehair/campaign.py": "7d494d4bb619063fb3dca4e557250949ae3617b5ab35794153dc2a4a4406462d",
+      "src/horsehair/cli.py": "c6674e416a39bc14ba9a71f6224b28f00f1d3cfb9cee5fa244cbe2ef8ad4a26d",
+      "src/horsehair/cohort_profile.py": "186688920c600c29e3c1370bf539e6c7bc746c82001622d2888c0d90a6cacde0",
+      "src/horsehair/core.py": "1fa8eadfb7206d21ead617bd5c0eee28147d8e27271ea55bbaf2b957b8bbba70",
+      "src/horsehair/cost_forecast_review.py": "dc822b24a9f156158cc21832352fe9df699dd6fcde1f4d14b8020c34645de62f",
+      "src/horsehair/execution_resources.py": "8a20ed1f2e84412dd673deeecb7b77f1131a80576dc909297e07a7f5fdf155f7",
+      "src/horsehair/inference.py": "9bd921a23806b0ea26f1beaf49ef0f9fc6268bde0ff4b754295136f84124fb13",
+      "src/horsehair/interventions.py": "19379a68b6f9bae2c39506584845020cdb53e3d8cdf69a59341750b4fc4a9f43",
+      "src/horsehair/mantis_recovery.py": "02a3f1ac36161cded25a4af8d7104e66fe86f93a1818a7af86e061596cf582b3",
+      "src/horsehair/molecular.py": "e8fef634335cb3778f7beb4c1871f163ff32f037dd2cf055b81e01495f425379",
+      "src/horsehair/molecular_pipeline.py": "58c58d04eb599cc5d5cf4f1c514ddfccae363bafa2c7d12da4a033a3da4d2bdc",
+      "src/horsehair/pipeline.py": "ef954fe249e376e0d911b64b67fae16290216b62f2efb93ecace25598fbcc575",
+      "src/horsehair/repair.py": "f189d515acdcba105fda56dd8d52c08044db736c8de9176fa5488931d428e7aa",
+      "src/horsehair/report.py": "5ffce4c6ec679901fc63c54e24acc99e899731eb258667b8fa22b6f5686027a8",
+      "src/horsehair/rna_followup.py": "827b08e90a6a82ad0eb3e9bb395f553634b0b3550d919193f5051ef2ea262dcc",
+      "src/horsehair/rna_recovery.py": "ec350aa44d86c661c49534f71b2207e3bafbe7366ba2b41985fc97aef566771a",
+      "src/horsehair/semimarkov.py": "d997a358b968a924082d43eaf3f4192d57c0fa2f8df0a3ab4f1c675abbce0c1b",
+      "src/horsehair/slurm.py": "19473528d9684bbbc9a241a621283b105beb8bfa1352f168bf21e628327e8d37",
+      "src/horsehair/storage_artifacts.py": "c2e1cbe785027f92fb30833a9fdfb58e7cdee9c3907a1d2eefb6deb8efa11968",
+      "tests/conftest.py": "35b7de8dc1bf174325264334d337b171f7296c275524a8c44d902f49d7a595e8",
+      "tests/test_acquire.py": "79b5a357d99633420c5046e0d8d540f3b86e2eb5c276c94cb8640b4a0d0ab38a",
+      "tests/test_admission.py": "e795dddcc2abc771bf2727a964887cf32348dba2118fcd2690586e62a35a639f",
+      "tests/test_agent_analysis.py": "69921d64181ec46f69afd75be1e13dc31af77e10cdee18028cb1586cae175ce1",
+      "tests/test_agent_campaign.py": "41268e15eb4856a8a60fcd91a53d8973df4e19a2e63f3a542ae0218697e12cab",
+      "tests/test_agent_cost_envelope.py": "46246801ef382b6c3e855dcd20efacd628894c6011ebdecf69bb01a672197397",
+      "tests/test_agent_execution_v2.py": "86b5c41186c410c9a28fba2d396a6ab37b05f20aa08ac4452350759a9d1fcc67",
+      "tests/test_agents.py": "d444c523e177ea6d0207bac5fa8a8dae1ce7d89cc824519d608ef701a0225624",
+      "tests/test_archive.py": "5ec0bedbd6ae2632c24ba45092a3e0f67fdb2fcd186be4c4203f2736373826f5",
+      "tests/test_batched_duration.py": "d134d7d2ac33bf1486310477ed156aa8905355f9242d026a6c2e46701d5e08d0",
+      "tests/test_behaviour.py": "2347a512bb1be89e390e847b3d7aa91e56a787399d614f0b3fc9d19fde2aa4c0",
+      "tests/test_behaviour_feasibility.py": "d8b48e05850a0724fc145266fce0da4372d5f973d9c8db16f2c9a5ade3a28a6e",
+      "tests/test_behaviour_feasibility_validation.py": "10fc8d2f5b725274b20f29dd4dfb837a2909dd45822cec7d1ef76bb72d46e2e4",
+      "tests/test_behaviour_workload.py": "5a6285a50c44ae8b7268a0500f5bf10ecb94e804889f5922f72183b87b4f35db",
+      "tests/test_budget.py": "9ea7346e98203bc098121689f7a4ac4a45c2ef488bd2472d894cc0beee0d65de",
+      "tests/test_campaign.py": "d622458323c2dafbd47690057440e8e9566d6fb328c61febc54a722eaaffe4e0",
+      "tests/test_cohort_profile.py": "79b8f1a5b15420a7086793878241cb9da7d3f04cdda4f5997ca5bb8b63b53dc3",
+      "tests/test_core.py": "ff5ee441e55cd9b2b608e246bfc379070c616543334b18d1f9c779bc0dbc3f4b",
+      "tests/test_cost_forecast_review.py": "0f8170416a8a1e239dbe03edd33f4a22080f4e44f6d632fa914614b257b8aadc",
+      "tests/test_dataverse_metadata_audit.py": "fd67a804359e6b8ae86d10bf8d1d270a97b7d02c8c0d827015f2606de7f7e3d9",
+      "tests/test_deployment.py": "91c998d36faeb87db3f70f47e80bb22ab8fd2c0a0e3c9c1c04b3fab4b9086a12",
+      "tests/test_execution_resources.py": "40c87f6516c1de73928dec86fbe7b0f887d920fb7e84756ea27f8f8794ce5835",
+      "tests/test_inference.py": "8cd75533b590c8f455b99bfe936ca32a21905df65dc925c9265383ca61de165b",
+      "tests/test_mantis_recovery.py": "b088f5644ade2dde9ba318e1014af5e3a50a6767514a6b742244e3070e0c0baf",
+      "tests/test_mantis_repair.py": "07c499d9fd0dfee017e6ea80ef549bfaae0e01e82c5a794db0e9367cb9eab3d2",
+      "tests/test_molecular.py": "0cf04f45b0a99e1f21fd8c4d2e9a1bc8e590bdadd5a34f4ebc12187e31ea8287",
+      "tests/test_molecular_pipeline.py": "b17061f1ba1e044e900af1208b60a8f1ad54a753ca0d0e7dd6469fde602a3106",
+      "tests/test_pipeline.py": "5e0c052c596765a32ff4443d8668ba3b627dbeb1d7f7f954479048bbc5a14936",
+      "tests/test_qualification.py": "cdbed86dad2dc9d4815d17ea0ff4851d450f9d71f076a765fc341e2a3eca238a",
+      "tests/test_repair.py": "d7b73165798687f8a56cb225887dd782e90a126733363b6bd1400f6ad0edba96",
+      "tests/test_repair_native_query.py": "dfd13632b3674e3aab002302c9d63a2f51ca908274a4386121f87ceb9e813587",
+      "tests/test_report.py": "69b45c4e69ce8423723772004aa5c4b99006e26ef52ec444049850b9c554cfef",
+      "tests/test_rna_followup.py": "ee5c020c91228036a79c121b96b9164277f708e45aa91cbaa95306497a545bc9",
+      "tests/test_rna_recovery.py": "f573a7b514f0cf8d5701f1ebcf8454fe8311dfd120585cbeb537a682b90f349d",
+      "tests/test_rna_recovery_registration.py": "2b341c54a9a408f26a8143db77a8d2be7d9b481a5a0a54b296f1712a34506baa",
+      "tests/test_rna_recovery_stability.py": "543b3cea3b4ad4c576a0f630c294e691e1498b9b6c504f84a483c37b994c24e7",
+      "tests/test_semimarkov.py": "113ed93c9c0ee1f08bc2aea624f6b0ab984e142be82181a417fcb62bcc117030",
+      "tests/test_slurm.py": "b805fe9b58c765b8fdd16f6f6efa7dce45ab57c8e6659a190cb12763f7d4ce5e",
+      "tests/test_slurm_exclusions.py": "7be0e56b7763514d9ee57cec296387aa28c3c21cedf318fd0ea5c30ccd99feb9",
+      "tests/test_slurm_placement.py": "e9214519ff626d0daa42f712cf77923038734dca726ed42e9108ed04ea580980",
+      "tests/test_source_replication.py": "70ce073abb1ad56dbadd0369039faee2768731ea4002fc6310d387f05f0360bf",
+      "tests/test_storage_artifact_cache.py": "19921beee77beea62c649e34f0a129bdd07a0255c9d1c65f7cc779e56c8d9065",
+      "tests/test_storage_artifacts.py": "a6ec2fb94323f4388ec7862a7c334c4bb2f0d56dfbe5bcc5f8e993c816f2c12b",
+      "tests/test_storage_boundary_cache.py": "49400961147f65f26f2e7f6596e0f282d50498eb4590356d39dfc44be5fffea6",
+      "tests/test_storage_snapshot_artifacts.py": "591d700b7968db248efbb7af46ed28dbd9ef6b3ff3fff1659c55c5e0decdbd28",
+      "tests/test_storage_snapshot_boundary.py": "831e82054a12aa28cbdb50f24f135fa16d590e806546e389b76085848f5653f2",
+      "tests/test_transfer_rna_curl.py": "29a658ef6ff86f73c1e7b238530ae754afa036a3a264b47de864bf8caf65887c",
+      "tests/test_transfer_rna_ftp.py": "24e64e0e2f572c6e7056a1326b3b8f652cf50279957f09cab6aa69a8fcc19a53"
+    },
+    "sha256": "4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1"
+  },
+  "resource_policy": {
+    "approval": {
+      "approved_at_utc": "2026-10-21T18:06:12.965619+00:00",
+      "authorizes_cpu_gpu_resource_amendment": true,
+      "evidence_reference": "Current user instruction, 21 October 2026, complete ABCDEF and lift CPU/GPU restrictions",
+      "identity_verification": "instruction_provenance_only",
+      "source": "current_user",
+      "statement": "I want you to complete ABCDEF. you can lift the restrictions on cpu or gpu. for any unsupported stuff, try to create possibilities of completing them, including but not limited to new data acquisition etc."
+    },
+    "authority_basis": "Recorded current-user instruction provenance; not cryptographic identity verification",
+    "base_config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+    "execution_source_sha256": "4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1",
+    "limits": {
+      "cpu_ceiling": 256,
+      "cpu_core_hours_cap": null,
+      "gpu_concurrency": 4,
+      "gpu_hours_cap": null,
+      "max_native_hours": 168,
+      "scratch_budget_bytes": 6000000000000,
+      "scratch_budget_files": 250000,
+      "scratch_reserve_bytes": 2000000000000
+    },
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/execution-resource-policies/af-expanded-20261021-v1/policy.json",
+    "policy_id": "af-expanded-20261021-v1",
+    "primary_scientific_source_sha256": "0e2b1ebce8bffe10799470b3ac20828e621f1415f3a18bca8cd67d502f1e8630",
+    "scientific_gates_changed": false,
+    "sha256": "f4445fb72d6a0fd8e62fb9a3c5ef43a6a6b1e7bf5a369254ff40d617e992b4e5"
+  },
+  "root": "/scratch/pwa209/horsehair-worm",
+  "schema_version": 2,
+  "tasks": [
+    {
+      "begin_not_before_unix": 1792749484,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-01 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-01.sbatch --case-id rolling-01 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [],
+      "external_dependencies": [
+        "6863966"
+      ],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-01",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-01",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-01.sbatch",
+      "script_sha256": "b3ebe37e8e9d5c4eccffe86a7eaa79a8f832f7b399edd33cedae228a7071ae97"
+    },
+    {
+      "begin_not_before_unix": 1792771084,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-02 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-02.sbatch --case-id rolling-02 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-01"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-02",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-02",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-02.sbatch",
+      "script_sha256": "ae04aea6b5df89e44a22dacdbfbe4b9f8a4d5e9917d9ddb3a2422bcac3b310e9"
+    },
+    {
+      "begin_not_before_unix": 1792792684,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-03 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-03.sbatch --case-id rolling-03 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-02"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-03",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-03",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-03.sbatch",
+      "script_sha256": "339777f0f77149c6e5d5158ea0a3a5e8aab92fdd152f58eb258eef10b8eedf1b"
+    },
+    {
+      "begin_not_before_unix": 1792814284,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-04 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-04.sbatch --case-id rolling-04 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-03"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-04",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-04",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-04.sbatch",
+      "script_sha256": "cbfc1bf3a8c9919a8905e5a244de7c12ad5b93f47f6a6dae70a5ff61122bebd5"
+    },
+    {
+      "begin_not_before_unix": 1792835884,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-05 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-05.sbatch --case-id rolling-05 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-04"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-05",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-05",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-05.sbatch",
+      "script_sha256": "6512100f0f3f77ef00ce967ed82a5ef61b0ae30b4cf1992cfd33013eb0366c87"
+    },
+    {
+      "begin_not_before_unix": 1792857484,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-06 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-06.sbatch --case-id rolling-06 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-05"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-06",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-06",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-06.sbatch",
+      "script_sha256": "7dcd910efc0a8138f43cd9b098b58b1559400cd22b37203730cc87558a9f921b"
+    },
+    {
+      "begin_not_before_unix": 1792879084,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-07 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-07.sbatch --case-id rolling-07 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-06"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-07",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-07",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-07.sbatch",
+      "script_sha256": "0b91a74e72d0355834b50c3c66e7179b8f0b6aa5d9dc7e1b5643f6ce10ce3e67"
+    },
+    {
+      "begin_not_before_unix": 1792900684,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-08 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-08.sbatch --case-id rolling-08 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-07"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-08",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-08",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-08.sbatch",
+      "script_sha256": "bdd64d92fecf69f518c68c54e83959cd336c3ada666d49c38aa9d5528d7855ed"
+    },
+    {
+      "begin_not_before_unix": 1792922284,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-09 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-09.sbatch --case-id rolling-09 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-08"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-09",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-09",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-09.sbatch",
+      "script_sha256": "2994fc91e0327a522128ebd2a03560073d17a1ea555a5dd824c49bb20bcc3fd8"
+    },
+    {
+      "begin_not_before_unix": 1792943884,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-10 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-10.sbatch --case-id rolling-10 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-09"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-10",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-10",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-10.sbatch",
+      "script_sha256": "e335374135139ee88c2f579b7d969f2aefa2aa6fafa6fea54e5cec296020d0db"
+    },
+    {
+      "begin_not_before_unix": 1792965484,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-11 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-11.sbatch --case-id rolling-11 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-10"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-11",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-11",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-11.sbatch",
+      "script_sha256": "1f8e1e66469e273b45fdcfa6e2eb39a91e9676142376b062098c40e558771cf6"
+    },
+    {
+      "begin_not_before_unix": 1792987084,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-12 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-12.sbatch --case-id rolling-12 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-11"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-12",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-12",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-12.sbatch",
+      "script_sha256": "7346cb101cd456e9d25d849b9b0be2cb9d0984900876954346fbea168796a41d"
+    },
+    {
+      "begin_not_before_unix": 1793008684,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-13 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-13.sbatch --case-id rolling-13 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-12"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-13",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-13",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-13.sbatch",
+      "script_sha256": "278c2eacf8bd47aa1a3eb3a8c6f0806ad6632a92efad804b373751d60389afab"
+    },
+    {
+      "begin_not_before_unix": 1793030284,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-14 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-14.sbatch --case-id rolling-14 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-13"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-14",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-14",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-14.sbatch",
+      "script_sha256": "479ca0a0d476c2c827cda6ad52ef864267041b2067f2ad386ab4e100e568f824"
+    },
+    {
+      "begin_not_before_unix": 1793051884,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-15 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-15.sbatch --case-id rolling-15 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-14"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-15",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-15",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-15.sbatch",
+      "script_sha256": "ec0cd7b5fc7688623dbbd0458196191b48e3a99047179f7d88d40942589f3af1"
+    },
+    {
+      "begin_not_before_unix": 1793073484,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-16 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-16.sbatch --case-id rolling-16 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-15"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-16",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-16",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-16.sbatch",
+      "script_sha256": "1c1b1f24f75c8b484e13dca4905d85f4ed2a62a6c9f5ee952c44f3ce4b70527d"
+    },
+    {
+      "begin_not_before_unix": 1793095084,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-17 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-17.sbatch --case-id rolling-17 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-16"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-17",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-17",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-17.sbatch",
+      "script_sha256": "be362dd399efc589b813fdb7eeb5a4b2154fbbf4f1025783e39eb4fce779dde6"
+    },
+    {
+      "begin_not_before_unix": 1793116684,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-18 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-18.sbatch --case-id rolling-18 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-17"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-18",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-18",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-18.sbatch",
+      "script_sha256": "46f2c2cc8f1bbb0f5d675e473edb9c76e05d6169666b080bc690c4488e60127a"
+    },
+    {
+      "begin_not_before_unix": 1793138284,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-19 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-19.sbatch --case-id rolling-19 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-18"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-19",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-19",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-19.sbatch",
+      "script_sha256": "15e25199f71bba9bd897da3df4b2e1f9dbc4d6f04c96401dd527890e353d1b4e"
+    },
+    {
+      "begin_not_before_unix": 1793159884,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-20 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-20.sbatch --case-id rolling-20 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-19"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-20",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-20",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-20.sbatch",
+      "script_sha256": "bea789fa9704f3ad1e8c9aa55d2f93a057fc657e355d2cd70de01b4c290757ed"
+    },
+    {
+      "begin_not_before_unix": 1793181484,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-21 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-21.sbatch --case-id rolling-21 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-20"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-21",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-21",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-21.sbatch",
+      "script_sha256": "14baf5a9589ab093fb21ca5b9f25a61c6012cb164f35f36ceb15e0b054976e33"
+    },
+    {
+      "begin_not_before_unix": 1793203084,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-22 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-22.sbatch --case-id rolling-22 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-21"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-22",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-22",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-22.sbatch",
+      "script_sha256": "bc43a369a10796d049c33235e5daf54fec08bea4ded75a587a72eb48d9065952"
+    },
+    {
+      "begin_not_before_unix": 1793224684,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-23 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-23.sbatch --case-id rolling-23 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-22"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-23",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-23",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-23.sbatch",
+      "script_sha256": "08b26fdae852b4f1a5b5fe93f61006d6658a17c1dd75a9ddbc2bc6a1a8fa0a08"
+    },
+    {
+      "begin_not_before_unix": 1793246284,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-24 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-24.sbatch --case-id rolling-24 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-23"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-24",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-24",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-24.sbatch",
+      "script_sha256": "9e9e22d3c9606ee0252a46fa621b638c7d41926ee5341513cde9a4a338e95495"
+    },
+    {
+      "begin_not_before_unix": 1793267884,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-25 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-25.sbatch --case-id rolling-25 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-24"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-25",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-25",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-25.sbatch",
+      "script_sha256": "5a2a4c7febca37241a4622fb8007328cf48393056c160dafc73e6f8e4764dc2a"
+    },
+    {
+      "begin_not_before_unix": 1793289484,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-26 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-26.sbatch --case-id rolling-26 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-25"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-26",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-26",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-26.sbatch",
+      "script_sha256": "02adb9239adaa4e67a949da9892497231ee95356f528473d2629913a491f9d74"
+    },
+    {
+      "begin_not_before_unix": 1793311084,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-27 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-27.sbatch --case-id rolling-27 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-26"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-27",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-27",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-27.sbatch",
+      "script_sha256": "dd94993c73c1ffedf70d383be2a78b4fc09821480b128dbfd6256557025a0a30"
+    },
+    {
+      "begin_not_before_unix": 1793332684,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-28 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-28.sbatch --case-id rolling-28 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-27"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-28",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-28",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-28.sbatch",
+      "script_sha256": "9646fb5c7df2694bfa169095a25448d9f602d8ebc134dfe51727c8050ed37603"
+    },
+    {
+      "begin_not_before_unix": 1793354284,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-29 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-29.sbatch --case-id rolling-29 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-28"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-29",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-29",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-29.sbatch",
+      "script_sha256": "6d3686749f01ff7f186894bdbcec5b6ffda6cd199c540e45257b2d3982b7162c"
+    },
+    {
+      "begin_not_before_unix": 1793375884,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-30 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-30.sbatch --case-id rolling-30 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-29"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-30",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-30",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-30.sbatch",
+      "script_sha256": "83a6d6ae2bbc94edfbd4a2dae3fe6518a08cb9c82d45fb0d2bc617164a165818"
+    },
+    {
+      "begin_not_before_unix": 1793397484,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-31 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-31.sbatch --case-id rolling-31 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-30"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-31",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-31",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-31.sbatch",
+      "script_sha256": "bc951c2a51da7d887d37ff78a74adf2c939ccc52567196d567cfc81f4626d087"
+    },
+    {
+      "begin_not_before_unix": 1793419084,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-32 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-32.sbatch --case-id rolling-32 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-31"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-32",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-32",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-32.sbatch",
+      "script_sha256": "108b1e8ff6f173e7923cc8da5e6ce1af2cb974ee05a9731b0995868914412a66"
+    },
+    {
+      "begin_not_before_unix": 1793440684,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-33 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-33.sbatch --case-id rolling-33 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-32"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-33",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-33",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-33.sbatch",
+      "script_sha256": "76421d2b6c93b2394cef460cf6371ec5d9a902617c67fe30f06f54b95f540ca4"
+    },
+    {
+      "begin_not_before_unix": 1793462284,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-34 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-34.sbatch --case-id rolling-34 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-33"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-34",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-34",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-34.sbatch",
+      "script_sha256": "6aa68aab2c44e4904fd9b3a223ee13d8504e17e4d6dcee87dbbad36b877103cf"
+    },
+    {
+      "begin_not_before_unix": 1793483884,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-35 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-35.sbatch --case-id rolling-35 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-34"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-35",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-35",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-35.sbatch",
+      "script_sha256": "58351b3b826e9f100f09306c24e6ceaedfb2408992309c2cb2ab426a3ab2a5a6"
+    },
+    {
+      "begin_not_before_unix": 1793505484,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-36 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-36.sbatch --case-id rolling-36 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-35"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-36",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-36",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-36.sbatch",
+      "script_sha256": "a4cc2f39cefc1591c5c7a18e13ca3d74ae5d36804b07763b832b654e50dded3f"
+    },
+    {
+      "begin_not_before_unix": 1793527084,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-37 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-37.sbatch --case-id rolling-37 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-36"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-37",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-37",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-37.sbatch",
+      "script_sha256": "9a84904c35d02203cc45f6319b908dcc6d3b87e352930fbc32ea2998a448afbd"
+    },
+    {
+      "begin_not_before_unix": 1793548684,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-38 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-38.sbatch --case-id rolling-38 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-37"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-38",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-38",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-38.sbatch",
+      "script_sha256": "19f89bdcb626f18ee4afce10208291cbf0f051bf5b0cff5fe630e255315c863f"
+    },
+    {
+      "begin_not_before_unix": 1793570284,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-39 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-39.sbatch --case-id rolling-39 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-38"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-39",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-39",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-39.sbatch",
+      "script_sha256": "da0b9f80acee1320a1c362eda16ea6d4fad06b96242bbb76040fd2217f213734"
+    },
+    {
+      "begin_not_before_unix": 1793591884,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-40 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-40.sbatch --case-id rolling-40 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-39"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-40",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-40",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-40.sbatch",
+      "script_sha256": "063b003355f1c688c5a472702a094e4c2d1fd28f66f0a57b0f29e8c878c1e3e3"
+    },
+    {
+      "begin_not_before_unix": 1793613484,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-41 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-41.sbatch --case-id rolling-41 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-40"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-41",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-41",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-41.sbatch",
+      "script_sha256": "f4a26c5c3d2d955938bbc3a0c80485973d0f796ff504c97d57200dbf6f61c4fb"
+    },
+    {
+      "begin_not_before_unix": 1793635084,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-42 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-42.sbatch --case-id rolling-42 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-41"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-42",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-42",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-42.sbatch",
+      "script_sha256": "40e1e3b27f75cd4139d1ea4877c2b5722a0122c93e71c34efcdf21b74338cc27"
+    },
+    {
+      "begin_not_before_unix": 1793656684,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-43 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-43.sbatch --case-id rolling-43 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-42"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-43",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-43",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-43.sbatch",
+      "script_sha256": "d11a94300ddb0eb656e38b42ff6c473bc9f2a3007ed352eea517c87bbeef0056"
+    },
+    {
+      "begin_not_before_unix": 1793678284,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-44 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-44.sbatch --case-id rolling-44 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-43"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-44",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-44",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-44.sbatch",
+      "script_sha256": "b21fdb0a0eceb94de9feb82b1f24f84f4364c554c1ed5a3e00a73e925c22ffbe"
+    },
+    {
+      "begin_not_before_unix": 1793699884,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-45 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-45.sbatch --case-id rolling-45 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-44"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-45",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-45",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-45.sbatch",
+      "script_sha256": "f13f875a9a859a794d124411c8195b1b98621069d53aa876c5ff0ffc26d948a3"
+    },
+    {
+      "begin_not_before_unix": 1793721484,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-46 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-46.sbatch --case-id rolling-46 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-45"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-46",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-46",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-46.sbatch",
+      "script_sha256": "7c670aa39daed1adec537f7ad88a49a4b2784f5ea76684f75d3d627ecd24f35f"
+    },
+    {
+      "begin_not_before_unix": 1793743084,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-47 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-47.sbatch --case-id rolling-47 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-46"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-47",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-47",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-47.sbatch",
+      "script_sha256": "9a7e424775c24b9bc726b7e17d61f5f4d423372f00fb08763a46eb2d059e5fe6"
+    },
+    {
+      "begin_not_before_unix": 1793764684,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-48 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-48.sbatch --case-id rolling-48 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-47"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-48",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-48",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-48.sbatch",
+      "script_sha256": "219dd733b8d9b1ad339483b707793536f572197d6d5ecf056e9eef40b2765857"
+    },
+    {
+      "begin_not_before_unix": 1793786284,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-49 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-49.sbatch --case-id rolling-49 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-48"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-49",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-49",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-49.sbatch",
+      "script_sha256": "073a0d199436e4624c4135e260c1b9588b0c4d864144f135812b343ddbdfdfb0"
+    },
+    {
+      "begin_not_before_unix": 1793807884,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-50 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-50.sbatch --case-id rolling-50 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-49"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-50",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-50",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-50.sbatch",
+      "script_sha256": "469806f6ac8544691363c0b856b243b1b610831d9a198e8c7cb055f8c3ab6020"
+    },
+    {
+      "begin_not_before_unix": 1793829484,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-51 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-51.sbatch --case-id rolling-51 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-50"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-51",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-51",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-51.sbatch",
+      "script_sha256": "654571548db467f907a48d6192689515c63ba255871a51b9c0381ee62659372b"
+    },
+    {
+      "begin_not_before_unix": 1793851084,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-52 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-52.sbatch --case-id rolling-52 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-51"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-52",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-52",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-52.sbatch",
+      "script_sha256": "5e93a6211472569291f3e58567bde8417193c2f955897fe5e3fae2ef9d6c9bbd"
+    },
+    {
+      "begin_not_before_unix": 1793872684,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-53 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-53.sbatch --case-id rolling-53 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-52"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-53",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-53",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-53.sbatch",
+      "script_sha256": "a97108e596db504cb5346b5a703b8fac62cffce0a6c0238941ef1e60f16b9c4c"
+    },
+    {
+      "begin_not_before_unix": 1793894284,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-54 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-54.sbatch --case-id rolling-54 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-53"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-54",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-54",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-54.sbatch",
+      "script_sha256": "4e8a56378dd301dea7552589d9ef4313dfabff371d235c51bef4b8867fde203e"
+    },
+    {
+      "begin_not_before_unix": 1793915884,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-55 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-55.sbatch --case-id rolling-55 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-54"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-55",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-55",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-55.sbatch",
+      "script_sha256": "7c44f07ed163e2a0e2f7d06600294eebfdbf5b63f68053ddccd1f5f79feb55f4"
+    },
+    {
+      "begin_not_before_unix": 1793937484,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-56 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-56.sbatch --case-id rolling-56 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-55"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-56",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-56",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-56.sbatch",
+      "script_sha256": "4b1d2aaf8345ea484a1400a4a161b176174f0152889fe6313da50f14e993d381"
+    },
+    {
+      "begin_not_before_unix": 1793959084,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-57 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-57.sbatch --case-id rolling-57 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-56"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-57",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-57",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-57.sbatch",
+      "script_sha256": "59e3df37e5fee3eb5af9f277220c129a12d653e4fb4c4f31b29e8d3ef15378ab"
+    },
+    {
+      "begin_not_before_unix": 1793980684,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-58 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-58.sbatch --case-id rolling-58 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-57"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-58",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-58",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-58.sbatch",
+      "script_sha256": "19b14ce783e337e4cc5ba51d53746c3210ed9861f10ba8cc29e5911e8f9e32d9"
+    },
+    {
+      "begin_not_before_unix": 1794002284,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-59 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-59.sbatch --case-id rolling-59 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-58"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-59",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-59",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-59.sbatch",
+      "script_sha256": "23c407b38909f0d09dcfd713028c72f26f28c95d06ddf918b1bd08071deb2105"
+    },
+    {
+      "begin_not_before_unix": 1794023884,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-60 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-60.sbatch --case-id rolling-60 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-59"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-60",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-60",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-60.sbatch",
+      "script_sha256": "58c04e3a75999dcd97b3391aaa7e30bccaddadaaf08d63df6d92fd2536f9127c"
+    },
+    {
+      "begin_not_before_unix": 1794045484,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-61 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-61.sbatch --case-id rolling-61 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-60"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-61",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-61",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-61.sbatch",
+      "script_sha256": "8ae22c3ba45349e48bcd3a3bce9cb8538b2d2149e45c64660c6a3ee90e6ba041"
+    },
+    {
+      "begin_not_before_unix": 1794067084,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-62 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-62.sbatch --case-id rolling-62 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-61"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-62",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-62",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-62.sbatch",
+      "script_sha256": "7fc5adcd0f9437de7ee92886c15552afbdb3030e413a944c874c9faddc6cfa8b"
+    },
+    {
+      "begin_not_before_unix": 1794088684,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-63 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-63.sbatch --case-id rolling-63 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-62"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-63",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-63",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-63.sbatch",
+      "script_sha256": "a447e2bc9b3f47a32e929d8edfdcfa6e70dc764cc35aa43e2a09068b898f26ec"
+    },
+    {
+      "begin_not_before_unix": 1794110284,
+      "command": "python -u /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py --native-plan /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/plan.json --native-ledger /scratch/pwa209/horsehair-worm/state/recovery-support-20261021-429-submission.json --native-task rolling-storage-census-64 --native-script /scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-64.sbatch --case-id rolling-64 --source-manifest /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json --source-manifest-sha256 1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e --kernel-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json --kernel-qualification-sha256 8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c --kernel-qualification-job-id 6863966 --registry-qualification /scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v4-20261021/private-qualification.json --registry-qualification-sha256 1f391caccd4629eb47150862f7bc2575e991e4ce5cb5aae99e955cdeae4510ca --registry-qualification-job-id 6699561",
+      "dependency_kind": "afterok",
+      "depends": [
+        "rolling-storage-census-63"
+      ],
+      "external_dependencies": [],
+      "initially_submitted_held": true,
+      "name": "rolling-storage-census-64",
+      "resources": {
+        "array": null,
+        "cpus": 8,
+        "gpu": false,
+        "hours": 6,
+        "memory": "64G"
+      },
+      "rolling_census_provider": {
+        "case_id": "rolling-64",
+        "helper": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+          "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+        },
+        "source_manifest": {
+          "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+          "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+        }
+      },
+      "script": "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-429/rolling-storage-census-64.sbatch",
+      "script_sha256": "498e0c47d78dd56f34270bbd00ab288ecd7207649432b744e1d19c3324dbb124"
+    }
+  ]
+}

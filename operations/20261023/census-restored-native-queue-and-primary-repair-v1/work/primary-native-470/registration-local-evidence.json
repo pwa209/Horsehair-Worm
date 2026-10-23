@@ -1,0 +1,27 @@
+{
+  "external_dependencies": [
+    "6866457"
+  ],
+  "helper_sha256": "f299f6be9684e7f5d5ad4e28cd92870f9f8ee4c72774eef876251be9f9123584",
+  "junit": {
+    "path": "work\\primary470-handoff-local-final.xml",
+    "sha256": "95491f33b0563530a7ca8549d69f919942cb1ea57d381d9aaea3338d4367f463"
+  },
+  "kind": "primary-external-census-handoff-local-registration-v1",
+  "local_tests": {
+    "count": 113,
+    "roster_sha256": "0d5edba1d786594ce531cf5c987e444976401d0fc8d5a445da1bde22cc021261"
+  },
+  "own_resources": {
+    "array": null,
+    "cpus": 4,
+    "gpu": false,
+    "hours": 1,
+    "memory": "16G"
+  },
+  "qualification_claimed": false,
+  "scheduler_submitted": false,
+  "shell_sha256": "12cb7f22a92131a4bba78ed05139763fc74e2588ec61c110f765c426fdb94cfd",
+  "source_manifest_sha256": "4159f3d3224b106773e4fea8704c1cece39460f27b1acf79130c6dfc94092444",
+  "test_sha256": "fbe9651e6e01edb109f8fae9fd2e97e1e6a510d022e30776be4ac6c5cade8119"
+}

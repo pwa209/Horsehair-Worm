@@ -1,0 +1,22 @@
+{
+  "external_dependencies": [
+    "6863966"
+  ],
+  "helper_sha256": "dd5f8d2aec90896fdcfe190971ea8b6c32a94158a3684566c2b8405748e7c794",
+  "kind": "primary-external-census-qualification-local-registration-v1",
+  "policy_descriptor_sha256": "b597cd76d14a668e35a36a8a9745e0f034fc47981e29e3ddab779e6e4f011d18",
+  "provider_dependency_required": false,
+  "qualification_claimed": false,
+  "request_id": "469",
+  "resources": {
+    "array": null,
+    "cpus": 4,
+    "gpu": false,
+    "hours": 1,
+    "memory": "64G"
+  },
+  "scheduler_submitted": false,
+  "shell_sha256": "1382eb0be0b820fd931af0e19f54715c2320fae3e262c788dbc58d8f6d4cc84f",
+  "source_manifest_sha256": "fd5d7b951b2df0094e82c7c670d6e578a30efa913b4dcc6923cf335627d1dde9",
+  "test_sha256": "031ecb0cd1364952241decbb5d88f0c1cd8b313373a5630672910d37a1e4390e"
+}

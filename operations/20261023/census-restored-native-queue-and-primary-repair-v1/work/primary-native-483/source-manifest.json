@@ -1,0 +1,19 @@
+{
+  "files": {
+    "handoff-primary-external-census-v1-20261023.py": "de582b45b5c3f813673f6f0bcaa3aca32659c3b57a75b10511e2409fabb015c9",
+    "test_handoff_primary_external_census_v1_20261023.py": "0bd09ef4ec8fc62c4e5cc98e26698e3a1fc0da462b1891a8f0fc907dd73e7ed5"
+  },
+  "kind": "primary-external-census-handoff-source-manifest-v1",
+  "primary_source_manifest": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/source-manifest.json",
+    "sha256": "fd5d7b951b2df0094e82c7c670d6e578a30efa913b4dcc6923cf335627d1dde9"
+  },
+  "qualification_policy_descriptor": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-primary-external-census-policy-v1-20261023/qualification-policy.json",
+    "sha256": "b597cd76d14a668e35a36a8a9745e0f034fc47981e29e3ddab779e6e4f011d18"
+  },
+  "tests": {
+    "count": 125,
+    "roster_sha256": "9a8c3cf8cda5aaa01878c50f0638135147c269353de86bda091c3d568cf5c3f6"
+  }
+}

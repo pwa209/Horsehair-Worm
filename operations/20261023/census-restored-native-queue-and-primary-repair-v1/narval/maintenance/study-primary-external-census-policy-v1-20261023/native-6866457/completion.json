@@ -1,0 +1,12 @@
+{
+  "admission_authority": false,
+  "canonical_science_changed": false,
+  "freshness_timestamp_rewritten": false,
+  "mode": "qualify",
+  "native_completion_required": true,
+  "native_job_id": "6866457",
+  "scientific_gates_cleared": false,
+  "scientific_result": false,
+  "status": "finite_primary_operational_allocation_finished",
+  "underlying_status": "complete_primary_external_census_qualification"
+}

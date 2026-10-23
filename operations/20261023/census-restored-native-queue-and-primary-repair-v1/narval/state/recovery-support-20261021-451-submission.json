@@ -1,0 +1,27 @@
+{
+  "config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+  "environment_job": null,
+  "excluded_nodes": [],
+  "plan_sha256": "7cf4375a32ccfc97aa82ee1725a8dca7ce42b0b45bc210420940cb57db54e6ee",
+  "schema_version": 2,
+  "source_sha256": "4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1",
+  "tasks": {
+    "recovery-451": {
+      "command": [
+        "sbatch",
+        "--parsable",
+        "--dependency=afterok:6865619",
+        "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-451/recovery-451.sbatch"
+      ],
+      "completed_native_dependencies": [],
+      "dependency_kind": "afterok",
+      "dependency_resolution_sha256": "aebc24e99825bcaf1aa41ca5d24c212d3ecd8bd47453c9ffe171165581037ea9",
+      "issued_native_dependencies": [
+        "6865619"
+      ],
+      "job_id": "6865706",
+      "script_sha256": "a10ff167dc5f23309bfd6747f1c6500752890c8e47eaed27c5cf91ea5bc3506a",
+      "state": "submitted"
+    }
+  }
+}

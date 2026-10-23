@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "horsehair-worm"
+version = "0.1.0"
+description = "Comparative parasite behavioural control and computational intervention study"
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.26,<3", "scipy>=1.11,<2", "pandas>=2.2,<4", "torch>=2.6,<3", "scikit-learn>=1.4,<2", "pyarrow>=14", "h5py>=3.10", "openpyxl>=3.1", "requests>=2.31", "statsmodels>=0.14", "matplotlib>=3.8"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+horsehair = "horsehair.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+

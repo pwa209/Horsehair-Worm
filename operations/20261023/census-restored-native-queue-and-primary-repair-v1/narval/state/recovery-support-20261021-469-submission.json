@@ -1,0 +1,49 @@
+{
+  "config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+  "environment_job": null,
+  "excluded_nodes": [],
+  "plan_sha256": "280e498d2b8be1e5457553f6fc56539f9bf092cffe7706eceb54d6ab901eaa4f",
+  "schema_version": 2,
+  "source_sha256": "4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1",
+  "tasks": {
+    "recovery-469": {
+      "command": [
+        "sbatch",
+        "--parsable",
+        "/scratch/pwa209/horsehair-worm/plans/recovery-support-20261021-469/recovery-469.sbatch"
+      ],
+      "completed_native_dependencies": [
+        {
+          "array": null,
+          "basis": "Positive persisted final sacct records for every declared task; require COMPLETED/0:0 for afterok",
+          "completion_proof_sha256": "89fea511f31adac03a2fa4b7523efc0e6548fed9b7073f726bc883694d6918ad",
+          "dependency_kind": "afterok",
+          "job_id": "6863966",
+          "native_records": {
+            "6863966": {
+              "basis": "sacct final allocated wall time",
+              "cpu_core_hours": 0.3688888888888889,
+              "cpus": 8,
+              "elapsed_seconds": 166,
+              "exit_code": "0:0",
+              "gpu_hours": 0.0,
+              "gpus": 0,
+              "job_id": "6863966",
+              "job_id_raw": "6863966",
+              "state": "COMPLETED"
+            }
+          },
+          "native_records_sha256": "54ff40198805c95d4fdab81b96d8d34fe7b77b3c5dc8adb5b6643bf1fb4b839a",
+          "source_file_sha256_at_capture": "92c166c177181296b6a0d8a81e9ed1d62505a965a62062bc4db7257446aa7229",
+          "source_path": "/scratch/pwa209/horsehair-worm/state/resource-budget.json"
+        }
+      ],
+      "dependency_kind": "afterok",
+      "dependency_resolution_sha256": "1b3f003f0cf2d457c600ecc29f1aefb2ae369521b483d586d07794ad63a7fae9",
+      "issued_native_dependencies": [],
+      "job_id": "6866457",
+      "script_sha256": "64dee20ba1593a3a58a3898f1b42f4199f39dda33186a238ceeecf6750d35b11",
+      "state": "submitted"
+    }
+  }
+}
