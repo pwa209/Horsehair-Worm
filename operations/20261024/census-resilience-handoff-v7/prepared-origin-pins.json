@@ -1,0 +1,27 @@
+{
+  "descriptor": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v3-20261024/handoff-descriptor.json",
+    "sha256": "6bfee692f73ea33ca858335a9fef3108068d1f8010b3fbc265eeb57eaab5f5e6"
+  },
+  "failed_activation": {
+    "failure": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v3-20261024/native-7049022/failure.json",
+      "sha256": "c91a77781303fd2eabaedd2d58ceaa4ec81a8673479f33eb976cdf450dc1f9a3"
+    },
+    "job_id": "7049022"
+  },
+  "kind": "qualified-v3-prepared-origin-v1",
+  "prepared_receipt": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v3-20261024/native-7043324/prepared-receipt.json",
+    "sha256": "d94f5fd10f0d9caf644e3e9d13d0553f8d183cd4297b5d7a28c002d18fe18e98"
+  },
+  "qualification": {
+    "job_id": "7040348",
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v3-20261024/qualification.json",
+    "sha256": "c3fcf48837e7d17abd260b82d581905db40750057dadb48ba8279df385780893"
+  },
+  "source_manifest": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v3-20261024/source-manifest.json",
+    "sha256": "2513a89c5766fa97bd2794b6435e0a6f23716db62e556d2b411fb2d496668487"
+  }
+}
