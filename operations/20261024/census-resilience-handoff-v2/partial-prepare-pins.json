@@ -1,0 +1,42 @@
+{
+  "accepted_job_id": "7028292",
+  "af_binding": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-consumers-v2-20261024/af-consumer-binding.json",
+    "sha256": "7c59a1e4a78ff3cbe5d44666a4830a16027585ea9525bf87c5f1040f83755288"
+  },
+  "af_ledger": {
+    "path": "/scratch/pwa209/horsehair-worm/state/study-af-census-resilience-consumers-v2-20261024-submission.json",
+    "sha256": "9fbff9c8eb497e730fc2d614ddf6ea8f9ca8bec1d59462d0b2df81b5ce9fbb4a"
+  },
+  "af_plan": {
+    "path": "/scratch/pwa209/horsehair-worm/plans/study-af-census-resilience-consumers-v2-20261024/plan.json",
+    "sha256": "a48edca80b532d667a8bef3b4ba6ea4c7c1d93398ae72a47f471fe76d3a61176"
+  },
+  "failed_job_id": "7027712",
+  "failure": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v1-20261024/native-7027712/failure.json",
+    "sha256": "4d356eec5f4b72b46918152c2b78552a0e5bef1fb775faac557a46e3af5d7fb4"
+  },
+  "kind": "exact-accepted-held-prepare-reconciliation-v1",
+  "native_bindings": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v1-20261024/native-7027712/native-bindings.json",
+    "sha256": "1c6b6e67bbc996603b8a116f1746fa718d2be1cc64219793e312c2ea5b574100"
+  },
+  "old_qualification": {
+    "job_id": "7026397",
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v1-20261024/qualification.json",
+    "sha256": "01299c8e4564459b5d87816bafa852aee38450b5ad30df41b3a7f94150ea3e53"
+  },
+  "old_source_manifest": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v1-20261024/source-manifest.json",
+    "sha256": "217dcac1ed0e142963f67412377e0663e8b59599cf07318a3764e808395a58ed"
+  },
+  "submit_intent": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v1-20261024/native-7027712/00002-submit-held-af-resilient-census-controller-0-intent.json",
+    "sha256": "94b1de53d3d19c377313dd2989ceb2647f743ea072ceecfd10daceb772cb4d1b"
+  },
+  "submit_response": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v1-20261024/native-7027712/00002-submit-held-af-resilient-census-controller-0-response.json",
+    "sha256": "4055f9989726ed81f0b5e7e8f12732da2d68d0b86ecc9626a4de785d1c289285"
+  }
+}

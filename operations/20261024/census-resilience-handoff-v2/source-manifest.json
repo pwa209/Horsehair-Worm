@@ -1,0 +1,26 @@
+{
+  "files": {
+    "old-input-pins.json": "ad9f2fc1781b1001db67cc36d86b6db68e95491d2a6a495ce0cfc46eacf7b282",
+    "partial-prepare-pins.json": "d44e97ef8314b3016b094cba252babe4bbfefa730255987821ccb2d7948711ec",
+    "primary-history-pins.json": "f16b19c6974fc19c28d9e01f575f4ca05904c6fd6ffb1a1d901aac9742d512e6",
+    "primary-roster.py": "8b3096630a0638a1d2ded9bf6002d57eb5df5e0fa5d90529fca517aa3c2d1199",
+    "run-census-resilience-handoff-v2-20261024.py": "732a40bb701bdee2ac74510323551a46c8709b7503f79fc0a5fde59a6903b734",
+    "test_census_resilience_handoff_v2_20261024.py": "ae6ba141b3375e697378099df06dec1995aadde434e4ff1c7b1ea1764e4f3516",
+    "test_primary_roster.py": "972d021855cd6462092fd07fd3b312cbd0d70f433f3e43be396238eeec114500"
+  },
+  "kind": "census-resilience-handoff-source-manifest-v2",
+  "suites": {
+    "handoff": {
+      "roster_sha256": "dc958dfa28f101c0469365981cd1965c9b3b38652510fd4e3e667852566cd7b4",
+      "source": "test_census_resilience_handoff_v2_20261024.py",
+      "source_sha256": "ae6ba141b3375e697378099df06dec1995aadde434e4ff1c7b1ea1764e4f3516",
+      "tests": 79
+    },
+    "primary_roster": {
+      "roster_sha256": "e94074512aadcc8b40c8af83e9eee95bb65901a2150a8f2567f7992ac93ec554",
+      "source": "test_primary_roster.py",
+      "source_sha256": "972d021855cd6462092fd07fd3b312cbd0d70f433f3e43be396238eeec114500",
+      "tests": 75
+    }
+  }
+}
