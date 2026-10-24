@@ -1,0 +1,15 @@
+{
+  "files": {
+    "README.md": "e6c7a98bfa04bfc06c2221f77b654423150664295b5056a0f5ed65caa7d2ff55",
+    "build-native-plan.py": "10646608676ff983193123e59d22f3b745690816693078fe9ea6ab9531e54827",
+    "run-behaviour-continuation-activation-v1-20261024.py": "964f80bf419359a7566f33f1f278a40c99831873b90a545df25096afe2380cda",
+    "test_behaviour_continuation_activation_v1_20261024.py": "031450fa85f3a5a590aed19a8de610262887572255d5ff7972ff9812adeced8d"
+  },
+  "kind": "behaviour-continuation-activation-source-manifest-v1",
+  "suite": {
+    "roster_sha256": "e2be112c2b31fa3541c803d7e09bf6e7e8003a1709f62305aef342c46c3cb7ca",
+    "source": "test_behaviour_continuation_activation_v1_20261024.py",
+    "source_sha256": "031450fa85f3a5a590aed19a8de610262887572255d5ff7972ff9812adeced8d",
+    "tests": 31
+  }
+}
