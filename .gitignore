@@ -29,4 +29,5 @@ operations/20261024/f2-backfill-controller-v2/local-backfill-tests*.xml
 operations/20261024/f2-backfill-controller-v2/local-regression-summary.json
 operations/20261024/f2-backfill-controller-v2/local-qualification-*/
 operations/20261024/f2-pending-handoff-v2/local-contracts*.xml
+operations/20261024/f2-pending-handoff-v2/test-work-v2/
 
