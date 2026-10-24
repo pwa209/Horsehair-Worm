@@ -1,0 +1,13 @@
+This capsule preserves all v1 source and evidence. It uses the unchanged controller base bytes (`cbf01cffbbaa9a983ec1e8e6394b38ac04623483e768398c18f48b5e30e31445`) under the new v2 namespace.
+
+Handoff 6946289 stopped before scheduler mutation because v1 bounded the native accounting admission proof at 1,000,000 bytes. Observation 522 measured that immutable file at 1,358,401 bytes with its expected SHA256 `ed0a3ccefd305347a750f7db94e3d561bbe9a852022a77ca75dcfa0477d66dfd`; the fixture proof was 3,894 bytes and its hash also matched. The error was a producer/consumer size-contract mismatch.
+
+V2 applies one scoped 8,000,000-byte limit to the three qualification JUnit files, accounting admission proof and local fixture proof. Their locators remain exact, confined ordinary files with pinned SHA256. Fixture JSON retains duplicate-field and nonfinite-value rejection. Other existing source, descriptor and report bounds remain unchanged.
+
+The qualifier checks JUnit through a bounded read, persists the native outputs, records actual sizes and the common maximum for all five files, and calls the production evidence consumer before publishing `qualification.json`. The production validator checks that recorded size contract against the actual persisted files. Complete positive native accounting is still required separately.
+
+The new suite contains 40 cases: all 29 original scheduler/source contracts, nine real-file boundary cases at the observed 1,358,401-byte size or above the 8 MB ceiling across XML/admission JSON/fixture JSON, and two strict JSON parser cases. The native qualifier also runs the original 172 operational cases against the exact unchanged backfill base and all 71 original provider cases: 283 cases total.
+
+Stage only the 16 files named in `transport-source-manifest.json`, preserving exact bytes, into `/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v2-20261024`. Run its `build-backfill-native-plans-v2-20261024.py --mode qualification-plan` in the qualified 4f environment to freeze the new one-CPU64G one-hour qualification plan. The builder does not submit jobs. Fixtures execute under a unique owned SLURM_TMPDIR namespace, with the existing actual admission and expanded-policy resource lease.
+
+After that qualification completes 0:0 and its immutable completion accounting is persisted, run the v2 pending-handoff builder's read-only qualification preflight. That invokes the actual complete production `backfill_qualification` validator, including all source, report, artifact, registration and finalized native-completion checks, before creating any handoff plan. The frozen v1 qualification and failed handoff remain preserved. No remote action is performed by this local package creation.
