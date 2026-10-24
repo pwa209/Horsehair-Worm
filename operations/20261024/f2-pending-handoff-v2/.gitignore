@@ -1,0 +1,6 @@
+__pycache__/
+.pytest_cache/
+test-work*/
+local-contracts*.xml
+local-preflight-test-output.txt
+local-preflight-test-result.json
