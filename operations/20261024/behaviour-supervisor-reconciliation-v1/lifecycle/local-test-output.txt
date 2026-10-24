@@ -1,0 +1,29 @@
+test_already_exited_child_does_not_read_rss (__main__.LifecycleTests.test_already_exited_child_does_not_read_rss) ... ok
+test_changed_source_binding_is_rejected (__main__.LifecycleTests.test_changed_source_binding_is_rejected) ... ok
+test_delayed_reap_after_file_disappears_completes_without_signal (__main__.LifecycleTests.test_delayed_reap_after_file_disappears_completes_without_signal) ... ok
+test_delayed_reap_after_process_lookup_completes_without_signal (__main__.LifecycleTests.test_delayed_reap_after_process_lookup_completes_without_signal) ... ok
+test_existing_deadline_bound_is_preserved (__main__.LifecycleTests.test_existing_deadline_bound_is_preserved) ... ok
+test_existing_memory_bound_is_preserved (__main__.LifecycleTests.test_existing_memory_bound_is_preserved) ... ok
+test_immediate_second_poll_terminal_avoids_wait_and_signal (__main__.LifecycleTests.test_immediate_second_poll_terminal_avoids_wait_and_signal) ... ok
+test_incomplete_stage_roster_cannot_claim_completion (__main__.LifecycleTests.test_incomplete_stage_roster_cannot_claim_completion) ... ok
+test_malformed_result_is_rejected_after_natural_exit (__main__.LifecycleTests.test_malformed_result_is_rejected_after_natural_exit) ... ok
+test_missing_result_remains_failed_after_zero_exit (__main__.LifecycleTests.test_missing_result_remains_failed_after_zero_exit) ... ok
+test_natural_wait_is_capped_by_remaining_deadline (__main__.LifecycleTests.test_natural_wait_is_capped_by_remaining_deadline) ... ok
+test_natural_wait_timeout_at_deadline_preserves_deadline_bound (__main__.LifecycleTests.test_natural_wait_timeout_at_deadline_preserves_deadline_bound) ... ok
+test_no_natural_wait_if_deadline_elapsed_after_rss_disappears (__main__.LifecycleTests.test_no_natural_wait_if_deadline_elapsed_after_rss_disappears) ... ok
+test_nonzero_natural_exit_remains_failed_with_complete_result (__main__.LifecycleTests.test_nonzero_natural_exit_remains_failed_with_complete_result) ... ok
+test_original_reproduces_false_failure_after_delayed_reap (__main__.LifecycleTests.test_original_reproduces_false_failure_after_delayed_reap) ... ok
+test_original_source_hash_and_only_supervise_changed (__main__.LifecycleTests.test_original_source_hash_and_only_supervise_changed) ... ok
+test_reordered_stage_roster_is_rejected (__main__.LifecycleTests.test_reordered_stage_roster_is_rejected) ... ok
+test_scientific_or_admission_flag_cannot_be_promoted (__main__.LifecycleTests.test_scientific_or_admission_flag_cannot_be_promoted) ... ok
+test_tampered_stage_artifact_is_rejected (__main__.LifecycleTests.test_tampered_stage_artifact_is_rejected) ... ok
+test_timeout_preserves_missing_rss_error_even_if_teardown_reaps_zero (__main__.LifecycleTests.test_timeout_preserves_missing_rss_error_even_if_teardown_reaps_zero) ... ok
+test_timeout_with_unreaped_child_preserves_unknown_termination (__main__.LifecycleTests.test_timeout_with_unreaped_child_preserves_unknown_termination) ... ok
+test_unexpected_rss_error_stays_failed_even_with_complete_result (__main__.LifecycleTests.test_unexpected_rss_error_stays_failed_even_with_complete_result) ... ok
+test_wait_error_is_not_promoted_by_valid_result (__main__.LifecycleTests.test_wait_error_is_not_promoted_by_valid_result) ... ok
+test_wait_must_return_positive_integer_reap_evidence (__main__.LifecycleTests.test_wait_must_return_positive_integer_reap_evidence) ... ok
+
+----------------------------------------------------------------------
+Ran 24 tests in 2.929s
+
+OK

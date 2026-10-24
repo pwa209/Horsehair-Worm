@@ -1,0 +1,9 @@
+{
+  "errors": 0,
+  "failures": 0,
+  "reconciler_sha256": "bc7672a0937c1a9f4a48b53f95c7d66fda153fb66ccd614e25b2ec380bfca9bc",
+  "skipped": 0,
+  "successful": true,
+  "tests": 36,
+  "tests_sha256": "5cd6a68df3d49141c25d3b2cea717f138c1cc94e91a26f247fef5c469e28a4df"
+}

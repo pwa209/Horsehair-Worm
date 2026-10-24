@@ -1,0 +1,12 @@
+{
+  "controller-primary-repair-sixth-20261016.py": "49815eeb509909d5eac2ebde2e4f4a3918cf40cefdc5f643f2bcaffead629eb1",
+  "native-accounting-read-guard-20261021.py": "358145f195ee70d485fa1c7547fb8d593323bdaaaf7e7e905ce195a79dfcea91",
+  "registered-snapshot-read-guard-v5-20261022.py": "7bd2bf562d0a81887ef1afd308ddd9265e5cadb23ba4b2e5946980b659505431",
+  "run-af-agent-controller-census-policy-v1-20261023.py": "120f02d098b6c9afa0ea0df54f590ae381b4227d4892ba0f9ee4acc93e6fec0f",
+  "run-af-agent-controller-registry-v6-20261022.py": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866",
+  "run-f00d-worker-registry-overlay-20261021.py": "dd39905ce44f89f7f8bbdd325d1a0f1d5ec7950dd89d0e3bb267f6fdfe77a09a",
+  "test_af_agent_controller_census_policy_v1_20261023.py": "c7f458b63b4322905e0487c79f9e2d8a12831d0ddff3cdcb829583466ca41308",
+  "test_af_agent_controller_registry_v6_20261022.py": "da703c4cc8b172a2ea79067a8f5c5e9d0976853823a8ed230e3fb1a721633a3d",
+  "test_f00d_worker_registry_overlay_20261021.py": "2fdcf83a1abc796f82e86d3d3014fd785d195bf7ca4dc6457f2d6dd5db9b3968",
+  "test_registered_snapshot_read_guard_v5_20261022.py": "934196d84276299ce2b567bef6925515e4656978401a0dd4f49c8bd2d1339d72"
+}

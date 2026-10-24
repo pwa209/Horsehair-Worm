@@ -1,0 +1,36 @@
+{
+  "bytes_outside_supervise_unchanged": true,
+  "changed_top_level_functions": [
+    "supervise"
+  ],
+  "derivative": {
+    "path": "run-full-cohort-prefix-v5-exit-race-repaired-20261024.py",
+    "sha256": "6abb6bc1ecea8f819881aba1506d6b9769b0c67aa0144f98384166334e8530f2"
+  },
+  "files": {
+    "README.md": "2c95ee52dad8a9a514cd6d2d919b05dea9c984d9c71ce41677c785a990d2ac23",
+    "local-test-output.txt": "8937acaf54503025eb1c22c8970e0cd83efcb06beee6af7c47b2a018dfcb52cc",
+    "local-test-result.json": "a766941380bc0e28920df2ba08e58015e122c331903e89e44242fb0cc5127b5b",
+    "run-full-cohort-prefix-v5-exit-race-repaired-20261024.py": "6abb6bc1ecea8f819881aba1506d6b9769b0c67aa0144f98384166334e8530f2",
+    "test_lifecycle_exit_race_20261024.py": "d048aab4f3c29c175911ec5cda8f341c540e57dd2688b5385525a98eec943083"
+  },
+  "local_tests": {
+    "checked_utc": "2026-10-24T06:43:55.803007+00:00",
+    "derivative_sha256": "6abb6bc1ecea8f819881aba1506d6b9769b0c67aa0144f98384166334e8530f2",
+    "errors": 0,
+    "failed_names": [],
+    "failures": 0,
+    "original_sha256": "dec3ace9591b71759bbd7418b550e657ecb87a85823652e9d1e56547fe19ec60",
+    "scope": "synthetic_generic_process_lifecycle_only",
+    "skipped": 0,
+    "successful": true,
+    "tests": 24,
+    "tests_sha256": "d048aab4f3c29c175911ec5cda8f341c540e57dd2688b5385525a98eec943083"
+  },
+  "original": {
+    "path": "C:\\Users\\Gebruiker\\Documents\\Horsehair Worm\\work\\repair-20261024-509-evidence\\maintenance\\study-af-resubmission-433-20261023\\run-full-cohort-prefix-v5-20261022.py",
+    "sha256": "dec3ace9591b71759bbd7418b550e657ecb87a85823652e9d1e56547fe19ec60"
+  },
+  "scientific_code_executed": false,
+  "scientific_output_flags_changed": false
+}
