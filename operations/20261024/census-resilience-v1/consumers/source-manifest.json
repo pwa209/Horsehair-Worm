@@ -1,0 +1,17 @@
+{
+  "files": {
+    "build-consumer-plan.py": "03886b08bb2ed204bb87fdbee41986bdd890b80891dd85e03eba3e4c56e53752",
+    "qualify-census-resilience-consumers-v1-20261024.py": "e8c598fb3a04bdbe20846562a41aa23eafbe18f84dc12718c12a82b907bce224",
+    "run-census-resilience-consumer-v1-20261024.py": "84072d35f58c1e2b6dbd94913d4acb49dff591c6c70e844edf5838e0132d5a9f",
+    "test_census_resilience_consumers_v1_20261024.py": "eede62af8ea9eba11c752e4a3c8ffa95455a065c85f3e22e3624e52645604c65"
+  },
+  "kind": "census-resilience-consumer-source-manifest-v1",
+  "suites": {
+    "consumers": {
+      "roster_sha256": "bb3e0e30029bc353e72f27ce8fdac80ec85ebe8916af339424122a55136eeea0",
+      "source": "test_census_resilience_consumers_v1_20261024.py",
+      "source_sha256": "eede62af8ea9eba11c752e4a3c8ffa95455a065c85f3e22e3624e52645604c65",
+      "tests": 68
+    }
+  }
+}
