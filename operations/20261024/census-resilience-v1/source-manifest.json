@@ -1,0 +1,40 @@
+{
+  "files": {
+    "README.md": "95d3e858d725158928f385f1f946e8e44cbc4d30248147ebeb598da9815d7e3d",
+    "build-candidate.py": "14795b70c77d8dacdda5cc28cee7ce6b1747cb882052ff8fc7a33c0075f0c56d",
+    "build-native-plans.py": "46836e1044df683eb8281de843f1f4450801365a6e90e195b1c664beec16dc9b",
+    "original-registered-snapshot-read-guard-v4-20261022.py": "5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a",
+    "original-run-fresh-storage-census-v6-20261023.py": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3",
+    "preservation.json": "fe099db62f36470dc6f3ee729c53dbf3d9e04cc7bb0e89ea327d63ed168a0670",
+    "qualify-census-resilience-v1-20261024.py": "78cbebf21f007696c2f249bc5f4830b280575b16db6611001fb7b00d978583e9",
+    "registered-snapshot-read-guard-resilience-v1-20261024.py": "983ec0ca4c6fc9ff8f995ec6dc15f81adbf2e9205d0235964d8094bbbdb05fcc",
+    "resilience-functions.py.txt": "6f3f0a714f754b6075925e020eaf57dd8d9f4a52d43e21858c7c57f80db56ac3",
+    "run-fresh-storage-census-resilience-v1-20261024.py": "94ac29d11da50412ba3c1f9269ed5762224f93635cd1fae505bfabc5f9b63a93",
+    "seal-source.py": "698f623825085e27894aceef10bed2e766b395b02760ba66c6c8f1ae4901a8e6",
+    "test_census_resilience_v1_20261024.py": "b9a30326e052f66111536f1f3b1f5545439cb1d8e31fe63a5adbb63ff848fc8e"
+  },
+  "kind": "census-resilience-source-manifest-v1",
+  "legacy": {
+    "helper": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+      "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+    },
+    "qualification": {
+      "job_id": "6863966",
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json",
+      "sha256": "8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c"
+    },
+    "source_manifest": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+      "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+    }
+  },
+  "suites": {
+    "resilience": {
+      "roster_sha256": "a156ab626681f24deed93aff066c62ccdd996d0c1c05d1de2243b68c8d4dae0c",
+      "source": "test_census_resilience_v1_20261024.py",
+      "source_sha256": "b9a30326e052f66111536f1f3b1f5545439cb1d8e31fe63a5adbb63ff848fc8e",
+      "tests": 25
+    }
+  }
+}

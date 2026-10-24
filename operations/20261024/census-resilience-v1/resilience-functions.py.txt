@@ -1,0 +1,188 @@
+def legacy_module():
+    import importlib.util
+    path=LEGACY_SUPPORT/'run-fresh-storage-census-v6-20261023.py'
+    require(digest(path)=='487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3','Exact original v6 provider source required')
+    spec=importlib.util.spec_from_file_location('qualified_legacy_census_v6',path)
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    return module
+
+
+def source_manifest(path,sha):
+    require(Path(path)==SOURCE_SUPPORT/'source-manifest.json' and re.fullmatch('[0-9a-f]{64}',str(sha)),
+        'Exact new resilience source manifest required')
+    ordinary(path,ROOT/'maintenance');require(Path(path).stat().st_size<=200_000 and digest(path)==sha,'Source manifest changed')
+    value=read_json(path)
+    require(set(value)=={'kind','files','suites','legacy'} and value['kind']=='census-resilience-source-manifest-v1'
+        and value['legacy']==LEGACY_BINDING and set(value['suites'])=={'resilience'},'Exact new and original source closure required')
+    require(isinstance(value['files'],dict) and Path(__file__).name in value['files'],'Explicit complete new source pins required')
+    pins={}
+    for name,pin in value['files'].items():
+        require(Path(name).name==name and re.fullmatch('[0-9a-f]{64}',str(pin)),'Flat pinned source capsule required')
+        target=ordinary(SOURCE_SUPPORT/name,ROOT/'maintenance');require(digest(target)==pin,'Resilience source changed: '+name)
+        pins[str(target)]=pin
+    suite=value['suites']['resilience']
+    require(set(suite)=={'source','source_sha256','tests','roster_sha256'} and suite['source']=='test_census_resilience_v1_20261024.py'
+        and type(suite['tests']) is int and suite['tests']>0 and re.fullmatch('[0-9a-f]{64}',suite['roster_sha256'])
+        and value['files'].get(suite['source'])==suite['source_sha256'],'Exact generic test source/count/roster required')
+    _,old_pins=legacy_module().source_manifest(Path(LEGACY_BINDING['source_manifest']['path']),LEGACY_BINDING['source_manifest']['sha256'])
+    require(not set(pins)&set(old_pins),'New and legacy source namespaces must remain separate')
+    pins.update(old_pins);require(digest(path)==sha,'Manifest changed during source verification')
+    return value,pins
+
+
+def registry_read_extension():
+    original=LEGACY_SUPPORT/'registered-snapshot-read-guard-v4-20261022.py'
+    require(digest(original)=='5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a'
+        and digest(EXTENDED_REGISTRY_GUARD)==EXTENDED_REGISTRY_SHA,'Exact original and resilient registration guards required')
+    before=ast.parse(original.read_bytes());after=ast.parse(EXTENDED_REGISTRY_GUARD.read_bytes())
+    def reduce(tree):
+        values={}
+        for n in list(tree.body):
+            if isinstance(n,ast.Assign) and isinstance(n.targets[0],ast.Name) and n.targets[0].id in {'CONTROLLER_LOCK_SECONDS','LOCK_MARGIN'}:
+                values[n.targets[0].id]=ast.literal_eval(n.value);tree.body.remove(n)
+        function=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='registration_lock')
+        loop=next(n for n in ast.walk(function) if isinstance(n,ast.For));values['loop']=ast.unparse(loop.iter)
+        loop.iter=ast.Constant('bounded registration acquisition attempts')
+        return ast.dump(tree,include_attributes=False),values
+    a,x=reduce(before);b,y=reduce(after)
+    require(a==b and x=={'CONTROLLER_LOCK_SECONDS':900,'LOCK_MARGIN':300,'loop':'range(1, 61 if role == \'worker-admission\' else 16)'}
+        and y=={'CONTROLLER_LOCK_SECONDS':7200,'LOCK_MARGIN':600,'loop':'range(1, 61 if role == \'worker-admission\' else 121)'},
+        'Only finite provider registration wait/attempts/finalization reserve may change')
+    return {'baseline_guard':{'path':str(original),'sha256':digest(original)},
+        'extended_guard':{'path':str(EXTENDED_REGISTRY_GUARD),'sha256':EXTENDED_REGISTRY_SHA},
+        'maximum_registration_wait_seconds':7200,'native_finalization_reserve_seconds':600,
+        'registration_callback_retries':0,'guard_removed_or_replaced':False,
+        'scientific_controller_qualification_authorized':False}
+
+
+def predecessor_terminal(provider,observed):
+    job=provider['predecessor_job_id']
+    if job is None:return None
+    record=observed.get(job,{})
+    terminal={'COMPLETED','FAILED','CANCELLED','TIMEOUT','OUT_OF_MEMORY','NODE_FAIL','PREEMPTED','BOOT_FAIL','DEADLINE','REVOKED'}
+    require(record.get('job_id_raw')==job and record.get('state') in terminal and record.get('user')=='pwa209'
+        and record.get('account')=='def-ptewarie_cpu' and re.fullmatch('[0-9]+:[0-9]+',str(record.get('exit_code','')))
+        and type(record.get('cpus')) is int and record['cpus'] in {0,8}
+        and type(record.get('elapsed_seconds')) is int and 0<=record['elapsed_seconds']<=21600
+        and 'gpu' not in record.get('alloc_tres','').lower(),'Actual owned terminal predecessor proof required')
+    require((record['cpus']==0 and record['elapsed_seconds']==0 and record.get('unallocated_metadata') is True)
+        or (record['cpus']==8 and record['elapsed_seconds']>0 and record.get('unallocated_metadata') is False),
+        'Actual allocated cost or explicit zero-cost unallocated terminal metadata required')
+    proof=completed_native_dependency(ROOT,job,dependency_kind='afterany')
+    require(proof is not None,'Persisted terminal predecessor accounting is pending')
+    return {'job_id':job,'native_observed':record,'completion':proof,'dependency_kind':'afterany',
+        'successful_census_claimed':False,'admission_authority':False,'scientific_result':False}
+
+
+def qualification_registration(registration,job,*,manifest_path,manifest_sha):
+    plan_path=ordinary(registration['plan']['path'],ROOT/'plans');ledger_path=ordinary(registration['ledger']['path'],ROOT/'state')
+    script=ordinary(registration['script']['path'],ROOT/'plans');plan=read_json(plan_path);ledger=read_json(ledger_path)
+    require(plan.get('config_sha256')==CONFIG and plan.get('release_identity',{}).get('sha256')==SOURCE
+        and ledger.get('source_sha256')==SOURCE and ledger.get('plan_sha256')==canonical_hash(plan),
+        'Source/config-bound qualification plan/ledger required')
+    task=next((t for t in plan['tasks'] if t['name']==registration['task_name']),None)
+    require(task is not None and task.get('resources')=={'cpus':4,'memory':'16G','hours':1,'gpu':False,'array':None}
+        and task['script']==str(script) and task['command'] in script.read_text()
+        and shlex.split(task['command']).count(str(SOURCE_SUPPORT/QUALIFIER_NAME))==1,
+        'Exact finite qualification helper/script/resources required')
+    command=shlex.split(task['command']);tail=command[command.index(str(SOURCE_SUPPORT/QUALIFIER_NAME))+1:]
+    flags={'--source-manifest':str(manifest_path),'--source-manifest-sha256':manifest_sha,
+        '--native-plan':str(plan_path),'--native-ledger':str(ledger_path),'--native-script':str(script),'--native-task':task['name']}
+    require(len(tail)==2*len(flags) and len(set(tail[::2]))==len(flags) and dict(zip(tail[::2],tail[1::2]))==flags
+        and task.get('census_resilience_qualification')=={'helper':{'path':str(SOURCE_SUPPORT/QUALIFIER_NAME),'sha256':digest(SOURCE_SUPPORT/QUALIFIER_NAME)},
+            'source_manifest':{'path':str(manifest_path),'sha256':manifest_sha}},
+        'Every actual qualification command argument and source-bound helper/manifest must match')
+    entry=ledger['tasks'].get(task['name'],{})
+    require(entry.get('state')=='submitted' and entry.get('job_id')==job
+        and entry.get('script_sha256')==task['script_sha256']==canonical_hash(script.read_text())
+        and all(digest(registration[k]['path'])==registration[k]['sha256'] for k in ('plan','ledger','script')),
+        'Exact actual qualification registration bytes required')
+    return registration
+
+
+def validate_schedule_binding(schedule,qualification_binding,native_reader):
+    """Read-only actual emitted schedule/Q consumer; never scan or dispatch."""
+    from types import SimpleNamespace
+    require(set(schedule)=={'plan','ledger','helper','source_manifest','qualification','case_root'}
+        and schedule['qualification']==qualification_binding and schedule['case_root']==str(CASE_ROOT)
+        and schedule['helper']=={'path':str(Path(__file__)),'sha256':digest(Path(__file__))},
+        'Exact new provider schedule and helper required')
+    for key,expected in [('plan',ROOT/'plans'/PHASE/'plan.json'),('ledger',ROOT/'state'/(PHASE+'-submission.json'))]:
+        require(schedule[key]['path']==str(expected) and digest(ordinary(expected,ROOT/('plans' if key=='plan' else 'state')))==schedule[key]['sha256'],
+            'Exact immutable new provider plan/ledger required')
+    manifest,pins=source_manifest(Path(schedule['source_manifest']['path']),schedule['source_manifest']['sha256'])
+    plan=read_json(schedule['plan']['path']);ledger=read_json(schedule['ledger']['path'])
+    require(len(plan.get('tasks',[]))==64,'Exactly sixty-four future provider slots required')
+    task=plan['tasks'][0];parts=shlex.split(task['command']);tail=parts[parts.index(str(Path(__file__)))+1:]
+    require(len(tail)%2==0 and len(set(tail[::2]))==len(tail)//2,'Unique provider command arguments required')
+    arguments={k.removeprefix('--').replace('-','_'):v for k,v in zip(tail[::2],tail[1::2])}
+    args=SimpleNamespace(**arguments)
+    for key in ('native_plan','native_ledger','native_script','source_manifest','kernel_qualification','registry_qualification'):
+        setattr(args,key,Path(getattr(args,key)))
+    require(str(args.kernel_qualification)==qualification_binding['path'] and args.kernel_qualification_sha256==qualification_binding['sha256']
+        and args.kernel_qualification_job_id==qualification_binding['job_id'],'Schedule must bind exact completed new qualification')
+    provider_registration(args,str(ledger['tasks'][task['name']]['job_id']),read_json(PRIMARY/'configs/study.json'))
+    observed=native_reader([qualification_binding['job_id'],'6863966'],{},owner='pwa209',account='def-ptewarie_cpu')
+    proof=kernel_qualification(Path(qualification_binding['path']),qualification_binding['sha256'],qualification_binding['job_id'],
+        Path(schedule['source_manifest']['path']),schedule['source_manifest']['sha256'],observed)
+    checked=dict(pins)
+    for key in ('plan','ledger','helper','source_manifest','qualification'):checked[schedule[key]['path']]=schedule[key]['sha256']
+    for task in plan['tasks']:checked[task['script']]=digest(task['script'])
+    for qpath in (Path(qualification_binding['path']),Path(LEGACY_BINDING['qualification']['path'])):
+        q=read_json(qpath);checked[str(qpath)]=digest(qpath)
+        suites=q.get('suites',[]) if 'suites' in q else [q['suite']]
+        for suite in suites:checked[suite['junit']['path']]=suite['junit']['sha256']
+        if q.get('native_canary'):checked[q['native_canary']['path']]=q['native_canary']['sha256']
+    require(all(digest(path)==pin for path,pin in checked.items()),'Source/qualification/schedule bytes changed during verification')
+    return {'checked_paths':checked,'qualification':proof,'schedule':schedule,'numerical_work_executed':False,
+        'canonical_state_changed':False,'scientific_result':False,'admission_authority':False}
+
+
+def kernel_qualification(path,sha,job,manifest_path,manifest_sha,observed):
+    require(Path(path)==KERNEL_Q and re.fullmatch('[0-9a-f]{64}',str(sha)) and re.fullmatch('[1-9][0-9]*',str(job)),
+        'Exact new resilience qualification locator required')
+    ordinary(path,ROOT/'maintenance');require(Path(path).stat().st_size<=2_000_000 and digest(path)==sha,'Qualification bytes changed')
+    manifest,pins=source_manifest(manifest_path,manifest_sha);q=read_json(path)
+    require(q.get('status')=='complete_census_resilience_operational_qualification' and q.get('returncode')==0
+        and type(q['returncode']) is int and q.get('slurm_job_id')==job and q.get('source_sha256')==SOURCE
+        and q.get('config_sha256')==CONFIG and q.get('source_verified_unchanged') is True and q.get('source_pins')==pins
+        and q.get('source_manifest')=={'path':str(manifest_path),'sha256':manifest_sha}
+        and q.get('qualification_helper')=={'path':str(SOURCE_SUPPORT/QUALIFIER_NAME),'sha256':pins[str(SOURCE_SUPPORT/QUALIFIER_NAME)]}
+        and q.get('legacy_binding')==LEGACY_BINDING and all(q.get(k) is False for k in FALSE_FLAGS),
+        'Complete actual new qualification and unchanged original lineage required')
+    expected=manifest['suites']['resilience'];suite=q.get('suite',{})
+    require(suite.get('source')=={'path':str(SOURCE_SUPPORT/expected['source']),'sha256':expected['source_sha256']}
+        and suite.get('test_counts')=={'tests':expected['tests'],'failures':0,'errors':0,'skipped':0}
+        and suite.get('test_roster_sha256')==expected['roster_sha256'],'Exact full passing generic qualification required')
+    junit=suite['junit'];require(Path(junit['path'])==KERNEL_Q.parent/('native-'+job)/'resilience.xml','Confined native JUnit required')
+    junit_roster(junit['path'],expected['tests'],expected['roster_sha256'],junit['sha256'])
+    legacy=legacy_module();binding=LEGACY_BINDING['qualification']
+    old=legacy.kernel_qualification(Path(binding['path']),binding['sha256'],binding['job_id'],
+        Path(LEGACY_BINDING['source_manifest']['path']),LEGACY_BINDING['source_manifest']['sha256'],observed)
+    registration=q['native_registration']
+    actual=qualification_registration(registration,job,manifest_path=manifest_path,manifest_sha=manifest_sha)
+    require(actual==registration,'Actual source-bound new qualifier registration changed')
+    record=observed.get(job,{})
+    require(record.get('state')=='COMPLETED' and record.get('exit_code')=='0:0' and record.get('job_id_raw')==job
+        and record.get('user')=='pwa209' and record.get('account')=='def-ptewarie_cpu'
+        and record.get('unallocated_metadata') is False and record.get('cpus')==4
+        and type(record.get('elapsed_seconds')) is int and 0<record['elapsed_seconds']<=3600
+        and 'gpu' not in record.get('alloc_tres','').lower(),'Positive owned actual4CPU new qualification native completion required')
+    proof=completed_native_dependency(ROOT,job);require(proof is not None,'New qualification final native proof pending')
+    require(source_manifest(manifest_path,manifest_sha)==(manifest,pins) and digest(path)==sha,'Qualification inputs changed')
+    return {'path':str(path),'sha256':sha,'job_id':job,'native_observed':record,'completion':proof,
+        'source_manifest':{'path':str(manifest_path),'sha256':manifest_sha},'source_pins':pins,
+        'legacy_qualification':old,'registration_wait':registry_read_extension()}
+
+
+def validate_predecessor_receipt(receipt,native_reader):
+    provider=receipt['provider_registration'];job=provider['predecessor_job_id'];saved=receipt.get('predecessor_terminal')
+    if job is None:
+        require(saved is None,'First slot cannot invent a predecessor');return None
+    current=predecessor_terminal(provider,native_reader([job],{},owner='pwa209',account='def-ptewarie_cpu'))
+    require(isinstance(saved,dict) and saved.get('job_id')==job and saved.get('dependency_kind')=='afterany'
+        and saved.get('successful_census_claimed') is False and saved.get('admission_authority') is False
+        and saved.get('scientific_result') is False
+        and saved.get('completion',{}).get('native_records')==current['completion']['native_records'],
+        'Successful current census receipt must preserve actual terminal predecessor evidence without promoting it')
+    return current

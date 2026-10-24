@@ -1,0 +1,41 @@
+{
+  "census_measurement_definition_changed": false,
+  "changed_orchestration_functions": [
+    "kernel_qualification",
+    "main",
+    "provider_registration",
+    "registry_read_extension",
+    "source_manifest"
+  ],
+  "guard_sha256": "983ec0ca4c6fc9ff8f995ec6dc15f81adbf2e9205d0235964d8094bbbdb05fcc",
+  "original_provider_sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3",
+  "provider_sha256": "94ac29d11da50412ba3c1f9269ed5762224f93635cd1fae505bfabc5f9b63a93",
+  "unchanged_function_asts": [
+    "brief_admission",
+    "completed_registry_qualification",
+    "cpu_only_tres",
+    "create_case",
+    "exclusive",
+    "final_snapshot_check",
+    "fresh_original_clocks",
+    "function_ast",
+    "junit_roster",
+    "measured_sweep",
+    "memory",
+    "native_allocation",
+    "operational_adapter",
+    "ordinary",
+    "preserve_closed_progress",
+    "preserve_snapshot",
+    "primitive_contract",
+    "primitive_identity",
+    "progress_path",
+    "progress_recorder",
+    "qualification_proof",
+    "registered_task",
+    "registry_qualification",
+    "require",
+    "run_snapshot",
+    "snapshot_clocks"
+  ]
+}
