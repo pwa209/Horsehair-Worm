@@ -1,0 +1,5 @@
+This additive deployment dependency supplies the exact already qualified streaming-kernel bytes at the new provider checksum path. The executed kernel remains the original qualified legacy path. No sealed provider source, manifest, qualification or original evidence is edited.
+
+The one-time script verifies owner, ordinary files, source and qualification hashes, the executed path in the helper AST and all sealed source pins. It creates a separate read-only byte copy and publishes it exclusively by a hard link to that copy. The original kernel inode is never linked or changed. An immutable dependency receipt records the original and target hashes and unchanged pins. Existing output is an error; inspect the recorded outcome instead of replaying the script.
+
+Executed as remote request 574 on 24 October 2026 before any replacement provider release. The dependency is 11,452 bytes with SHA-256 a1620825ef1401b7497746b7b9128e3d43b985675985505273dca3c36f30364e. This is a checksum witness and does not add an executable path or grant admission authority.
