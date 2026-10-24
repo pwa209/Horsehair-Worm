@@ -1,0 +1,19 @@
+{
+  "files": {
+    "maintenance/study-af-backfill-controller-support-v2-20261024/native-handoff-6949645/backfill-policy.json": "21fcc6902cfaf8280e693cf20a52cc663a972266911eec2bcbc1533b1daeb2b6",
+    "maintenance/study-primary-external-census-policy-v1-20261023/handoffs/native-6872985/run-policy.json": "ad70a140cdd50384f860cb4adc2dc4fc38feb0a7eaa60be2403456373c9b2267",
+    "plans/primary-external-census-controllers-v3/plan.json": "7149e8a8311b497b3495c3e38ecdd51d7465d679c63e00f1e3ba5be81b60512c",
+    "plans/primary-external-census-controllers-v3/primary-external-census-controller-0.sbatch": "40bba01fcac378d79bd3fc0fab35379744168482bec115eb589f27b2e6c02269",
+    "plans/primary-external-census-controllers-v3/primary-external-census-controller-1.sbatch": "df23c2d53cc0c69ac19710b84ebff7d1094db6714957dac110e86db9a584d964",
+    "plans/primary-external-census-controllers-v3/primary-external-census-controller-2.sbatch": "4b6832958de242479b127302e615bcc3e7a87c10e169176d5f39d53a70179d3c",
+    "plans/primary-external-census-controllers-v3/primary-external-census-controller-3.sbatch": "179403f786ab7dd34116dc83e59aad9edfdb53fb8d152c84783aff38e31446d2",
+    "plans/study-af-f2-backfill-controllers-v2-20261024/af-f2-backfill-v2-controller-0.sbatch": "77d6d7e42b5a70ea3d29bdc77aa5a62cfd5c40175fbeef6cecab43d1426bf818",
+    "plans/study-af-f2-backfill-controllers-v2-20261024/af-f2-backfill-v2-controller-1.sbatch": "2840a2686660027c05b7dd6e5f795e7b9ded717dbc4e1e4a47264890daf313ae",
+    "plans/study-af-f2-backfill-controllers-v2-20261024/af-f2-backfill-v2-controller-2.sbatch": "a856db23be6caa395e32bc0ba766dad4dd5f6f0609affb19e5bc0619c37e37f7",
+    "plans/study-af-f2-backfill-controllers-v2-20261024/af-f2-backfill-v2-controller-3.sbatch": "3a46fc9af43213bee58133058e06f7375c41cdeac0df90bd0cef279725da2824",
+    "plans/study-af-f2-backfill-controllers-v2-20261024/plan.json": "689a8ff6ecc5712bf2376bffdf4324b2cdeb0e0cfc7ed143d44e80059616b4eb",
+    "state/primary-external-census-controllers-v3-submission.json": "35334a9eccbdf55cf15ff1563159af972996e933af498df612f731efaf38a49c",
+    "state/study-af-f2-backfill-controllers-v2-20261024-submission.json": "b74b0d0b0af91b05a3a36df96b798dcc11dd777068781282d36cab6cfdb471b7"
+  },
+  "kind": "census-resilience-old-consumer-inputs-v1"
+}

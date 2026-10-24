@@ -1,0 +1,28 @@
+{
+  "files": {
+    "old-input-pins.json": "ad9f2fc1781b1001db67cc36d86b6db68e95491d2a6a495ce0cfc46eacf7b282",
+    "partial-prepare-pins.json": "c1e82064866c67183102d0bc02f8486aacd43eacdfcc1376240291bd6bc17166",
+    "prepared-origin-pins.json": "e433a26277cfc65ab565fd7c585abc4bfd6819cb9bce5fa7e5f5aea06ea0138b",
+    "primary-history-pins.json": "f16b19c6974fc19c28d9e01f575f4ca05904c6fd6ffb1a1d901aac9742d512e6",
+    "primary-roster.py": "8b3096630a0638a1d2ded9bf6002d57eb5df5e0fa5d90529fca517aa3c2d1199",
+    "retirement-continuation-pins.json": "b2b2faf7759eddcaa8a6bfb372872cfb3bcdd1443d067cabe42b0c7a51061eac",
+    "run-census-resilience-handoff-v5-20261024.py": "a6c6297726d3a02064d6a2d7215def20042ce3e26d33f09f6f2a13c475343ed6",
+    "test_census_resilience_handoff_v5_20261024.py": "0110f21d83898cb50e872d8a277ab19c0058d4c7e95ddbd3a31e062c1eb0fe36",
+    "test_primary_roster.py": "972d021855cd6462092fd07fd3b312cbd0d70f433f3e43be396238eeec114500"
+  },
+  "kind": "census-resilience-handoff-source-manifest-v5",
+  "suites": {
+    "handoff": {
+      "roster_sha256": "c19eb27c0ced2cb8deae672d711850d9b075d63a7274bd8b1891e6b6fca111ed",
+      "source": "test_census_resilience_handoff_v5_20261024.py",
+      "source_sha256": "0110f21d83898cb50e872d8a277ab19c0058d4c7e95ddbd3a31e062c1eb0fe36",
+      "tests": 135
+    },
+    "primary_roster": {
+      "roster_sha256": "e94074512aadcc8b40c8af83e9eee95bb65901a2150a8f2567f7992ac93ec554",
+      "source": "test_primary_roster.py",
+      "source_sha256": "972d021855cd6462092fd07fd3b312cbd0d70f433f3e43be396238eeec114500",
+      "tests": 75
+    }
+  }
+}

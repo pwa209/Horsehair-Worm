@@ -1,0 +1,119 @@
+{
+  "cancelled_backups": {
+    "6873102": {
+      "intent": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/native-7058744/00016-cancel-backup-6873102-intent.json",
+        "sha256": "ebfe2abe9136890d6b6dd34bd5678d64c2f0b0d332837a51401a42695f257361"
+      },
+      "response": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/native-7058744/00016-cancel-backup-6873102-response.json",
+        "sha256": "83395cbaf5cbebe654f352914cdd7b569643698a8b687ae84b6ea7e5b6f4dd9e"
+      }
+    },
+    "6873105": {
+      "intent": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/native-7058744/00014-cancel-backup-6873105-intent.json",
+        "sha256": "303b3f44a81eb32cc545cf102e001931f4f137b5c675d4d157d54f4dbaaf6e08"
+      },
+      "response": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/native-7058744/00014-cancel-backup-6873105-response.json",
+        "sha256": "83395cbaf5cbebe654f352914cdd7b569643698a8b687ae84b6ea7e5b6f4dd9e"
+      }
+    },
+    "6873107": {
+      "intent": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/native-7058744/00012-cancel-backup-6873107-intent.json",
+        "sha256": "3eaac648754119e830d36167b2da96f9319ebc766a16867e876ffb001e4375ac"
+      },
+      "response": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/native-7058744/00012-cancel-backup-6873107-response.json",
+        "sha256": "83395cbaf5cbebe654f352914cdd7b569643698a8b687ae84b6ea7e5b6f4dd9e"
+      }
+    },
+    "6950437": {
+      "intent": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/native-7058744/00010-cancel-backup-6950437-intent.json",
+        "sha256": "3fe385c0d903ecc3b6246a0870416703fe15b064ce3928fcbc5765d430d9b4cd"
+      },
+      "response": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/native-7058744/00010-cancel-backup-6950437-response.json",
+        "sha256": "83395cbaf5cbebe654f352914cdd7b569643698a8b687ae84b6ea7e5b6f4dd9e"
+      }
+    },
+    "6950443": {
+      "intent": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/native-7058744/00008-cancel-backup-6950443-intent.json",
+        "sha256": "fa5900af7d617f2009d24ca7f986c8cb84ab3baf916e65df34ece8aae6c51049"
+      },
+      "response": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/native-7058744/00008-cancel-backup-6950443-response.json",
+        "sha256": "83395cbaf5cbebe654f352914cdd7b569643698a8b687ae84b6ea7e5b6f4dd9e"
+      }
+    },
+    "6950449": {
+      "intent": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/native-7058744/00006-cancel-backup-6950449-intent.json",
+        "sha256": "5d2e6908110ecb02d44a7f4a776877e10fdd50aa8b38cfbeebdd9d898320350c"
+      },
+      "response": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/native-7058744/00006-cancel-backup-6950449-response.json",
+        "sha256": "83395cbaf5cbebe654f352914cdd7b569643698a8b687ae84b6ea7e5b6f4dd9e"
+      }
+    }
+  },
+  "descriptor": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/handoff-descriptor.json",
+    "sha256": "8585bfbf1f7f363b9d81e7da80bbcdcc7aeb1d9b5881a900a8976ab17260249f"
+  },
+  "failed_job_id": "7058744",
+  "failed_process_probe": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/native-7058744/00022-process-probe-6873101-response.json",
+    "sha256": "10796be1af3dae9a520ef6cd704ed29e55348fcd9096610226131891e43c2c81"
+  },
+  "failure": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/native-7058744/failure.json",
+    "sha256": "7c863d231817915606cd610b68101ab61c9bcfd2dd53cb1211a2507a407ad5f1"
+  },
+  "flags": {
+    "admission_authority": false,
+    "automatic_replay_permitted": false,
+    "campaign_state_changed": false,
+    "scientific_gates_cleared": false,
+    "scientific_result": false,
+    "worker_jobs_changed": false
+  },
+  "kind": "six-backup-retirement-continuation-v1",
+  "native_bindings": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/native-7058744/native-bindings.json",
+    "sha256": "a1e12499947c3901b601ea914acb53c11e346da9f65507edac3fd3d8ccadc58d"
+  },
+  "pre_retirement_checkpoint": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/native-7058744/pre-retirement-checkpoint.json",
+    "sha256": "8e7d7f372f77937372faacdb280741e8f8b2e60c4033fba694aec23e132fd2c2"
+  },
+  "qualification": {
+    "job_id": "7055616",
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/qualification.json",
+    "sha256": "c32038152f3c43e876c41b6e9d7b74cd0d50f8d60505a378658fcb0e9e6bf180"
+  },
+  "registration": {
+    "ledger": {
+      "path": "/scratch/pwa209/horsehair-worm/state/census-resilience-handoff-activate-v4-20261024-submission.json",
+      "sha256": "dd69ae251c8d66108f570a6d362adc9e4fa43609d5a1d152dc158b4fe1c46c35"
+    },
+    "native_job_id": "7058744",
+    "plan": {
+      "path": "/scratch/pwa209/horsehair-worm/plans/census-resilience-handoff-activate-v4-20261024/plan.json",
+      "sha256": "97f06a48ace30957ab9c085d054be1340f3f36e9ec8302c3e6ce8637d63e2f18"
+    },
+    "script": {
+      "path": "/scratch/pwa209/horsehair-worm/plans/census-resilience-handoff-activate-v4-20261024/census-resilience-handoff-activate-v4.sbatch",
+      "sha256": "dc33a9731d91df905f74119a42a5f56063e3d68ef6d419c3baef3bae0e784126"
+    },
+    "task_name": "census-resilience-handoff-activate-v4"
+  },
+  "source_manifest": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v4-20261024/source-manifest.json",
+    "sha256": "cdd79adb560680d1a4460ac7098016807d1e4e40b3c3db66a4a0a02ecaa9389a"
+  }
+}
