@@ -1,0 +1,52 @@
+{
+  "admission_authority": false,
+  "builder_namespace_normalized_raw_bytes_equal": true,
+  "kind": "census-resilience-consumers-v2-preservation-review",
+  "namespace_replacements": [
+    [
+      "run-census-resilience-consumer-v1-20261024.py",
+      "run-census-resilience-consumer-v2-20261024.py"
+    ],
+    [
+      "qualify-census-resilience-consumers-v1-20261024.py",
+      "qualify-census-resilience-consumers-v2-20261024.py"
+    ],
+    [
+      "test_census_resilience_consumers_v1_20261024.py",
+      "test_census_resilience_consumers_v2_20261024.py"
+    ],
+    [
+      "study-census-resilience-consumers-v1-20261024",
+      "study-census-resilience-consumers-v2-20261024"
+    ],
+    [
+      "census-resilience-consumer-source-manifest-v1",
+      "census-resilience-consumer-source-manifest-v2"
+    ],
+    [
+      "census-resilience-consumer-binding-v1",
+      "census-resilience-consumer-binding-v2"
+    ],
+    [
+      "census-resilience-consumers-v1-20261024",
+      "census-resilience-consumers-v2-20261024"
+    ]
+  ],
+  "original_native_qualification_preserved": "6982493 FAILED before pytest collection; diagnostic576 basetemp equals cwd",
+  "original_source_files_unchanged": true,
+  "original_source_manifest": {
+    "path": "operations\\20261024\\census-resilience-v1\\consumers\\source-manifest.json",
+    "sha256": "089fdedb03fb8d57295f541a8be94ad0c42690092049359def8b4838888c0cf2"
+  },
+  "qualifier_added_functions": [
+    "fixture_workspace"
+  ],
+  "qualifier_main_changes": [
+    "workspace,basetemp returned by fixture_workspace",
+    "--basetemp strict existing child, cwd unchanged parent"
+  ],
+  "runtime_namespace_normalized_ast_equal": true,
+  "runtime_namespace_normalized_raw_bytes_equal": true,
+  "scientific_result": false,
+  "sealing_deferred_to_root": true
+}
