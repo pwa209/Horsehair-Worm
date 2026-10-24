@@ -1,0 +1,42 @@
+{
+  "baseline_normalization": "Historical CRLF snapshot normalized to LF for this new capsule; AST unchanged",
+  "baseline_sha256": "815292c4323a03eb1e9cd83499afd9ca3adb0eec8cdcecb56913fb05f79c3ea1",
+  "candidate_sha256": "459e0aa542eabd824dfe6f9deacf5e0e702b0108e5816760024c155823e1bb2f",
+  "changed_existing_functions": [
+    "prefix_evidence",
+    "stop",
+    "supervise",
+    "qualify_private",
+    "main"
+  ],
+  "full_coverage_or_scientific_flags_promoted": false,
+  "historical_transport_sha256": "120d3ec88267748ad0f36d03527702f7b5f163ce2f4c5b0aa0e455e6a1b3abca",
+  "numerical_functions_executed_by_builder": false,
+  "preserved_function_and_class_bytes_sha256": {
+    "DeadlineBound": "7b77e500bcfda59674d034addc68eb927b53fa381653ab522e622aea373ec780",
+    "MemoryBound": "7d77de449ed5f33c6f880b87e1046a13ae5683c528dbbc44d6adb398ebe92b2e",
+    "MemoryGuard": "29dd8cf2fc24d4367d00ef39cff28c2a0b7507e56510699841dd796e77940668",
+    "NoEligibleValidation": "a597a6971103937c530dd4ce449149bca0ab741c55d2c7ad259920a51b9990a7",
+    "_worker": "4c64d1e59d7d84a0b6f1e39b7aad9e6e896d18cab901ee817b74665d20c5a190",
+    "bound_json": "58f7d44a3cd23740c9cf0828652cddc422cbc758263824c804c86483164e8a35",
+    "compare_gradients": "1efdd9394ed5ea9c8b4a02ab2578db9a2f6ec2796b40d014f37c3f521530ac14",
+    "compare_tensor": "899f9e4b3ec4ffe59d18099f419f61c9810ee4baf80eda3717b251d705fdf5c9",
+    "digest": "be476e6c4a16fee3a48e49595c160ef88fc091ed02aa3ec2072009f0f3ead2b9",
+    "exclusive": "77299f7970a0a83b83f75f0c8032bc4121faa1d18712620e1f17e0c6ae5f91c8",
+    "load_exact": "d67cb92fa33e5164c784d958cad848cb749ddfe3cae07d4cdc4e41dd874143cf",
+    "marginal_scores": "9566104f54ec22a9759744b84bf9a15e233d636a1aec4f2a7c957fa9569753cf",
+    "native_fixture_workspace": "809d6570fa19214167c6465b140edb14d16820b2ab7317b2e900eb71b1c0b7ea",
+    "ordinary": "6a8f77474524bc523353efe3f6e4807cf6de4aee7e8955830803c61a2c9b30db",
+    "paired_stage": "576de111832f58a253fd7584bb55f27071eb957a1600289608578c3fbd8995be",
+    "prepare": "6f3f495e08ee633f1250d330eeb3b63acfe2bcb3af5f6a478efca51b2198854d",
+    "require": "3a3d4719e7fdff72d3f3869c4e60796f8b8e13de27000e42116bc96039a9a3f8",
+    "rss_bytes": "5142d0eff2213a8f4b262cb0531bb38e0a3ac9d5affe2c90963ec407f9dd08f9",
+    "scheduler_utc": "d6b228c03ee49ad7cdbfd1d84e192f6690c8c75cde088cad333d1d3e08b354bf",
+    "select_clock": "2dec24765326e4ec5c0ec992a4e1b89f2931072f280960bdf592c257efb67576",
+    "shared_admission": "0faad31e0c3779fd77e86d94383d239324cf6433fce55bd2184a651411db3929",
+    "source_bindings": "d2919570bdafe19f0e4880c6f2bb1f53041604469367934abc8552558303c903",
+    "validate_worker_result": "7979cc10982b67e7fb7c45bba04432ddfe7023302567af69d26ab6f192c1be0e",
+    "verify_private_junit": "317920f741a725773665416cfac98d266c775c3f07fe1c62f998c1356412c2c7"
+  },
+  "scientific_configuration_changed": false
+}

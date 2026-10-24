@@ -1,0 +1,63 @@
+{
+  "artifact_pins": {
+    "/scratch/pwa209/horsehair-worm/maintenance/behaviour-full-cohort-prefix-v5-20261022/all_original_validation_calls_with_explicit_nulls.pt": "336c21c34df52f6841f88787aa80fbaf6a2dbd02ff99f2958bb7843ff87c512c",
+    "/scratch/pwa209/horsehair-worm/maintenance/behaviour-full-cohort-prefix-v5-20261022/full_fold_preprocessing_and_eligibility_census.pt": "82a3901eb8c0678cfbb8efbb471ef3859be61867f4546bf37782d7462fc9236a",
+    "/scratch/pwa209/horsehair-worm/maintenance/behaviour-full-cohort-prefix-v5-20261022/full_training_objective_and_all_gradients.pt": "05ca10cc1ad0e3239777b3d1ef665e2caee3507521acc26cca307e9f15f944b2",
+    "/scratch/pwa209/horsehair-worm/maintenance/behaviour-full-cohort-prefix-v5-20261022/single_original_clip_and_Adam_update.pt": "8c1291474fc57413d460e415196b146b58e3583371885eaa73969e74a7b184fa"
+  },
+  "case": "maintenance/behaviour-full-cohort-prefix-v5-20261022",
+  "flags": {
+    "MALA_acceptance_qualified": false,
+    "admission_authority": false,
+    "complete_declared_workload": false,
+    "native_gpu_qualified": false,
+    "optimizer_convergence_qualified": false,
+    "original_H1_H2_H3_gates_cleared": false,
+    "scientific_fit": false,
+    "scientific_result": false,
+    "second_derivatives_supported": false,
+    "whole_cohort_objective_qualified": false
+  },
+  "framework_source_sha256": "8495a3d985515bf71f476295da87e663a1e764864ddce47a06794e7e11d88f94",
+  "full_config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+  "helper_path": "maintenance/study-af-resubmission-433-20261023/run-full-cohort-prefix-v5-20261022.py",
+  "helper_sha256": "dec3ace9591b71759bbd7418b550e657ecb87a85823652e9d1e56547fe19ec60",
+  "original_job_id": "6865674",
+  "original_native": {
+    "account": "def-ptewarie_cpu",
+    "cpus": 1,
+    "elapsed_seconds": 18500,
+    "end": "2026-10-23T16:16:01",
+    "exit_code": "1:0",
+    "job_id": "6865674",
+    "owner": "pwa209",
+    "start": "2026-10-23T11:07:41",
+    "state": "FAILED"
+  },
+  "pinned_files": {
+    "maintenance/behaviour-full-cohort-prefix-v5-20261022/all_original_validation_calls_with_explicit_nulls.json": "26a3d029613bea1f1ddb123c59cefdb7a5fdef06888d063398303f7ec98631bc",
+    "maintenance/behaviour-full-cohort-prefix-v5-20261022/full_fold_preprocessing_and_eligibility_census.json": "e30229fbb3799063df09b4f0a84e096d9a05dfaf297668dbf210a5c74e49402b",
+    "maintenance/behaviour-full-cohort-prefix-v5-20261022/full_training_objective_and_all_gradients.json": "e67db5ddec6c5c0526cdcd1be7c5dd5eb5377c3793c175c9668cab55adf85ded",
+    "maintenance/behaviour-full-cohort-prefix-v5-20261022/plan.json": "f1f3ebc735a0ed392078ba386ae477b3bc7fede678dc0ccbbd207be307757f28",
+    "maintenance/behaviour-full-cohort-prefix-v5-20261022/progress.json": "a76eeb29f19b137320689f10a3ed9f1d158ffc92101435dc3dcd410eb7c10edf",
+    "maintenance/behaviour-full-cohort-prefix-v5-20261022/receipt.json": "081062ca60848dad666033c9c1789137d93d491a03e4b53c9f9e7e92fad2a8e7",
+    "maintenance/behaviour-full-cohort-prefix-v5-20261022/single_original_clip_and_Adam_update.json": "9a98a3d0d2d09660b6578ff0f481a5c5cadcab762f83bdaedd790fcb2422206d",
+    "maintenance/behaviour-full-cohort-prefix-v5-20261022/started.json": "c6cfebde169d75ce934de8e04638674963b4eb9cbb85d6d1903217a75c4f230e",
+    "maintenance/behaviour-full-cohort-prefix-v5-20261022/worker-result.json": "7efb1947baabc8b200d1fbbaefa4877216b4513cb6bf99515e30ee0e34214056",
+    "maintenance/behaviour-full-cohort-prefix-v5-support-20261022/context-private-tests.xml": "b77ed4199f528c1af11df86b8b7ccbd371b7ea3df0b19f45fc4602dfaaa169e9",
+    "maintenance/behaviour-full-cohort-prefix-v5-support-20261022/input-bindings.json": "4f746d77418b58513a69d9c2d3f6852e64649c6220b957a594f7f4dd0a04ee74",
+    "maintenance/behaviour-full-cohort-prefix-v5-support-20261022/private-tests.xml": "4252923790539a020c7ba8fa0a596a32d8ff60e866ff5af69b31a46a87360795",
+    "maintenance/behaviour-full-cohort-prefix-v5-support-20261022/receipt.json": "081062ca60848dad666033c9c1789137d93d491a03e4b53c9f9e7e92fad2a8e7",
+    "maintenance/study-af-resubmission-433-20261023/run-full-cohort-prefix-context-v5-20261022.py": "e055352de535d029c658723b69707c371ab5d89e451cace506d305c344a3fd0f",
+    "maintenance/study-af-resubmission-433-20261023/run-full-cohort-prefix-v5-20261022.py": "dec3ace9591b71759bbd7418b550e657ecb87a85823652e9d1e56547fe19ec60",
+    "maintenance/study-af-resubmission-433-20261023/test_full_cohort_prefix_context_v5_20261022.py": "47c09780ff90feeaa362599fe8a2bb5ab367a1d6a7e3724c427cc5f4668fea9f",
+    "maintenance/study-af-resubmission-433-20261023/test_full_cohort_prefix_v5_20261022.py": "874cfce84a7814536e6442a00775d7ad3b652ef7ad12a087e81585edd0b88169",
+    "plans/recovery-support-20261021-433/plan.json": "c30a1a2d3afd84315328ca31fe08782608781bde6096458a35a3bf97b245fdbc",
+    "plans/recovery-support-20261021-433/recovery-433.sbatch": "8ddcd7fb1d22b7960a398c371214dede399bc03d0265c7dd2ad326a7f4fd8f7f",
+    "state/recovery-support-20261021-433-submission.json": "e519c98cab059596a1a904d7588ecb9374af9d34babadc351e22976de4cfde9e"
+  },
+  "primary_source_sha256": "0e2b1ebce8bffe10799470b3ac20828e621f1415f3a18bca8cd67d502f1e8630",
+  "root": "/scratch/pwa209/horsehair-worm",
+  "schema_version": 1,
+  "support": "maintenance/behaviour-full-cohort-prefix-v5-support-20261022"
+}

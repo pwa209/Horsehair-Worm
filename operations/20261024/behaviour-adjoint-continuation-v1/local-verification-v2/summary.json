@@ -1,0 +1,33 @@
+{
+  "checked_utc": "2026-10-24T06:58:33.684812+00:00",
+  "native_qualification_pending": true,
+  "remote_calls_made": false,
+  "scientific_code_executed": false,
+  "source_manifest_sha256": "8a409623d93ede64b5f980dab2160bda0745ebd240a3255e70498d26cc34d794",
+  "suites": [
+    {
+      "derivative_sha256": "459e0aa542eabd824dfe6f9deacf5e0e702b0108e5816760024c155823e1bb2f",
+      "errors": 0,
+      "failures": 0,
+      "original_sha256": "815292c4323a03eb1e9cd83499afd9ca3adb0eec8cdcecb56913fb05f79c3ea1",
+      "result_sha256": "ae12dfd9eabeb9ee1f14d1a8a4fb5e44866b2c456bed6190dcc664a0e84d883b",
+      "skipped": 0,
+      "successful": true,
+      "suite": "lifecycle",
+      "tests": 23,
+      "tests_sha256": "4d98675ebb6aed54d8f1a1a10be4f9de28e23c80c08377a55c5906534168f5ce"
+    },
+    {
+      "derivative_sha256": "459e0aa542eabd824dfe6f9deacf5e0e702b0108e5816760024c155823e1bb2f",
+      "errors": 0,
+      "failures": 0,
+      "result_sha256": "09f5634012f19d48cf9bdcef20d1e5c60256f8c86b13d82843aaeec8db6c9652",
+      "skipped": 0,
+      "successful": true,
+      "suite": "operational-ingress",
+      "tests": 36,
+      "tests_sha256": "dbd6e12f2f75b8b4e6d53d229325a381c590c1712f25a3504d289ddde2ab6e22"
+    }
+  ],
+  "total_generic_tests": 59
+}

@@ -18,4 +18,9 @@ work/
 .coverage
 *.docx
 *.pdf
+operations/20261024/behaviour-supervisor-reconciliation-v1/lifecycle/test-work/
+operations/20261024/behaviour-supervisor-reconciliation-v1/lifecycle/local-results-env-v1/
+operations/20261024/behaviour-supervisor-reconciliation-v1/lifecycle/reconcile-local-results*/
+operations/20261024/f2-backfill-controller-v1/local-qualification-*/
+operations/20261024/behaviour-adjoint-continuation-v1/local-verification-*/
 

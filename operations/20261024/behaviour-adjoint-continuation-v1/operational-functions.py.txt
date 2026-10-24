@@ -1,0 +1,243 @@
+ORIGINAL_JOB_ID='6865674'
+EXPECTED_MANIFEST_SHA='5b5e276e8c394fda765d3d6183bc8dce47e4a626123f4607f722fa512fef0e9a'
+EXPECTED_CANONICAL_SHA='b3be0c3340c80864407b10b34ab5a9b324330a0b7647d8ae6374ae64b180f7fd'
+VERIFIER_SOURCE=ROOT/'maintenance/study-behaviour-supervisor-reconciliation-source-v1-20261024'
+VERIFIER_OUTPUT=ROOT/'maintenance/study-behaviour-supervisor-reconciliation-v1-20261024'
+VERIFIER_SOURCE_MANIFEST_SHA=None
+CAPSULE_MANIFEST=None
+BASELINE_HELPER_SHA='815292c4323a03eb1e9cd83499afd9ca3adb0eec8cdcecb56913fb05f79c3ea1'
+BASELINE_PREFIX_SHA='b131d6317858eae3c43c2ae7337f46e3173ab64355693980af2e7e489af46d3d'
+
+
+def adjoint_runtime_seconds(allocation_end,*,now=None):
+    """Use the verified eight-hour allocation with an explicit cleanup reserve."""
+    current=time.time() if now is None else now
+    require(type(current) in (int,float) and math.isfinite(current),'Finite actual allocation clock required')
+    require(type(allocation_end) in (str,int,float),'Finite native allocation end required')
+    end=float(allocation_end)
+    require(math.isfinite(end) and 330<=end-current<=8*3600+2,'Verified8h allocation and cleanup margin required')
+    return min(27900.,end-current-300.)
+
+
+def verify_capsule(sha):
+    """Bind all local code and fixtures to the immutable native script argument."""
+    area=Path(__file__).resolve().parent
+    manifest=bound_json(area/'source-manifest.json',sha)
+    require(manifest.get('schema_version')==1 and isinstance(manifest.get('files'),dict),
+        'Explicit source bundle required')
+    for name,pin in manifest['files'].items():
+        require(isinstance(name,str) and Path(name).name==name and re.fullmatch('[0-9a-f]{64}',pin),
+            'Flat pinned source bundle required')
+        path=ordinary(area/name)
+        require(path.parent==area and digest(path)==pin,'Source bundle changed: '+name)
+    require(manifest['files'].get(Path(__file__).name)==digest(Path(__file__)),
+        'Native script must bind this exact candidate source')
+    return manifest
+
+
+def original_file_bindings(expected):
+    """Recheck frozen files and opaque artifact hashes without deserializing."""
+    evidence={}
+    for relative,pin in expected['pinned_files'].items():
+        require(not Path(relative).is_absolute() and '..' not in Path(relative).parts,
+            'Exact root-relative original file required')
+        path=ordinary(ROOT/relative,maintenance=False)
+        require(path.is_relative_to(ROOT.resolve()) and digest(path)==pin,
+            'Original file changed: '+relative)
+        evidence[relative]=pin
+    for absolute,pin in expected['artifact_pins'].items():
+        path=ordinary(absolute)
+        require(path.is_relative_to(PREFIX_CASE.resolve()) and digest(path)==pin,
+            'Original opaque artifact changed')
+        evidence[str(path.relative_to(ROOT.resolve()))]=pin
+    return evidence
+
+
+def registered_json(path):
+    """Read confined plan/state metadata with the original strict JSON rules."""
+    path=ordinary(path,maintenance=False)
+    raw=path.read_bytes()
+    require(len(raw)<=20_000_000,'Bounded registered metadata required')
+    def unique(pairs):
+        value={}
+        for key,item in pairs:
+            require(key not in value,'Duplicate registration key');value[key]=item
+        return value
+    value=json.loads(raw,object_pairs_hook=unique,parse_constant=lambda x:(_ for _ in ()).throw(ValueError('Nonfinite metadata refused')))
+    require(digest(path)==hashlib.sha256(raw).hexdigest(),'Registered metadata changed during read')
+    return value
+
+
+def verifier_registration(job,source_sha):
+    """Link positive native completion to the frozen verifier launch itself."""
+    plan_path=ROOT/'plans/behaviour-reconciliation-v1-20261024/plan.json'
+    ledger_path=ROOT/'state/behaviour-reconciliation-v1-20261024-submission.json'
+    started_path=VERIFIER_OUTPUT/('native-'+job)/'started.json'
+    started=bound_json(started_path,digest(started_path))
+    plan=registered_json(plan_path);ledger=registered_json(ledger_path)
+    canonical=lambda value:hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
+    require(len(plan.get('tasks',[]))==1,'Exact one-job verifier plan required')
+    task=plan['tasks'][0];registered=ledger.get('tasks',{}).get('behaviour-reconciliation-v1',{})
+    require(task.get('name')=='behaviour-reconciliation-v1' and registered.get('job_id')==job
+        and registered.get('state')=='submitted' and ledger.get('plan_sha256')==canonical(plan)
+        and plan.get('config_sha256')==CONFIG and plan.get('release_identity',{}).get('sha256')==SOURCE
+        and ledger.get('source_sha256')==SOURCE and ledger.get('config_sha256')==CONFIG,
+        'Verifier native completion must belong to its exact source-bound registered plan')
+    script=ordinary(task.get('script',''),maintenance=False)
+    require(script.parent==plan_path.parent and task.get('script_sha256')==canonical(script.read_text())
+        and registered.get('script_sha256')==task['script_sha256'],
+        'Verifier script changed after native registration')
+    text=script.read_text()
+    require(str(VERIFIER_SOURCE/'run_native_reconciliation.py') in text
+        and re.search(r'(?:^|\s)--source-manifest-sha256\s+[\'\"]?'+source_sha+r'[\'\"]?(?:\s|$)',text),
+        'Verifier native script must pin the exact reviewed source bundle')
+    allocation=started.get('allocation',{});fields=allocation.get('fields',{})
+    require(started.get('native_job_id')==job and started.get('source_manifest_sha256')==source_sha
+        and allocation.get('plan_sha256')==digest(plan_path) and allocation.get('ledger_sha256')==digest(ledger_path)
+        and fields.get('JobId')==job and fields.get('JobState')=='RUNNING'
+        and fields.get('UserId')=='pwa209(3164768)' and fields.get('Account')=='def-ptewarie_cpu'
+        and fields.get('NumCPUs')=='4' and fields.get('MinMemoryNode')=='16G'
+        and fields.get('TimeLimit') in {'02:00:00','2:00:00','0-02:00:00'}
+        and fields.get('Command')==str(script),
+        'Verifier started evidence must bind its actual registered allocation')
+    return {'started':{'path':str(started_path),'sha256':digest(started_path)},
+        'plan':{'path':str(plan_path),'sha256':digest(plan_path)},
+        'ledger':{'path':str(ledger_path),'sha256':digest(ledger_path)},
+        'script':{'path':str(script),'sha256':digest(script)}}
+
+
+def prefix_evidence(path,sha,job,observed):
+    """Accept independent positive verification while preserving original failure."""
+    from horsehair.slurm import completed_native_dependency
+    require(re.fullmatch('[1-9][0-9]*',job) and job!=ORIGINAL_JOB_ID
+        and Path(path)==VERIFIER_OUTPUT/('native-'+job)/'receipt.json',
+        'Exact independent verifier receipt/job required')
+    value=bound_json(path,sha)
+    expected=bound_json(Path(__file__).with_name('expected-original-manifest.json'),EXPECTED_MANIFEST_SHA)
+    require(hashlib.sha256(json.dumps(expected,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()==EXPECTED_CANONICAL_SHA,
+        'Exact original manifest identity required')
+    record=observed.get(job,{})
+    require(record.get('state')=='COMPLETED' and record.get('exit_code')=='0:0'
+        and record.get('user')=='pwa209' and record.get('account')=='def-ptewarie_cpu'
+        and record.get('job_id_raw')==job and record.get('unallocated_metadata') is False
+        and type(record.get('cpus')) is int and record['cpus']==4
+        and type(record.get('elapsed_seconds')) is int and 0<record['elapsed_seconds']<=7200
+        and 'gpu' not in record.get('alloc_tres','').lower(),
+        'Positive owned scalar4CPU/two-hour verifier completion required')
+    completion=completed_native_dependency(ROOT,job)
+    require(completion is not None,'Verifier native completion must be persisted positively')
+    producer=observed.get(ORIGINAL_JOB_ID,{})
+    old=expected['original_native']
+    require(producer.get('state')==old['state']=='FAILED' and producer.get('exit_code')==old['exit_code']=='1:0'
+        and producer.get('job_id_raw')==ORIGINAL_JOB_ID and producer.get('user')==old['owner']=='pwa209'
+        and producer.get('account')==old['account']=='def-ptewarie_cpu'
+        and producer.get('cpus')==old['cpus']==1 and producer.get('elapsed_seconds')==old['elapsed_seconds']==18500
+        and producer.get('unallocated_metadata') is False and 'gpu' not in producer.get('alloc_tres','').lower(),
+        'Original failed native producer must remain explicitly failed')
+    require(value.get('status')=='technical_prefix_independently_verified' and value.get('native_job_id')==job
+        and value.get('original_job_id')==ORIGINAL_JOB_ID and value.get('original_native')==old
+        and value.get('expected_manifest_sha256')==EXPECTED_CANONICAL_SHA
+        and value.get('original_helper_sha256')==PREFIX_HELPER_SHA
+        and value.get('primary_source_sha256')==PRIMARY_SHA and value.get('framework_source_sha256')==SOURCE
+        and value.get('full_config_sha256')==CONFIG and value.get('original_receipt_status')=='worker_failed'
+        and value.get('worker_result_status')=='complete_full_cohort_first_update_technical_prefix'
+        and value.get('consumer_requires_verifier_native_completed_zero') is True
+        and all(value.get(k) is False for k in (*FALSE_FLAGS,'canonical_state_changed','numerical_worker_replayed',
+            'artifacts_deserialized','original_native_history_rewritten')),
+        'Exact source-bound independent technical certificate required')
+    require(re.fullmatch('[0-9a-f]{64}',str(VERIFIER_SOURCE_MANIFEST_SHA))
+        and value.get('source_manifest_sha256')==VERIFIER_SOURCE_MANIFEST_SHA,
+        'Native plan must pin the exact verifier source bundle')
+    bundle=bound_json(VERIFIER_SOURCE/'source-manifest.json',VERIFIER_SOURCE_MANIFEST_SHA)
+    require(isinstance(bundle.get('files'),dict) and bundle['files'].get('expected-original-manifest.json')==EXPECTED_MANIFEST_SHA,
+        'Verifier must bind the same frozen original manifest')
+    for name,pin in bundle['files'].items():
+        require(isinstance(name,str) and not Path(name).is_absolute() and '..' not in Path(name).parts,
+            'Confined verifier source bundle required')
+        require(digest(ordinary(VERIFIER_SOURCE/name))==pin,'Verifier source changed')
+    registration=verifier_registration(job,VERIFIER_SOURCE_MANIFEST_SHA)
+    files=original_file_bindings(expected)
+    certificate_files=value.get('evidence_files',{})
+    require(isinstance(certificate_files,dict) and set(files).issubset(certificate_files),
+        'Independent certificate must bind every original file and artifact')
+    for name,pin in files.items():
+        require(isinstance(certificate_files[name],dict) and certificate_files[name].get('sha256')==pin,
+            'Independent evidence file hash differs from frozen original')
+    helper=ordinary(ROOT/expected['helper_path'])
+    require(digest(helper)==PREFIX_HELPER_SHA,'Exact original v5 preprocessing helper required')
+    prefix=load_exact('qualified_original_v5_prefix_ingress',helper,PREFIX_HELPER_SHA)
+    for suite,name in [('prefix','private-tests.xml'),('context','context-private-tests.xml')]:
+        prefix.verify_private_junit(PREFIX_SUPPORT/name,suite=suite)
+    worker_path=PREFIX_CASE/'worker-result.json'
+    worker=bound_json(worker_path,expected['pinned_files'][str(worker_path.relative_to(ROOT))])
+    prefix.validate_worker_result(worker,PREFIX_CASE)
+    require(worker.get('status')=='complete_full_cohort_first_update_technical_prefix'
+        and isinstance(worker.get('torch_version'),str) and bool(worker['torch_version']),
+        'Actual complete original v5 worker/runtime required')
+    stages=worker['completed_stages']
+    require(value.get('completed_stages')==[stage['stage'] for stage in stages]
+        and stages and stages[0].get('stage')==PREFIX_STAGE,
+        'Independent certificate must bind every completed original stage')
+    stage=stages[0]
+    plan_path=PREFIX_CASE/'plan.json';plan=bound_json(plan_path,stage['plan_sha256'])
+    census_path=PREFIX_CASE/'clock-eligibility-census.json';census=bound_json(census_path,plan['census_sha256'])
+    require(stage.get('census_sha256')==plan['census_sha256'] and census.get('all_original_roster_rows_retained') is True
+        and plan.get('private_helper_sha256')==PREFIX_HELPER_SHA and plan.get('primary_source_sha256')==PRIMARY_SHA
+        and plan.get('framework_source_sha256')==SOURCE and plan.get('full_config_sha256')==CONFIG,
+        'Original full-roster/source/scaler plan provenance changed')
+    artifact=ordinary(stage['artifacts_path'])
+    require(artifact==PREFIX_CASE/(PREFIX_STAGE+'.pt') and digest(artifact)==stage['artifacts_sha256'],
+        'Preserved original stage1 artifact changed')
+    return {'receipt':{'path':str(path),'sha256':sha},'native_job_id':job,'native_observed':record,'completion':completion,
+        'original_job_id':ORIGINAL_JOB_ID,'original_native_outcome_preserved':producer,
+        'independent_verification_only':True,'verifier_source_manifest_sha256':VERIFIER_SOURCE_MANIFEST_SHA,
+        'verifier_registration':registration,
+        'runtime_torch_version':worker['torch_version'],
+        'helper':{'path':str(helper),'sha256':PREFIX_HELPER_SHA},'plan':{'path':str(plan_path),'sha256':stage['plan_sha256']},
+        'census':{'path':str(census_path),'sha256':plan['census_sha256']},
+        'original_stage1_artifact':{'path':str(artifact),'sha256':stage['artifacts_sha256'],'loaded':False},
+        'full_prefix_completion_required':False,'all_original_v5_stages_independently_verified':True,'only_complete_stage1_is_required':True,**FALSE_FLAGS}
+
+
+def qualify_private(test_path,test_sha,allocation_end,*,runner=subprocess.run):
+    """Qualify unchanged baseline plus operational derivative in separate suites."""
+    require(CAPSULE_MANIFEST is not None,'Pinned candidate source capsule required')
+    area=Path(__file__).resolve().parent
+    legacy_path=ordinary(area/'run-full-record-adjoint-v3-20261021.py')
+    legacy=load_exact('immutable_adjoint_v3_qualification',legacy_path,BASELINE_HELPER_SHA)
+    require(digest(area/'run-full-cohort-prefix-v3-20261021.py')==BASELINE_PREFIX_SHA,
+        'Immutable legacy fixture closure required')
+    legacy.SUPPORT=SUPPORT
+    baseline=legacy.qualify_private(test_path,test_sha,allocation_end,runner=runner)
+    additional=[]
+    for suite in CAPSULE_MANIFEST['operational_test_suites']:
+        source=ordinary(area/suite['path'])
+        require(digest(source)==CAPSULE_MANIFEST['files'][suite['path']], 'Pinned operational suite required')
+        output=SUPPORT/suite['name'];output.mkdir(mode=0o700,exist_ok=False)
+        workspace=Path(os.environ['SLURM_TMPDIR'])/('hhw-adjoint-'+suite['name']+'-'+os.environ['SLURM_JOB_ID'])
+        workspace.mkdir(mode=0o700,exist_ok=False)
+        environment={**os.environ,'HHW_TEST_WORKSPACE':str(workspace),'HHW_TEST_RESULT_DIR':str(output),
+            'PYTHONDONTWRITEBYTECODE':'1','HHW_ADJOINT_BASELINE':str(legacy_path)}
+        timeout=min(300.,allocation_end-time.time()-300.)
+        require(timeout>=60,'Finite operational qualification margin required')
+        command=[sys.executable,'-B',str(source)]
+        exclusive(output/'intent.json',{'command':command,'source_sha256':digest(source),'maximum_seconds':timeout,**FALSE_FLAGS})
+        with (output/'stdout.log').open('xb') as stdout,(output/'stderr.log').open('xb') as stderr:
+            completed=runner(command,cwd=workspace,env=environment,stdout=stdout,stderr=stderr,timeout=timeout,check=False)
+        result_path=output/'test-result.json'
+        require(completed.returncode==0 and result_path.is_file(),'Actual complete operational native suite failed')
+        result=bound_json(result_path,digest(result_path))
+        require(result.get('tests')==suite['tests'] and result.get('failures')==0 and result.get('errors')==0
+            and result.get('skipped')==0 and result.get('successful') is True
+            and result.get('tests_sha256')==digest(source) and result.get('derivative_sha256')==digest(Path(__file__))
+            and digest(source)==CAPSULE_MANIFEST['files'][suite['path']],
+            'Exact complete operational native test roster required')
+        additional.append({'suite':suite['name'],'path':str(result_path),'sha256':digest(result_path),
+            'test_source_sha256':digest(source),'tests':suite['tests'],'failures':0,'errors':0,'skipped':0})
+    for name,pin in CAPSULE_MANIFEST['files'].items():
+        require(digest(area/name)==pin,'Candidate capsule changed during native qualification')
+    result={'legacy_numerical_baseline':baseline,'operational_derivative_suites':additional,
+        'candidate_sha256':digest(Path(__file__)),'all_numerical_definition_bytes_preserved':True,
+        'total_tests':baseline['test_counts']['tests']+sum(x['tests'] for x in additional),**FALSE_FLAGS}
+    exclusive(SUPPORT/'candidate-private-qualification.json',result)
+    return result
