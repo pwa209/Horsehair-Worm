@@ -1,0 +1,245 @@
+def prepare(s,b,profile,config,root,case,deadline,emit,prefix_info=None):
+    """Recompute the exact pinned full training fold; never select one recording."""
+    import torch
+    require(prefix_info is not None,'Completed source-bound prefix preprocessing evidence is required')
+    require(str(torch.__version__)==prefix_info['runtime_torch_version'],'Original and recomputed Torch runtimes differ')
+    prefix=load_exact('qualified_prefix_recomputation',ordinary(prefix_info['helper']['path']),PREFIX_HELPER_SHA)
+    original=bound_json(prefix_info['plan']['path'],prefix_info['plan']['sha256'])
+    original_census=bound_json(prefix_info['census']['path'],prefix_info['census']['sha256'])
+    try:model,train,validation,scaler,n,settings,recomputed=prefix.prepare(s,b,profile,config,root,case,deadline,emit)
+    except prefix.MemoryBound as error:raise MemoryBound(str(error)) from error
+    except prefix.DeadlineBound as error:raise DeadlineBound(str(error)) from error
+    require(recomputed==original and bound_json(case/'clock-eligibility-census.json',recomputed['census_sha256'])==original_census,
+        'Recomputed full-fold scaler/knots/roles/normalizer or clock census differs from bound prefix')
+    require([q.animal_id for q in train]==original['split']['training_ids']
+        and len(train)==original['training_fold_recordings']==1107
+        and sum(len(q.times) for q in train)==original['training_fold_full_bins']==7828183
+        and n==original['global_observed_bin_normalizer']==sum(int(q.observed.sum()) for q in train)==2666463
+        and len(set(q.animal_id for q in train))==len(train),
+        'Exact complete ordered original training fold and global observed normalizer required')
+    require(original['full_nuisance_dimensions']=={'animal_rows':1107,'experiment_rows':10}
+        and original['original_validation_criterion_defined'] is False,
+        'Original nuisance dimensions and unresolved validation criterion must remain unchanged')
+    (case/'plan.json').rename(case/'recomputed-prefix-plan.json')
+    plan=dict(recomputed,prefix_evidence=prefix_info,
+        recomputed_prefix_plan_sha256=digest(case/'recomputed-prefix-plan.json'),
+        preprocessing_recomputed_not_restored=True,original_stage1_tensor_artifact_loaded=False,
+        byte_parity_with_original_initial_tensor_artifact_claimed=False,
+        numerical_route={'primary':'cohort_profile.objective_gradient','candidate':'duration_adjoint.objective_gradient',
+            'independent_batch_size':1,'block_size':None,'prior_applications_per_implementation':1,
+            'optimizer_updates':0,'mid_operation_resume_supported':False},
+        private_full_fold_helper_sha256=digest(Path(__file__)))
+    exclusive(case/'plan.json',plan)
+    return model,train,n,settings,plan
+
+
+class ResidentDeadlineGuard(MemoryGuard):
+    """Bound current resident memory across sequential released batch graphs."""
+    def pack(self,tensor):
+        self.calls+=1
+        if self.calls%128==1:self.check()
+        return tensor
+    def evidence(self):
+        return {'resident_rejection_bound_bytes':self.limit,'observed_current_rss_peak_bytes':self.peak_rss,
+            'saved_tensor_callbacks':self.calls,'cumulative_saved_storage_rejection_applied':False,
+            'tracking_scope':'Current RSS and deadline; released cohort-batch storage is not accumulated'}
+
+
+def full_training_comparison(profile,adjoint,initial,training,normalizer,deadline,emit,commit,*,guard_factory=MemoryGuard,candidate_guard_factory=ResidentDeadlineGuard):
+    """Route unchanged complete-fold APIs; this wrapper defines no likelihood."""
+    require(training and len(training)==1107 and normalizer==2666463
+        and normalizer==sum(int(q.observed.sum()) for q in training)
+        and len({q.animal_id for q in training})==len(training),
+        'The complete ordered training fold and its original positive normalizer are mandatory')
+    models=[copy.deepcopy(initial),copy.deepcopy(initial)]
+    require(models[0] is not models[1] and all(model is not initial for model in models),'Separate initial model copies required')
+    left,right=models[0].state_dict(),models[1].state_dict()
+    require(left.keys()==right.keys(),'Identical original initial parameter roster required')
+    for name in left:require(compare_tensor(left[name],right[name])['max_absolute_difference']==0.,'Identical original initial model states required')
+    class BoundedTimings(profile.Timings):
+        def __init__(self):super().__init__(emit);self.memory={}
+        def call(self,phase,callback,**unit):
+            guard=guard_factory(deadline)
+            with guard:value=super().call(phase,callback,**unit)
+            guard.check();e=guard.evidence();old=self.memory.setdefault(phase,{'maximum_saved_storage_bytes':0,'maximum_current_rss_bytes':0})
+            old['maximum_saved_storage_bytes']=max(old['maximum_saved_storage_bytes'],e['unique_saved_storage_bytes'])
+            old['maximum_current_rss_bytes']=max(old['maximum_current_rss_bytes'],e['observed_current_rss_peak_bytes'])
+            return value
+    objectives=[];measurements=[]
+    for index,model in enumerate(models):
+        guard_factory(deadline).check();emit({'stage':STAGES[index+1],'state':'started'},True)
+        started=time.perf_counter();cpu=time.process_time()
+        if index==0:
+            timer=BoundedTimings()
+            objective=profile.objective_gradient(model,training,normalizer,timer)
+            memory=timer.memory;timings=copy.deepcopy(timer.totals)
+        else:
+            guard=candidate_guard_factory(deadline)
+            with guard:objective=adjoint.objective_gradient(model,training,normalizer,batch_size=1,block_size=None)
+            guard.check();memory=guard.evidence();timings={}
+        objectives.append(objective.detach().clone())
+        measurement={'implementation':'primary0e2' if index==0 else 'qualified_first_adjoint',
+            'wall_seconds':time.perf_counter()-started,'process_cpu_seconds':time.process_time()-cpu,
+            'training_clocks':len(training),'training_bins':sum(len(q.times) for q in training),
+            'global_observed_bin_normalizer':normalizer,'prior_applications':1,
+            'independent_batch_size':None if index==0 else 1,'block_size':None,
+            'timings':timings,'memory':memory}
+        measurements.append(measurement)
+        commit(STAGES[index+1],measurement,{'objective':objective.detach().clone(),
+            'model_state':model.state_dict(),
+            'named_gradients':{name:None if p.grad is None else p.grad.detach().clone() for name,p in model.named_parameters()}})
+    comparison={'objective':compare_tensor(objectives[0],objectives[1]),
+        'all_named_gradients':compare_gradients(*models),'measurements':measurements,
+        'training_clocks':len(training),'training_bins':sum(len(q.times) for q in training),
+        'global_observed_bin_normalizer':normalizer,'prior_applications_per_implementation':1,
+        'separate_identical_initial_models':True,'optimizer_updates':0,
+        'validation_calls':0,'mid_operation_resume_supported':False,
+        'coverage_scope':'One complete original declared training fold at its frozen initialization; other workload cells remain unmeasured'}
+    commit(STAGES[3],comparison,{'comparison':comparison})
+    return comparison
+
+
+def record_probe_evidence(observed):
+    """Require the completed original one-record probe without loading tensors."""
+    from horsehair.slurm import completed_native_dependency
+    job='6943757';record=observed.get(job,{})
+    require(record.get('job_id_raw')==job and record.get('state')=='COMPLETED' and record.get('exit_code')=='0:0'
+        and record.get('user')=='pwa209' and record.get('account')=='def-ptewarie_cpu'
+        and record.get('unallocated_metadata') is False and record.get('cpus')==1
+        and type(record.get('elapsed_seconds')) is int and 0<record['elapsed_seconds']<=8*3600
+        and 'gpu' not in record.get('alloc_tres','').lower(),'Positive owned completed one-record native probe required')
+    completion=completed_native_dependency(ROOT,job);require(completion is not None,'Persisted positive one-record afterok proof required')
+    old_area=ROOT/'maintenance/study-behaviour-adjoint-continuation-v1-20261024'
+    old_support=ROOT/'maintenance/behaviour-full-record-adjoint-v5prefix-support-v1-20261024'
+    old_case=ROOT/'maintenance/behaviour-full-record-adjoint-v5prefix-v1-20261024'
+    manifest_sha='8a409623d93ede64b5f980dab2160bda0745ebd240a3255e70498d26cc34d794'
+    helper_sha='459e0aa542eabd824dfe6f9deacf5e0e702b0108e5816760024c155823e1bb2f'
+    receipt_sha='76126379b9f292d2df77779223af3e947d40e81222ed7bb24c18d4230d1315c7'
+    bundle=bound_json(old_area/'source-manifest.json',manifest_sha)
+    require(bundle.get('complete_native_qualification_tests')==131 and isinstance(bundle.get('files'),dict),
+        'Exact previous native-qualified source bundle required')
+    for name,pin in bundle['files'].items():
+        require(Path(name).name==name and digest(ordinary(old_area/name))==pin,'Previous probe source bytes changed')
+    receipt=bound_json(old_support/'receipt.json',receipt_sha)
+    require(receipt.get('status')=='complete_one_record_first_order_probe' and receipt.get('native_job_id')==job
+        and receipt.get('worker_returncode')==0 and receipt.get('source_sha256')==SOURCE
+        and receipt.get('primary_source_sha256')==PRIMARY_SHA and receipt.get('full_config_sha256')==CONFIG
+        and all(receipt.get(k) is False for k in FALSE_FLAGS),'Exact honest completed one-record receipt required')
+    private=receipt.get('private_qualification',{})
+    require(private.get('candidate_sha256')==helper_sha and private.get('total_tests')==131
+        and private.get('all_numerical_definition_bytes_preserved') is True,'Actual131-case prior qualification required')
+    allocation=receipt['allocation'];plan_path=Path(allocation['plan_path']);ledger_path=Path(allocation['ledger_path'])
+    require(plan_path==ROOT/'plans/behaviour-adjoint-continuation-v1-20261024/plan.json'
+        and ledger_path==ROOT/'state/behaviour-adjoint-continuation-v1-20261024-submission.json',
+        'Exact previous probe registration namespace required')
+    plan=registered_json(plan_path);ledger=registered_json(ledger_path)
+    canonical=lambda v:hashlib.sha256(json.dumps(v,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
+    require(canonical(plan)==allocation['plan_sha256']==ledger['plan_sha256']
+        and digest(ledger_path)==allocation['ledger_sha256'] and plan.get('source_manifest_sha256')==manifest_sha
+        and len(plan.get('tasks',[]))==1,'Exact source-bound previous native plan and ledger required')
+    task=plan['tasks'][0];entry=ledger['tasks'].get(task['name'],{})
+    script=ordinary(task['script'],maintenance=False)
+    require(task['name']=='behaviour-adjoint-continuation-v1' and entry.get('job_id')==job
+        and entry.get('state')=='submitted' and task.get('resources')=={'cpus':1,'memory':'64G','hours':8,'gpu':False,'array':None}
+        and canonical(script.read_text())==task['script_sha256']==entry.get('script_sha256')
+        and digest(script)==allocation['script_sha256']
+        and '--source-manifest-sha256 '+manifest_sha in task['command'],
+        'Previous native job must bind the reviewed exact script and source bundle')
+    legacy=load_exact('completed_one_record_validator',old_area/'run-full-record-adjoint-v5prefix-v1-20261024.py',helper_sha)
+    legacy.validate_worker_result(receipt['worker_result'],old_case)
+    return {'job_id':job,'native_observed':record,'completion':completion,
+        'receipt':{'path':str(old_support/'receipt.json'),'sha256':receipt_sha},
+        'source_manifest':{'path':str(old_area/'source-manifest.json'),'sha256':manifest_sha},
+        'helper_sha256':helper_sha,'native_qualified_cases':131,'artifacts_deserialized':False,**FALSE_FLAGS}
+
+
+def _worker(primary,framework,root,case,deadline,prefix_info_path,prefix_info_sha):
+    import torch
+    import horsehair
+    from horsehair import semimarkov as s,behaviour as b
+    from horsehair.core import atomic_json
+    primary,framework,root,case=(Path(p).resolve() for p in (primary,framework,root,case))
+    require(Path(horsehair.__file__).resolve()==primary/'src/horsehair/__init__.py'
+        and all(Path(module.__file__).resolve().is_relative_to(primary/'src') for module in (s,b)), 'Frozen isolated primary interpreter required')
+    config=source_bindings(primary,framework)
+    require(root.resolve()==ROOT.resolve()==Path(config['paths']['root']).resolve() and case.resolve()==CASE.resolve()
+        and case.is_dir() and not case.is_symlink(),'Exact personal native case/root required')
+    require(os.environ.get('SLURM_CPUS_PER_TASK')=='1' and os.environ.get('HHW_GPU_COUNT')=='0','One CPU and no GPU required')
+    torch.set_num_threads(1)
+    adjoint=load_exact('horsehair._native_duration_adjoint',framework/'src/horsehair/duration_adjoint.py',ADJOINT_SHA)
+    profile=load_exact('horsehair._native_cohort_profile',framework/'src/horsehair/cohort_profile.py',PROFILE_SHA)
+    progress={'status':'preprocessing','torch_threads':1,'torch_version':str(torch.__version__),'full_config_sha256':CONFIG,
+        'primary_source_sha256':PRIMARY_SHA,'framework_source_sha256':SOURCE,'completed_stages':[],**FALSE_FLAGS}
+    last=[None]
+    def emit(event,force=False):
+        progress['last_event']=event;progress['current_rss_bytes']=rss_bytes();progress['updated_unix']=time.time()
+        if force or last[0] is None or time.monotonic()-last[0]>=30:
+            atomic_json(case/'progress.json',progress);last[0]=time.monotonic()
+    def commit(stage,result,artifacts):
+        require(stage==STAGES[len(progress['completed_stages'])],'Only complete sequential stage boundaries may be committed')
+        checkpoint=case/(stage+'.pt');torch.save(artifacts,checkpoint)
+        with checkpoint.open('rb') as stream:os.fsync(stream.fileno())
+        value=dict(result,stage=stage,status='full_fold_technical_stage_complete',artifacts_path=str(checkpoint),
+            artifacts_sha256=digest(checkpoint),plan_sha256=progress['plan_sha256'],
+            exact_mid_operation_resume_supported=False,**FALSE_FLAGS)
+        exclusive(case/(stage+'.json'),value);progress['completed_stages'].append(value)
+        emit({'stage':stage,'state':'completed'},True)
+    try:
+        emit({'stage':'source_bound_worker_started'},True)
+        prefix_info=bound_json(prefix_info_path,prefix_info_sha)
+        require(prefix_info['helper']['sha256']==PREFIX_HELPER_SHA and prefix_info['original_stage1_artifact']['loaded'] is False
+            and prefix_info['only_complete_stage1_is_required'] is True and all(prefix_info.get(k) is False for k in FALSE_FLAGS),
+            'Exact parent-verified prefix preprocessing provenance required')
+        bound_json(prefix_info['receipt']['path'],prefix_info['receipt']['sha256'])
+        initial,training,normalizer,settings,plan=prepare(s,b,profile,config,root,case,deadline,emit,prefix_info)
+        progress.update(status='full_training_fold_comparison_running',plan_sha256=digest(case/'plan.json'),
+            training_clocks=len(training),training_bins=sum(len(q.times) for q in training),global_observed_bin_normalizer=normalizer)
+        commit(STAGES[0],{'training_clocks':len(training),'training_bins':sum(len(q.times) for q in training),
+            'global_observed_bin_normalizer':normalizer,'original_validation_criterion_defined':False,
+            'all_original_roster_rows_retained':True,'original_stage1_tensor_artifact_loaded':False},
+            {'initial_state':initial.state_dict(),'torch_rng_state':torch.get_rng_state(),'normalizer':normalizer})
+        full_training_comparison(profile,adjoint,initial,training,normalizer,deadline,emit,commit)
+        require(digest(Path(plan['source_bin_path']))==plan['source_bin_sha256']
+            and digest(Path(plan['provenance_path']))==plan['provenance_sha256'],'Source bin/provenance changed during full-fold comparison')
+        source_bindings(primary,framework);progress['status']='complete_full_training_fold_first_order_comparison'
+    except (MemoryBound,DeadlineBound) as error:
+        progress.update(status='memory_bound_not_compared' if isinstance(error,MemoryBound) else 'bounded_deadline_reached',
+                        error_type=type(error).__name__,reason=str(error))
+    except BaseException as error:
+        progress.update(status='worker_failed',error_type=type(error).__name__,reason=str(error))
+    progress.update(pending_stages=[stage for stage in STAGES if stage not in {r['stage'] for r in progress['completed_stages']}],
+        process_cpu_seconds=time.process_time(),finished_unix=time.time(),memory_ceiling_bytes=MEMORY_LIMIT,
+        exact_mid_operation_resume_supported=False,
+        scope='Single frozen MX/two-state/10s training fold at initialization; no validation, optimization, inference or complete-workload proof')
+    atomic_json(case/'worker-result.json',progress);emit({'stage':'worker_finished'},True)
+    return 1 if progress['status']=='worker_failed' else 0
+
+
+def validate_worker_result(result,case):
+    require(result.get('status') in {'complete_full_training_fold_first_order_comparison','memory_bound_not_compared','bounded_deadline_reached','worker_failed'}
+        and all(result.get(key) is False for key in FALSE_FLAGS)
+        and result.get('primary_source_sha256')==PRIMARY_SHA and result.get('framework_source_sha256')==SOURCE
+        and result.get('full_config_sha256')==CONFIG,'Valid source-bound honest technical worker receipt required')
+    completed=result.get('completed_stages');require(isinstance(completed,list),'Explicit completed-stage roster required')
+    names=[value.get('stage') for value in completed]
+    require(names==list(STAGES[:len(names)]),'Partial completion must be an unambiguous original-stage prefix')
+    if result['status']=='complete_full_training_fold_first_order_comparison':require(names==list(STAGES),'All four full-fold technical stages must actually complete')
+    for value in completed:
+        path=case/(value['stage']+'.json');artifact=case/(value['stage']+'.pt')
+        require(value.get('status')=='full_fold_technical_stage_complete' and all(value.get(key) is False for key in FALSE_FLAGS)
+            and value.get('training_clocks')==1107 and value.get('training_bins')==7828183
+            and value.get('global_observed_bin_normalizer')==2666463
+            and value.get('exact_mid_operation_resume_supported') is False
+            and json.loads(path.read_text())==value and value.get('artifacts_path')==str(artifact)
+            and digest(artifact)==value.get('artifacts_sha256') and digest(case/'plan.json')==value.get('plan_sha256'),
+            'Actual completed full-fold stage bytes/coverage/plan/false gates must bind the worker result')
+
+
+def adjoint_runtime_seconds(allocation_end,*,now=None):
+    """Use only a verified24h allocation with ten minutes reserved for cleanup."""
+    current=time.time() if now is None else now
+    require(type(current) in (int,float) and math.isfinite(current),'Finite actual allocation clock required')
+    require(type(allocation_end) in (str,int,float),'Finite native allocation end required')
+    end=float(allocation_end)
+    require(math.isfinite(end) and 630<=end-current<=24*3600+2,'Verified24h allocation and cleanup margin required')
+    return min(85800.,end-current-600.)
