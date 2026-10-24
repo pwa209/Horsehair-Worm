@@ -1,0 +1,57 @@
+{
+  "checkpoint_diff": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-deployment-v1-20261024/checkpoint-diff-698/receipt.json",
+    "sha256": "a6c8418b01a66f4f983370a4193724bbe947c772b7b4d3f337c7c9fc1ab819cb"
+  },
+  "descriptor": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v5-20261024/handoff-descriptor.json",
+    "sha256": "f58f0540ad173746d148a6d6d02814ff1e6b5f5e109ab185ca57c8364f69a47a"
+  },
+  "failed_job_id": "7069610",
+  "failure": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v5-20261024/native-7069610/failure.json",
+    "sha256": "9d11ebac44dda48666dffebde7c2db2b5e5d8a15eb7130400be71e32fa65cab2"
+  },
+  "flags": {
+    "admission_authority": false,
+    "automatic_replay_permitted": false,
+    "campaign_state_changed": false,
+    "scientific_gates_cleared": false,
+    "scientific_result": false,
+    "worker_jobs_changed": false
+  },
+  "kind": "checkpoint-witness-relocation-continuation-v1",
+  "native_bindings": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v5-20261024/native-7069610/native-bindings.json",
+    "sha256": "30e5ff6433202b27a63e3aadf8a02210a4c4c48c74499ccf7f36987868458d9b"
+  },
+  "prior_retirements": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v5-20261024/native-7069610/prior-six-backup-retirements-reconciled.json",
+    "sha256": "3a66ddcaaae3c98a5f7a38fa4bc9ec09de8429394288b752cbbfaa3149ddd27e"
+  },
+  "qualification": {
+    "job_id": "7068089",
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v5-20261024/qualification.json",
+    "sha256": "3aee47392208fa3d6923774919efc23ad81313839dccf7adf7245de0823c1d8a"
+  },
+  "registration": {
+    "ledger": {
+      "path": "/scratch/pwa209/horsehair-worm/state/census-resilience-handoff-activate-v5-20261024-submission.json",
+      "sha256": "1fa492d95700fc667be0ac8feb3be57bbd999ee9c5484b4c29aa0c1c2b187b5d"
+    },
+    "native_job_id": "7069610",
+    "plan": {
+      "path": "/scratch/pwa209/horsehair-worm/plans/census-resilience-handoff-activate-v5-20261024/plan.json",
+      "sha256": "cace1ea21ed073c1fcc9b77bb604c3b49cdbaedfeb8301c61bf2177286bf5600"
+    },
+    "script": {
+      "path": "/scratch/pwa209/horsehair-worm/plans/census-resilience-handoff-activate-v5-20261024/census-resilience-handoff-activate-v5.sbatch",
+      "sha256": "dcf9d4d88979421a8579355419eee5afca1a983c34ce2bf6e507334371f0aa2c"
+    },
+    "task_name": "census-resilience-handoff-activate-v5"
+  },
+  "source_manifest": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-census-resilience-handoff-v5-20261024/source-manifest.json",
+    "sha256": "3bb6738ff4d1597d94b4fe76295476005859c60e0449dbdd8e14cb585de4aef0"
+  }
+}

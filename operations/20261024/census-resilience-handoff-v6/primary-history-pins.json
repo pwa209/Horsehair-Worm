@@ -1,0 +1,150 @@
+{
+  "evidence": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-handoff-metadata-audit-v1-20261024/attempt-605-1792859340584892751-1989274/audit.json",
+    "sha256": "923bc64c009a5a1658eacb51f9c1da1d0a359f3f2c43f5139d886cc48fd59f0e"
+  },
+  "kind": "source-bound-primary-historical-script-bindings-v1",
+  "primary_release_id": "20261013-829e3817bee1-0e2b1ebce8bf",
+  "tasks": {
+    "managed-initial/pipeline-controller-0": {
+      "job_id": "6632164",
+      "ledger_execution_release_sha256": "f73a2f6d97912bce50f3862abd5323a252cb9416fa2b94320da3d2040d35dfc4",
+      "ledger_sha256": "bcefded06f0ed6b7ae3a2a78f1beb15c1334eb521eea79dfe2a2c9610a60a050",
+      "plan_sha256": "797869dcce163382a3e52c62175c1642c32e8d091f07324c59a6f6f2ae799e6e",
+      "script_relative_path": "plans/mantis-reference-recovery-v14-20261021-controllers/pipeline-controller-0.sbatch",
+      "script_sha256": "641f2603174f3741e4ce545cd69c849c0821d505e2d11a7e08c603ee2be26051",
+      "script_text_sha256": "581d4134a22d96c4744d2ce5361ec7be8646b62c1498abbc5eb661822bb8b826",
+      "task_execution_release_sha256": "f73a2f6d97912bce50f3862abd5323a252cb9416fa2b94320da3d2040d35dfc4"
+    },
+    "managed-initial/pipeline-controller-1": {
+      "job_id": "6632209",
+      "ledger_execution_release_sha256": "f73a2f6d97912bce50f3862abd5323a252cb9416fa2b94320da3d2040d35dfc4",
+      "ledger_sha256": "bcefded06f0ed6b7ae3a2a78f1beb15c1334eb521eea79dfe2a2c9610a60a050",
+      "plan_sha256": "797869dcce163382a3e52c62175c1642c32e8d091f07324c59a6f6f2ae799e6e",
+      "script_relative_path": "plans/mantis-reference-recovery-v14-20261021-controllers/pipeline-controller-1.sbatch",
+      "script_sha256": "31b1951853486b307249733376d9e84e6a6591d008b2208318e3fd6d454c70b0",
+      "script_text_sha256": "db750bc0c3760272a8a3ac9b4136bfece5e16a66d06c1f67c23426868c4d9045",
+      "task_execution_release_sha256": "f73a2f6d97912bce50f3862abd5323a252cb9416fa2b94320da3d2040d35dfc4"
+    },
+    "managed-initial/pipeline-controller-2": {
+      "job_id": "6632225",
+      "ledger_execution_release_sha256": "f73a2f6d97912bce50f3862abd5323a252cb9416fa2b94320da3d2040d35dfc4",
+      "ledger_sha256": "bcefded06f0ed6b7ae3a2a78f1beb15c1334eb521eea79dfe2a2c9610a60a050",
+      "plan_sha256": "797869dcce163382a3e52c62175c1642c32e8d091f07324c59a6f6f2ae799e6e",
+      "script_relative_path": "plans/mantis-reference-recovery-v14-20261021-controllers/pipeline-controller-2.sbatch",
+      "script_sha256": "32b5c374fe0affea802de643dc960b4db840df2f24a4da54beb73d0a1949bc2a",
+      "script_text_sha256": "114a6eb8dc48630af3a8297a7c919a60b921cb2f1a0f6b5ffd90452757ceca40",
+      "task_execution_release_sha256": "f73a2f6d97912bce50f3862abd5323a252cb9416fa2b94320da3d2040d35dfc4"
+    },
+    "managed-initial/pipeline-controller-3": {
+      "job_id": "6632239",
+      "ledger_execution_release_sha256": "f73a2f6d97912bce50f3862abd5323a252cb9416fa2b94320da3d2040d35dfc4",
+      "ledger_sha256": "bcefded06f0ed6b7ae3a2a78f1beb15c1334eb521eea79dfe2a2c9610a60a050",
+      "plan_sha256": "797869dcce163382a3e52c62175c1642c32e8d091f07324c59a6f6f2ae799e6e",
+      "script_relative_path": "plans/mantis-reference-recovery-v14-20261021-controllers/pipeline-controller-3.sbatch",
+      "script_sha256": "3371eb33a7e18477c8457fdd309f85de1232056feb7055f2972b7f424d0da0bb",
+      "script_text_sha256": "502c8b265df4e29d507ec5b6064386059067a519b60fd66ebd1959ef1de4e1a5",
+      "task_execution_release_sha256": "f73a2f6d97912bce50f3862abd5323a252cb9416fa2b94320da3d2040d35dfc4"
+    },
+    "managed-initial/source-audit": {
+      "job_id": "5525636",
+      "ledger_execution_release_sha256": "a16b43affed68ffc54ff6706d6164435e207c1af902ad4557d309ff67b27a1b7",
+      "ledger_sha256": "bcefded06f0ed6b7ae3a2a78f1beb15c1334eb521eea79dfe2a2c9610a60a050",
+      "plan_sha256": "797869dcce163382a3e52c62175c1642c32e8d091f07324c59a6f6f2ae799e6e",
+      "script_relative_path": "plans/component-repair-managed-initial-20261014/source-audit.sbatch",
+      "script_sha256": "167886e58e209f6cc0a741c2930e30b6e3ea14a378478bdf0b80fc17d1d2e854",
+      "script_text_sha256": "6bdcf663bb2a5862549a5ab12e9e650818aa1dbe3aecf79a4ba030df8c373a41",
+      "task_execution_release_sha256": "a16b43affed68ffc54ff6706d6164435e207c1af902ad4557d309ff67b27a1b7"
+    },
+    "managed-initial/source-replication": {
+      "job_id": "5525637",
+      "ledger_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2",
+      "ledger_sha256": "bcefded06f0ed6b7ae3a2a78f1beb15c1334eb521eea79dfe2a2c9610a60a050",
+      "plan_sha256": "797869dcce163382a3e52c62175c1642c32e8d091f07324c59a6f6f2ae799e6e",
+      "script_relative_path": "plans/component-repair-managed-initial-20261014/source-replication.sbatch",
+      "script_sha256": "77955d07589622ef14f516c8d186c5c07adc1efc91f0ac253e7e3186c4c74f0d",
+      "script_text_sha256": "639557ea02038ef0b00ca3540f920b2daf8ac8fcfda99458ae67be3f6d6fe331",
+      "task_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2"
+    },
+    "molecular-corroboration/mantis-orfs": {
+      "job_id": "6632012",
+      "ledger_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2",
+      "ledger_sha256": "8e7686842875645988a521886280da70a06580737bb61eeeb763334a8879c3ff",
+      "plan_sha256": "4c532df0ceb9bb8b56c51c81272f2deff82f59308b7255fd5638ce37f892a17e",
+      "script_relative_path": "plans/mantis-reference-recovery-v14-20261021-auxiliary/mantis-orfs.sbatch",
+      "script_sha256": "e211b468d4faf6cbfacb79891a41d3403b740fcbba58bf1f3e474385c16e02af",
+      "script_text_sha256": "04877fbce2da90fd1bda98ee9582c413f451f782b1f49e5bf76129ba2db24158",
+      "task_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2"
+    },
+    "molecular-corroboration/mantis-orthology": {
+      "job_id": "6632058",
+      "ledger_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2",
+      "ledger_sha256": "8e7686842875645988a521886280da70a06580737bb61eeeb763334a8879c3ff",
+      "plan_sha256": "4c532df0ceb9bb8b56c51c81272f2deff82f59308b7255fd5638ce37f892a17e",
+      "script_relative_path": "plans/mantis-reference-recovery-v14-20261021-auxiliary/mantis-orthology.sbatch",
+      "script_sha256": "c669b325db7f802abc2c7870bb7f43baf7706e9be7e30f979e14256f069a1ef5",
+      "script_text_sha256": "cca1f75fba3121257110640c0ca6eec31ecae2c123ffe09615e3f76f03c4260e",
+      "task_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2"
+    },
+    "rna-full/ant-phase": {
+      "job_id": "6625202",
+      "ledger_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2",
+      "ledger_sha256": "98878634d9a913f8d9f992c47e2f72903befb7b0f852feb77300b47cf7ae9d3f",
+      "plan_sha256": "1d5005dbda7ce4912dc0f4d128caf6cf07dfdb310dc40a8c3144f917af56b820",
+      "script_relative_path": "plans/rna-followup-v11-20261021/ant-phase.sbatch",
+      "script_sha256": "970432f0a0cb7230bd0bf41e1456ecdc3d27b7c011619f23514a2d07611e8f49",
+      "script_text_sha256": "bbf7a58a318ed768536b61830bbacf49dceeefe636a078e50fdbe5528136b457",
+      "task_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2"
+    },
+    "rna-full/ant-score-freeze": {
+      "job_id": "6625204",
+      "ledger_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2",
+      "ledger_sha256": "98878634d9a913f8d9f992c47e2f72903befb7b0f852feb77300b47cf7ae9d3f",
+      "plan_sha256": "1d5005dbda7ce4912dc0f4d128caf6cf07dfdb310dc40a8c3144f917af56b820",
+      "script_relative_path": "plans/rna-followup-v11-20261021/ant-score-freeze.sbatch",
+      "script_sha256": "8ea215118e22a67d9679b1c47034552022fe2329a1398c70da6b52b01f465421",
+      "script_text_sha256": "0c1424d470c85be266baac59435a3bebf5122e46c762e17e8870467bf8cd8bfc",
+      "task_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2"
+    },
+    "rna-full/mantis-phase": {
+      "job_id": "5866366",
+      "ledger_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2",
+      "ledger_sha256": "98878634d9a913f8d9f992c47e2f72903befb7b0f852feb77300b47cf7ae9d3f",
+      "plan_sha256": "1d5005dbda7ce4912dc0f4d128caf6cf07dfdb310dc40a8c3144f917af56b820",
+      "script_relative_path": "plans/sixth-component-repair-rna-full-20261016/mantis-phase.sbatch",
+      "script_sha256": "96850c582990e100e7096320420dc520e4a541a62d540620c2c987a9befc56c6",
+      "script_text_sha256": "50efc0a81ab4dc54842f7ba408e1a7ec549f3904c6874fe525f13b51d5885f54",
+      "task_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2"
+    },
+    "rna-full/rna-all-verified": {
+      "job_id": "5866356",
+      "ledger_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2",
+      "ledger_sha256": "98878634d9a913f8d9f992c47e2f72903befb7b0f852feb77300b47cf7ae9d3f",
+      "plan_sha256": "1d5005dbda7ce4912dc0f4d128caf6cf07dfdb310dc40a8c3144f917af56b820",
+      "script_relative_path": "plans/sixth-component-repair-rna-full-20261016/rna-all-verified.sbatch",
+      "script_sha256": "9833dd0f2a63b6971542e6dc94f0b47166fc38cdae6c8be1084aac50d868ba62",
+      "script_text_sha256": "a50a58d996aa8284b8500450015b8f0fc94bb2407af2126fd263d99cdd01b1c3",
+      "task_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2"
+    },
+    "rna-full/rna-all-wait": {
+      "job_id": "5866343",
+      "ledger_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2",
+      "ledger_sha256": "98878634d9a913f8d9f992c47e2f72903befb7b0f852feb77300b47cf7ae9d3f",
+      "plan_sha256": "1d5005dbda7ce4912dc0f4d128caf6cf07dfdb310dc40a8c3144f917af56b820",
+      "script_relative_path": "plans/sixth-component-repair-rna-full-20261016/rna-all-wait.sbatch",
+      "script_sha256": "71ebb5c4c17bce58d1001e09a1408d2d33154de8fd55f0df3bd4a8864a5e1fb2",
+      "script_text_sha256": "ca3029dc0d57016efaebe787c76db3d3dfd9337bea446854a534a8d60c1f88e5",
+      "task_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2"
+    },
+    "rna-full/rna-counts": {
+      "job_id": "6625201",
+      "ledger_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2",
+      "ledger_sha256": "98878634d9a913f8d9f992c47e2f72903befb7b0f852feb77300b47cf7ae9d3f",
+      "plan_sha256": "1d5005dbda7ce4912dc0f4d128caf6cf07dfdb310dc40a8c3144f917af56b820",
+      "script_relative_path": "plans/rna-followup-v11-20261021/rna-counts.sbatch",
+      "script_sha256": "48db8d2513869a6e7c021ae90250729a234fb1db32584bd280b854261be90832",
+      "script_text_sha256": "e796e5b6b7cf08f46c4c2cd6fbc4ebe49f94d555e674fcbe9aced7c21c794150",
+      "task_execution_release_sha256": "948c154f7d2de003396f5dfca1f4345d941320868d060d3e2bf8850dc4ab92f2"
+    }
+  }
+}
