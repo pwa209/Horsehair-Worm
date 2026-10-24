@@ -10,6 +10,8 @@ The managed implementation adds the complete phase controller graph, four finite
 
 The controller advances eligible finite phases automatically. Missing scientific metadata, incomplete benchmarks, failed native jobs, ambiguous submissions and forecasts exceeding the study limits remain explicit conditions requiring resolution. Complete phase code and controller registration do not establish completed experiments or scientific support.
 
+On 24 October, the repaired census completed two exact sweeps with the original freshness rules. The complete-cohort behavioural baseline objective and all gradients finished for all 1,107 records; the independent comparison remains running. Eight source-bound replacement controllers are prepared and held. The first activation failed a source-path scope check before retirement or release; its additive repair passed all 179 native operational cases and positive final accounting. At the 18:43 UTC checkpoint, the new activation job is pending scheduler priority. These operational results leave scientific provenance, complete workload qualification and inference gates unchanged.
+
 ## Public source availability
 
 The required original Dryad polarization and mating files have been recovered and verified against the frozen provider byte counts and SHA-256 digests. Their source definitions were preserved. Direct scripted provider refusals and the integrity-verified recovery receipts remain in the research execution records.
