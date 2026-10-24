@@ -1,0 +1,7 @@
+# Native accounting launch wait
+
+Narval's control plane confirmed census 6982735 and the whole-fold comparison 6997524 completed successfully, and activation 7086253 failed before active retirement or new releases. Its accounting service continued reporting those jobs as running. The current census publication therefore could not yet satisfy the unchanged qualified handoff's final-native-record requirement.
+
+This read-only prelude is embedded in a fresh, immutable registered Slurm script. It polls only `sacct`, requires the exact three owned final outcomes and actual allocations, and waits at most 90 minutes while retaining at least 90 minutes for the handoff. It records each read without editing research state or issuing scheduler mutations. Invalid identity, unexpected terminal outcome or deadline exhaustion stops before the qualified helper is started. The helper then independently repeats all its original source, provider, worker, checkpoint, process and retirement checks. It runs once; it is never retried automatically after starting.
+
+The existing V7 handoff and its 228-case native qualification are unchanged. Seventeen separate local metadata tests cover this launch wait's completion, missing/stale rows, identity/resource errors, timeout recovery and finite deadline. The registered script hash binds the exact inline prelude; the public file is retained here for review. This prelude does not qualify a scientific workload or clear any study gate.
