@@ -1,0 +1,36 @@
+{
+  "backfill_package": {
+    "files": {
+      "build-backfill-native-plans-v1-20261024.py": "75edf3ec412d28015f20b156ff521360c45c70e79431f678876653716fc3627d",
+      "qualification-asset-pins.json": "afddbb5f5e0833dee421dc8a8bdcbb2b7b34edbd05e254eac736bd8f24e7b250",
+      "qualification-assets/controller-primary-repair-sixth-20261016.py": "49815eeb509909d5eac2ebde2e4f4a3918cf40cefdc5f643f2bcaffead629eb1",
+      "qualification-assets/native-accounting-read-guard-20261021.py": "358145f195ee70d485fa1c7547fb8d593323bdaaaf7e7e905ce195a79dfcea91",
+      "qualification-assets/registered-snapshot-read-guard-v5-20261022.py": "7bd2bf562d0a81887ef1afd308ddd9265e5cadb23ba4b2e5946980b659505431",
+      "qualification-assets/run-af-agent-controller-census-policy-v1-20261023.py": "120f02d098b6c9afa0ea0df54f590ae381b4227d4892ba0f9ee4acc93e6fec0f",
+      "qualification-assets/run-af-agent-controller-registry-v6-20261022.py": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866",
+      "qualification-assets/run-f00d-worker-registry-overlay-20261021.py": "dd39905ce44f89f7f8bbdd325d1a0f1d5ec7950dd89d0e3bb267f6fdfe77a09a",
+      "qualification-assets/test_af_agent_controller_census_policy_v1_20261023.py": "c7f458b63b4322905e0487c79f9e2d8a12831d0ddff3cdcb829583466ca41308",
+      "qualification-assets/test_af_agent_controller_registry_v6_20261022.py": "da703c4cc8b172a2ea79067a8f5c5e9d0976853823a8ed230e3fb1a721633a3d",
+      "qualification-assets/test_f00d_worker_registry_overlay_20261021.py": "2fdcf83a1abc796f82e86d3d3014fd785d195bf7ca4dc6457f2d6dd5db9b3968",
+      "qualification-assets/test_registered_snapshot_read_guard_v5_20261022.py": "934196d84276299ce2b567bef6925515e4656978401a0dd4f49c8bd2d1339d72",
+      "qualify-f2-backfill-controller-v1-20261024.py": "4a9a0cb55f0df5c0975abbe5330d13312d110c30b9b53c2c7a2f433dfe67411d",
+      "run-af-agent-controller-backfill-base-v1-20261024.py": "cbf01cffbbaa9a983ec1e8e6394b38ac04623483e768398c18f48b5e30e31445",
+      "run-af-agent-controller-backfill-policy-v1-20261024.py": "381fbde43ba0798cb207388a402afcc702b569129c81afa6d8226e2cb5258c63",
+      "test_f2_backfill_controller_v1_20261024.py": "bcb933dde87c61afceeeca77ba15c29bf2c39c9924d134bb668cca865b285291"
+    },
+    "kind": "f2-backfill-controller-transport-source-manifest-v1",
+    "native_framework": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e",
+    "native_support": "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024"
+  },
+  "files": {
+    "build-pending-f2-handoff-plan-v1-20261024.py": "db6b94ce7ee63a52a1cdbe56b743f685f7b88f020072671b9f5d9af7b6de265f",
+    "handoff-f2-pending-backfill-v1-20261024.py": "af4bebc224557a50fb227f731f708b573d625c7df5154e96ec05f7d6f14c8d58",
+    "run_emitted_descriptor_canary.py": "6d1b3f21998714c0b27197b455aaa6f74ca97891d2018e75108f862af257c962",
+    "test_f2_pending_handoff_v1_20261024.py": "6e03b3fdcb98a709ba8871308b4612000f905822ed2dd8d4798b155753c7cf6f"
+  },
+  "kind": "f2-pending-handoff-source-manifest-v1",
+  "tests": {
+    "count": 25,
+    "roster_sha256": "bc64ea1df83a7f9225f397e45b545ce6d3b95a8eb651dfc7af9f7cf9eaa6f235"
+  }
+}

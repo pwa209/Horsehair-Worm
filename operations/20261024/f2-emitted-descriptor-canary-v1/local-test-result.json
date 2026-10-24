@@ -1,0 +1,19 @@
+{
+  "checked_utc": "2026-10-24T07:26:16.038427+00:00",
+  "errors": 0,
+  "failures": 0,
+  "files": {
+    "README.md": "524ea8c23dacc3fed98204419a9e6e3ddb6a290ad27b86f8008aa968c9c26db5",
+    "captured-native-qualification.json": "3f4692eb5752352d86f5d515b5f493c67ef6d63811660ab1db33378f6f88c503",
+    "captured-original-descriptor.json": "9a0706642ac1660fb7f39fe68279ca34bdc10f89812a0c2397608d2a382cf464",
+    "run_emitted_descriptor_canary.py": "6d1b3f21998714c0b27197b455aaa6f74ca97891d2018e75108f862af257c962",
+    "test_emitted_descriptor_canary.py": "98d51e79918387ca5925a38971b6d8e7caedade6c86b1840010e210e3d0cb65b"
+  },
+  "frozen_16_backfill_sources_modified": false,
+  "native_canary_execution_claimed": false,
+  "remote_calls_made": false,
+  "scientific_code_executed": false,
+  "skipped": 0,
+  "successful": true,
+  "tests": 11
+}

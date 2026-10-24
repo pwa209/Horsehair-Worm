@@ -1,0 +1,16 @@
+test_actual_captured_original_and_qualified_new_base_are_exact (__main__.MetadataTests.test_actual_captured_original_and_qualified_new_base_are_exact) ... ok
+test_duplicate_emitted_task_roster_is_rejected (__main__.MetadataTests.test_duplicate_emitted_task_roster_is_rejected) ... ok
+test_in_memory_registration_models_actual_tasks_without_writing_a_ledger (__main__.MetadataTests.test_in_memory_registration_models_actual_tasks_without_writing_a_ledger) ... ok
+test_module_has_no_controller_dispatch_or_full_load_context_call (__main__.MetadataTests.test_module_has_no_controller_dispatch_or_full_load_context_call) ... ok
+test_real_builder_emits_only_compatible_operational_descriptor_changes (__main__.MetadataTests.test_real_builder_emits_only_compatible_operational_descriptor_changes) ... ok
+test_wrong_worker_registry_or_source_mutation_is_rejected (__main__.MetadataTests.test_wrong_worker_registry_or_source_mutation_is_rejected) ... ok
+test_directory_creation_and_removal_are_blocked (__main__.ReadonlyTests.test_directory_creation_and_removal_are_blocked) ... ok
+test_file_write_is_blocked_before_mutation (__main__.ReadonlyTests.test_file_write_is_blocked_before_mutation) ... ok
+test_raw_os_write_is_blocked (__main__.ReadonlyTests.test_raw_os_write_is_blocked) ... ok
+test_real_reads_remain_available_and_guard_restores_after_exit (__main__.ReadonlyTests.test_real_reads_remain_available_and_guard_restores_after_exit) ... ok
+test_subprocess_and_scheduler_invocations_are_blocked (__main__.ReadonlyTests.test_subprocess_and_scheduler_invocations_are_blocked) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.022s
+
+OK

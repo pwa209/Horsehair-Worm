@@ -1,0 +1,297 @@
+{
+  "actual_native_allocation": {
+    "Account": "def-ptewarie_cpu",
+    "AccrueTime": "2026-10-24T06:53:44",
+    "AllocTRES": "cpu=1,mem=64G,node=1,billing=16000",
+    "BatchFlag": "1",
+    "BatchHost": "nl20101",
+    "Command": "/scratch/pwa209/horsehair-worm/plans/study-af-f2-backfill-qualification-v1-20261024/af-f2-backfill-qualification-v1.sbatch",
+    "Contiguous": "0",
+    "CoreSpec": "*",
+    "Deadline": "N/A",
+    "DelayBoot": "00:00:00",
+    "Dependency": "(null)",
+    "EligibleTime": "2026-10-24T06:53:44",
+    "EndTime": "2026-10-24T07:58:22",
+    "ExcNodeList": "(null)",
+    "ExitCode": "0:0",
+    "Features": "[rome|milan|genoa]",
+    "GroupId": "pwa209(3164768)",
+    "JobId": "6942315",
+    "JobName": "hhw-af-f2-backfill-qualification-v1",
+    "JobState": "RUNNING",
+    "LastSchedEval": "2026-10-24T06:58:22",
+    "Licenses": "(null)",
+    "LicensesAlloc": "(null)",
+    "MCS_label": "N/A",
+    "MinCPUsNode": "1",
+    "MinMemoryNode": "64G",
+    "MinTmpDiskNode": "0",
+    "Network": "(null)",
+    "Nice": "0",
+    "NodeList": "nl20101",
+    "NumCPUs": "1",
+    "NumNodes": "1",
+    "NumTasks": "1",
+    "OverSubscribe": "OK",
+    "Partition": "cpularge_bycore_b1",
+    "Priority": "1635081",
+    "QOS": "normal",
+    "Reason": "None",
+    "Reboot": "0",
+    "ReqNodeList": "(null)",
+    "ReqTRES": "cpu=1,mem=64G,node=1,billing=16000",
+    "Requeue": "0",
+    "Restarts": "0",
+    "RunTime": "00:00:13",
+    "Scheduler": "Backfill",
+    "SecsPreSuspend": "0",
+    "StartTime": "2026-10-24T06:58:22",
+    "StdErr": "",
+    "StdIn": "/dev/null",
+    "StdOut": "/scratch/pwa209/horsehair-worm/logs/af-f2-backfill-qualification-v1-6942315_4294967294.log",
+    "SubmitLine": "sbatch",
+    "SubmitTime": "2026-10-24T06:53:35",
+    "SuspendTime": "None",
+    "TimeLimit": "01:00:00",
+    "TimeMin": "N/A",
+    "TresPerTask": "cpu=1",
+    "UserId": "pwa209(3164768)",
+    "WorkDir": "/home/pwa209"
+  },
+  "admission_authority": false,
+  "config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+  "end_time_extends_admission_freshness": false,
+  "freshness_timestamp_rewritten": false,
+  "local_fixture_source_proof": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/native-qualification-6942315/local-fixture-source-proof.json",
+    "sha256": "0971385ceaaf17a19c7f29198761adcd09b6ec5ed91ecf4e826f5c718348311c"
+  },
+  "native_accounting_admission": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/native-qualification-6942315/backfill-qualification-admission.json",
+    "sha256": "ed0a3ccefd305347a750f7db94e3d561bbe9a852022a77ca75dcfa0477d66dfd"
+  },
+  "native_completion_required_separately": true,
+  "native_registration": {
+    "ledger": {
+      "path": "/scratch/pwa209/horsehair-worm/state/study-af-f2-backfill-qualification-v1-20261024-submission.json",
+      "sha256": "313baa47fbbebfdc088c7552dfd94afde3d80a5b5c11261260005b0aa1ed373b"
+    },
+    "native_job_id": "6942315",
+    "plan": {
+      "path": "/scratch/pwa209/horsehair-worm/plans/study-af-f2-backfill-qualification-v1-20261024/plan.json",
+      "sha256": "a28517ad6ee47cd2d9bc1abe4095ed07ae6645b8655074bf225235fe6ba6fc19"
+    },
+    "script": {
+      "path": "/scratch/pwa209/horsehair-worm/plans/study-af-f2-backfill-qualification-v1-20261024/af-f2-backfill-qualification-v1.sbatch",
+      "sha256": "5480ef99ce96b7085a41147f2b7aab9e53eefc2eeeee5fa73f024239a343f0bf"
+    },
+    "task_name": "af-f2-backfill-qualification-v1"
+  },
+  "original_base": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/run-af-agent-controller-registry-v6-20261022.py",
+    "sha256": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866"
+  },
+  "original_policy": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-af-agent-controller-census-policy-v1-20261023.py",
+    "sha256": "120f02d098b6c9afa0ea0df54f590ae381b4227d4892ba0f9ee4acc93e6fec0f"
+  },
+  "provider_policy": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-external-census-handoff-v1-20261023/native-6865706/external-census-policy.json",
+    "sha256": "2b0e6ebaa0f1b511bca4343d4722d43702cf051f956cce59494ddccae656c517"
+  },
+  "qualification_helper": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/qualify-f2-backfill-controller-v1-20261024.py",
+    "sha256": "4a9a0cb55f0df5c0975abbe5330d13312d110c30b9b53c2c7a2f433dfe67411d"
+  },
+  "regression_suites": [
+    {
+      "contract": {
+        "roster_sha256": "897fb78714dd35cbc9c326b14f6a9ae6863457dbbb80ec1c688caef08858a5fd",
+        "tests": 172
+      },
+      "junit": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/native-qualification-6942315/new_base_operational.xml",
+        "sha256": "b50c4b62a2b7dfade3778f4bfe1843772d017beb5800b3afa6f5d0539eeaf52c"
+      },
+      "original_operational_roster_sha256": "cae9f3349cf709af939c6953b626cf54e9d7ef1a4a0a711874960d89e939195b",
+      "scope": "new_base_operational",
+      "test_counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 172
+      },
+      "test_roster_sha256": "897fb78714dd35cbc9c326b14f6a9ae6863457dbbb80ec1c688caef08858a5fd",
+      "test_sources": {
+        "test_af_agent_controller_registry_v6_20261022.py": "da703c4cc8b172a2ea79067a8f5c5e9d0976853823a8ed230e3fb1a721633a3d",
+        "test_f00d_worker_registry_overlay_20261021.py": "2fdcf83a1abc796f82e86d3d3014fd785d195bf7ca4dc6457f2d6dd5db9b3968",
+        "test_registered_snapshot_read_guard_v5_20261022.py": "934196d84276299ce2b567bef6925515e4656978401a0dd4f49c8bd2d1339d72"
+      },
+      "tested_controller_sha256": "cbf01cffbbaa9a983ec1e8e6394b38ac04623483e768398c18f48b5e30e31445"
+    },
+    {
+      "contract": {
+        "roster_sha256": "26f42367f6b53579e6ed923fc075c68466871e9296e4beb1a7103a4166384c21",
+        "tests": 71
+      },
+      "junit": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/native-qualification-6942315/original_provider.xml",
+        "sha256": "7c05fe264c166b5c58bc4ede043761822348abd1e72be388294c3643ceab29b0"
+      },
+      "scope": "original_provider",
+      "test_counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 71
+      },
+      "test_roster_sha256": "26f42367f6b53579e6ed923fc075c68466871e9296e4beb1a7103a4166384c21",
+      "test_sources": {
+        "test_af_agent_controller_census_policy_v1_20261023.py": "c7f458b63b4322905e0487c79f9e2d8a12831d0ddff3cdcb829583466ca41308"
+      },
+      "tested_controller_sha256": "120f02d098b6c9afa0ea0df54f590ae381b4227d4892ba0f9ee4acc93e6fec0f"
+    }
+  ],
+  "resource_policy": {
+    "approval": {
+      "approved_at_utc": "2026-10-21T18:06:12.965619+00:00",
+      "authorizes_cpu_gpu_resource_amendment": true,
+      "evidence_reference": "Current user instruction, 21 October 2026, complete ABCDEF and lift CPU/GPU restrictions",
+      "identity_verification": "instruction_provenance_only",
+      "source": "current_user",
+      "statement": "I want you to complete ABCDEF. you can lift the restrictions on cpu or gpu. for any unsupported stuff, try to create possibilities of completing them, including but not limited to new data acquisition etc."
+    },
+    "authority_basis": "Recorded current-user instruction provenance; not cryptographic identity verification",
+    "base_config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+    "execution_source_sha256": "4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1",
+    "limits": {
+      "cpu_ceiling": 256,
+      "cpu_core_hours_cap": null,
+      "gpu_concurrency": 4,
+      "gpu_hours_cap": null,
+      "max_native_hours": 168,
+      "scratch_budget_bytes": 6000000000000,
+      "scratch_budget_files": 250000,
+      "scratch_reserve_bytes": 2000000000000
+    },
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/execution-resource-policies/af-expanded-20261021-v1/policy.json",
+    "policy_id": "af-expanded-20261021-v1",
+    "primary_scientific_source_sha256": "0e2b1ebce8bffe10799470b3ac20828e621f1415f3a18bca8cd67d502f1e8630",
+    "scientific_gates_changed": false,
+    "sha256": "f4445fb72d6a0fd8e62fb9a3c5ef43a6a6b1e7bf5a369254ff40d617e992b4e5"
+  },
+  "returncode": 0,
+  "runtime_contract": {
+    "cpus": 1,
+    "memory": "64G",
+    "minimum_hours": 8,
+    "requested_hours": 96,
+    "shutdown_reserve_seconds": 14400
+  },
+  "scientific_gates_cleared": false,
+  "scientific_result": false,
+  "slurm_job_id": "6942315",
+  "source_pins": {
+    "/scratch/pwa209/horsehair-worm/maintenance/benchmark-preflight-stage-v4-20261021/native-accounting-read-guard.py": "358145f195ee70d485fa1c7547fb8d593323bdaaaf7e7e905ce195a79dfcea91",
+    "/scratch/pwa209/horsehair-worm/maintenance/sixth-repair-support-20261016/controller-primary-repair-sixth-20261016.py": "49815eeb509909d5eac2ebde2e4f4a3918cf40cefdc5f643f2bcaffead629eb1",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/build-backfill-native-plans-v1-20261024.py": "75edf3ec412d28015f20b156ff521360c45c70e79431f678876653716fc3627d",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/qualification-asset-pins.json": "afddbb5f5e0833dee421dc8a8bdcbb2b7b34edbd05e254eac736bd8f24e7b250",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/qualification-assets/controller-primary-repair-sixth-20261016.py": "49815eeb509909d5eac2ebde2e4f4a3918cf40cefdc5f643f2bcaffead629eb1",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/qualification-assets/native-accounting-read-guard-20261021.py": "358145f195ee70d485fa1c7547fb8d593323bdaaaf7e7e905ce195a79dfcea91",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/qualification-assets/registered-snapshot-read-guard-v5-20261022.py": "7bd2bf562d0a81887ef1afd308ddd9265e5cadb23ba4b2e5946980b659505431",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/qualification-assets/run-af-agent-controller-census-policy-v1-20261023.py": "120f02d098b6c9afa0ea0df54f590ae381b4227d4892ba0f9ee4acc93e6fec0f",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/qualification-assets/run-af-agent-controller-registry-v6-20261022.py": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/qualification-assets/run-f00d-worker-registry-overlay-20261021.py": "dd39905ce44f89f7f8bbdd325d1a0f1d5ec7950dd89d0e3bb267f6fdfe77a09a",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/qualification-assets/test_af_agent_controller_census_policy_v1_20261023.py": "c7f458b63b4322905e0487c79f9e2d8a12831d0ddff3cdcb829583466ca41308",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/qualification-assets/test_af_agent_controller_registry_v6_20261022.py": "da703c4cc8b172a2ea79067a8f5c5e9d0976853823a8ed230e3fb1a721633a3d",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/qualification-assets/test_f00d_worker_registry_overlay_20261021.py": "2fdcf83a1abc796f82e86d3d3014fd785d195bf7ca4dc6457f2d6dd5db9b3968",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/qualification-assets/test_registered_snapshot_read_guard_v5_20261022.py": "934196d84276299ce2b567bef6925515e4656978401a0dd4f49c8bd2d1339d72",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/qualify-f2-backfill-controller-v1-20261024.py": "4a9a0cb55f0df5c0975abbe5330d13312d110c30b9b53c2c7a2f433dfe67411d",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/run-af-agent-controller-backfill-base-v1-20261024.py": "cbf01cffbbaa9a983ec1e8e6394b38ac04623483e768398c18f48b5e30e31445",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/run-af-agent-controller-backfill-policy-v1-20261024.py": "381fbde43ba0798cb207388a402afcc702b569129c81afa6d8226e2cb5258c63",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/test_f2_backfill_controller_v1_20261024.py": "bcb933dde87c61afceeeca77ba15c29bf2c39c9924d134bb668cca865b285291",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-registry-repair-support-v6-20261022/run-af-agent-controller-registry-v6-20261022.py": "e4c3d2fc8f0085900983053d4d4fe2b10cad6ffe9d176cdc8156630fc6921866",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/baseline_budget.xml": "9e12f03ba78713f45ed50ea697e8e63900701cccd9b0e19b5d90d98c32cb8feb",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/baseline_storage_artifact_cache.xml": "1bca1c296e4ad30233a25b2f70db2a964837f7cbafaf5b75f3c8490f3f026b95",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/baseline_storage_artifacts.xml": "628a752dd2b30c4a7a44b90f7094a5884fadbe12b18ee7249c38d394fea20e00",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/baseline_storage_boundary_cache.xml": "0dc9c2f2d72b89543200eeee2b9f4923a07030fb57048eccb38f27fca08d8a24",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/baseline_storage_snapshot_artifacts.xml": "2704f6b17adea0715e928bd240a4bc1ef0cea45b6cf51aa0e0b2ba218536ee5b",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/baseline_storage_snapshot_boundary.xml": "fe8a0b192828f810b97bdcb382044963bfc5131149577d9470837c874bffc994",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/external_census_policy.xml": "ea4bb3b2119ef5989b50d37341d08c9c0c2a9eb7bd546edd49c8d7bdde2250ca",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/kernel.xml": "9cd4b308f233051d97bdd7ee168c62cc47db1b10e48042f0d731e2f585703c57",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json": "8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualifier.xml": "6d9db289fe6843302e8c2197ca7a0d27b72ca13de70415b9e08ca36b150c706c",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/registry.xml": "d9ce8434e521e1d3cb784f9979cdbf5a019e6bdcfcab847877d8533b68e2b359",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/repeatable_wrapper.xml": "fc145e29caad9555775725f77e875daa85336928176327044186e5c03964a779",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/rolling_qualifier.xml": "4fbaa5d97ead14952fdec61702e76b7e9b1dc67a475f747585b6966c77166a6d",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/wrapper.xml": "30e6e05934abe12dd845a62600985d1fd452d7ae2ad01604c146c8cba565c41d",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/qualify-streaming-census-v1-20261023.py": "c1ddf15d87953ad9d5758864553c8b858b77ef1c753cb41c5f4727789e9b1e1a",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/qualify-streaming-census-v2-20261023.py": "32fca6288d496ad298c1bc2e8f990bfd4b118d4ed36802d83ee245c0ee0c2a11",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/registered-snapshot-read-guard-v4-20261022.py": "5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-af-agent-controller-census-policy-v1-20261023.py": "120f02d098b6c9afa0ea0df54f590ae381b4227d4892ba0f9ee4acc93e6fec0f",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v5-20261023.py": "b448607b00512ef865a3369da56c18bf6f98ab589b6a524795e5bbed9c64e569",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/streaming-storage-census-v1-20261023.py": "a1620825ef1401b7497746b7b9128e3d43b985675985505273dca3c36f30364e",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/test_af_agent_controller_census_policy_v1_20261023.py": "c7f458b63b4322905e0487c79f9e2d8a12831d0ddff3cdcb829583466ca41308",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/test_qualify_streaming_census_v1_20261023.py": "340bbe0046e2cd3da5aff33566d93ff229ceeed872f3edbc92ee743d55433fc8",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/test_qualify_streaming_census_v2_20261023.py": "4faaa183493a3c2c0c6578dae254a3aecc8924323c2aa0eca6d9549c2d378520",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/test_registered_snapshot_read_guard_v4_20261022.py": "0e4f029814f1aca969fe282dac99a61373128a6dbbe4a0672ba5706a736545b9",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/test_run_fresh_storage_census_v5_20261023.py": "caf3b9ecc56c2af298411c31790892621e97de506aca2e3ea1d1c9c22745d97a",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/test_run_fresh_storage_census_v6_20261023.py": "0ed479c57e8ae73f4fff5d238065a26bb5b80cfa5b6863fe3da6d465f2d1992e",
+    "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/test_streaming_storage_census_v1_20261023.py": "20665f0fef390ea0ac88ca7b08eb90aa177ec1281d326b3553942d8c55713b4f",
+    "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/src/horsehair/budget.py": "49509a7fc9484d9c0859ce1ef7501e4a0b57b4d29864496dc599fa76d18e269c",
+    "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/src/horsehair/storage_artifacts.py": "c2e1cbe785027f92fb30833a9fdfb58e7cdee9c3907a1d2eefb6deb8efa11968",
+    "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/tests/conftest.py": "35b7de8dc1bf174325264334d337b171f7296c275524a8c44d902f49d7a595e8",
+    "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/tests/test_budget.py": "9ea7346e98203bc098121689f7a4ac4a45c2ef488bd2472d894cc0beee0d65de",
+    "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/tests/test_storage_artifact_cache.py": "19921beee77beea62c649e34f0a129bdd07a0255c9d1c65f7cc779e56c8d9065",
+    "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/tests/test_storage_artifacts.py": "a6ec2fb94323f4388ec7862a7c334c4bb2f0d56dfbe5bcc5f8e993c816f2c12b",
+    "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/tests/test_storage_boundary_cache.py": "49400961147f65f26f2e7f6596e0f282d50498eb4590356d39dfc44be5fffea6",
+    "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/tests/test_storage_snapshot_artifacts.py": "591d700b7968db248efbb7af46ed28dbd9ef6b3ff3fff1659c55c5e0decdbd28",
+    "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e/tests/test_storage_snapshot_boundary.py": "831e82054a12aa28cbdb50f24f135fa16d590e806546e389b76085848f5653f2"
+  },
+  "source_sha256": "4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1",
+  "source_verified_unchanged": true,
+  "sources": {
+    "base": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/run-af-agent-controller-backfill-base-v1-20261024.py",
+      "sha256": "cbf01cffbbaa9a983ec1e8e6394b38ac04623483e768398c18f48b5e30e31445"
+    },
+    "outer": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/run-af-agent-controller-backfill-policy-v1-20261024.py",
+      "sha256": "381fbde43ba0798cb207388a402afcc702b569129c81afa6d8226e2cb5258c63"
+    }
+  },
+  "status": "complete_f2_backfill_controller_qualification",
+  "suite": {
+    "contract": {
+      "roster_sha256": "bd864ed204d6dd49821be506ef20ac82f73e009e22412baa360bd86a4580bb85",
+      "tests": 29
+    },
+    "junit": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/native-qualification-6942315/backfill.xml",
+      "sha256": "63a671b7e604cde75173abe2e8feda1ef70a52540121d0e5933f97918e476317"
+    },
+    "scope": "backfill",
+    "source": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v1-20261024/test_f2_backfill_controller_v1_20261024.py",
+      "sha256": "bcb933dde87c61afceeeca77ba15c29bf2c39c9924d134bb668cca865b285291"
+    },
+    "test_counts": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 29
+    },
+    "test_roster_sha256": "bd864ed204d6dd49821be506ef20ac82f73e009e22412baa360bd86a4580bb85",
+    "test_sources": {},
+    "tested_controller_sha256": "cbf01cffbbaa9a983ec1e8e6394b38ac04623483e768398c18f48b5e30e31445"
+  },
+  "suite_contract": {
+    "roster_sha256": "bd864ed204d6dd49821be506ef20ac82f73e009e22412baa360bd86a4580bb85",
+    "source": "test_f2_backfill_controller_v1_20261024.py",
+    "source_sha256": "bcb933dde87c61afceeeca77ba15c29bf2c39c9924d134bb668cca865b285291",
+    "tests": 29
+  }
+}
