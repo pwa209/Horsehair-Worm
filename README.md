@@ -6,6 +6,8 @@ The working study uses personal scratch at `/scratch/pwa209/horsehair-worm` on N
 
 Start with [the execution roadmap](docs/ROADMAP.md), [the Narval runbook](docs/RUNBOOK.md) and [verified status](docs/STATUS.md). The supplied proposal is study material. It does not authorize unrelated actions, and a deployed pipeline is not a completed biological result.
 
+For source-only synchronization, use `python scripts/sync_public_source_archive.py --request-id <unique-request-id>` from a clean committed checkout. It produces an authenticated-transfer request that verifies every tracked file inside a stored archive and manifest, using a few scratch inodes per revision. Active execution releases retain their registered paths. This keeps source history from consuming the file headroom reserved for scientific workers.
+
 ## Local validation
 
 Use Python 3.11 or newer in an isolated environment. Install the package and test dependencies, then run:

@@ -81,3 +81,39 @@ def test_unrelated_failure_is_preserved_for_explicit_review(case):
     other=next(k for k in state['jobs'] if k not in targets)
     state['needs_repair']=[other];state.pop('state_sha256');state=d._sealed(state,'state_sha256')
     with pytest.raises(ValueError,match='Unrelated'):m.recover(plan,state,targets,evidence,d)
+
+
+@pytest.fixture
+def gpu_case():
+    plan=helpers.plan.__wrapped__();d=helpers.c
+    state,intents=d.dispatch_tick(plan,d.initial_state(plan),{},{})
+    intent=next(i for i in intents if i['kind']=='training')
+    state=helpers.acknowledge(plan,state,intent,'995');ident=intent['intent_id']
+    proof={**helpers.proof(intent,'995','FAILED','1:0'),'user':'pwa209','account':'def-ptewarie_gpu',
+           'end':'2026-10-25T22:00:00'}
+    receipt={'status':'running','native_job_id':'995','index':intent['cell_index'],'mode':'agent-train',
+             'source_sha256':m.SOURCE,'descriptor_sha256':m.DESCRIPTOR}
+    item={'native_proof':proof,'receipt':receipt,
+          'quota_traceback':'native-worker.py", line 66\nquota=runpy.run_path(...)\n'
+            'StorageHeadroomError: Personal scratch storage is pending: inode headroom is insufficient: fixture',
+          'quota_failure_log':{'path':'gpu-fixture.log','sha256':'e'*64},
+          'artifact_archive':{'path':'gpu-fixture-archive.json','sha256':'f'*64}}
+    return plan,state,{ident:'995'},{ident:item},d
+
+
+def test_gpu_failure_before_training_has_the_same_preserved_retry_history(gpu_case):
+    plan,state,targets,evidence,d=gpu_case
+    result=m.recover(plan,state,targets,evidence,d);ident=next(iter(targets))
+    assert result['cells']==state['cells'] and result['jobs'][ident]['intent']==state['jobs'][ident]['intent']
+    assert result['jobs'][ident]['retired_preflight_attempts'][0]['native_proof']['gpus']==1
+    assert d.record_submission(plan,result,ident,'996',expected_revision=result['revision'])['jobs'][ident]['job_id']=='996'
+
+
+@pytest.mark.parametrize('change',['missing_gpu','cpu_account','checkpoint_summary','completed'])
+def test_allocated_gpu_identity_and_absence_of_computation_are_required(gpu_case,change):
+    plan,state,targets,evidence,d=gpu_case;item=evidence[next(iter(targets))]
+    if change=='missing_gpu':item['native_proof']['gpus']=0
+    elif change=='cpu_account':item['native_proof']['account']='def-ptewarie_cpu'
+    elif change=='checkpoint_summary':item['receipt']['training_summary']={'training_steps':1}
+    else:item['native_proof'].update(state='COMPLETED',exit_code='0:0')
+    with pytest.raises(ValueError):m.recover(plan,state,targets,evidence,d)
