@@ -30,3 +30,7 @@ startup have their own source-bound receipts in personal scratch. The source
 manifest binds the four executable/test files and exact test roster. Local
 tests do not establish native execution, successful recovery, completed
 scientific inference, or publication readiness.
+
+Native qualification 7177258 completed 0:0 in 86 seconds with all 72 cases passing. Controllers 7178192, 7178209, 7178218 and 7178228 were registered and released as one finite sequential chain. The first has positive native startup evidence and published the exact recovery receipt: revision443 to445, 83 completed trainings, 76 policies, and no repair flags. The three successful peer jobs were not rerun. This observation establishes recovery and startup, while the next audited dispatch and full scientific outcomes remain separate milestones.
+
+The preserved `operator-actions/short-reconciliation.py` is the one-off short allocation used to invoke the same qualified recovery routine if a short slot became available first. Its actual plan separately pins its source hash. Native job7180418 completed 0:0 in81 seconds and validated the already published recovery from7178192, without repeating the state transition. It adds no recurring controller.
