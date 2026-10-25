@@ -55,3 +55,17 @@ same unresolved acknowledgement. Revision 473 preserved 87 recognized trainings
 and 80 policies; completed trainings 7189552/7189779 and evaluations
 7190034/7190227 awaited reconciliation. The current revision addresses that
 specific failure without rerunning completed workers or replaying the handoff.
+
+Current native qualification 7272420 completed 0:0 in 27 seconds, with all 106
+cases passing. Four replacement segments 7272664/7272665/7272667/7272668 were
+registered, independently verified while held, and released as one sequential
+success-dependent chain. The complete plans, ledgers and real native responses
+are preserved in personal scratch. Their first actual recovery tick remains a
+separate milestone from registration.
+
+Controller 7272664 subsequently started with verified scalar one-CPU allocation
+and the actual backfill window. Its bounded startup wait requires the real
+qualification accounting record; Slurm's completed scheduler result is already
+preserved, but the new job IDs were not yet present in accounting at 21:35 UTC.
+The three successors remain pending success dependencies. No campaign recovery
+or downstream restart is claimed before its actual recovery receipt.
