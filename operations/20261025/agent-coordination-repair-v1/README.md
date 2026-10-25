@@ -1,40 +1,57 @@
-This repair addresses registration-lock starvation and controller deadline
-checks in the existing synthetic agent campaign. It preserves the original
-dispatcher, workers, protocol, checkpoints, condition checks, provider clocks,
-resource policy and scientific gates.
+This is the existing coordination component for the unchanged synthetic agent
+campaign. Its current revision repairs lost Slurm submission acknowledgements
+as well as the earlier registration-lock and deadline problems. The executable
+revision is frozen in `agent-coordination-repair-v2-20261025` on personal scratch;
+no additional controller framework is introduced.
 
-The controller takes a short registration snapshot, releases the global mutex
-for the complete condition-byte audit, then reacquires it and requires an
-unchanged campaign before genuine fresh admission and state commit. A separate
-permanent controller mutex prevents concurrent writers. Every new worker keeps
-the original admission code with a finite two-hour lock wait, bounded by its
-actual allocation cleanup margin. Neither mutex is removed or replaced.
+Every submission first persists its exact command and intention. A client timeout
+triggers a read of the actual owned held job, checked against the original
+script, job name, account, resources and scalar allocation. A known native ID
+cannot be replaced. An unresolved attempt waits for reconciliation and never
+calls `sbatch` a second time. Release acknowledgements receive the same treatment:
+matching actual execution can establish that an uncertain release succeeded.
+Normal process output is preserved; native recovery does not manufacture it.
 
-The deadline calculation checks native start/end/limit consistency and uses the
-earlier of the live native end and environment end. It retains the original
-four-hour shutdown reserve and records both clocks. The four replacement
-segments each request eight hours on one CPU with 64 GiB; scientific workers
-retain their original allocations.
+Recovery preserves the compressed campaign state and all existing journals,
+plans and ledgers, validates the four completed workers through the original
+receipt and checkpoint validators, then resumes the original seven saved
+intentions. Assembly job 7191569 is adopted from its original ledger and script;
+its native job ID and original files remain unchanged. The other six intentions
+may be submitted only when their original artifacts establish they were never
+attempted. Each saved acknowledgement precedes release outside the registration
+mutex. The normal dispatcher then resumes subsequent evaluation and assembly.
 
-One exact recovery reconciles training jobs 7110400, 7110771 and 7111066 through
-the original receipt, checkpoint and dispatcher validators. It preserves the
-revision443 compressed state and original failed training 7110041, requires no
-training/admission output from that attempt, and removes only its active
-reference. The same frozen intention may then use the new r3 namespace. Other
-campaign records and all existing submission journals remain intact. A partial
-or ambiguous activation requires explicit reconciliation.
+There are 106 passing local cases, including timeout/restart recovery without a
+second submission, strict identity mismatches, missing native acknowledgements,
+receipt reconciliation, lost release replies, conservative native deadlines,
+and the full existing registry suite. The five executable/test files and exact
+test roster are bound by `source-manifest.json`. Native qualification and actual
+recovery require their own receipts; a local passing test is not native proof.
 
-All 72 local cases pass, including the complete registry-reader regression
-suite with the revised finite wait. Native qualification and actual controller
-startup have their own source-bound receipts in personal scratch. The source
-manifest binds the four executable/test files and exact test roster. Local
-tests do not establish native execution, successful recovery, completed
-scientific inference, or publication readiness.
+Replacement segments request at most 96 hours on one CPU with 64 GiB and permit
+Slurm to shorten the allocation to fit a backfill window of at least eight
+hours. The earlier native/environment deadline remains authoritative, with a
+four-hour shutdown reserve. Sequential `afterok` dependencies prevent a fatal
+controller error from consuming every successor. Existing workers, numerical
+functions, frozen protocol, provider freshness rules and scientific gates are
+preserved.
 
-Native qualification 7177258 completed 0:0 in 86 seconds with all 72 cases passing. Controllers 7178192, 7178209, 7178218 and 7178228 were registered and released as one finite sequential chain. The first has positive native startup evidence and published the exact recovery receipt: revision443 to445, 83 completed trainings, 76 policies, and no repair flags. The three successful peer jobs were not rerun. This observation establishes recovery and startup, while the next audited dispatch and full scientific outcomes remain separate milestones.
+The earlier revision moved the complete condition-byte audit outside the global
+registration mutex and used a compare-and-swap check before fresh admission and
+commit. Its permanent controller mutex and finite worker admission waits remain
+in place. Neither mutex is deleted or replaced.
 
-The preserved `operator-actions/short-reconciliation.py` is the one-off short allocation used to invoke the same qualified recovery routine if a short slot became available first. Its actual plan separately pins its source hash. Native job 7180418 completed 0:0 in 81 seconds and validated the already published recovery from 7178192, without repeating the state transition. It adds no recurring controller.
+Historical recovery: qualification 7177258 completed 0:0 with all 72 then-current
+cases passing. Controller 7178192 reconciled trainings 7110400, 7110771 and
+7111066, preserved the original failed pre-start training 7110041 and its state,
+and allowed its unchanged intention to use the r3 namespace. The preserved
+`operator-actions/short-reconciliation.py` validated that recovery in native job
+7180418 without repeating the state transition.
 
-At 08:12 UTC on 25 October the first controller had released eleven acknowledged workers. Retry 7183860 and trainings 7184131/7184461/7184786 were RUNNING; evaluations 7184908/7185228/7185654 were RUNNING. All eleven workers had positive native-start admission using registry guard 63735406494fae9c1417fe3a32396c03835ab9dc03332da3aab1ca1852558f96. Assemblies 7182930/7183132/7183498/7183790 had positive COMPLETED/0:0 records and complete worker receipts. Canonical revision 461 remained active with 83 recognized trainings, 76 policies and no repair flags, pending the next receipt reconciliation.
-
-The preserved `operator-actions/finite-continuations.sh` registered two more four-slot groups after verifying the first production batch was fully released. Groups 7187374/7187376/7187384/7187393 and 7187402/7187410/7187424/7187433 depend sequentially on the existing tail and each other. All twelve total slots execute this same qualified component with eight-hour reservations and existing shutdown margins. Their maximum combined registration is 96 one-CPU hours, supplying up to 48 hours of controller work windows. The actual plans, immutable scripts, ledgers, held-state observations and release acknowledgements are retained in personal scratch.
+The original twelve eight-hour controller slots subsequently failed after a
+45-second `sbatch` timeout. Slurm had accepted held assembly 7191569, while the
+campaign still lacked its acknowledgement. The successors then encountered the
+same unresolved acknowledgement. Revision 473 preserved 87 recognized trainings
+and 80 policies; completed trainings 7189552/7189779 and evaluations
+7190034/7190227 awaited reconciliation. The current revision addresses that
+specific failure without rerunning completed workers or replaying the handoff.

@@ -1,11 +1,12 @@
 {
   "files": {
-    "coordination.py": "ab39afe6299dfa79d7a388730a0f1a555ab8082361578db26ef4d9eb43960468",
+    "coordination.py": "9cf0df31a126dce2ae30b2199f058e6f4a803905ba3a2e6c5e49b2b8eed824ce",
     "registry-wait.py": "63735406494fae9c1417fe3a32396c03835ab9dc03332da3aab1ca1852558f96",
+    "test_acknowledgements.py": "92d300fedf81d1105dc71a359b9ede0901b4c65002f53e6d2fc0606b7d4da94c",
     "test_coordination.py": "799df5b0e86c04b4418d44107d2894672975ff70dc124fd5d86b7acd4adb446a",
     "test_registry.py": "e0208ae1f5c52c12c931942096e6a658c2bed210224775a21370513f94cbbad1"
   },
   "kind": "agent-coordination-repair-v1",
-  "roster_sha256": "5680d92ee25d838c57451f96a31ceb0d0de5875faf1330ac0003f48284f8903d",
-  "tests": 72
+  "roster_sha256": "f81210189238c09b97c22cf5d4b77c5b90116788edbe6416b56ceb0903fadff5",
+  "tests": 106
 }

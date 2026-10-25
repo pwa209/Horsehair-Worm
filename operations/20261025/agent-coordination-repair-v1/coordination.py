@@ -22,7 +22,8 @@ import sys
 import time
 
 ROOT=Path('/scratch/pwa209/horsehair-worm')
-SUPPORT=ROOT/'maintenance/agent-coordination-repair-v1-20261025'
+SUPPORT=ROOT/'maintenance/agent-coordination-repair-v2-20261025'
+PRIOR_SUPPORT=ROOT/'maintenance/agent-coordination-repair-v1-20261025'
 FRAMEWORK=ROOT/'releases/20261021-6ed201653dfa-4f3903d7c26e'
 CAMPAIGN=ROOT/'maintenance/study-af-campaign-v1-20261021/agent-final-f64-v1'
 CONSUMER=ROOT/'maintenance/study-census-resilience-consumers-v2-20261024/run-census-resilience-consumer-v2-20261024.py'
@@ -31,7 +32,8 @@ CONSUMER_BINDING=CONSUMER.parent/'af-consumer-binding.json'
 CONSUMER_BINDING_SHA='7c59a1e4a78ff3cbe5d44666a4830a16027585ea9525bf87c5f1040f83755288'
 SOURCE='4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1'
 CONFIG='446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35'
-OLD_CONTROLLERS=('7028292','7044270','7044530','7044573')
+OLD_CONTROLLERS=('7178192','7178209','7178218','7178228','7187374','7187376',
+                 '7187384','7187393','7187402','7187410','7187424','7187433')
 FAILED='7110041'
 TARGET='training-0080'
 PEERS={'training-0081':'7110400','training-0082':'7110771','training-0083':'7111066'}
@@ -39,6 +41,203 @@ ORIGINAL_STATE='68935200ddcb81342cffa0f40072d6adc3146a88ae142ddf04018890937bf115
 ORIGINAL_FILE='ac52c45fdc2da3302525532988e7cc3b864013539e09688594854bfbaf95a40e'
 FLAGS={'scientific_result':False,'admission_authority':False,'scientific_gates_changed':False,
        'freshness_timestamp_rewritten':False,'numeric_functions_replaced':False}
+
+
+class PendingAcknowledgement(TimeoutError):
+    """No resubmission is permitted while the original attempt is unresolved."""
+
+
+def held_identity(fields,task,intent,job):
+    """A job name alone never authorizes adoption of an accepted submission."""
+    resources=intent['resources']
+    require(fields.get('JobId')==job and fields.get('UserId')=='pwa209(3164768)'
+        and fields.get('JobName')=='hhw-'+task['name'] and fields.get('Command')==task['script']
+        and fields.get('Account')==('def-ptewarie_gpu' if resources['gpus'] else 'def-ptewarie_cpu')
+        and fields.get('JobState')=='PENDING' and fields.get('Reason')=='JobHeldUser'
+        and fields.get('RunTime')=='00:00:00' and fields.get('NumCPUs')==str(resources['cpus'])
+        and fields.get('MinMemoryNode') in {task['resources']['memory'],str(int(task['resources']['memory'][:-1])*1024)+'M'}
+        and duration(fields.get('TimeLimit',''))==resources['hours']*3600
+        and 'ArrayJobId' not in fields and 'ArrayTaskId' not in fields,
+        'Exact owned scalar held job/script/account/resources required')
+    tres={}
+    for pair in fields.get('ReqTRES','').split(','):
+        if '=' in pair:
+            k,v=pair.split('=',1);tres[k]=v
+    gpu=int(tres.get('gres/gpu',sum(int(v) for k,v in tres.items() if k.startswith('gres/gpu:'))))
+    require(gpu==resources['gpus'],'Held job GPU request differs')
+    return fields
+
+
+def submit_once(row,command,invoke,discover,persist):
+    """Durable before-call intent plus real native adoption; never a fake reply."""
+    if row is None:
+        row={'state':'submitting','command':command,'attempt_started_unix':time.time()}
+        persist(row)
+        try:
+            result=invoke(command)
+            row['client_response']={'returncode':result.returncode,'stdout':result.stdout,'stderr':result.stderr}
+            candidate=result.stdout.strip().split(';')[0]
+            if result.returncode==0 and re.fullmatch('[1-9][0-9]*',candidate):
+                row.update(state='submitted',job_id=candidate,acknowledgement_basis='actual_sbatch_stdout')
+                persist(row)
+        except subprocess.TimeoutExpired as error:
+            def string(value):return value.decode(errors='replace') if isinstance(value,bytes) else value
+            row['client_timeout']={'seconds':error.timeout,'stdout':string(error.stdout),'stderr':string(error.stderr)}
+        persist(row)
+    else:
+        require(row.get('command')==command and row.get('state') in {'submitting','submitted'},
+                'Existing submission intent changed; no automatic replay')
+    # Even a normal acknowledgement must be joined to the actual held job.
+    # Discovery returns observed metadata, not fabricated process stdout.
+    job,fields=discover(row.get('job_id'))
+    require(row.get('job_id') in {None,job},'Native reconciliation cannot replace an acknowledged job ID')
+    row.update(state='submitted',job_id=job)
+    if 'acknowledgement_basis' not in row:row['acknowledgement_basis']='exact_owned_held_native_reconciliation'
+    row['native_held_observation']=fields;persist(row)
+    return row
+
+
+def observe_job(base,c,job):
+    try:return base.fields(c['scheduler'](job,base.read_evidence(c,'submission-native')))
+    except (subprocess.SubprocessError,OSError) as error:
+        raise PendingAcknowledgement('Native job observation pending: '+str(error)) from error
+
+
+def discover_held(base,c,task,intent,hint=None):
+    if hint is None and intent['intent_id']=='assembly-0081':hint='7191569'
+    if hint is not None:
+        return hint,held_identity(observe_job(base,c,hint),task,intent,hint)
+    command=['squeue','--local','--user=pwa209','--name=hhw-'+task['name'],'--noheader','--format=%i']
+    try:
+        result=subprocess.run(command,text=True,capture_output=True,timeout=60)
+        result.check_returncode()
+    except (subprocess.SubprocessError,OSError) as error:
+        raise PendingAcknowledgement('Accepted submission lookup pending: '+str(error)) from error
+    if result.stderr:raise PendingAcknowledgement('Submission lookup returned stderr; acceptance remains unresolved')
+    ids=result.stdout.split()
+    if len(ids)!=1 or not re.fullmatch('[1-9][0-9]*',ids[0]):
+        raise PendingAcknowledgement('Expected one uniquely identified held submission; found '+str(len(ids)))
+    job=ids[0]
+    return job,held_identity(observe_job(base,c,job),task,intent,job)
+
+
+def worker_registration(base,c,plan,state,intent):
+    """Create only absent work; existing artifacts must join their original intent."""
+    ident=intent['intent_id'];name=base.native_namespace(c,ident)
+    pp=ROOT/'plans'/name/'plan.json';lp=ROOT/'state'/(name+'-submission.json');jp=base.submission_journal(c,ident)
+    if not pp.exists() and not lp.exists() and not jp.exists():
+        c['state']=state;pp,lp,task=base.native_plan(c,intent)
+        record={'intent':intent,'plan_path':str(pp),'plan_sha256':digest(pp),'ledger_path':str(lp),
+                'status':'before_sbatch',**FLAGS}
+        base.atomic_json(jp,record)
+    else:
+        require(pp.exists() and jp.exists(),'Partial plan without a durable journal requires explicit reconciliation')
+        record=base.read_json(jp);task=base.read_json(pp)['tasks'][0]
+    native_plan=base.read_json(pp)
+    require(len(native_plan['tasks'])==1 and record['intent']==intent
+        and record['plan_path']==str(pp) and record['plan_sha256']==digest(pp) and record['ledger_path']==str(lp)
+        and native_plan['root']==str(ROOT) and native_plan['config_sha256']==CONFIG
+        and native_plan['release_identity']['sha256']==SOURCE and native_plan['intent_sha256']==intent['intent_sha256']
+        and native_plan['campaign_plan_sha256']==plan['plan_sha256'] and task['name']==name
+        and task['script_sha256']==canonical(read(task['script']).decode())
+        and task['resources']['cpus']==intent['resources']['cpus'] and task['resources']['hours']==intent['resources']['hours']
+        and task['resources']['gpu']==bool(intent['resources']['gpus']) and '#SBATCH --hold' in read(task['script']).decode(),
+        'Original complete worker plan/script/intent/source binding required')
+    return pp,lp,jp,record,task
+
+
+def submit_intentions(base,c,plan,state,intents,*,runner=subprocess.run):
+    """Resume saved batch members and recover accepted jobs without another sbatch."""
+    for intent in intents:
+        ident=intent['intent_id'];job=state['jobs'][ident]
+        if job['job_id'] is None:base.admission(c,'ack-before-'+ident,**intent['resources'])
+        pp,lp,jp,record,task=worker_registration(base,c,plan,state,intent)
+        if job['job_id'] is not None:
+            ledger=base.read_json(lp);row=ledger['tasks'][task['name']]
+            require(record.get('job_id') in {None,job['job_id']} and row.get('job_id')==job['job_id']
+                    and row.get('state')=='submitted' and ledger['plan_sha256']==canonical(base.read_json(pp)),
+                    'Existing acknowledgement changed')
+            if record['status']=='released':continue
+            pp=Path(record['plan_path']);task=base.read_json(pp)['tasks'][0]
+            fields=observe_job(base,c,job['job_id'])
+            if record['status']=='releasing' and released_identity(fields,task,job['job_id']):
+                record.update(status='released',job_id=job['job_id'],release_basis='actual_unheld_native_state')
+                base.atomic_json(jp,record);continue
+            held_identity(fields,task,intent,job['job_id'])
+            record.update(status='registered_held_verified',job_id=job['job_id'],held_allocation=fields);base.atomic_json(jp,record)
+        else:
+            with base.exclusive_file_lock(lp.with_suffix('.mutex'),timeout=60):
+                ledger=base.read_json(lp) if lp.exists() else {'schema_version':2,'plan_sha256':canonical(base.read_json(pp)),
+                    'environment_job':None,'excluded_nodes':[],'source_sha256':SOURCE,'config_sha256':CONFIG,'tasks':{}}
+                require(ledger['plan_sha256']==canonical(base.read_json(pp)) and ledger['source_sha256']==SOURCE
+                        and ledger['config_sha256']==CONFIG,'Existing worker ledger changed')
+                row=ledger['tasks'].get(task['name']);command=['sbatch','--parsable',task['script']]
+                def persist(value):
+                    value.update(script_sha256=task['script_sha256'],dependency_kind='afterok',issued_native_dependencies=[],
+                        completed_native_dependencies=[],dependency_resolution_sha256=canonical({'kind':'afterok','issued':[],'completed':[]}))
+                    ledger['tasks'][task['name']]=value
+                    base.atomic_json(lp,ledger)
+                def invoke(command):
+                    # Mutation is invoked once. A timeout is followed only by
+                    # discovery of the already accepted, script-bound held job.
+                    require(time.time()+300<c['deadline'],'Submission finalization margin exhausted')
+                    return runner(command,text=True,capture_output=True,timeout=180)
+                row=submit_once(row,command,invoke,lambda hint:discover_held(base,c,task,intent,hint),persist)
+            jid=row['job_id']
+            state=base.dispatch.record_submission(plan,state,ident,jid,expected_revision=state['revision']);base.save_state(c,state)
+            record.update(status='registered_held_verified',job_id=jid,held_allocation=row['native_held_observation'],
+                          acknowledgement_basis=row['acknowledgement_basis'])
+            base.atomic_json(jp,record)
+            base.admission(c,'ack-registered-'+ident,cpus=0,gpus=0,hours=1)
+        c.setdefault('release_queue',[]).append({'job_id':state['jobs'][ident]['job_id'],'task':task,'intent':intent,'journal':str(jp)})
+    return state
+
+
+def released_identity(fields,task,job):
+    owned=(fields.get('JobId')==job and fields.get('UserId')=='pwa209(3164768)'
+        and fields.get('Command')==task['script'] and fields.get('JobName')=='hhw-'+task['name'])
+    state=fields.get('JobState')
+    return owned and (state in {'RUNNING','COMPLETING','COMPLETED'} or
+        state=='PENDING' and fields.get('Reason') not in {'JobHeldUser','JobHeldAdmin'}
+        and fields.get('Priority','').isdigit() and int(fields['Priority'])>0)
+
+
+def release_ready(base,c,*,runner=subprocess.run):
+    base.source_guard(c)
+    for item in list(c.get('release_queue',[])):
+        jp=Path(item['journal']);record=base.read_json(jp);job=item['job_id']
+        require(record.get('job_id')==job,'Release acknowledgement belongs to another job')
+        if record['status']=='released':continue
+        fields=observe_job(base,c,job)
+        if fields.get('JobState')!='PENDING' or fields.get('Reason')!='JobHeldUser':
+            require(record['status']=='releasing' and released_identity(fields,item['task'],job),
+                'Lost release acknowledgement requires positive matching native execution')
+        else:
+            held_identity(fields,item['task'],item['intent'],job)
+            record['status']='releasing';base.atomic_json(jp,record)
+            try:
+                response=runner(['scontrol','release',job],text=True,capture_output=True,timeout=60)
+                response.check_returncode();require(not response.stderr,'Native release stderr refused')
+            except (subprocess.SubprocessError,OSError) as error:
+                raise PendingAcknowledgement('Held-job release acknowledgement pending: '+str(error)) from error
+        record.update(status='released',released_unix=time.time());base.atomic_json(jp,record)
+    c['release_queue']=[]
+
+
+def reconcile_only(plan,state,native,packets,dispatch):
+    """Use original receipt validators without generating any additional work."""
+    result=dispatch._state(plan,state)
+    for ident,packet in packets.items():
+        job=result['jobs'][ident]
+        require(job['status']=='submitted' and native[job['job_id']]['state']=='COMPLETED'
+                and native[job['job_id']]['exit_code']=='0:0','Only positively completed existing work may reconcile')
+        dispatch._native(job,native[job['job_id']]);cell=result['cells'][job['intent']['cell_index']]
+        if job['intent']['kind']=='training':dispatch._training(plan,job,packet)
+        elif job['intent']['kind']=='evaluation':dispatch._evaluation(plan,result,cell,job,packet)
+        else:dispatch._assembly(plan,cell,job,packet);cell['complete']=True
+        job.update(status='complete',receipt=copy.deepcopy(packet))
+    result=dispatch._finish(result);dispatch._state(plan,result)
+    return result
 
 
 def require(value,message):
@@ -141,10 +340,85 @@ def audit_then_commit(snapshot,audit,guard,load_current,commit):
         return commit(packets)
 
 
+def pending_intents(base,c,state):
+    result=[]
+    for ident,job in state['jobs'].items():
+        journal=base.submission_journal(c,ident)
+        if job['job_id'] is None or not journal.exists() or base.read_json(journal).get('status')!='released':
+            result.append(job['intent'])
+    return result
+
+
+def preserve_pending(base,c,state):
+    area=SUPPORT/('pending-state-'+str(state['revision']))
+    original=CAMPAIGN/'state.json.gz'
+    if area.exists():
+        require(digest(area/'state.json.gz')==digest(original),'Preserved pending state changed');return area
+    area.mkdir();sources={'state.json.gz':original,'state-binding.json':CAMPAIGN/'state-binding.json',
+                        'campaign-plan.json':CAMPAIGN/'campaign-plan.json'}
+    absence=[]
+    for intent in pending_intents(base,c,state):
+        ident=intent['intent_id'];phase=base.native_namespace(c,ident)
+        for kind,p in [('journal',base.submission_journal(c,ident)),('plan',ROOT/'plans'/phase/'plan.json'),
+                       ('ledger',ROOT/'state'/(phase+'-submission.json'))]:
+            if p.exists():sources[ident+'-'+kind+'.json']=p
+            else:absence.append(str(p))
+    evidence={}
+    for name,path in sources.items():
+        raw=read(path)
+        with (area/name).open('xb') as out:out.write(raw);out.flush();os.fsync(out.fileno())
+        evidence[name]={'original_path':str(path),**locator(area/name)}
+    exclusive(area/'before.json',{'native_actor':c['job_id'],'revision':state['revision'],'state_sha256':state['state_sha256'],
+        'preserved':evidence,'absent_before_attempt':absence,**FLAGS})
+    return area
+
+
+def resume_pending_batch(base,c,plan,state):
+    """One original batch, including its accepted held member, resumes in place."""
+    with base.registration_guard(c,'controller-tick'):
+        base.source_guard(c);require(base.initialize(c)[1]==state,'State changed before pending-batch recovery')
+        archive=preserve_pending(base,c,state)
+        base.admission(c,'resume-snapshot-'+str(state['revision']))
+    ids=[j['job_id'] for j in state['jobs'].values() if j['job_id'] is not None and j['status']=='submitted']
+    records=c['native_reader'](ids,{},owner='pwa209',account=None) if ids else {}
+    native={job:base.normalized_native(job,row) for job,row in records.items()}
+    targets={k:j for k,j in state['jobs'].items() if j['status']=='submitted' and base.positive_native(native,j['job_id'])}
+    # Keep all indices for the original collector's indexing, but audit only
+    # the completed workers being reconciled. No new intentions are generated.
+    view=copy.deepcopy(state);view['jobs']=targets
+    needed={j['intent']['cell_index'] for j in targets.values() if j['intent']['kind']!='training'}
+    for cell in view['cells']:
+        if cell['index'] not in needed:cell['evaluation_plan']=None
+    packets=base.collect_packets(c,plan,view,native) if targets else {}
+    base.prepare_census(c)
+    with base.registration_guard(c,'controller-tick'):
+        base.source_guard(c);require(base.initialize(c)[1]==state,'Pending state changed during receipt validation')
+        base.admission(c,'resume-commit-'+str(state['revision']))
+        if packets:
+            state=reconcile_only(plan,state,native,packets,base.dispatch);base.save_state(c,state)
+        intents=pending_intents(base,c,state);c['release_queue']=[]
+        state=base.submit_intentions(c,plan,state,intents)
+    base.release_ready(c)
+    summary={'status':state['status'],'revision':state['revision'],'native_controller_job':c['job_id'],
+        'segment':c['segment'],'training_complete':sum(j['status']=='complete' and j['intent']['kind']=='training' for j in state['jobs'].values()),
+        'policies_complete':sum(cell['complete'] for cell in state['cells']),'resumed_intentions':len(intents),
+        'reconciled_existing_jobs':list(packets),'jobs':len(state['jobs']),'state_sha256':state['state_sha256'],
+        'storage_pending':None,'audit_outside_registration_mutex':True,'coordination_source':locator(SUPPORT/'coordination.py'),
+        'H4_inference_status':state['H4_inference_status'],**FLAGS}
+    base.atomic_json(c['case']/'status.json',summary)
+    if not (SUPPORT/'acknowledgement-recovery.json').exists():
+        exclusive(SUPPORT/'acknowledgement-recovery.json',{'status':'original_pending_batch_recovered','actor':c['job_id'],
+            'archive':str(archive),'held_job_preserved':'7191569','summary':summary,**FLAGS})
+    return summary
+
+
 def coordinated_tick(base,c):
     """Original validation/dispatch/submission with the slow audit outside the lock."""
-    require(not c.get('release_queue'),'Ambiguous prior release queue requires reconciliation')
     base.prepare_census(c)
+    with base.registration_guard(c,'controller-tick'):
+        initial_plan,initial_state=base.initialize(c)
+        pending=pending_intents(base,c,initial_state)
+    if pending:return resume_pending_batch(base,c,initial_plan,initial_state)
     with base.registration_guard(c,'controller-tick'):
         base.source_guard(c);plan,state=base.initialize(c)
         for ident,job in state['jobs'].items():
@@ -195,7 +469,7 @@ def coordinated_tick(base,c):
 def verify_sources(manifest_sha):
     manifest=packet({'path':str(SUPPORT/'source-manifest.json'),'sha256':manifest_sha})
     require(manifest['kind']=='agent-coordination-repair-v1'
-            and set(manifest['files'])=={'coordination.py','registry-wait.py','test_coordination.py','test_registry.py'},'Exact repair closure required')
+            and set(manifest['files'])=={'coordination.py','registry-wait.py','test_coordination.py','test_registry.py','test_acknowledgements.py'},'Exact repair closure required')
     for name,sha in manifest['files'].items():read(SUPPORT/name,sha)
     require(Path(__file__)==SUPPORT/'coordination.py','Only the frozen repair entry may execute')
     return manifest
@@ -213,7 +487,7 @@ def registration(a,job,mode,argv):
             and task['script']==str(a.native_script) and task['script_sha256']==row['script_sha256']==canonical(text)
             and row['state']=='submitted' and row['job_id']==job,'Actual invocation/native ID/script required')
     contract={'cpus':4 if mode=='qualify' else 1,'memory':'16G' if mode=='qualify' else '64G',
-              'hours':1 if mode=='qualify' else 8,'gpu':False,'array':None}
+              'hours':1 if mode=='qualify' else 96,'gpu':False,'array':None}
     require(task['resources']==contract and task.get('coordination_manifest_sha256')==a.source_manifest_sha256,
             'Exact finite source-bound repair reservation required')
     return plan,ledger,task
@@ -230,7 +504,7 @@ def qualification(a,manifest,area,fields):
     junit=area/'junit.xml'
     with resource_lease(ROOT,read_json(FRAMEWORK/'configs/study.json'),cpus=4,gpus=0,max_hours=1,
                         job_id=os.environ['SLURM_JOB_ID'],resource_policy=policy):
-        result=subprocess.run([sys.executable,'-m','pytest',str(SUPPORT/'test_coordination.py'),str(SUPPORT/'test_registry.py'),'-q','-p','no:cacheprovider',
+        result=subprocess.run([sys.executable,'-m','pytest',str(SUPPORT/'test_coordination.py'),str(SUPPORT/'test_registry.py'),str(SUPPORT/'test_acknowledgements.py'),'-q','-p','no:cacheprovider',
             '--basetemp',str(scratch/'pytest-temp'),'--junitxml',str(junit)],cwd=scratch,timeout=2400)
     require(result.returncode==0,'Native repair tests failed')
     tree=ET.parse(junit);cases=list(tree.getroot().iter('testcase'))
@@ -260,55 +534,15 @@ def recover_native(base,c,manifest_sha):
             and value['source_manifest_sha256']==manifest_sha,'Exact prior recovery receipt required')
         for item in value['preserved'].values():read(item['path'],item['sha256'])
         return
-    require(c['segment']==0,'Only first new controller may activate the one-time recovery')
-    with base.registration_guard(c,'controller-start'):
-        plan,state=base.initialize(c);require(digest(CAMPAIGN/'state.json.gz')==ORIGINAL_FILE,'Original compressed state changed')
-        area=SUPPORT/('recovery-native-'+c['job_id']);area.mkdir()
-        preserved={}
-        for name,source in [('original-state.json.gz',CAMPAIGN/'state.json.gz'),('original-binding.json',CAMPAIGN/'state-binding.json'),
-                            ('campaign-plan.json',CAMPAIGN/'campaign-plan.json'),('failed-submission.json',CAMPAIGN/('submission-'+TARGET+'.json')),
-                            ('failed-native-plan.json',ROOT/'plans/af-f2-training-0080/plan.json'),
-                            ('failed-native-ledger.json',ROOT/'state/af-f2-training-0080-submission.json'),
-                            ('failed-script.sbatch',ROOT/'plans/af-f2-training-0080/af-f2-training-0080.sbatch'),
-                            ('failed-traceback.txt',ROOT/'logs/af-f2-training-0080-7110041_4294967294.log')]:
-            raw=read(source);target=area/name
-            with target.open('xb') as f:f.write(raw);f.flush();os.fsync(f.fileno())
-            preserved[name]=locator(target)
-        text=read(area/'failed-traceback.txt').decode()
-        require('RegistrationWaitBudgetExceeded' in text and 'native-start-admission' in text and 'AF_NATIVE_WORK ' not in text,
-                'Exact before-computation lock-wait failure required')
-        training=Path(plan['cells'][80]['training_case'])
-        require(not training.is_symlink() and (not training.exists() or training.is_dir() and not list(training.iterdir())),
-                'No partial training output may be discarded')
-        require(not (CAMPAIGN.parent/('native-'+FAILED)/'receipt.json').exists()
-                and not (CAMPAIGN.parent/('native-'+FAILED)/'native-start-admission.json').exists(),
-                'Failed native attempt must not have completed admission or work')
-        for p in [ROOT/'plans/af-f2-r3-training-0080',ROOT/'state/af-f2-r3-training-0080-submission.json',
-                  CAMPAIGN/'submission-r3-training-0080.json']:
-            require(not p.exists() and not p.is_symlink(),'Fresh retry namespace required')
-        rows=c['native_reader']([FAILED,*PEERS.values()],{},owner='pwa209',account=None)
-        native={job:base.normalized_native(job,row) for job,row in rows.items()}
-        require(set(native)=={FAILED,*PEERS.values()},'Full targeted native roster required')
-        for job in PEERS.values():require(native[job]['state']=='COMPLETED' and native[job]['exit_code']=='0:0'
-            and native[job]['cpus']==6 and native[job]['gpus']==1 and native[job]['elapsed_seconds']>0,'Positive completed GPU training required')
-        # This collector invocation verifies only training receipts/checkpoints;
-        # it need not re-audit unrelated evaluation conditions during recovery.
-        subset={**state,'jobs':{k:state['jobs'][k] for k in PEERS},'cells':[]}
-        packets=base.collect_packets(c,plan,subset,native)
-        for key,p in packets.items():
-            original,_=base.worker_receipt(c,PEERS[key],'agent-train',int(key[-4:]))
-            preserved[key+'-receipt']=dict(path=str(original),sha256=p['sha256'])
-        result=recover_one(plan,state,native,packets,base.dispatch)
-        exclusive(area/'intent.json',{'before_state':state['state_sha256'],'after_state':result['state_sha256'],
-            'failed_original':state['jobs'][TARGET],'native':native,'preserved':preserved,**FLAGS})
-        require(base.initialize(c)[1]==state,'State changed before recovery compare-and-swap')
-        base.save_state(c,result)
-        value={'status':'reconciled_three_and_recovered_one_prestart','native_job_id':c['job_id'],
-            'source_manifest_sha256':manifest_sha,'before_revision':state['revision'],'after_revision':result['revision'],
-            'after_state_sha256':result['state_sha256'],'completed_training':83,'completed_policies':76,
-            'reconciled_jobs':PEERS,'failed_job_preserved':FAILED,'retry_namespace':'af-f2-r3-training-0080',
-            'preserved':preserved,**FLAGS}
-        exclusive(receipt,value);print('COORDINATION_RECOVERY '+json.dumps(value),flush=True)
+    # Preserve the already completed first recovery; this version continues the
+    # same campaign and never reruns the old revision443 transition.
+    prior={'path':str(PRIOR_SUPPORT/'recovery.json'),
+           'sha256':'dda2ecc22fd584d8d910dd0085421f0d84f509274f12bcc80d3ea41b9dcda606'}
+    value=packet(prior)
+    require(value['status']=='reconciled_three_and_recovered_one_prestart','Original completed recovery required')
+    for item in value['preserved'].values():read(item['path'],item['sha256'])
+    exclusive(receipt,{**value,'source_manifest_sha256':manifest_sha,'preserved_prior_recovery':prior})
+    return
 
 
 def install_coordination(base,manifest):
@@ -321,7 +555,13 @@ def install_coordination(base,manifest):
             'path':str(SUPPORT/'registry-wait.py'),'sha256':manifest['files']['registry-wait.py']}}}
         return old_plan(alternate,intent)
     base.native_plan=native_plan
-    base.tick=lambda c,**kw:coordinated_tick(base,c)
+    base.submit_intentions=lambda c,p,s,i,**kw:submit_intentions(base,c,p,s,i,**kw)
+    base.release_ready=lambda c,**kw:release_ready(base,c,**kw)
+    def tick(c,**kw):
+        try:return coordinated_tick(base,c)
+        except PendingAcknowledgement as error:
+            raise base.PendingRegistration('submission_acknowledgement_pending: '+str(error)) from error
+    base.tick=tick
 
 
 def run_controller(a,manifest,area,fields):
@@ -408,14 +648,16 @@ def main(argv=None):
         and fields['NumNodes'] in {'1','1-1'} and fields['MinMemoryNode'] in {contract['memory'],str(int(contract['memory'][:-1])*1024)+'M'}
         and 'ArrayJobId' not in fields and all('gpu' not in fields.get(k,'').lower() for k in ('AllocTRES','ReqTRES','Gres','TresPerNode','TresPerTask')),
         'Actual finite owned scalar CPU allocation required')
-    require(duration(fields['TimeLimit'])==contract['hours']*3600,'Actual scheduler limit must equal this finite registration')
+    require((a.mode=='qualify' and duration(fields['TimeLimit'])==3600)
+        or (a.mode=='run' and 28800<=duration(fields['TimeLimit'])<=contract['hours']*3600
+            and duration(fields['TimeMin'])==28800),'Actual scheduler limit must remain within the registered finite window')
     exclusive(area/'allocation.json',{'fields':fields,'environment_end_unix':float(os.environ['SLURM_JOB_END_TIME']),
         'source_manifest_sha256':a.source_manifest_sha256,**FLAGS})
     if a.mode=='qualify':qualification(a,manifest,area,fields)
     else:
         require(0<=a.segment<4 and len(plan['tasks'])==4,'Four finite ordered controller segments required')
         for index,t in enumerate(plan['tasks']):
-            require(t['depends']==([] if index==0 else [plan['tasks'][index-1]['name']]) and t['dependency_kind']=='afterany',
+            require(t['depends']==([] if index==0 else [plan['tasks'][index-1]['name']]) and t['dependency_kind']=='afterok',
                 'No parallel controller lineage is authorized')
         return run_controller(a,manifest,area,fields)
 
