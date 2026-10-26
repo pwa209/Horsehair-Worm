@@ -254,3 +254,110 @@ def test_real_base_loop_turns_deadline_cutoff_into_successful_finite_handoff(tmp
     assert writes['status.json']['status']=='resource_pending_registration'
     assert writes['segment-complete.json']==result and 'controller-failure.json' not in writes
     assert c==before and clock[0]<c['deadline']
+
+
+def final_release_fixture(gpu=False):
+    task,intent,held=identity()
+    if gpu:
+        task.update(name='af-f2-training-0081',script='/scratch/pwa209/horsehair-worm/plans/af-f2-training-0081/af-f2-training-0081.sbatch')
+        task['resources'].update(cpus=6,gpu=True,hours=12)
+        intent.update(intent_id='training-0081',resources={'cpus':6,'gpus':1,'hours':12})
+        held.update(JobName='hhw-'+task['name'],Command=task['script'],Account='def-ptewarie_gpu',
+                    NumCPUs='6',TimeLimit='12:00:00',ReqTRES='cpu=6,mem=32G,node=1,gres/gpu=1')
+    record={'status':'releasing','job_id':'7191569','held_allocation':held}
+    native={'job_id':'7191569','state':'COMPLETED','exit_code':'0:0','cpus':intent['resources']['cpus'],
+            'gpus':intent['resources']['gpus'],'elapsed_seconds':73,'end':'2026-10-26T09:11:54',
+            'user':'pwa209','account':held['Account']}
+    return task,intent,record,native
+
+
+@pytest.mark.parametrize('gpu',[False,True])
+def test_final_owned_cpu_or_gpu_accounting_confirms_release_without_a_live_record(gpu):
+    task,intent,record,native=final_release_fixture(gpu);before=copy.deepcopy((record,native))
+    result=m.completed_release_proof(record,task,intent,'7191569',native)
+    assert result==native and result is not native and (record,native)==before
+
+
+@pytest.mark.parametrize('field,value',[('job_id','123'),('state','RUNNING'),('state','FAILED'),
+    ('exit_code','1:0'),('user','another-user'),('account','another-account'),('cpus',2),('gpus',1),
+    ('elapsed_seconds',0),('elapsed_seconds',True),('elapsed_seconds',None),('end','Unknown'),('end','')])
+def test_final_release_accounting_refuses_unowned_unsuccessful_or_incomplete_records(field,value):
+    task,intent,record,native=final_release_fixture();native[field]=value
+    with pytest.raises(ValueError,match='Positive exact owned successful'):
+        m.completed_release_proof(record,task,intent,'7191569',native)
+
+
+@pytest.mark.parametrize('field,value',[('status','registered_held_verified'),('status','released'),('job_id','123')])
+def test_final_release_proof_requires_the_original_issued_release(field,value):
+    task,intent,record,native=final_release_fixture();record[field]=value
+    with pytest.raises(ValueError,match='exact previously issued release'):
+        m.completed_release_proof(record,task,intent,'7191569',native)
+
+
+@pytest.mark.parametrize('field,value',[('Command','/other/script'),('UserId','someone(1)'),('JobId','123'),('ArrayJobId','7191569')])
+def test_final_release_retains_original_script_and_scalar_ownership_binding(field,value):
+    task,intent,record,native=final_release_fixture();record['held_allocation'][field]=value
+    with pytest.raises(ValueError):m.completed_release_proof(record,task,intent,'7191569',native)
+
+
+def final_release_runtime(tmp_path):
+    from types import SimpleNamespace
+    task,intent,record,native=final_release_fixture();jp=tmp_path/'journal.json';writes=[]
+    raw={**native,'job_id_raw':'7191569','alloc_tres':'cpu=1,mem=32G,node=1'}
+    base=SimpleNamespace(source_guard=lambda c:None,read_json=lambda p:record,
+        normalized_native=lambda job,row:native,
+        atomic_json=lambda p,value:writes.append((p,copy.deepcopy(value))))
+    c={'native_reader':lambda *args,**kwargs:{'7191569':raw},'release_queue':[{
+        'job_id':'7191569','task':task,'intent':intent,'journal':str(jp)}]}
+    return base,c,jp,task,intent,record,native,raw,writes
+
+
+def test_release_ready_uses_final_accounting_without_releasing_or_querying_a_purged_job(tmp_path,monkeypatch):
+    base,c,jp,task,intent,record,native,raw,writes=final_release_runtime(tmp_path)
+    monkeypatch.setattr(m,'observe_job',lambda *args:pytest.fail('Completed jobs need no live scheduler read'))
+    m.release_ready(base,c,runner=lambda *args,**kwargs:pytest.fail('No repeated Slurm mutation'))
+    assert c['release_queue']==[] and record['status']=='released' and len(writes)==1
+    assert writes[0][0]==jp and record['release_final_native']==native
+    assert record['release_basis']=='actual_final_accounting_completed_0_0'
+    assert 'receipt' not in record and 'scientific_result' not in record
+
+
+def test_existing_intention_uses_final_accounting_before_any_live_read(tmp_path,monkeypatch):
+    base,c,jp,task,intent,record,native,raw,writes=final_release_runtime(tmp_path)
+    pp=tmp_path/'plan.json';lp=tmp_path/'ledger.json';plan={'tasks':[task]}
+    record['plan_path']=str(pp)
+    ledger={'plan_sha256':m.canonical(plan),'tasks':{task['name']:{'state':'submitted','job_id':'7191569'}}}
+    base.read_json=lambda p:ledger if p==lp else plan
+    state={'jobs':{intent['intent_id']:{'job_id':'7191569'}}};before=copy.deepcopy(state)
+    monkeypatch.setattr(m,'worker_registration',lambda *args:(pp,lp,jp,record,task))
+    monkeypatch.setattr(m,'observe_job',lambda *args:pytest.fail('Completed jobs need no live scheduler read'))
+    assert m.submit_intentions(base,c,{},state,[intent]) is state
+    assert state==before and record['status']=='released' and len(writes)==1
+
+
+def test_missing_final_accounting_still_allows_actual_unheld_live_observation(tmp_path,monkeypatch):
+    base,c,jp,task,intent,record,native,raw,writes=final_release_runtime(tmp_path)
+    c['native_reader']=lambda *args,**kwargs:{}
+    live={**record['held_allocation'],'JobState':'RUNNING','Reason':'None','Priority':'1'}
+    monkeypatch.setattr(m,'observe_job',lambda *args:live)
+    m.release_ready(base,c,runner=lambda *args,**kwargs:pytest.fail('An unheld job is never released again'))
+    assert record['status']=='released' and 'release_final_native' not in record and len(writes)==1
+
+
+def test_final_accounting_timeout_preserves_pending_release_without_mutation(tmp_path):
+    base,c,jp,task,intent,record,native,raw,writes=final_release_runtime(tmp_path);before=copy.deepcopy(record)
+    def timeout(*args,**kwargs):raise subprocess.TimeoutExpired(['sacct'],90)
+    c['native_reader']=timeout
+    with pytest.raises(m.PendingAcknowledgement,match='Final release accounting pending'):
+        m.release_ready(base,c,runner=lambda *args,**kwargs:pytest.fail('No Slurm mutation'))
+    assert record==before and not writes and c['release_queue']
+
+
+@pytest.mark.parametrize('change',['foreign-key','physical-id','failed-exit'])
+def test_ambiguous_or_failed_final_accounting_never_writes_a_release(tmp_path,change):
+    base,c,jp,task,intent,record,native,raw,writes=final_release_runtime(tmp_path);before=copy.deepcopy(record)
+    if change=='foreign-key':c['native_reader']=lambda *args,**kwargs:{'other':raw}
+    elif change=='physical-id':raw['job_id_raw']='123'
+    else:native['exit_code']='1:0'
+    with pytest.raises(ValueError):m.release_ready(base,c,runner=lambda *args,**kwargs:pytest.fail('No mutation'))
+    assert record==before and not writes

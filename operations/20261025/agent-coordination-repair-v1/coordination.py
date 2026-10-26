@@ -22,7 +22,7 @@ import sys
 import time
 
 ROOT=Path('/scratch/pwa209/horsehair-worm')
-SUPPORT=ROOT/'maintenance/agent-coordination-repair-v3-20261026'
+SUPPORT=ROOT/'maintenance/agent-coordination-repair-v4-20261026'
 PRIOR_SUPPORT=ROOT/'maintenance/agent-coordination-repair-v1-20261025'
 FRAMEWORK=ROOT/'releases/20261021-6ed201653dfa-4f3903d7c26e'
 CAMPAIGN=ROOT/'maintenance/study-af-campaign-v1-20261021/agent-final-f64-v1'
@@ -172,6 +172,7 @@ def submit_intentions(base,c,plan,state,intents,*,runner=subprocess.run):
                     'Existing acknowledgement changed')
             if record['status']=='released':continue
             pp=Path(record['plan_path']);task=base.read_json(pp)['tasks'][0]
+            if reconcile_completed_release(base,c,jp,record,task,intent,job['job_id']):continue
             fields=observe_job(base,c,job['job_id'])
             if record['status']=='releasing' and released_identity(fields,task,job['job_id']):
                 record.update(status='released',job_id=job['job_id'],release_basis='actual_unheld_native_state')
@@ -215,12 +216,45 @@ def released_identity(fields,task,job):
         and fields.get('Priority','').isdigit() and int(fields['Priority'])>0)
 
 
+def completed_release_proof(record,task,intent,job,native):
+    """Final accounting confirms a release; it never substitutes a result receipt."""
+    require(record.get('status')=='releasing' and record.get('job_id')==job,
+            'Only the exact previously issued release may reconcile')
+    held_identity(record['held_allocation'],task,intent,job)
+    resources=intent['resources']
+    require(native.get('job_id')==job and native.get('state')=='COMPLETED' and native.get('exit_code')=='0:0'
+            and native.get('user')=='pwa209'
+            and native.get('account')==('def-ptewarie_gpu' if resources['gpus'] else 'def-ptewarie_cpu')
+            and type(native.get('elapsed_seconds')) is int and native['elapsed_seconds']>0
+            and native.get('cpus')==resources['cpus'] and native.get('gpus')==resources['gpus']
+            and native.get('end') not in {None,'Unknown','None',''},
+            'Positive exact owned successful final allocation required for release acknowledgement')
+    return copy.deepcopy(native)
+
+
+def reconcile_completed_release(base,c,jp,record,task,intent,job):
+    if record.get('status')!='releasing':return False
+    try:rows=c['native_reader']([job],{},owner='pwa209',account=None)
+    except (subprocess.SubprocessError,OSError) as error:
+        raise PendingAcknowledgement('Final release accounting pending: '+str(error)) from error
+    require(set(rows).issubset({job}),'Release accounting returned an unrelated allocation')
+    if job not in rows or rows[job].get('state')!='COMPLETED':return False
+    raw=rows[job]
+    require(str(raw.get('job_id_raw',job))==job,'Scalar native release allocation identity changed')
+    proof=completed_release_proof(record,task,intent,job,base.normalized_native(job,raw))
+    record.update(status='released',release_basis='actual_final_accounting_completed_0_0',
+                  release_final_native=proof,release_acknowledged_unix=time.time())
+    base.atomic_json(jp,record)
+    return True
+
+
 def release_ready(base,c,*,runner=subprocess.run):
     base.source_guard(c)
     for item in list(c.get('release_queue',[])):
         jp=Path(item['journal']);record=base.read_json(jp);job=item['job_id']
         require(record.get('job_id')==job,'Release acknowledgement belongs to another job')
         if record['status']=='released':continue
+        if reconcile_completed_release(base,c,jp,record,item['task'],item['intent'],job):continue
         fields=observe_job(base,c,job)
         if fields.get('JobState')!='PENDING' or fields.get('Reason')!='JobHeldUser':
             require(record['status']=='releasing' and released_identity(fields,item['task'],job),

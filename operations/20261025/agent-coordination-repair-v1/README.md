@@ -1,6 +1,6 @@
 This directory contains the existing coordination component for the unchanged
 synthetic agent campaign. The executable revision is frozen at
-`maintenance/agent-coordination-repair-v3-20261026` in personal Narval scratch.
+`maintenance/agent-coordination-repair-v4-20261026` in personal Narval scratch.
 
 Submission recovery persists each exact command before calling Slurm. A lost
 reply is joined to the actual owned held job using the original script, name,
@@ -17,13 +17,17 @@ native/environment deadline remains authoritative, with a four-hour shutdown
 reserve. Success dependencies require a clean exit before the next slot can run. Scientific workers, numerical routines, protocol, provider freshness
 and inference gates retain their original contracts.
 
-Qualification 7338418 completed 0:0 in 34 seconds with all 115 frozen core cases passing. The complete local operational suite passes 196 cases: the 115 core cases, three supplemental handoff cases, 44 guarded pre-call retirement cases, 24 quota metadata cases and ten source-archive integrity cases. Fixtures establish software behavior and never supply study observations.
+Qualification 7371890 completed 0:0 in 25 seconds with all 144 frozen core cases passing. The complete local operational closure passes 225 cases: those 144 core cases, three supplemental handoff cases, 44 guarded pre-call retirement cases, 24 quota metadata cases and ten archive-integrity cases. Fixtures establish implementation behavior and never supply study observations.
 
-At **26 October 2026, 08:59 CET**, controller **7340344 is RUNNING with verified startup**, and **7340363/7340394/7340447** are released and pending their sequential dependencies. Canonical revision **538** contains **97 completed trainings and 89 completed policies**. Every member of the current unfinished batch has an acknowledged native ID and successful release journal (**12 jobs**). The native snapshot shows **4 assemblies completed 0:0**, **4 CPU evaluations running**, and **4 GPU trainings queued**. These newly completed assemblies await ordinary canonical receipt reconciliation.
+At **26 October 2026, 11:28 CET**, controller **7373985 is RUNNING** with source-verified startup; **7373992/7374031/7374040** are released with sequential dependencies. The recovered batch has **3 completed assembly jobs**, **1 completed CPU evaluation job**, **3 running CPU evaluation jobs** and **4 running GPU training jobs**. All 11 original jobs were released without resubmission. Canonical revision **559** records **101 completed trainings and 94 completed policies**. The new controller requires its own actual startup evidence; a pending reservation is not reported as healthy execution.
 
-The finalization cutoff is now checked before a new durable submission attempt. A long audit or admission reaching the margin produces the existing soft wait and a successful finite segment exit, so sequential successors can run. Previously acknowledged or uncertain attempts still reconcile their original native identity; no uncertain submission is replayed. The earlier native/environment end, four-hour shutdown reserve, original numerical routines and scientific gates remain authoritative.
+The existing coordination component now resolves a lost release acknowledgement using positive final accounting when a successful job is no longer observable through the live-job interface. It verifies the original issued-release journal, exact job ID, held script/name/owner/resources and actual successful final allocation. It updates only the release acknowledgement; original scientific receipt validation, numerical routines, provider freshness and deadline reserves remain unchanged. Missing, conflicting or unsuccessful evidence cannot manufacture an acknowledgement or cause a repeated submission.
 
-The reviewed `operator-actions/deadline-precall-recovery.py` is a one-off metadata correction. It requires the exact original source, full fatal stack, original state/plan/ledger/script/journal, conservative clock and positively terminal former controllers. Empty queue/accounting lookups only corroborate that proof. It archives every original byte and removes only the proven uninvoked first ledger row, retaining all headers and the unchanged canonical state. Accepted, timed-out, completed or altered attempts are refused. No additional runtime controller layer is installed. The subsequent registration release error was resolved through actual unheld native state under the same four IDs; no second controller chain was submitted.
+`operator-actions/completed-release-reconciliation.sh` preserves the exact original journal, plan, ledger, script, state/binding and actual accounting for job 7352510 before acknowledging its already completed release. It changes no scientific state, submits no job and cancels no job. The permanent change is in `coordination.py`, not an additional controller wrapper. Tests cover both resume and release paths, CPU/GPU identity, purged live records, unsuccessful or foreign allocations, missing accounting and transient accounting failure.
+
+The previous v3 controller chain was retired only at the existing registration barrier, with permanent kernel-lock ownership and positive native terminal accounting verified before replacement. Scientific workers were retained. Slurm's `CANCELLED by ...` label was normalized in the administrative continuation, with the original failed check and retirement proof preserved; the cancellation and controller submissions were not repeated.
+
+The earlier deadline cutoff and inode repairs remain in force. The reviewed `operator-actions/deadline-precall-recovery.py` is a historical one-off action for an exact uninvoked ledger row. It is not rerun against subsequent campaign states. Neither success acknowledgements nor final accounting substitute for the original scientific result validators or inference gates.
 
 The following quota checkpoint is historical:
 
