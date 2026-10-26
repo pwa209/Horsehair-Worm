@@ -1,6 +1,6 @@
 This directory contains the existing coordination component for the unchanged
 synthetic agent campaign. The executable revision is frozen at
-`maintenance/agent-coordination-repair-v2-20261025` in personal Narval scratch.
+`maintenance/agent-coordination-repair-v3-20261026` in personal Narval scratch.
 
 Submission recovery persists each exact command before calling Slurm. A lost
 reply is joined to the actual owned held job using the original script, name,
@@ -14,14 +14,18 @@ commit, and a permanent controller mutex for the single active writer.
 Four sequential controller slots request at most 96 hours on one CPU with
 64 GiB and permit an actual backfill window of at least eight hours. The earlier
 native/environment deadline remains authoritative, with a four-hour shutdown
-reserve. Success dependencies prevent a fatal error from consuming every
-successor. Scientific workers, numerical routines, protocol, provider freshness
+reserve. Success dependencies require a clean exit before the next slot can run. Scientific workers, numerical routines, protocol, provider freshness
 and inference gates retain their original contracts.
 
-Qualification 7272420 completed 0:0 in 27 seconds with all 106 core cases passing.
-The final local operational run passes 140 cases: those 106 cases, 24 metadata
-retry cases and 10 source-archive integrity cases. Fixtures are implementation
-evidence and never supply study observations.
+Qualification 7338418 completed 0:0 in 34 seconds with all 115 frozen core cases passing. The complete local operational suite passes 196 cases: the 115 core cases, three supplemental handoff cases, 44 guarded pre-call retirement cases, 24 quota metadata cases and ten source-archive integrity cases. Fixtures establish software behavior and never supply study observations.
+
+At **26 October 2026, 08:43 CET**, controller **7340344 is RUNNING with verified startup**, and **7340363/7340394/7340447** are released and pending their sequential dependencies. Canonical revision **529** contains **97 completed trainings and 89 completed policies**. The current unfinished batch has **3 acknowledged jobs**, including **0 release journals**, and **9 intentions without a native ID**.
+
+The finalization cutoff is now checked before a new durable submission attempt. A long audit or admission reaching the margin produces the existing soft wait and a successful finite segment exit, so sequential successors can run. Previously acknowledged or uncertain attempts still reconcile their original native identity; no uncertain submission is replayed. The earlier native/environment end, four-hour shutdown reserve, original numerical routines and scientific gates remain authoritative.
+
+The reviewed `operator-actions/deadline-precall-recovery.py` is a one-off metadata correction. It requires the exact original source, full fatal stack, original state/plan/ledger/script/journal, conservative clock and positively terminal former controllers. Empty queue/accounting lookups only corroborate that proof. It archives every original byte and removes only the proven uninvoked first ledger row, retaining all headers and the unchanged canonical state. Accepted, timed-out, completed or altered attempts are refused. No additional runtime controller layer is installed. The subsequent registration release error was resolved through actual unheld native state under the same four IDs; no second controller chain was submitted.
+
+The following quota checkpoint is historical:
 
 At 26 October 2026, 00:06 CET (25 October 23:06 UTC), all seven saved intentions had acknowledged
 and released jobs. Four completed workers 7189552/7189779/7190034/7190227 were
@@ -46,7 +50,7 @@ data remained in place. `scripts/sync_public_source_archive.py` preserves each
 complete committed repository as an archive, manifest and receipt. It verifies
 every tracked member without extracting another historical source tree.
 
-Current controller 7283317 is RUNNING; successors 7283326/7283327/7283328 wait on
+At the earlier checkpoint, controller 7283317 was RUNNING; successors 7283326/7283327/7283328 wait on
 success dependencies. Retry 7281294 has actual scheduler COMPLETED/0:0 proof.
 Assemblies 7281294, 7281425, 7281520 have complete source-bound result receipts;
 normal final native reconciliation remains separate from receipt creation.

@@ -22,7 +22,7 @@ import sys
 import time
 
 ROOT=Path('/scratch/pwa209/horsehair-worm')
-SUPPORT=ROOT/'maintenance/agent-coordination-repair-v2-20261025'
+SUPPORT=ROOT/'maintenance/agent-coordination-repair-v3-20261026'
 PRIOR_SUPPORT=ROOT/'maintenance/agent-coordination-repair-v1-20261025'
 FRAMEWORK=ROOT/'releases/20261021-6ed201653dfa-4f3903d7c26e'
 CAMPAIGN=ROOT/'maintenance/study-af-campaign-v1-20261021/agent-final-f64-v1'
@@ -47,6 +47,16 @@ class PendingAcknowledgement(TimeoutError):
     """No resubmission is permitted while the original attempt is unresolved."""
 
 
+class SubmissionWindowExhausted(PendingAcknowledgement):
+    """A normal finite cutoff; the existing successor resumes saved work."""
+
+
+def submission_window(c,*,now=None):
+    now=time.time() if now is None else now
+    if now+300>=c['deadline']:
+        raise SubmissionWindowExhausted('Submission finalization margin exhausted; defer to next finite segment')
+
+
 def held_identity(fields,task,intent,job):
     """A job name alone never authorizes adoption of an accepted submission."""
     resources=intent['resources']
@@ -68,9 +78,12 @@ def held_identity(fields,task,intent,job):
     return fields
 
 
-def submit_once(row,command,invoke,discover,persist):
+def submit_once(row,command,invoke,discover,persist,*,before_attempt=lambda:None):
     """Durable before-call intent plus real native adoption; never a fake reply."""
     if row is None:
+        # A deadline cutoff must not leave a durable record claiming that a
+        # client call might have happened. Existing rows still only reconcile.
+        before_attempt()
         row={'state':'submitting','command':command,'attempt_started_unix':time.time()}
         persist(row)
         try:
@@ -180,9 +193,9 @@ def submit_intentions(base,c,plan,state,intents,*,runner=subprocess.run):
                 def invoke(command):
                     # Mutation is invoked once. A timeout is followed only by
                     # discovery of the already accepted, script-bound held job.
-                    require(time.time()+300<c['deadline'],'Submission finalization margin exhausted')
                     return runner(command,text=True,capture_output=True,timeout=180)
-                row=submit_once(row,command,invoke,lambda hint:discover_held(base,c,task,intent,hint),persist)
+                row=submit_once(row,command,invoke,lambda hint:discover_held(base,c,task,intent,hint),persist,
+                                before_attempt=lambda:submission_window(c))
             jid=row['job_id']
             state=base.dispatch.record_submission(plan,state,ident,jid,expected_revision=state['revision']);base.save_state(c,state)
             record.update(status='registered_held_verified',job_id=jid,held_allocation=row['native_held_observation'],
@@ -393,7 +406,9 @@ def resume_pending_batch(base,c,plan,state):
     base.prepare_census(c)
     with base.registration_guard(c,'controller-tick'):
         base.source_guard(c);require(base.initialize(c)[1]==state,'Pending state changed during receipt validation')
+        submission_window(c)
         base.admission(c,'resume-commit-'+str(state['revision']))
+        submission_window(c)
         if packets:
             state=reconcile_only(plan,state,native,packets,base.dispatch);base.save_state(c,state)
         intents=pending_intents(base,c,state);c['release_queue']=[]
@@ -439,7 +454,9 @@ def coordinated_tick(base,c):
         base.prepare_census(c)
         return packets
     def commit(packets):
+        submission_window(c)
         base.source_guard(c);base.admission(c,'commit-'+str(state['revision']))
+        submission_window(c)
         candidate,intents=base.dispatch.dispatch_tick(plan,state,native,packets)
         if candidate['status']=='needs_repair':
             base.save_state(c,candidate)

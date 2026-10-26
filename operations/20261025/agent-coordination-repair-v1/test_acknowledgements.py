@@ -145,3 +145,112 @@ def test_pending_acknowledgement_is_a_wait_condition_not_a_fatal_controller_erro
         m.coordinated_tick=wait;m.install_coordination(base,{'files':{'registry-wait.py':'x'}})
         with pytest.raises(base.PendingRegistration,match='submission_acknowledgement_pending'):base.tick({})
     finally:m.coordinated_tick=original
+
+
+def test_deadline_preflight_never_records_or_invokes_an_unstarted_submission():
+    saved=[];calls=[];c={'deadline':1000.};before=copy.deepcopy(c)
+    def gate():m.submission_window(c,now=700.)
+    with pytest.raises(m.SubmissionWindowExhausted):
+        m.submit_once(None,['sbatch','--parsable','new.sbatch'],lambda cmd:calls.append(cmd),
+            lambda hint:pytest.fail('No submission exists to discover'),lambda row:saved.append(copy.deepcopy(row)),
+            before_attempt=gate)
+    assert not saved and not calls and c==before
+
+
+@pytest.mark.parametrize('now,allowed',[(699.999,True),(700.,False),(701.,False)])
+def test_submission_window_has_a_strict_boundary_without_extending_any_clock(now,allowed):
+    c={'deadline':1000.,'backfill_window':{'allocation_end_unix':15400.,'shutdown_reserve_seconds':14400}}
+    before=copy.deepcopy(c)
+    if allowed:m.submission_window(c,now=now)
+    else:
+        with pytest.raises(m.SubmissionWindowExhausted):m.submission_window(c,now=now)
+    assert c==before
+
+
+@pytest.mark.parametrize('state,job',[('submitting',None),('submitted','7191569')])
+def test_deadline_does_not_replay_or_gate_discovery_of_an_existing_submission(state,job):
+    _,_,native=identity();command=['sbatch','--parsable','original.sbatch']
+    row={'state':state,'command':command}
+    if job is not None:row['job_id']=job
+    hints=[]
+    def discover(hint):hints.append(hint);return '7191569',native
+    result=m.submit_once(row,command,lambda cmd:pytest.fail('Existing mutation cannot repeat'),discover,
+        lambda value:None,before_attempt=lambda:pytest.fail('Existing attempts only reconcile'))
+    assert hints==[job] and result['job_id']=='7191569' and result['state']=='submitted'
+
+
+def test_partial_batch_retains_accepted_id_and_successor_submits_only_unstarted_member():
+    _,_,native=identity();clock=[0.];saved={};calls=[];c={'deadline':1000.}
+    first=['sbatch','--parsable','first.sbatch'];second=['sbatch','--parsable','second.sbatch']
+    def invoke(command):calls.append(command);return subprocess.CompletedProcess(command,0,'7191569\n','')
+    def persist(key):return lambda row:saved.__setitem__(key,copy.deepcopy(row))
+    m.submit_once(None,first,invoke,lambda hint:('7191569',native),persist('first'),
+        before_attempt=lambda:m.submission_window(c,now=clock[0]))
+    clock[0]=701.
+    with pytest.raises(m.SubmissionWindowExhausted):
+        m.submit_once(None,second,invoke,lambda hint:pytest.fail('Second has not run'),persist('second'),
+            before_attempt=lambda:m.submission_window(c,now=clock[0]))
+    assert saved['first']['job_id']=='7191569' and 'second' not in saved and calls==[first]
+    # The next finite segment preserves the first acknowledgement and only
+    # invokes the member that never received a durable attempt record.
+    c={'deadline':2000.}
+    m.submit_once(saved['first'],first,lambda cmd:pytest.fail('Accepted member repeated'),
+        lambda hint:('7191569',native),persist('first'),before_attempt=lambda:m.submission_window(c,now=clock[0]))
+    def second_invoke(command):calls.append(command);return subprocess.CompletedProcess(command,0,'7191570\n','')
+    result=m.submit_once(None,second,second_invoke,lambda hint:('7191570',{**native,'JobId':'7191570'}),persist('second'),
+        before_attempt=lambda:m.submission_window(c,now=clock[0]))
+    assert calls==[first,second] and result['job_id']=='7191570' and saved['first']['job_id']=='7191569'
+
+
+def test_long_audit_reaching_cutoff_never_dispatches_or_commits(monkeypatch):
+    from contextlib import nullcontext
+    from types import SimpleNamespace
+    clock=[0.];events=[];state={'revision':1,'jobs':{},'cells':[]};plan={}
+    c={'deadline':1000.,'descriptor':{'precision_gate':{'diagnostics_job_id':'1','assembly_job_id':'2'}},'area':Path('audit')}
+    def audit(*args):clock[0]=701.;events.append('audited');return {}
+    base=SimpleNamespace(prepare_census=lambda c:None,registration_guard=lambda *args:nullcontext(),
+        initialize=lambda c:(plan,state),source_guard=lambda c:None,admission=lambda c,label:events.append(label),
+        collect_packets=audit,atomic_json=lambda *args:None,
+        dispatch=SimpleNamespace(dispatch_tick=lambda *args:pytest.fail('Late audit must not generate work')),
+        save_state=lambda *args:pytest.fail('Late audit must not commit state'))
+    c['native_reader']=lambda *args,**kwargs:{}
+    monkeypatch.setattr(m,'pending_intents',lambda *args:[])
+    monkeypatch.setattr(m.time,'time',lambda:clock[0])
+    with pytest.raises(m.SubmissionWindowExhausted):m.coordinated_tick(base,c)
+    assert events==['snapshot-1','audited'] and state=={'revision':1,'jobs':{},'cells':[]}
+
+
+def test_real_base_loop_turns_deadline_cutoff_into_successful_finite_handoff(tmp_path,monkeypatch):
+    import ast
+    import hashlib
+    import math
+    from contextlib import nullcontext
+    from types import SimpleNamespace
+    path=Path(__file__).resolve().parents[2]/'20261024/f2-backfill-controller-v2/run-af-agent-controller-backfill-base-v2-20261024.py'
+    if not path.is_file():
+        path=Path('/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v2-20261024/run-af-agent-controller-backfill-base-v2-20261024.py')
+    source=path.read_bytes()
+    assert hashlib.sha256(source).hexdigest()=='cbf01cffbbaa9a983ec1e8e6394b38ac04623483e768398c18f48b5e30e31445'
+    # Exercise the exact frozen run function, while keeping its dependencies
+    # synthetic and identical in local tests and the native qualification job.
+    node=next(n for n in ast.parse(source).body if isinstance(n,ast.FunctionDef) and n.name=='run')
+    clock=[710.];writes={};calls=[]
+    base=SimpleNamespace(time=m.time,math=math,json=m.json,ROOT=tmp_path,CONTROLLER_TICK_SECONDS=180,
+        BACKFILL_MAX_SECONDS=96*3600,PendingStorage=type('PendingStorage',(Exception,),{}),
+        PendingRegistration=type('PendingRegistration',(Exception,),{}),require=m.require,
+        native_namespace=lambda c,i:i,submission_journal=lambda c,i:Path(i),native_plan=lambda c,i:None,
+        resource_lease=lambda *args,**kwargs:nullcontext(),
+        atomic_json=lambda path,value:writes.__setitem__(Path(path).name,copy.deepcopy(value)))
+    exec(compile(ast.Module(body=[node],type_ignores=[]),str(path),'exec'),base.__dict__)
+    c={'deadline':1000.,'config':{},'policy':{},'job_id':'123','segment':0,
+       'case':tmp_path/'case','area':tmp_path/'area','backfill_window':{'allocation_end_unix':15400.}}
+    before=copy.deepcopy(c)
+    monkeypatch.setattr(m.time,'time',lambda:clock[0])
+    def late_tick(runtime,context):calls.append('tick');m.submission_window(context)
+    monkeypatch.setattr(m,'coordinated_tick',late_tick)
+    m.install_coordination(base,{'files':{'registry-wait.py':'x'}})
+    result=base.run(c,clock=lambda:clock[0],sleeper=lambda seconds:clock.__setitem__(0,clock[0]+seconds))
+    assert calls==['tick'] and result['status']=='finite_segment_complete'
+    assert writes['status.json']['status']=='resource_pending_registration'
+    assert writes['segment-complete.json']==result and 'controller-failure.json' not in writes
+    assert c==before and clock[0]<c['deadline']
