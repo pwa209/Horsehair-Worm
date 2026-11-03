@@ -1,6 +1,53 @@
 This directory contains the existing coordination component for the unchanged
-synthetic agent campaign. The executable revision is frozen at
-`maintenance/agent-coordination-repair-v4-20261026` in personal Narval scratch.
+synthetic agent campaign. The final source targets immutable deployment
+`maintenance/agent-coordination-repair-v8-20261103` in personal Narval scratch.
+
+The final v8 source passes **195 local tests**, preserving the prior deadline
+and acknowledgement cases and adding coordinated-capacity and primary-visibility
+cases. Earlier v6 qualification **8390228 completed 0:0 in 56 seconds** with
+148 native tests. That earlier qualification does not qualify the changed v8
+source; v8 needs its own final native receipt before production handoff.
+
+Final native qualifications **8422565** (agent v8) and **8422568** (primary v5) are registered/released and pending priority at the 3 November 17:37 CET check. The finite native restart handoff **8422882** is registered after successful completion of those exact two jobs and fresh census slot61 (**6983037**). Storage cleaner **8420757** passed all 50 native cases and reconciled the interrupted old archive; quota recovery and production restart remain unconfirmed. The complete final local closure passed **442 tests**, with two Windows link-permission skips. The corrected cross-platform handoff materializer passes seven fixture cases; native cleanup permits no skips.
+
+The existing coordinator checks the coordinated operational envelope before
+issuing a new submission: at most **four GPUs**, **53 HHW CPUs including
+scientific workers, controllers and the census**, and **120 observed whole-user
+CPUs**. The last figure is the cross-project coordination constraint. Registered
+pending and held work retains its capacity until actual final evidence or
+visibility resolves it. Exact source-bound sequential controller and census
+chains reserve their concurrent maximum rather than summing every future slot.
+Source-bound future controller commitments and an eight-CPU census reserve,
+plus other primary and maintenance commitments, reduce the available scientific share.
+An accepted partial batch is released before an unstarted member softly waits;
+accepted IDs, queue age and numerical dispatcher decisions are preserved.
+
+Both workflow consumers use the same prospective snapshot. It inspects only the
+original primary release's phase plans, ledgers and journals. An ambiguous or
+invisible primary submission pauses new admission until a complete source-bound
+ledger and actual visibility or positive final accounting resolve it. The guard
+does not invent job IDs, resubmit ambiguous attempts or treat a missing queue
+record as completion. Original phase readiness and scientific validators remain
+authoritative.
+
+At the earlier **3 November 2026 repair checkpoint**, v6 passed **148 local
+tests** and the existing primary census consumer revision v3 passes **90 local
+tests**. Primary qualification **8386042 completed 0:0** with all **90 native tests** passing. The saved
+campaign remains at **126 completed trainings and 122 completed policies**;
+four completed trainings and three completed evaluations still await ordinary
+canonical reconciliation. Queue registration and passing local fixtures do not
+establish native qualification, restored storage or healthy controller startup.
+
+At that earlier checkpoint, queued compactor **8403868** used the source-pinned existing helper and had to
+pass **60 native tests**, including 21 guard cases, before removing eligible
+terminal-worker diagnostic evidence after archival. Research observations,
+models, checkpoints and active source remain protected. The latest verified
+personal quota has **214,041 free file slots**, below the unchanged **250,005**
+requirement. The four remaining census slots are held until finite release job
+**8405892**, dependent on successful compaction, verifies fresh personal quota.
+Finite registration handoff **8400244** was queued after successful census slot
+61 and both native qualifications before restarting these existing components; it was later retired before execution. No new
+persistent controller is introduced and scientific gates remain unchanged.
 
 Submission recovery persists each exact command before calling Slurm. A lost
 reply is joined to the actual owned held job using the original script, name,
@@ -12,12 +59,15 @@ registration mutex, with a compare-and-swap check before fresh admission and
 commit, and a permanent controller mutex for the single active writer.
 
 Four sequential controller slots request at most 96 hours on one CPU with
-64 GiB and permit an actual backfill window of at least eight hours. The earlier
-native/environment deadline remains authoritative, with a four-hour shutdown
-reserve. Success dependencies require a clean exit before the next slot can run. Scientific workers, numerical routines, protocol, provider freshness
+64 GiB and permit an actual backfill window of at least eight hours. The
+verified current native allocation end is authoritative after its exact owned
+identity and StartTime + TimeLimit = EndTime relationship are checked. The
+process deadline is then synchronized for the retained registration guards and
+resource lease; the originally exported environment clock remains diagnostic
+evidence. A four-hour shutdown reserve remains enforced. Success dependencies require a clean exit before the next slot can run. Scientific workers, numerical routines, protocol, provider freshness
 and inference gates retain their original contracts.
 
-Qualification 7371890 completed 0:0 in 25 seconds with all 144 frozen core cases passing. The complete local operational closure passes 225 cases: those 144 core cases, three supplemental handoff cases, 44 guarded pre-call retirement cases, 24 quota metadata cases and ten archive-integrity cases. Fixtures establish implementation behavior and never supply study observations.
+Earlier qualification 7371890 completed 0:0 in 25 seconds with all 144 frozen core cases passing. The earlier complete local operational closure passed 225 cases: those 144 core cases, three supplemental handoff cases, 44 guarded pre-call retirement cases, 24 quota metadata cases and ten archive-integrity cases. Fixtures establish implementation behavior and never supply study observations.
 
 At **26 October 2026, 11:28 CET**, controller **7373985 is RUNNING** with source-verified startup; **7373992/7374031/7374040** are released with sequential dependencies. The recovered batch has **3 completed assembly jobs**, **1 completed CPU evaluation job**, **3 running CPU evaluation jobs** and **4 running GPU training jobs**. All 11 original jobs were released without resubmission. Canonical revision **559** records **101 completed trainings and 94 completed policies**. The new controller requires its own actual startup evidence; a pending reservation is not reported as healthy execution.
 

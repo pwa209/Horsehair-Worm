@@ -1,3 +1,8 @@
+The current source targets immutable consumer revision **v5 (3 November 2026)** and passes **101 local tests**. The primary verifier returns the existing pending protocol at its shutdown reserve. Successors refresh actual owned final accounting before checking the original predecessor proof. Historical v3 qualification **8386042 completed 0:0** with all 90 native tests; changed v5 source requires its own native qualification and production startup evidence. Its actual native qualification **8422568** is registered/released, pending scheduler priority at the latest check. Finite handoff **8422882** waits for this qualification, agent qualification **8422565**, and fresh census slot61 before registering the existing controller chains.
+
+The builder replaces the previous invocation envelope. The primary's private submission guard holds the existing registration mutex across prospective capacity observation, the durable submission journal and the original submitter. It uses the original frozen `pipeline.prospective_capacity` calculation, including the dependency-DAG peak and array throttles. Shared coordinator v8 also checks original primary phase journals and accepted jobs, so a lost acknowledgement cannot silently release committed capacity. Scientific code, accepted job identities, source checks and freshness gates remain authoritative.
+
+The following implementation history describes the earlier v2 revision:
 This capsule supplies new finite AF and primary consumer entry points. It never
 edits an old capsule, submits a job, cancels an allocation, releases a hold, or
 changes a scientific or freshness gate.

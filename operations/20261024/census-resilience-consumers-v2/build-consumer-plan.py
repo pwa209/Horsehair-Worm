@@ -8,10 +8,11 @@ import json
 import shlex
 
 ROOT=Path('/scratch/pwa209/horsehair-worm')
-SUPPORT=ROOT/'maintenance/study-census-resilience-consumers-v2-20261024'
+SUPPORT=ROOT/'maintenance/study-census-resilience-consumers-v5-20261103'
+PRIOR_SUPPORT=ROOT/'maintenance/study-census-resilience-consumers-v2-20261024'
 SELF_NAME='run-census-resilience-consumer-v2-20261024.py'
-PARENTS={'af':'6950429','primary':'6873101'}
-PHASES={kind:'study-'+kind+'-census-resilience-consumers-v2-20261024' for kind in PARENTS}
+PARENTS={'af':'6950429','primary':'7046404'}
+PHASES={kind:'study-'+kind+'-census-resilience-consumers-v5-20261103' for kind in PARENTS}
 
 
 def require(value,message):
@@ -60,6 +61,30 @@ def render(old_plan,kind,binding_locator,binding_value,manifest,*,script_reader)
             'Original script and exact single source-bound invocation required')
         command=shlex.split(old['command']);require(command.count(entry)==1 and own not in command,'Exact unchanged old helper invocation required')
         boundary=command.index(entry);tail=command[boundary+1:]
+        interpreter=command[:boundary]
+        prior=str(PRIOR_SUPPORT/SELF_NAME)
+        if prior in interpreter:
+            # Replace the existing component's old envelope rather than nesting
+            # another invocation around it. Its exact frozen plan metadata and
+            # binding locator must agree with the old command first.
+            require(interpreter.count(prior)==1,'One exact prior consumer envelope required')
+            old_envelope=old.get('census_resilience_consumer',{})
+            locator=old_envelope.get('binding',{})
+            require(old_envelope.get('consumer_kind')==kind
+                and old_envelope.get('entry',{}).get('path')==prior
+                and isinstance(old_envelope.get('entry',{}).get('sha256'),str)
+                and len(old_envelope['entry']['sha256'])==64
+                and locator.get('path')==str(PRIOR_SUPPORT/(kind+'-consumer-binding.json'))
+                and isinstance(locator.get('sha256'),str) and len(locator['sha256'])==64,
+                'Prior source-bound consumer envelope metadata required')
+            at=interpreter.index(prior)
+            require(interpreter[at:]==[prior,'--consumer-binding',locator['path'],
+                '--consumer-binding-sha256',locator['sha256'],'--legacy-entry'],
+                'Exact prior consumer arguments required')
+            interpreter=interpreter[:at]
+        require(all(not token.startswith('--') and not token.endswith(SELF_NAME)
+            for token in interpreter if token not in {'-s','-u','-B'}),
+            'Only the original interpreter prefix may precede the helper')
         require(len(tail)%2==0 and len(set(tail[::2]))==len(tail)//2,'Unique complete inherited native arguments required')
         flags=dict(zip(tail[::2],tail[1::2]));require(flags.get('--segment')==str(index)
             and flags.get('--policy-descriptor')==binding_value['legacy_policy']['path']
@@ -73,7 +98,7 @@ def render(old_plan,kind,binding_locator,binding_value,manifest,*,script_reader)
         require(all(flag in flags for flag in replacements),'Every inherited native registration argument is required')
         for flag,value in replacements.items():tail[tail.index(flag)+1]=value
         envelope=[own,'--consumer-binding',binding_locator['path'],'--consumer-binding-sha256',binding_locator['sha256'],'--legacy-entry',entry]
-        new_command=shlex.join(command[:boundary]+envelope+tail)
+        new_command=shlex.join(interpreter+envelope+tail)
         new_text=text.replace(old['command'],new_command)
         # These are scheduler output/name paths only; the exact old command was
         # replaced above before any script path/name changes are considered.

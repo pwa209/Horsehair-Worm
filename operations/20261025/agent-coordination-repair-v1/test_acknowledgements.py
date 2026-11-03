@@ -2,11 +2,241 @@ from pathlib import Path
 import copy
 import importlib.util
 import subprocess
+import json
+from types import SimpleNamespace
 import pytest
 from test_coordination import recovery
 
 spec=importlib.util.spec_from_file_location('acknowledgement_tests_runtime',Path(__file__).with_name('coordination.py'))
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+
+
+def capacity_row(job,name,cpus=1,state='PENDING',gpu=0):
+    return '|'.join([str(job),'pwa209',name,state,str(cpus),'gres/gpu:a100:'+str(gpu) if gpu else 'N/A','/home/pwa209'])
+
+
+def capacity_chain(first,role,count):
+    return {'role':role,'jobs':{str(first+i):{'name':'hhw-'+role+'-'+str(i),'cpus':8 if role=='provider' else 1,'gpus':0} for i in range(count)}}
+
+
+def test_coordinated_capacity_exact_shared_contract():
+    chains=[capacity_chain(100,'controller',4),capacity_chain(200,'controller',4)]
+    text='\n'.join([capacity_row(1,'mnc',7,'RUNNING'),capacity_row(2,'nmas',32,'RUNNING'),
+        capacity_row(3,'nct',26,'RUNNING'),capacity_row(4,'archive',2,'RUNNING'),capacity_row(5,'hhw-af-f2-old',35),
+        capacity_row(6,'hhw-maintenance',2),capacity_row(100,'hhw-controller-0'),capacity_row(200,'hhw-controller-0')])
+    result=m.capacity_totals(text,{'cpus':6,'gpus':1,'hours':12},serial_chains=chains)
+    assert result['allowed'] and result['prospective_scientific_cpus']==43
+    assert result['prospective_hhw_cpus']==53 and result['prospective_whole_user_narval_cpus']==120
+
+
+@pytest.mark.parametrize('extra',[('hhw-primary-rna',32),('hhw-qualification',4),('hhw-maintenance',1)])
+def test_primary_qualification_and_maintenance_commitments_reduce_science(extra):
+    name,cpus=extra;text='\n'.join([capacity_row(1,'hhw-af-f2-old',41),capacity_row(2,name,cpus)])
+    result=m.capacity_totals(text,{'cpus':4,'gpus':0,'hours':1})
+    assert not result['allowed'] and result['prospective_scientific_cpus']==45+cpus
+
+
+def test_proven_serial_provider_and_controller_chains_are_not_summed():
+    chains=[capacity_chain(100,'provider',64),capacity_chain(200,'controller',4),capacity_chain(300,'controller',4)]
+    rows=[]
+    for chain in chains:
+        for job,contract in chain['jobs'].items():rows.append(capacity_row(job,contract['name'],contract['cpus']))
+    result=m.capacity_totals('\n'.join(rows),{'cpus':43,'gpus':4,'hours':12},serial_chains=chains)
+    assert result['allowed'] and result['provider_cpu_commitments']==8
+    assert result['controller_cpu_commitments']==2 and result['prospective_hhw_cpus']==53
+
+
+def test_unknown_hhw_name_never_escapes_science_or_total_limit():
+    assert not m.capacity_totals(capacity_row(1,'hhw-unknown-worker',46),{'cpus':0,'gpus':0,'hours':1})['allowed']
+
+
+@pytest.mark.parametrize('state',['PENDING','RUNNING','COMPLETING','CONFIGURING'])
+def test_pending_held_and_live_hhw_commitments_all_count(state):
+    result=m.capacity_totals(capacity_row(1,'hhw-af-f2-old',45,state),{'cpus':1,'gpus':0,'hours':1})
+    assert not result['allowed'] and result['prospective_scientific_cpus']==46
+
+
+def test_absent_unresolved_registered_jobs_keep_their_commitments():
+    result=m.capacity_totals('',{'cpus':6,'gpus':1,'hours':12},missing_commitments=[
+        {'job_id':'1','name':'hhw-af-f2-purged-unresolved','cpus':40,'gpus':0}])
+    assert not result['allowed'] and result['prospective_scientific_cpus']==46
+
+
+@pytest.mark.parametrize('text',[capacity_row(1,'hhw-job')+'\n'+capacity_row(1,'hhw-job'),
+    '1|other|hhw-job|PENDING|1|N/A|/home/other','1|pwa209|hhw-job|PENDING|0|N/A|/home/pwa209',
+    '1|pwa209|hhw-job|PENDING|1|unknownGPU|/home/pwa209','incomplete'])
+def test_malformed_capacity_observation_cannot_admit(text):
+    with pytest.raises(ValueError):m.capacity_totals(text,{'cpus':1,'gpus':0,'hours':1})
+
+
+def test_serial_contract_name_conflict_or_parallel_native_allocations_refused():
+    chain=capacity_chain(100,'controller',4)
+    with pytest.raises(ValueError):m.capacity_totals(capacity_row(100,'hhw-other'),{'cpus':1,'gpus':0,'hours':1},serial_chains=[chain])
+    with pytest.raises(ValueError):m.capacity_totals('\n'.join(capacity_row(job,row['name'],1,'RUNNING') for job,row in list(chain['jobs'].items())[:2]),{'cpus':1,'gpus':0,'hours':1},serial_chains=[chain])
+
+
+def test_prospective_gpu_and_whole_user_limits_are_independent():
+    assert not m.capacity_totals(capacity_row(1,'hhw-job',6,gpu=4),{'cpus':6,'gpus':1,'hours':12})['allowed']
+    assert not m.capacity_totals(capacity_row(1,'other-project',112,'RUNNING'),{'cpus':1,'gpus':0,'hours':1})['allowed']
+
+
+def test_new_attempt_capacity_deferral_precedes_any_durable_submission(monkeypatch):
+    _,intent,_=identity();calls=[]
+    monkeypatch.setattr(m,'coordinated_capacity',lambda *a,**kw:(_ for _ in ()).throw(m.PendingCapacity('full')))
+    with pytest.raises(m.PendingCapacity):
+        m.submit_once(None,['sbatch','--parsable','original.sbatch'],lambda c:calls.append(c),lambda hint:None,
+            lambda row:calls.append(row),before_attempt=lambda:m.before_new_attempt({'deadline':m.time.time()+10000},intent,{'jobs':{}}))
+    assert calls==[]
+
+
+def test_partial_accepted_batch_is_released_before_capacity_soft_wait(monkeypatch):
+    calls=[];base=SimpleNamespace(native_namespace=lambda *a:None,submission_journal=lambda *a:None,native_plan=lambda *a:None,
+        PendingRegistration=type('OriginalPendingRegistration',(Exception,),{}))
+    monkeypatch.setattr(m,'coordinated_tick',lambda *a:(_ for _ in ()).throw(m.PendingCapacity('full')))
+    monkeypatch.setattr(m,'release_ready',lambda base,c:calls.append('release-original-accepted-members'))
+    m.install_coordination(base,{'files':{'registry-wait.py':'x'}})
+    with pytest.raises(base.PendingRegistration,match='coordinated_capacity_pending'):base.tick({})
+    assert calls==['release-original-accepted-members']
+
+
+@pytest.mark.parametrize('observed',['missing','complete','running'])
+def test_snapshot_keeps_absent_registered_commitment_until_positive_terminal(tmp_path,monkeypatch,observed):
+    monkeypatch.setattr(m,'primary_visibility_guard',lambda *a,**kw:{'status':'fixture_primary_boundary'})
+    state={'jobs':{'old':{'job_id':'1','status':'submitted','intent':{'intent_id':'old','resources':{'cpus':45,'gpus':0,'hours':12}}}}}
+    record={} if observed=='missing' else {'1':{'job_id_raw':'1','state':'COMPLETED' if observed=='complete' else 'RUNNING'}}
+    reader=lambda *a,**kw:record
+    runner=lambda *a,**kw:subprocess.CompletedProcess(a[0],0,'','')
+    if observed=='complete':
+        result=m.coordinated_snapshot({'cpus':1,'gpus':0,'hours':1},state=state,serial_chains=[],native_reader=reader,evidence_dir=tmp_path,intent_id='next',runner=runner)
+        assert result['allowed'] and result['prospective_scientific_cpus']==1
+    else:
+        with pytest.raises(m.PendingCapacity):m.coordinated_snapshot({'cpus':1,'gpus':0,'hours':1},state=state,serial_chains=[],native_reader=reader,evidence_dir=tmp_path,intent_id='next',runner=runner)
+
+
+@pytest.mark.parametrize('failure',['timeout','stderr','stale'])
+def test_failed_or_stale_capacity_query_defers_without_authority(tmp_path,monkeypatch,failure):
+    monkeypatch.setattr(m,'primary_visibility_guard',lambda *a,**kw:{'status':'fixture_primary_boundary'})
+    times=iter([0,36] if failure=='stale' else [0])
+    def runner(*a,**kw):
+        if failure=='timeout':raise subprocess.TimeoutExpired(a[0],30)
+        return subprocess.CompletedProcess(a[0],0,'','warning' if failure=='stderr' else '')
+    with pytest.raises(m.PendingCapacity):m.coordinated_snapshot({'cpus':1,'gpus':0,'hours':1},state={'jobs':{}},serial_chains=[],native_reader=lambda *a,**kw:{},evidence_dir=tmp_path,intent_id='next',runner=runner,clock=lambda:next(times))
+
+
+def test_partial_capacity_registration_softly_defers_new_work(monkeypatch):
+    monkeypatch.setattr(m,'capacity_chains',lambda c:(_ for _ in ()).throw(ValueError('Partial registration')))
+    with pytest.raises(m.PendingCapacity,match='registration is pending'):
+        m.coordinated_capacity({}, {'intent_id':'next','resources':{'cpus':1,'gpus':0,'hours':1}}, {'jobs':{}})
+
+
+def serial_plan_fixture():
+    tasks=[];rows={}
+    for i in range(4):
+        name='agent-coordination-v7-controller-'+str(i)
+        tasks.append({'name':name,'depends':[] if i==0 else [tasks[-1]['name']],'dependency_kind':'afterok',
+            'resources':{'cpus':1,'gpu':False,'array':None},'script_sha256':'a'*64})
+        rows[name]={'state':'submitted','job_id':str(100+i),'script_sha256':'a'*64}
+    plan={'root':str(m.ROOT),'phase':'agent-coordination-controllers-v7-20261103','config_sha256':m.CONFIG,
+        'release_identity':{'sha256':m.SOURCE},'tasks':tasks}
+    ledger={'plan_sha256':m.canonical(plan),'config_sha256':m.CONFIG,'source_sha256':m.SOURCE,'tasks':rows}
+    return plan,ledger
+
+
+def test_source_bound_serial_plan_and_ledger_reserve_only_one_cpu():
+    plan,ledger=serial_plan_fixture();chain=m.serial_capacity_chain(plan,ledger,'controller')
+    result=m.capacity_totals('\n'.join(capacity_row(job,c['name']) for job,c in chain['jobs'].items()),{'cpus':41,'gpus':0,'hours':12},serial_chains=[chain])
+    assert result['allowed'] and result['controller_cpu_commitments']==1
+    rows='\n'.join(capacity_row(job,c['name']) for job,c in chain['jobs'].items())
+    accepted=m.capacity_totals(rows,{'cpus':44,'gpus':0,'hours':12},serial_chains=[chain])
+    assert accepted['allowed'] and accepted['prospective_hhw_cpus']==53
+    assert m.capacity_totals('',{'cpus':44,'gpus':0,'hours':12},serial_chains=[chain])['allowed']
+    future=capacity_chain(200,'controller',4)
+    future_rows='\n'.join(capacity_row(job,c['name']) for job,c in future['jobs'].items())
+    denied=m.capacity_totals(rows+'\n'+future_rows,{'cpus':44,'gpus':0,'hours':12},serial_chains=[chain,future])
+    assert not denied['allowed'] and denied['prospective_hhw_cpus']==54
+    assert not m.capacity_totals('',{'cpus':44,'gpus':0,'hours':12},serial_chains=[chain,future])['allowed']
+
+
+@pytest.mark.parametrize('change',['parallel','ledger_hash','source','phase','task_name','unsubmitted','duplicate_job','gpu','cpus'])
+def test_serial_role_cannot_be_claimed_by_unproven_plan(change):
+    plan,ledger=serial_plan_fixture()
+    if change=='parallel':plan['tasks'][1]['depends']=[]
+    elif change=='ledger_hash':ledger['plan_sha256']='b'*64
+    elif change=='source':plan['release_identity']['sha256']='c'*64;ledger['source_sha256']='c'*64
+    elif change=='phase':plan['phase']='arbitrary-phase'
+    elif change=='task_name':plan['tasks'][-1]['name']='unrelated-job'
+    elif change=='unsubmitted':ledger['tasks'][plan['tasks'][1]['name']]['state']='submitting'
+    elif change=='duplicate_job':ledger['tasks'][plan['tasks'][1]['name']]['job_id']='100'
+    elif change=='gpu':plan['tasks'][0]['resources']['gpu']=True
+    else:plan['tasks'][0]['resources']['cpus']=2
+    if change!='ledger_hash':ledger['plan_sha256']=m.canonical(plan)
+    with pytest.raises(ValueError):m.serial_capacity_chain(plan,ledger,'controller')
+
+
+@pytest.fixture
+def primary_visibility_fixture(tmp_path,monkeypatch):
+    root=tmp_path/'study';root.mkdir();primary=tmp_path/'original-primary';primary.mkdir()
+    monkeypatch.setattr(m,'ROOT',root)
+    release='20261013-829e3817bee1-0e2b1ebce8bf'
+    (primary/'release.json').write_text(json.dumps({'release_id':release,'source_identity':{'sha256':m.PRIMARY_SOURCE},'config_sha256':m.CONFIG}))
+    def write(path,value):path.parent.mkdir(parents=True,exist_ok=True);path.write_text(json.dumps(value))
+    def phase(name,job='100',array=None,state='submitted',journal=None):
+        task={'name':'task','script_sha256':'a'*64,'resources':{'array':array}}
+        plan={'root':str(root),'phase':name,'config_sha256':m.CONFIG,'release_identity':{'sha256':m.PRIMARY_SOURCE},'tasks':[task]}
+        ledger={'plan_sha256':m.canonical(plan),'source_sha256':m.PRIMARY_SOURCE,'config_sha256':m.CONFIG,
+            'tasks':{'task':{'state':state,'job_id':job,'script_sha256':'a'*64}}}
+        write(root/'plans'/(release+'-'+name)/'plan.json',plan)
+        write(root/'state'/(release+'-'+name+'-submission.json'),ledger)
+        if journal is not None:write(root/'state/pipeline'/release/(name+'-plan-journal.json'),
+            {'state':journal,'phase':name,'source_sha256':m.PRIMARY_SOURCE,'plan_sha256':m.canonical(plan)})
+        return plan,ledger
+    phase('managed-initial')
+    cost={'basis':'sacct final allocated wall time','state':'COMPLETED','exit_code':'0:0','elapsed_seconds':10,'cpus':1}
+    write(root/'state/resource-budget.json',{'native_jobs':{'100':cost}})
+    return root,primary,release,write,phase,cost
+
+
+@pytest.mark.parametrize('journal',['submitting','ambiguous_or_rejected','requires_submission_review'])
+def test_primary_unconfirmed_phase_never_invents_native_id(primary_visibility_fixture,journal):
+    root,primary,release,write,phase,cost=primary_visibility_fixture
+    write(root/'state/pipeline'/release/'behaviour-plan-journal.json',{'state':journal})
+    with pytest.raises(ValueError,match='unconfirmed submission'):
+        m.primary_visibility_guard(set(),lambda *a,**kw:pytest.fail('No native ID may be invented'),root=root,primary=primary)
+
+
+def test_primary_partial_accepted_ledger_remains_pending(primary_visibility_fixture):
+    root,primary,release,write,phase,cost=primary_visibility_fixture;phase('behaviour',job=None,state='submitting',journal='submitting')
+    with pytest.raises(ValueError,match='Unconfirmed primary task'):
+        m.primary_visibility_guard(set(),lambda *a,**kw:pytest.fail('Unconfirmed ID may not be queried'),root=root,primary=primary)
+
+
+@pytest.mark.parametrize('observed',['missing','running','complete'])
+def test_primary_native_visibility_lag_preserves_commitment(primary_visibility_fixture,observed):
+    root,primary,release,write,phase,cost=primary_visibility_fixture;phase('behaviour',job='200',journal='submitting')
+    records={} if observed=='missing' else {'200':{'job_id_raw':'200','user':'pwa209','account':'def-ptewarie_cpu','state':'COMPLETED' if observed=='complete' else 'RUNNING'}}
+    reader=lambda *a,**kw:records
+    if observed=='complete':assert m.primary_visibility_guard(set(),reader,root=root,primary=primary)['absent_final_job_ids']==['200']
+    else:
+        with pytest.raises(ValueError,match='invisible'):m.primary_visibility_guard(set(),reader,root=root,primary=primary)
+
+
+def test_primary_full_visible_ledger_resolves_lost_phase_acknowledgement(primary_visibility_fixture):
+    root,primary,release,write,phase,cost=primary_visibility_fixture;phase('behaviour',job='200',journal='submitting')
+    result=m.primary_visibility_guard({'200'},lambda *a,**kw:pytest.fail('Visible registered job needs no final query'),root=root,primary=primary)
+    assert result['status']=='all_primary_registrations_visible_or_final'
+
+
+def test_primary_source_bound_array_members_visible_or_final(primary_visibility_fixture):
+    root,primary,release,write,phase,cost=primary_visibility_fixture;phase('rna-full',job='200',array='0-2%1')
+    write(root/'state/resource-budget.json',{'native_jobs':{'100':cost,'200_0':cost,'200_2':cost}})
+    result=m.primary_visibility_guard({'200_1'},lambda *a,**kw:pytest.fail('Array members already visible/final'),root=root,primary=primary)
+    assert result['absent_final_job_ids']==[]
+
+
+def test_unrelated_prototype_primary_journals_are_not_current_authority(primary_visibility_fixture):
+    root,primary,release,write,phase,cost=primary_visibility_fixture
+    write(root/'state/pipeline/old-prototype/behaviour-plan-journal.json',{'state':'submitting'})
+    assert m.primary_visibility_guard(set(),lambda *a,**kw:pytest.fail('Completed original initial needs no query'),root=root,primary=primary)['status']=='all_primary_registrations_visible_or_final'
 
 
 def identity():

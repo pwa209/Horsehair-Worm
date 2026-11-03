@@ -105,6 +105,57 @@ def test_primary_keeps_seventy_two_hours(m,monkeypatch):
     assert m.allocation(fields,'123',{'name':'one','script':'/plan/one.sbatch'},'primary',wall=lambda:1893400000)==1893499200
 
 
+def test_verifier_near_shutdown_preserves_startup_reserve(m,monkeypatch):
+    fields=native(m);fields['TimeLimit']='3-00:00:00';end=1893499200
+    monkeypatch.setenv('SLURM_JOB_END_TIME',str(end));task={'name':'one','script':'/plan/one.sbatch'}
+    with pytest.raises(ValueError,match='shutdown margin'):
+        m.allocation(fields,'123',task,'primary',wall=lambda:end-14600)
+    assert m.allocation(fields,'123',task,'primary',wall=lambda:end-14600,startup=False)==end
+    with pytest.raises(ValueError,match='shutdown margin'):
+        m.allocation(fields,'123',task,'primary',wall=lambda:end-300,startup=False)
+
+
+def test_actual_verifier_shutdown_returns_pending_without_scientific_dispatch(m,tmp_path,monkeypatch,capsys):
+    import time
+    from datetime import datetime,timezone
+    m.SUPPORT=tmp_path/'consumer';m.SUPPORT.mkdir();m.ROOT=tmp_path
+    end=int(time.time())+14600;fields=native(m)
+    fields.update(TimeLimit='3-00:00:00',EndTime=datetime.fromtimestamp(end,timezone.utc).strftime('%Y-%m-%dT%H:%M:%S'))
+    tail=['--mode','run','--policy-descriptor','/policy','--policy-descriptor-sha256','a'*64,
+          '--native-plan','/plan','--native-ledger','/ledger','--native-script','/plan/one.sbatch','--native-task','one']
+    binding={'consumer_kind':'primary','legacy_entry':{'path':str(m.PRIMARY),'sha256':m.PRIMARY_SHA},'legacy_policy':{'path':'/policy','sha256':'a'*64}}
+    task={'name':'one','script':'/plan/one.sbatch','census_resilience_consumer':{
+        'entry':{'path':str(m.SUPPORT/m.SELF_NAME),'sha256':'b'*64},
+        'binding':{'path':str(Path('/binding')),'sha256':'c'*64},'consumer_kind':'primary'}}
+    legacy=SimpleNamespace(request_context=lambda args:{'argv':tail,'sequence':1},
+        parser=lambda:SimpleNamespace(parse_args=lambda argv:None),FALSE_FLAGS={**m.FALSE_FLAGS},
+        main=lambda *a:pytest.fail('Shutdown may not dispatch scientific verification'))
+    monkeypatch.setattr(m,'check_binding',lambda *a:(binding,{'files':{m.SELF_NAME:'b'*64}},{}))
+    monkeypatch.setattr(m,'module',lambda *a:legacy);monkeypatch.setattr(m,'registration',lambda *a,**kw:task)
+    monkeypatch.setattr(m,'locator',lambda p:{'path':str(p),'sha256':'d'*64});monkeypatch.setattr(m,'packet',lambda *a,**kw:b'')
+    response=SimpleNamespace(stdout=' '.join(k+'='+shlex.quote(v) for k,v in fields.items()),stderr='',check_returncode=lambda:None)
+    monkeypatch.setattr(m.runpy,'run_path',lambda p:{'run_scontrol_job':lambda *a:response})
+    monkeypatch.setattr(m.os,'geteuid',lambda:3164768,raising=False)
+    monkeypatch.setenv('USER','pwa209');monkeypatch.setenv('SLURM_JOB_ID','123');monkeypatch.setenv('SLURM_JOB_END_TIME',str(end))
+    argv=m.prefix(Path('/binding'),'c'*64,m.PRIMARY)[1:]+['--mode','verify','--request','/request']
+    assert m.main(argv)==75
+    value=json.loads(capsys.readouterr().out)
+    assert value['status']=='pending_external_storage_census' and value['job_id']=='123'
+    assert all(value[k] is False for k in m.FALSE_FLAGS)
+    # The exact frozen parent's protocol recognizes75 before its success-only
+    # branch and turns it into the existing soft pending exception.
+    old=actual_legacy(m,'primary');old.ROOT=tmp_path
+    # Production source checking is covered separately against the actual
+    # pinned guards; this local protocol fixture has no production filesystem.
+    monkeypatch.setattr(old,'source_guard',lambda pins:None)
+    temporary=tmp_path/'allocation-local';temporary.mkdir()
+    context={'job':'123','argv':tail,'parent_mode':'run','descriptor_sha256':'a'*64,'end':end,
+        'allocation':fields,'registration':{},'sequence':0,'pins':{},'temporary':temporary}
+    runner=lambda *a,**kw:subprocess.CompletedProcess(a[0],75,json.dumps(value).encode(),b'')
+    with pytest.raises(old.PendingExternalCensus,match='shutdown reserve'):
+        old.make_consumer(context,runner=runner)(tmp_path)
+
+
 def test_parse_keeps_exact_legacy_tail(m):
     argv=['--consumer-binding','/binding','--consumer-binding-sha256','a'*64,'--legacy-entry','/old.py','--mode','run','--segment','0']
     assert m.parse(argv).legacy_argv==['--mode','run','--segment','0']
@@ -179,7 +230,7 @@ def test_actual_primary_child_and_source_guards_retained(m,monkeypatch):
     command,kw=captured[0];assert command[:3]==['python','-s','-u'] and command.count(str(m.PRIMARY))==1
     assert command[3:]==m.prefix(Path('/binding'),'b'*64,m.PRIMARY)+['--mode','verify','--request','/local/request','--request-sha256','c'*64]
     assert kw['cwd']==old.FRAMEWORK and kw['timeout']==45
-    assert all(getattr(old,n) is v for n,v in functions.items() if n not in {'module','make_consumer','bounded_child'})
+    assert all(getattr(old,n) is v for n,v in functions.items() if n not in {'module','make_consumer','bounded_child','derive_run'})
     import inspect
     assert 'source_guard(pins)' in inspect.getsource(old.verify_census)
     assert 'finalized_primary_qualification(policy, manifest, slurm, refresh)' in inspect.getsource(old.verify_census)
@@ -228,6 +279,144 @@ def test_plan_new_chain_held_afterany_exact_old_parent(builder,kind):
         if kind=='primary':assert task['primary_external_census']==old['tasks'][i]['primary_external_census']
 
 
+@pytest.mark.parametrize('allowed',[False,True])
+def test_primary_capacity_private_tick_defers_before_any_submission_journal(m,tmp_path,allowed):
+    path=tmp_path/'pipeline.py'
+    path.write_text('''def tick(candidate):
+ phases={};ledger_path="/ledger";journal_path="/journal";plan_records={};ledgers={};states={}
+ for name in ["phase"]:
+  atomic_json(journal_path,{"state":"submitting","phase":name})
+  result=submitter(candidate,ledger_path)
+  phases[name]={"status":"queued"}
+ return phases
+''')
+    calls=[];namespace={'atomic_json':lambda *a:calls.append(('journal',a)),
+        'submitter':lambda *a:calls.append(('submit',a))}
+    exec(compile(path.read_text(),str(path),'exec'),namespace)
+    original=namespace['tick'];pipeline=SimpleNamespace(__file__=str(path),**namespace)
+    checked=[]
+    def guard(*args):checked.append(args);return nullcontext({'allowed':allowed})
+    private,proof=m.derive_primary_capacity_tick(pipeline,guard,expected_sha=m.digest(path))
+    result=private({'phase':'new'})
+    assert pipeline.tick is original and len(checked)==1 and proof['guard_precedes_submitting_journal']
+    if allowed:assert [v[0] for v in calls]==['journal','submit'] and result['phase']['status']=='queued'
+    else:assert calls==[] and result['phase']['status']=='waiting_for_coordinated_capacity'
+
+
+def test_actual_primary_tick_ast_and_original_functions_preserved(m):
+    path=HERE.parents[2]/'src/horsehair/pipeline.py'
+    pipeline=SimpleNamespace(__file__=str(path),sentinel=lambda:None)
+    original=pipeline.sentinel
+    private,proof=m.derive_primary_capacity_tick(pipeline,lambda *a:nullcontext({'allowed':False}),expected_sha=m.digest(path))
+    assert callable(private) and pipeline.sentinel is original and proof['normal_primary_tick_ast_preserved']
+
+
+def test_primary_capacity_state_keeps_pending_held_array_commitments(m):
+    resources={'cpus':8,'gpu':False,'hours':2,'array':'0-2%1'}
+    plan={'tasks':[{'name':'rna','resources':resources,'script_sha256':'a'*64}]}
+    ledger={'plan_sha256':m.canonical(plan),'tasks':{'rna':{'state':'submitted','job_id':'123','script_sha256':'a'*64}}}
+    states={'123_0':{'state':'COMPLETED','exit_code':'0:0'},'123_1':{'state':'PENDING'}}
+    jobs=m.primary_capacity_state({'rna':plan},{'rna':ledger},states)
+    assert set(jobs)=={'123_1','123_2'} and all(j['intent']['resources']['cpus']==8 for j in jobs.values())
+
+
+def test_primary_capacity_state_refuses_ambiguous_registered_work(m):
+    plan={'tasks':[{'name':'science','resources':{'cpus':2,'gpu':False,'hours':1},'script_sha256':'a'*64}]}
+    ledger={'plan_sha256':m.canonical(plan),'tasks':{'science':{'state':'submitting'}}}
+    with pytest.raises(ValueError,match='Ambiguous'):m.primary_capacity_state({'s':plan},{'s':ledger},{})
+
+
+@pytest.mark.parametrize('array,cpus',[('0-59%1',32),('0-59%2',64),('0-2',96)])
+def test_primary_candidate_capacity_uses_frozen_array_concurrency(m,array,cpus):
+    from horsehair.pipeline import prospective_capacity
+    candidate={'phase':'proposed','tasks':[{'name':'rna','depends':[],'resources':{'cpus':32,'gpu':False,'hours':2,'array':array}},
+                        {'name':'parallel','depends':[],'resources':{'cpus':4,'gpu':False,'hours':1}}]}
+    assert m.primary_candidate_resources(candidate,prospective_capacity)=={'cpus':cpus+4,'gpus':0,'hours':2}
+
+
+def test_primary_candidate_serial_dag_uses_original_peak_not_task_sum(m):
+    from horsehair.pipeline import prospective_capacity
+    candidate={'phase':'proposed','tasks':[
+        {'name':'train','depends':[],'resources':{'cpus':6,'gpu':True,'hours':2}},
+        {'name':'evaluate','depends':['train'],'resources':{'cpus':32,'gpu':False,'hours':1}},
+        {'name':'analyze','depends':['evaluate'],'resources':{'cpus':4,'gpu':False,'hours':1}}]}
+    assert m.primary_candidate_resources(candidate,prospective_capacity)=={'cpus':32,'gpus':1,'hours':2}
+    parallel=copy.deepcopy(candidate);parallel['tasks'][1]['depends']=[]
+    assert m.primary_candidate_resources(parallel,prospective_capacity)['cpus']==38
+    parallel['tasks'].append({'name':'other','depends':[],'resources':{'cpus':8,'gpu':False,'hours':1}})
+    assert m.primary_candidate_resources(parallel,prospective_capacity)['cpus']==46
+
+
+def test_primary_uses_exact_shared_coordinator_capacity_contract(m):
+    path=m.COORDINATION if m.COORDINATION.exists() else HERE.parents[1]/'20261025/agent-coordination-repair-v1/coordination.py'
+    assert m.digest(path)==m.COORDINATION_SHA
+    shared=load(path,'qualified_shared_primary_capacity')
+    native='101|pwa209|hhw-primary-controller|RUNNING|1|N/A|/scratch/pwa209/horsehair-worm\n'
+    native+='201|pwa209|hhw-census-provider|PENDING|8|N/A|/scratch/pwa209/horsehair-worm\n'
+    chains=[{'role':'controller','jobs':{'101':{'name':'hhw-primary-controller','cpus':1,'gpus':0}}},
+            {'role':'provider','jobs':{'201':{'name':'hhw-census-provider','cpus':8,'gpus':0}}}]
+    allowed=shared.capacity_totals(native,{'cpus':44,'gpus':0,'hours':2},serial_chains=chains)
+    assert allowed['allowed'] and allowed['prospective_hhw_cpus']==53
+    chains.append({'role':'controller','jobs':{'102':{'name':'hhw-agent-controller','cpus':1,'gpus':0}}})
+    denied=shared.capacity_totals(native,{'cpus':44,'gpus':0,'hours':2},serial_chains=chains)
+    assert not denied['allowed'] and denied['prospective_hhw_cpus']==54
+
+
+def test_shared_snapshot_primary_ambiguity_blocks_before_capacity_math(m,tmp_path,monkeypatch):
+    path=m.COORDINATION if m.COORDINATION.exists() else HERE.parents[1]/'20261025/agent-coordination-repair-v1/coordination.py'
+    assert m.digest(path)==m.COORDINATION_SHA
+    shared=load(path,'qualified_shared_primary_visibility');calls=[]
+    def unresolved(*args,**kwargs):
+        calls.append((args,kwargs));raise shared.PendingCapacity('Source-bound primary submitting phase awaits actual acceptance evidence')
+    monkeypatch.setattr(shared,'primary_visibility_guard',unresolved)
+    monkeypatch.setattr(shared,'capacity_totals',lambda *a,**kw:pytest.fail('An ambiguous primary phase must not reach capacity arithmetic'))
+    response=SimpleNamespace(returncode=0,stdout='',stderr='')
+    with pytest.raises(shared.PendingCapacity,match='primary submitting'):
+        shared.coordinated_snapshot({'cpus':6,'gpus':1,'hours':1},state={'jobs':{}},serial_chains=[],
+            native_reader=lambda *a,**kw:{},evidence_dir=tmp_path,intent_id='primary-test',runner=lambda *a,**kw:response)
+    assert len(calls)==1
+
+
+def previous_consumer_plan_fixture(builder):
+    old,scripts,bound,loc,manifest=old_plan_fixture(builder,'primary')
+    for task in old['tasks']:
+        prior=str(builder.PRIOR_SUPPORT/builder.SELF_NAME)
+        old_binding={'path':str(builder.PRIOR_SUPPORT/'primary-consumer-binding.json'),'sha256':'e'*64}
+        envelope=[prior,'--consumer-binding',old_binding['path'],
+                  '--consumer-binding-sha256',old_binding['sha256'],'--legacy-entry']
+        previous=task['command'];args=shlex.split(previous);at=args.index(bound['legacy_entry']['path'])
+        task['command']=shlex.join(args[:at]+envelope+args[at:])
+        scripts[task['script']]=scripts[task['script']].replace(previous,task['command'])
+        task['script_sha256']=builder.canonical(scripts[task['script']])
+        task['census_resilience_consumer']={'entry':{'path':prior,'sha256':'f'*64},
+            'binding':old_binding,'consumer_kind':'primary'}
+    return old,scripts,bound,loc,manifest
+
+
+def test_resume_replaces_prior_consumer_envelope_without_nesting(builder):
+    old,scripts,bound,loc,manifest=previous_consumer_plan_fixture(builder)
+    result=builder.render(old,'primary',loc,bound,manifest,script_reader=scripts.__getitem__)
+    for old_task,task in zip(old['tasks'],result['plan']['tasks']):
+        command=shlex.split(task['command']);entry=bound['legacy_entry']['path']
+        assert command.count(str(builder.SUPPORT/builder.SELF_NAME))==1
+        assert str(builder.PRIOR_SUPPORT/builder.SELF_NAME) not in command
+        assert command.count('--legacy-entry')==1 and command.count(entry)==1
+        assert task['primary_external_census']==old_task['primary_external_census']
+        assert task['external_dependencies']==(['7046404'] if task is result['plan']['tasks'][0] else [])
+
+
+@pytest.mark.parametrize('change',['binding','duplicate','metadata'])
+def test_resume_refuses_ambiguous_prior_consumer_envelope(builder,change):
+    old,scripts,bound,loc,manifest=previous_consumer_plan_fixture(builder)
+    task=old['tasks'][0];original=task['command'];args=shlex.split(original)
+    if change=='binding':args[args.index('--consumer-binding')+1]='/wrong/binding.json'
+    elif change=='duplicate':args.insert(args.index('--consumer-binding'),str(builder.PRIOR_SUPPORT/builder.SELF_NAME))
+    else:task['census_resilience_consumer']['binding']['sha256']='9'*64
+    task['command']=shlex.join(args);scripts[task['script']]=scripts[task['script']].replace(original,task['command'])
+    task['script_sha256']=builder.canonical(scripts[task['script']])
+    with pytest.raises(ValueError):builder.render(old,'primary',loc,bound,manifest,script_reader=scripts.__getitem__)
+
+
 @pytest.mark.parametrize('change',['parent','script','resource','segment','policy','dependency','duplicate_helper','embedded_dependency'])
 def test_plan_refuses_ambiguous_old_inputs(builder,change):
     old,scripts,bound,loc,manifest=old_plan_fixture(builder,'af')
@@ -262,7 +451,7 @@ def chain_fixture(m):
         issued=['6950429'] if i==0 else [str(899+i)]
         rows[name]={'state':'submitted','job_id':job,'script_sha256':'a'*64,'dependency_kind':'afterany','issued_native_dependencies':issued,
             'completed_native_dependencies':[],'dependency_resolution_sha256':m.canonical({'kind':'afterany','issued':issued,'completed':[]})}
-    return {'phase':'study-af-census-resilience-consumers-v2-20261024','tasks':tasks},{'tasks':rows},binding
+    return {'phase':'study-af-census-resilience-consumers-v5-20261103','tasks':tasks},{'tasks':rows},binding
 
 
 def test_chain_and_native_predecessor_positive(m):
@@ -271,6 +460,58 @@ def test_chain_and_native_predecessor_positive(m):
     def complete(job,**kw):calls.append((job,kw));return {'positive':True}
     m.predecessor_guard({'Dependency':'(null)'},plan['tasks'][0],ledger,binding,complete)
     assert calls and all(k=={'dependency_kind':'afterany'} for _,k in calls)
+
+
+def accounting_fixture(m):
+    plan,ledger,binding=chain_fixture(m);task=plan['tasks'][1]
+    final={'job_id_raw':'900','state':'COMPLETED','exit_code':'0:0','cpus':1,'elapsed_seconds':123,
+        'user':'pwa209','account':'def-ptewarie_cpu','unallocated_metadata':False,
+        'end':'2030-01-01T10:00:00','alloc_tres':'cpu=1,mem=64G,node=1','max_rss':'1024K'}
+    return task,ledger,binding,final
+
+
+@pytest.mark.parametrize('state,exit_code',[('COMPLETED','0:0'),('FAILED','1:0'),('TIMEOUT','0:15')])
+def test_predecessor_accounting_lag_refreshes_actual_final_record(m,state,exit_code):
+    task,ledger,binding,row=accounting_fixture(m);row.update(state=state,exit_code=exit_code);saved={};calls=[]
+    def completion(job,**kw):return {'positive':True} if job==binding['afterany_parent'] or job in saved else None
+    def native(ids,rosters,**kw):
+        calls.append((ids,rosters,kw));return {'900':row}
+    def reconcile(ids,runner):
+        response=runner(['sacct','-j',','.join(ids)]);assert response.returncode==0
+        assert response.stdout=='|'.join(['900','900',state,'123','1',row['alloc_tres'],exit_code,'1024K'])
+        saved['900']=row
+    value=m.finalized_predecessors({'Dependency':'(null)'},task,ledger,binding,completion,native,reconcile,
+        20000,wall=lambda:1000,monotonic=lambda:0,sleeper=lambda _:pytest.fail('Final evidence needs no sleep'))
+    assert value['native_reads']==1 and calls==[(['900'],{},{'owner':'pwa209','account':'def-ptewarie_cpu'})]
+
+
+@pytest.mark.parametrize('change',['owner','account','job','cpus','gpu','elapsed','unallocated','end','exit'])
+def test_predecessor_accounting_refuses_wrong_native_allocation(m,change):
+    task,ledger,binding,row=accounting_fixture(m)
+    key,value={'owner':('user','other'),'account':('account','def-other'),'job':('job_id_raw','901'),
+        'cpus':('cpus',2),'gpu':('alloc_tres','cpu=1,gres/gpu=1'),'elapsed':('elapsed_seconds',0),
+        'unallocated':('unallocated_metadata',True),'end':('end','Unknown'),'exit':('exit_code','unknown')}[change]
+    row[key]=value
+    completion=lambda job,**kw:{'positive':True} if job==binding['afterany_parent'] else None
+    with pytest.raises(ValueError,match='Positive owned scalar'):
+        m.finalized_predecessors({'Dependency':'(null)'},task,ledger,binding,completion,lambda *a,**kw:{'900':row},
+            lambda *a,**kw:pytest.fail('Invalid allocation may not enter accounting'),20000,wall=lambda:1000,monotonic=lambda:0)
+
+
+@pytest.mark.parametrize('observation',['missing','running','timeout'])
+def test_predecessor_missing_or_running_accounting_wait_is_finite(m,observation):
+    task,ledger,binding,row=accounting_fixture(m);row['state']='RUNNING';clock=[0.];queries=[]
+    def native(*a,**kw):
+        queries.append(a)
+        if observation=='timeout':raise subprocess.TimeoutExpired(['sacct'],45)
+        return {} if observation=='missing' else {'900':row}
+    def sleep(seconds):clock[0]+=seconds
+    completion=lambda job,**kw:{'positive':True} if job==binding['afterany_parent'] else None
+    with pytest.raises(ValueError,match='Finite wait'):
+        m.finalized_predecessors({'Dependency':'(null)'},task,ledger,binding,completion,native,
+            lambda *a,**kw:pytest.fail('No final proof may be persisted'),20000,
+            wall=lambda:1000+clock[0],monotonic=lambda:clock[0],sleeper=sleep)
+    assert clock[0]==900 and len(queries)==30
 
 
 @pytest.mark.parametrize('change',['phase','parallel','parent','duplicate_job','unsubmitted','afterok','wrong_native_edge','nonterminal'])

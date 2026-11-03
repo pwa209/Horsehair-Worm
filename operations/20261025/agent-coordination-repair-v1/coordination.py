@@ -22,7 +22,7 @@ import sys
 import time
 
 ROOT=Path('/scratch/pwa209/horsehair-worm')
-SUPPORT=ROOT/'maintenance/agent-coordination-repair-v4-20261026'
+SUPPORT=ROOT/'maintenance/agent-coordination-repair-v8-20261103'
 PRIOR_SUPPORT=ROOT/'maintenance/agent-coordination-repair-v1-20261025'
 FRAMEWORK=ROOT/'releases/20261021-6ed201653dfa-4f3903d7c26e'
 CAMPAIGN=ROOT/'maintenance/study-af-campaign-v1-20261021/agent-final-f64-v1'
@@ -32,6 +32,10 @@ CONSUMER_BINDING=CONSUMER.parent/'af-consumer-binding.json'
 CONSUMER_BINDING_SHA='7c59a1e4a78ff3cbe5d44666a4830a16027585ea9525bf87c5f1040f83755288'
 SOURCE='4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1'
 CONFIG='446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35'
+PRIMARY=Path('/project/def-ptewarie/pwa209/horsehair-worm/releases/20261013-829e3817bee1-0e2b1ebce8bf')
+PRIMARY_SOURCE='0e2b1ebce8bffe10799470b3ac20828e621f1415f3a18bca8cd67d502f1e8630'
+PRIMARY_PHASES=('rna-full','agents-development','agents-final','behaviour-benchmark','behaviour',
+    'interventions','screen','molecular-benchmark','molecular-transfer','molecular-corroboration','synthesis')
 OLD_CONTROLLERS=('7178192','7178209','7178218','7178228','7187374','7187376',
                  '7187384','7187393','7187402','7187410','7187424','7187433')
 FAILED='7110041'
@@ -49,6 +53,249 @@ class PendingAcknowledgement(TimeoutError):
 
 class SubmissionWindowExhausted(PendingAcknowledgement):
     """A normal finite cutoff; the existing successor resumes saved work."""
+
+
+class PendingCapacity(PendingAcknowledgement):
+    """Prospective commitments defer new work without replacing accepted jobs."""
+
+
+COORDINATED_LIMITS={'scientific_gpus':4,'hhw_cpus':53,
+    'provider_cpu_reserve':8,'whole_user_narval_cpus':120}
+
+
+def capacity_totals(stdout,resources,*,serial_chains=(),missing_commitments=()):
+    """Conservative committed resources, with proven serial chains counted once.
+
+    Every unknown HHW commitment is scientific until an exact source-bound
+    controller/provider chain proves its smaller concurrency. Other projects'
+    allocated work is observed; their parent-coordinated caps are separate.
+    """
+    require(type(resources) is dict and set(resources)=={'cpus','gpus','hours'}
+        and all(type(v) is int for v in resources.values()) and resources['cpus']>=0
+        and resources['gpus']>=0 and resources['hours']>0,'Finite prospective resources required')
+    roles={};groups=[]
+    for chain in serial_chains:
+        require(set(chain)=={'role','jobs'} and chain['role'] in {'controller','provider'}
+            and isinstance(chain['jobs'],dict) and chain['jobs'],'Explicit proven serial chain required')
+        group={'role':chain['role'],'commitments':[],'allocated':0};groups.append(group)
+        for job,contract in chain['jobs'].items():
+            require(re.fullmatch('[1-9][0-9]*',job) and job not in roles and set(contract)=={'name','cpus','gpus'}
+                and contract['name'].startswith('hhw-') and contract['cpus']==(1 if chain['role']=='controller' else 8)
+                and contract['gpus']==0,'Distinct exact serial CPU contracts required')
+            group['commitments'].append(contract['cpus'])
+            roles[job]=(group,contract)
+    science_cpus=resources['cpus'];science_gpus=resources['gpus'];other=0;seen=set();selected=[]
+    def add(job,name,status,cpus,gpus):
+        nonlocal science_cpus,science_gpus,other
+        allocated=status!='PENDING'
+        if job in roles:
+            group,contract=roles[job]
+            require(name==contract['name'] and cpus==contract['cpus'] and gpus==contract['gpus'],
+                'Observed serial allocation differs from its registered contract')
+            group['commitments'].append(cpus);group['allocated']+=int(allocated)
+        elif name.startswith('hhw-'):
+            science_cpus+=cpus;science_gpus+=gpus
+            selected.append({'job_id':job,'name':name,'state':status,'cpus':cpus,'gpus':gpus})
+        elif allocated:other+=cpus
+    for line in stdout.splitlines():
+        if not line.strip():continue
+        cells=[v.strip() for v in line.split('|')]
+        require(len(cells)==7,'Complete native capacity fields required')
+        job,user,name,status,cpus,gres,workdir=cells
+        require(re.fullmatch(r'[1-9][0-9]*(?:_[0-9]+)?',job) and job not in seen and user=='pwa209'
+            and cpus.isdigit() and int(cpus)>0 and status,'Unique owned native commitments required')
+        seen.add(job);gpu=0
+        if gres not in {'N/A','(null)','None',''}:
+            match=re.fullmatch(r'gres/gpu(?::[A-Za-z0-9_.-]+)?:([0-9]+)(?:\([^)]*\))?',gres)
+            require(match is not None,'Exact requested GPU count required');gpu=int(match[1])
+        add(job,name,status,int(cpus),gpu)
+    for item in missing_commitments:
+        require(set(item)=={'job_id','name','cpus','gpus'} and item['job_id'] not in seen
+            and re.fullmatch(r'[1-9][0-9]*(?:_[0-9]+)?',item['job_id']) and item['name'].startswith('hhw-')
+            and type(item['cpus']) is int and item['cpus']>0 and type(item['gpus']) is int and item['gpus']>=0,
+            'Exact unresolved registered commitment required')
+        seen.add(item['job_id']);add(item['job_id'],item['name'],'PENDING',item['cpus'],item['gpus'])
+    controllers=providers=0
+    for group in groups:
+        require(group['allocated']<=1,'Proven serial chain has concurrent native allocations')
+        value=max(group['commitments'],default=0)
+        if group['role']=='controller':controllers+=value
+        else:providers+=value
+    hhw=science_cpus+controllers+max(providers,8);whole=other+hhw
+    return {'allowed':science_gpus<=4 and hhw<=53 and whole<=120,
+        'limits':COORDINATED_LIMITS.copy(),'prospective_scientific_cpus':science_cpus,
+        'prospective_scientific_gpus':science_gpus,'prospective_hhw_cpus':hhw,
+        'prospective_whole_user_narval_cpus':whole,'other_allocated_cpus':other,
+        'controller_cpu_commitments':controllers,'provider_cpu_commitments':providers,
+        'registered_hhw_workers':selected,'native_job_count':len(seen),
+        'pending_held_hhw_work_reserved':True,'other_pending_work_is_not_a_reservation':True,
+        'atomic_cross_project_reservation_claimed':False}
+
+
+def serial_capacity_chain(plan,ledger,role):
+    """Read only the exact ordered controller/provider registration contract."""
+    expected=1 if role=='controller' else 8
+    require(role in {'controller','provider'} and plan['root']==str(ROOT) and plan['config_sha256']==CONFIG
+        and ledger['config_sha256']==CONFIG and ledger['source_sha256']==plan['release_identity']['sha256']
+        and ledger['plan_sha256']==canonical(plan),'Source-bound serial capacity plan/ledger required')
+    phase=plan['phase'];source=plan['release_identity']['sha256']
+    provider=role=='provider' and phase=='study-census-resilience-v1-20261024' and source==SOURCE
+    primary=role=='controller' and phase=='study-primary-census-resilience-consumers-v5-20261103' and source=='d89b31180d4c4ffe9c4023dc5534b96f2d157a3a8e3aecaff30849283d00a705'
+    agent=role=='controller' and phase.startswith('agent-coordination-') and source==SOURCE
+    require(provider or primary or agent,'Only the exact existing workflow chain roles may reserve concurrency')
+    tasks=plan['tasks'];require(len(tasks)==(4 if role=='controller' else 64),'Exact finite serial chain length required')
+    jobs={}
+    for index,task in enumerate(tasks):
+        prefix='rolling-storage-census-' if provider else 'primary-resilient-census-controller-' if primary else 'agent-coordination-'
+        require(task['name'].startswith(prefix) and task['depends']==([] if index==0 else [tasks[index-1]['name']])
+            and task['dependency_kind'] in {'afterok','afterany'} and task['resources']['cpus']==expected
+            and task['resources']['gpu'] is False and task['resources'].get('array') is None,
+            'Exact serial CPU-only capacity edges required')
+        row=ledger['tasks'][task['name']];job=row['job_id']
+        require(row['state']=='submitted' and re.fullmatch('[1-9][0-9]*',job) and job not in jobs
+            and row['script_sha256']==task['script_sha256'],'Exact unique registered serial jobs required')
+        jobs[job]={'name':'hhw-'+task['name'],'cpus':expected,'gpus':0}
+    return {'role':role,'jobs':jobs}
+
+
+def capacity_chains(c):
+    bindings=[(c['capacity_registration'],'controller'),
+        ({'plan':str(ROOT/'plans/study-primary-census-resilience-consumers-v5-20261103/plan.json'),
+          'ledger':str(ROOT/'state/study-primary-census-resilience-consumers-v5-20261103-submission.json')},'controller'),
+        ({'plan':str(ROOT/'plans/study-census-resilience-v1-20261024/plan.json'),
+          'ledger':str(ROOT/'state/study-census-resilience-v1-20261024-submission.json')},'provider')]
+    result=[];seen=set()
+    bp=ROOT/'state/resource-budget.json';costs=json.loads(read(bp)).get('native_jobs',{}) if bp.exists() else {}
+    terminal={'COMPLETED','FAILED','CANCELLED','TIMEOUT','OUT_OF_MEMORY','NODE_FAIL','PREEMPTED','BOOT_FAIL','DEADLINE','REVOKED'}
+    for binding,role in bindings:
+        pp,lp=Path(binding['plan']),Path(binding['ledger'])
+        if (str(pp),str(lp)) in seen:continue
+        seen.add((str(pp),str(lp)))
+        if not pp.exists() and not lp.exists():continue
+        require(pp.exists() and lp.exists(),'Partial serial registration cannot admit capacity')
+        chain=serial_capacity_chain(json.loads(read(pp)),json.loads(read(lp)),role)
+        remaining={}
+        for job,contract in chain['jobs'].items():
+            cost=costs.get(job,{})
+            final=cost.get('basis')=='sacct final allocated wall time' and cost.get('state') in terminal
+            final=final and re.fullmatch('[0-9]+:[0-9]+',str(cost.get('exit_code',''))) is not None
+            final=final and type(cost.get('elapsed_seconds')) is int and cost['elapsed_seconds']>=0
+            final=final and type(cost.get('cpus')) is int and cost['cpus']>=0
+            if not final:remaining[job]=contract
+        if remaining:result.append({'role':role,'jobs':remaining})
+    return result
+
+
+def primary_visibility_guard(seen,native_reader,*,root=None,primary=None):
+    """An invisible or ambiguous primary registration cannot free capacity.
+
+    The original phase plans and journals are the authority. Unconfirmed
+    attempts pause new admission without inventing a job ID or replaying it.
+    Acknowledged scalar/array allocations absent from squeue need genuine final
+    accounting before this guard lets either existing workflow admit more work.
+    """
+    root=ROOT if root is None else Path(root);primary=PRIMARY if primary is None else Path(primary)
+    raw=(primary/'release.json').read_bytes();require(len(raw)<=1_000_000,'Finite primary identity required')
+    identity=json.loads(raw);release=identity['release_id']
+    require(identity['source_identity']['sha256']==PRIMARY_SOURCE and identity['config_sha256']==CONFIG
+        and re.fullmatch('[A-Za-z0-9][A-Za-z0-9._-]{0,127}',release),'Original primary release/source/config required')
+    initial=next((phase for phase in ('managed-initial','initial') if (root/'state'/(release+'-'+phase+'-submission.json')).exists()),None)
+    require(initial is not None,'Original primary initial registration is unavailable')
+    budget_path=root/'state/resource-budget.json'
+    costs=json.loads(read(budget_path)).get('native_jobs',{}) if budget_path.exists() else {}
+    absent=set();rosters={};pins={};terminal={'COMPLETED','FAILED','CANCELLED','TIMEOUT','OUT_OF_MEMORY','NODE_FAIL','PREEMPTED','BOOT_FAIL','DEADLINE','REVOKED'}
+    for phase in (initial,*PRIMARY_PHASES):
+        pp=root/'plans'/(release+'-'+phase)/'plan.json';lp=root/'state'/(release+'-'+phase+'-submission.json')
+        jp=root/'state/pipeline'/release/(phase+'-plan-journal.json')
+        journal=json.loads(read(jp)) if jp.exists() else None
+        if not lp.exists():
+            require(journal is None or journal.get('state') in {'planning','plan_frozen'},
+                'Primary phase has an unconfirmed submission; capacity remains pending')
+            continue
+        require(pp.exists(),'Primary registered ledger has no original phase plan')
+        plan=json.loads(read(pp));ledger=json.loads(read(lp));pins[str(pp)]=digest(pp);pins[str(lp)]=digest(lp)
+        require(plan['root']==str(root) and plan['phase']==phase and plan['config_sha256']==CONFIG
+            and plan['release_identity']['sha256']==PRIMARY_SOURCE and ledger['plan_sha256']==canonical(plan)
+            and ledger.get('source_sha256',PRIMARY_SOURCE)==PRIMARY_SOURCE and ledger.get('config_sha256',CONFIG)==CONFIG,
+            'Original primary phase source/config/plan/ledger binding differs')
+        if journal is not None:
+            pins[str(jp)]=digest(jp)
+            require(journal.get('source_sha256')==PRIMARY_SOURCE and journal.get('phase')==phase
+                and journal.get('plan_sha256')==canonical(plan),'Primary phase mutation journal differs from its bound plan')
+        tasks=plan['tasks'];require(tasks and len({t['name'] for t in tasks})==len(tasks),'Distinct original primary tasks required')
+        require(set(ledger['tasks'])=={t['name'] for t in tasks},'Partial primary phase ledger remains unresolved')
+        for task in tasks:
+            row=ledger['tasks'][task['name']];job=row.get('job_id')
+            require(row.get('state')=='submitted' and isinstance(job,str) and re.fullmatch('[1-9][0-9]*',job)
+                and row.get('script_sha256')==task['script_sha256'],'Unconfirmed primary task preserves its capacity')
+            array=task['resources'].get('array');ids=[job]
+            if array:
+                match=re.fullmatch(r'([0-9]+)(?:-([0-9]+))?(?:%[1-9][0-9]*)?',str(array))
+                require(match is not None,'Exact finite original primary array roster required')
+                first,last=int(match[1]),int(match[2] or match[1]);require(first<=last and last-first<=10000,'Bounded original primary array required')
+                rosters[job]=list(range(first,last+1));ids=[job+'_'+str(index) for index in rosters[job]]
+            for ident in ids:
+                cost=costs.get(ident,{})
+                final=cost.get('basis')=='sacct final allocated wall time' and cost.get('state') in terminal
+                final=final and re.fullmatch('[0-9]+:[0-9]+',str(cost.get('exit_code',''))) is not None
+                final=final and type(cost.get('elapsed_seconds')) is int and cost['elapsed_seconds']>=0
+                final=final and type(cost.get('cpus')) is int and cost['cpus']>=0
+                if ident not in seen and not final:absent.add(ident)
+    records=native_reader(sorted(absent),rosters,owner='pwa209',account=None) if absent else {}
+    for ident in absent:
+        record=records.get(ident,{})
+        require(record.get('state') in terminal and record.get('user')=='pwa209'
+            and record.get('account') in {'def-ptewarie_cpu','def-ptewarie_gpu'}
+            and re.fullmatch('[1-9][0-9]*',str(record.get('job_id_raw',''))),
+            'Registered primary allocation is invisible without positive final accounting')
+    for path,pin in pins.items():require(digest(path)==pin,'Primary registration changed during capacity observation')
+    return {'status':'all_primary_registrations_visible_or_final','phase_source_pins':pins,
+        'fresh_final_records':records,'absent_final_job_ids':sorted(absent)}
+
+
+def coordinated_snapshot(resources,*,state,serial_chains,native_reader,evidence_dir,intent_id,
+                         runner=None,clock=time.time):
+    from horsehair.core import atomic_json
+    command=['squeue','--local','-r','--user=pwa209','--noheader','--format=%i|%u|%.200j|%T|%C|%b|%Z']
+    before=clock();runner=subprocess.run if runner is None else runner
+    try:
+        response=runner(command,text=True,capture_output=True,timeout=30)
+        require(response.returncode==0 and not response.stderr and len(response.stdout.encode())<=2_000_000,
+            'Fresh complete actual native capacity query required')
+        seen={line.split('|',1)[0].strip() for line in response.stdout.splitlines() if line.strip()}
+        primary_proof=primary_visibility_guard(seen,native_reader)
+        absent={j['job_id']:j for j in state['jobs'].values() if j['job_id'] is not None and j['status']!='complete' and j['job_id'] not in seen}
+        observed=native_reader(sorted(absent),{},owner='pwa209',account=None) if absent else {}
+        missing=[];terminal={'COMPLETED','FAILED','CANCELLED','TIMEOUT','OUT_OF_MEMORY','NODE_FAIL','PREEMPTED','BOOT_FAIL','DEADLINE','REVOKED'}
+        for job,item in absent.items():
+            native=observed.get(job)
+            if native and native.get('job_id_raw')==job and native.get('state') in terminal:continue
+            resource=item['intent']['resources'];missing.append({'job_id':job,'name':item.get('native_name','hhw-af-f2-'+item['intent']['intent_id']),
+                'cpus':resource['cpus'],'gpus':resource['gpus']})
+        record=capacity_totals(response.stdout,resources,serial_chains=serial_chains,missing_commitments=missing)
+        now=clock();require(0<=now-before<=35,'Native capacity observation expired')
+        record.update({'observed_unix':now,'elapsed_seconds':now-before,'command':command,
+            'native_stdout_sha256':hashlib.sha256(response.stdout.encode()).hexdigest(),'intent_id':intent_id,
+            'absent_registered_native_records':observed,**FLAGS})
+        record['primary_registration_visibility']=primary_proof
+        atomic_json(Path(evidence_dir)/'coordinated-capacity-last.json',record)
+        if not record['allowed']:raise PendingCapacity('Coordinated HHW capacity pending: '+json.dumps(record['limits'],sort_keys=True))
+        return record
+    except PendingCapacity:raise
+    except (subprocess.SubprocessError,OSError,ValueError,KeyError,TypeError) as error:
+        raise PendingCapacity('Actual prospective capacity observation pending: '+str(error)) from error
+
+
+def coordinated_capacity(c,intent,state,*,runner=None,clock=time.time):
+    try:chains=capacity_chains(c)
+    except (OSError,ValueError,KeyError,TypeError) as error:
+        raise PendingCapacity('Source-bound capacity registration is pending: '+str(error)) from error
+    return coordinated_snapshot(intent['resources'],state=state,serial_chains=chains,
+        native_reader=c['native_reader'],evidence_dir=c['area'],intent_id=intent['intent_id'],runner=runner,clock=clock)
+
+
+def before_new_attempt(c,intent,state):
+    submission_window(c);coordinated_capacity(c,intent,state);submission_window(c)
 
 
 def submission_window(c,*,now=None):
@@ -196,7 +443,7 @@ def submit_intentions(base,c,plan,state,intents,*,runner=subprocess.run):
                     # discovery of the already accepted, script-bound held job.
                     return runner(command,text=True,capture_output=True,timeout=180)
                 row=submit_once(row,command,invoke,lambda hint:discover_held(base,c,task,intent,hint),persist,
-                                before_attempt=lambda:submission_window(c))
+                                before_attempt=lambda:before_new_attempt(c,intent,state))
             jid=row['job_id']
             state=base.dispatch.record_submission(plan,state,ident,jid,expected_revision=state['revision']);base.save_state(c,state)
             record.update(status='registered_held_verified',job_id=jid,held_allocation=row['native_held_observation'],
@@ -331,7 +578,13 @@ def duration(value):
 
 
 def conservative_window(fields,environment_end,*,now=None):
-    """Accept genuine backfill shortening without extending either end clock."""
+    """Use the verified current allocation, retaining its shutdown reserve.
+
+    Slurm may extend a backfill allocation after exporting the batch environment.
+    That inherited environment is diagnostic; StartTime + actual TimeLimit must
+    independently agree with the current native EndTime before it is used.
+    The caller has already bound these fields to the owned current allocation.
+    """
     now=time.time() if now is None else now
     require(type(environment_end) in (int,float) and math.isfinite(environment_end)
             and type(now) in (int,float) and math.isfinite(now),'Finite native clocks required')
@@ -341,11 +594,18 @@ def conservative_window(fields,environment_end,*,now=None):
     require(28800<=limit<=345600 and duration(fields['TimeMin'])==28800
             and abs(end-start-limit)<=2 and start<=now+2 and environment_end>=start,
             'Owned native start/end/effective backfill window must agree')
-    effective=min(end,environment_end)
+    effective=end
     require(now+14400+300<effective,'Original four-hour shutdown reserve required')
     return {'allocation_end_unix':effective,'native_end_unix':end,'environment_end_unix':environment_end,
             'native_environment_delta_seconds':end-environment_end,'effective_seconds':limit,
             'work_deadline_unix':effective-14400,'shutdown_reserve_seconds':14400}
+
+
+def synchronize_native_deadline(fields,environment_end,*,now=None):
+    """Propagate the verified current end to existing downstream lease readers."""
+    window=conservative_window(fields,environment_end,now=now)
+    os.environ['SLURM_JOB_END_TIME']=str(window['allocation_end_unix'])
+    return window
 
 
 def recover_one(plan,state,native,packets,dispatch):
@@ -610,6 +870,11 @@ def install_coordination(base,manifest):
     base.release_ready=lambda c,**kw:release_ready(base,c,**kw)
     def tick(c,**kw):
         try:return coordinated_tick(base,c)
+        except PendingCapacity as error:
+            try:release_ready(base,c)
+            except PendingAcknowledgement as release_error:
+                raise base.PendingRegistration('partial_batch_release_pending: '+str(release_error)) from release_error
+            raise base.PendingRegistration('coordinated_capacity_pending: '+str(error)) from error
         except PendingAcknowledgement as error:
             raise base.PendingRegistration('submission_acknowledgement_pending: '+str(error)) from error
     base.tick=tick
@@ -620,7 +885,7 @@ def run_controller(a,manifest,area,fields):
     from horsehair.core import exclusive_file_lock
     consumer=module(CONSUMER,CONSUMER_SHA,'preserved_census_consumer')
     binding,old_manifest,pins=consumer.check_binding(CONSUMER_BINDING,CONSUMER_BINDING_SHA)
-    end=conservative_window(fields,float(os.environ['SLURM_JOB_END_TIME']))['allocation_end_unix']
+    end=synchronize_native_deadline(fields,float(os.environ['SLURM_JOB_END_TIME']))['allocation_end_unix']
     native_reader=consumer.bounded_native_reader(end)
     checked=consumer.validate_qualification(binding['qualification'],binding['source_manifest'],native_reader)
     pins.update(checked['checked_paths'])
@@ -657,6 +922,7 @@ def run_controller(a,manifest,area,fields):
     # is held for the entire allocation. Never delete or replace either mutex.
     with exclusive_file_lock(CAMPAIGN/'coordination-controller.mutex',timeout=60):
         c=base.load_context(Path(policy['base_descriptor']['path']),policy['base_descriptor']['sha256'],a.segment)
+        c['capacity_registration']={'plan':str(a.native_plan),'ledger':str(a.native_ledger)}
         positive_old_controllers(base,c)
         context={'policy_binding':policy['provider_policy'],'policy':provider_policy,'base_context':c,
             'checked_paths':{**checked_old,**checked_backfill},'backfill_policy_binding':binding['legacy_policy'],

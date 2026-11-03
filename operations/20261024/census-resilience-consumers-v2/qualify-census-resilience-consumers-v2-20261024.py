@@ -14,7 +14,7 @@ import sys
 import time
 
 ROOT=Path('/scratch/pwa209/horsehair-worm')
-SUPPORT=ROOT/'maintenance/study-census-resilience-consumers-v2-20261024'
+SUPPORT=ROOT/'maintenance/study-census-resilience-consumers-v5-20261103'
 FRAMEWORK=ROOT/'releases/20261021-6ed201653dfa-4f3903d7c26e'
 SOURCE='4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1'
 CONFIG='446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35'

@@ -7,6 +7,10 @@ from pathlib import Path
 from types import FunctionType
 from datetime import datetime, timezone
 import argparse
+import ast
+import copy
+import gzip
+from contextlib import contextmanager
 import hashlib
 import importlib.util
 import json
@@ -21,7 +25,9 @@ import time
 import xml.etree.ElementTree as ET
 
 ROOT=Path('/scratch/pwa209/horsehair-worm')
-SUPPORT=ROOT/'maintenance/study-census-resilience-consumers-v2-20261024'
+SUPPORT=ROOT/'maintenance/study-census-resilience-consumers-v5-20261103'
+COORDINATION=ROOT/'maintenance/agent-coordination-repair-v8-20261103/coordination.py'
+COORDINATION_SHA='54987e2ae11df2ede0f1bee88fc286a7c610404c9868094c23dbfcb12e2c5146'
 SELF_NAME='run-census-resilience-consumer-v2-20261024.py'
 TEST_NAME='test_census_resilience_consumers_v2_20261024.py'
 QUALIFIER_NAME='qualify-census-resilience-consumers-v2-20261024.py'
@@ -156,7 +162,7 @@ def seconds(value):
     return int(days)*86400+parts[0]*3600+parts[1]*60+parts[2]
 
 
-def allocation(fields,job,task,kind,*,wall=time.time):
+def allocation(fields,job,task,kind,*,wall=time.time,startup=True):
     require(fields.get('JobId')==job and fields.get('UserId')=='pwa209(3164768)'
         and fields.get('Account')=='def-ptewarie_cpu' and fields.get('JobState')=='RUNNING'
         and fields.get('JobName')=='hhw-'+task['name'] and fields.get('Command')==task['script']
@@ -169,13 +175,17 @@ def allocation(fields,job,task,kind,*,wall=time.time):
         or (kind=='primary' and limit==259200),'Original finite native time contract required')
     end=datetime.fromisoformat(fields.get('EndTime','')).replace(tzinfo=timezone.utc).timestamp()
     env=float(os.environ.get('SLURM_JOB_END_TIME','nan'))
-    require(math.isfinite(env) and abs(end-env)<=2 and wall()+14400+300<min(end,env),'Actual native end and original shutdown margin required')
+    # Initial admission retains the full shutdown reserve. A read-only verifier
+    # child near that boundary must be able to report the existing pending
+    # response instead of crashing its parent before the normal finite handoff.
+    margin=14700 if startup else 300
+    require(math.isfinite(env) and abs(end-env)<=2 and wall()+margin<min(end,env),'Actual native end and original shutdown margin required')
     return min(end,env)
 
 
 def chain_guard(plan,ledger,binding):
     kind=binding['consumer_kind'];tasks=plan.get('tasks',[])
-    phase='study-'+kind+'-census-resilience-consumers-v2-20261024'
+    phase='study-'+kind+'-census-resilience-consumers-v5-20261103'
     require(plan.get('phase')==phase and len(tasks)==4,'One exact new four-controller phase required')
     jobs=[]
     for index,task in enumerate(tasks):
@@ -213,6 +223,52 @@ def predecessor_guard(fields,task,ledger,binding,completion):
         require(match is not None,'Only exact afterany native dependencies are permitted');observed[match[1]]=True
     require(set(observed)<=expected,'Unexpected native controller dependency')
     for job in expected:require(completion(job,dependency_kind='afterany') is not None,'Registered predecessor is not positively terminal')
+
+
+def finalized_predecessors(fields,task,ledger,binding,completion,native_reader,reconcile,end,
+                           *,wall=time.time,monotonic=time.monotonic,sleeper=time.sleep):
+    """Refresh actual owned accounting while afterany's final records settle.
+
+    Scheduler dependency release can precede sacct finality. Only positively
+    observed owned scalar CPU allocations can enter the existing resource
+    ledger; a missing/running record never substitutes for final proof.
+    """
+    ids=sorted({binding['afterany_parent'],*task['external_dependencies'],
+                *(ledger['tasks'][name]['job_id'] for name in task['depends'])})
+    require(ids and all(re.fullmatch('[1-9][0-9]*',job) for job in ids),'Exact scalar predecessor identities required')
+    stop=monotonic()+min(900,max(0,end-wall()-15000));reads=0
+    terminal={'COMPLETED','FAILED','CANCELLED','TIMEOUT','OUT_OF_MEMORY','NODE_FAIL','PREEMPTED','BOOT_FAIL','DEADLINE','REVOKED'}
+    while True:
+        missing=[job for job in ids if completion(job,dependency_kind='afterany') is None]
+        if not missing:
+            predecessor_guard(fields,task,ledger,binding,completion)
+            return {'status':'verified_final_predecessor_accounting','jobs':ids,'native_reads':reads}
+        require(monotonic()<stop,'Finite wait for positive predecessor accounting exhausted')
+        try:
+            records=native_reader(missing,{},owner='pwa209',account='def-ptewarie_cpu');reads+=1
+        except subprocess.TimeoutExpired:
+            sleeper(min(30,max(0,stop-monotonic())))
+            continue
+        require(set(records)<=set(missing),'Unexpected predecessor allocation returned')
+        final={}
+        for job,row in records.items():
+            if row.get('state') not in terminal:continue
+            require(row.get('job_id_raw')==job and row.get('user')=='pwa209' and row.get('account')=='def-ptewarie_cpu'
+                and row.get('cpus')==1 and type(row.get('elapsed_seconds')) is int and row['elapsed_seconds']>0
+                and row.get('unallocated_metadata') is False and row.get('end') not in {'',None,'Unknown','None'}
+                and re.fullmatch('[0-9]+:[0-9]+',str(row.get('exit_code','')))
+                and 'gpu' not in row.get('alloc_tres','').lower(),'Positive owned scalar CPU predecessor allocation required')
+            final[job]=row
+        if final:
+            def accounting(command,**kwargs):
+                require(command and command[0]=='sacct' and command[command.index('-j')+1].split(',')==list(final),
+                    'Only the observed predecessor accounting projection is permitted')
+                lines=['|'.join([job,row['job_id_raw'],row['state'],str(row['elapsed_seconds']),str(row['cpus']),
+                    row['alloc_tres'],row['exit_code'],row.get('max_rss','')]) for job,row in final.items()]
+                return subprocess.CompletedProcess(command,0,'\n'.join(lines),'')
+            reconcile(list(final),runner=accounting)
+            continue
+        sleeper(min(30,max(0,stop-monotonic())))
 
 
 def validate_qualification(binding,manifest_binding,native_reader):
@@ -270,7 +326,7 @@ def check_binding(binding,sha):
         and value['kind']=='census-resilience-consumer-binding-v2' and value['consumer_kind'] in {'af','primary'}
         and value['flags']==FALSE_FLAGS,'Exact new consumer routing descriptor required')
     require(Path(binding).name==value['consumer_kind']+'-consumer-binding.json','Consumer identity and descriptor name must agree')
-    expected=(AF,AF_SHA,'6950429') if value['consumer_kind']=='af' else (PRIMARY,PRIMARY_SHA,'6873101')
+    expected=(AF,AF_SHA,'6950429') if value['consumer_kind']=='af' else (PRIMARY,PRIMARY_SHA,'7046404')
     require(value['legacy_entry']=={'path':str(expected[0]),'sha256':expected[1]} and value['afterany_parent']==expected[2],
         'Only exact frozen legacy controller and actual old parent may be routed')
     schedule=value['provider_schedule']
@@ -315,8 +371,120 @@ def prefix(binding_path,binding_sha,legacy_entry):
     return [str(SUPPORT/SELF_NAME),'--consumer-binding',str(binding_path),'--consumer-binding-sha256',binding_sha,'--legacy-entry',str(legacy_entry)]
 
 
+def derive_primary_capacity_tick(pipeline,capacity_guard,*,expected_sha):
+    """Add one operational admission boundary to a private copy of tick."""
+    path=Path(pipeline.__file__);require(digest(path)==expected_sha,'Frozen primary pipeline source required')
+    tree=ast.parse(path.read_bytes(),feature_version=(3,11))
+    original=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='tick')
+    derived=copy.deepcopy(original);selected=[]
+    for loop in (n for n in ast.walk(derived) if isinstance(n,ast.For)):
+        for index,node in enumerate(loop.body):
+            if (isinstance(node,ast.Expr) and isinstance(node.value,ast.Call)
+                and isinstance(node.value.func,ast.Name) and node.value.func.id=='atomic_json'
+                and len(node.value.args)>1 and isinstance(node.value.args[1],ast.Dict)):
+                fields={k.value:v.value for k,v in zip(node.value.args[1].keys,node.value.args[1].values)
+                        if isinstance(k,ast.Constant) and isinstance(v,ast.Constant)}
+                if fields.get('state')=='submitting':selected.append((loop,index))
+    require(len(selected)==1,'One original durable submission boundary required')
+    loop,index=selected[0];tail=loop.body[index:]
+    wrapper=ast.parse('with __primary_capacity_guard(candidate,ledger_path,plan_records,ledgers,states) as coordinated_capacity:\n'
+        ' if not coordinated_capacity["allowed"]:\n'
+        '  phases[name]={"status":"waiting_for_coordinated_capacity","coordinated_capacity":coordinated_capacity}\n'
+        '  continue\n').body[0]
+    wrapper.body.extend(tail);loop.body[index:]=[wrapper]
+    restored=copy.deepcopy(derived)
+    restored_loop=next(n for n in ast.walk(restored) if isinstance(n,ast.For)
+        and any(isinstance(v,ast.With) and any(isinstance(i.context_expr,ast.Call)
+            and isinstance(i.context_expr.func,ast.Name) and i.context_expr.func.id=='__primary_capacity_guard'
+            for i in v.items) for v in n.body))
+    at=next(i for i,n in enumerate(restored_loop.body) if isinstance(n,ast.With)
+        and isinstance(n.items[0].context_expr,ast.Call)
+        and isinstance(n.items[0].context_expr.func,ast.Name)
+        and n.items[0].context_expr.func.id=='__primary_capacity_guard')
+    restored_loop.body[at:at+1]=restored_loop.body[at].body[1:]
+    require(ast.dump(restored,include_attributes=False)==ast.dump(original,include_attributes=False),
+        'Only one private operational capacity boundary may change')
+    objects={k:v for k,v in vars(pipeline).items() if callable(v)}
+    namespace={**vars(pipeline),'__primary_capacity_guard':capacity_guard}
+    exec(compile(ast.fix_missing_locations(ast.Module(body=[derived],type_ignores=[])),str(path),'exec'),namespace)
+    require(all(getattr(pipeline,k) is v for k,v in objects.items()),'Original primary functions changed')
+    return namespace['tick'],{'normal_primary_tick_ast_preserved':True,'guard_precedes_submitting_journal':True}
+
+
+def primary_capacity_state(plan_records,ledgers,states):
+    """Retain source-bound accepted primary commitments until positive finality."""
+    terminal={'COMPLETED','FAILED','CANCELLED','TIMEOUT','OUT_OF_MEMORY','NODE_FAIL','PREEMPTED','BOOT_FAIL','DEADLINE','REVOKED'}
+    jobs={}
+    for phase,ledger in ledgers.items():
+        plan=plan_records[phase]
+        require(ledger.get('plan_sha256')==canonical(plan),'Existing primary plan/ledger identity required')
+        tasks={t['name']:t for t in plan['tasks']}
+        for name,row in ledger['tasks'].items():
+            require(name in tasks and row.get('state')=='submitted','Ambiguous existing primary work cannot admit capacity')
+            task=tasks[name];resource=task['resources'];job=row['job_id'];array=resource.get('array')
+            require(row['script_sha256']==task['script_sha256'] and re.fullmatch('[1-9][0-9]*',job),'Exact primary accepted identity required')
+            indices=[job]
+            if array:
+                match=re.fullmatch(r'(\d+)-(\d+)(?:%([1-9][0-9]*))?',str(array))
+                require(match is not None and int(match[2])>=int(match[1]) and int(match[2])-int(match[1])<=10000,'Finite original primary array required')
+                indices=[job+'_'+str(i) for i in range(int(match[1]),int(match[2])+1)]
+            for ident in indices:
+                if states.get(ident,{}).get('state') in terminal:continue
+                require(ident not in jobs,'Primary accepted allocation appears twice')
+                jobs[ident]={'job_id':ident,'status':'submitted','native_name':'hhw-'+name,'intent':{'intent_id':name,
+                    'resources':{'cpus':resource['cpus'],'gpus':int(resource['gpu']),'hours':resource['hours']}}}
+    return jobs
+
+
+def af_capacity_state():
+    case=ROOT/'maintenance/study-af-campaign-v1-20261021/agent-final-f64-v1'
+    raw=(case/'state.json.gz').read_bytes();binding=strict((case/'state-binding.json').read_bytes())
+    require(hashlib.sha256(raw).hexdigest()==binding['state_file_sha256'],'AF capacity state byte binding changed')
+    state=strict(gzip.decompress(raw));plan=strict((case/'campaign-plan.json').read_bytes())
+    require(canonical({k:v for k,v in state.items() if k!='state_sha256'})==state['state_sha256']==binding['state_sha256']
+        and state['plan_sha256']==plan['plan_sha256']==binding['campaign_plan_sha256'],'AF capacity canonical identities required')
+    return {k:j for k,j in state['jobs'].items() if j['job_id'] is not None and j['status']!='complete'}
+
+
+@contextmanager
+def primary_capacity_guard(candidate,ledger_path,plan_records,ledgers,states,*,native_reader,evidence_dir,capacity_function):
+    """One lock spans fresh capacity and the existing durable submission block."""
+    from horsehair.core import exclusive_file_lock,atomic_json
+    shared=module(COORDINATION,COORDINATION_SHA,'primary_shared_coordinated_capacity')
+    # The mutation boundary uses the same permanent registration barrier as AF.
+    with exclusive_file_lock(ROOT/'state/af-campaign-registration.mutex',timeout=180):
+        source_guard({str(COORDINATION):COORDINATION_SHA})
+        require(not Path(ledger_path).exists(),'An existing accepted phase is never resubmitted by capacity admission')
+        proposed=primary_candidate_resources(candidate,capacity_function)
+        # The pinned shared reader source-validates all primary phase ledgers
+        # and submitting journals for both controllers. An unresolved accepted
+        # primary allocation or ambiguous phase defers the entire admission;
+        # no invented native ID can make that commitment disappear.
+        jobs={item['job_id']:item for item in af_capacity_state().values()}
+        c={'capacity_registration':{'plan':str(ROOT/'plans/agent-coordination-v8-resume-20261103/plan.json'),
+            'ledger':str(ROOT/'state/agent-coordination-v8-resume-20261103-submission.json')}}
+        try:
+            record=shared.coordinated_snapshot(proposed,state={'jobs':jobs},serial_chains=shared.capacity_chains(c),
+                native_reader=native_reader,evidence_dir=evidence_dir,intent_id='primary-'+candidate['phase'])
+        except (shared.PendingCapacity,subprocess.SubprocessError,OSError,ValueError,KeyError,TypeError) as error:
+            record={'allowed':False,'reason':str(error),'scientific_gates_changed':False}
+        atomic_json(Path(evidence_dir)/'primary-coordinated-capacity-last.json',record)
+        yield record
+
+
+def primary_candidate_resources(candidate,capacity_function):
+    """Use the frozen primary's exact dependency-DAG concurrency calculation."""
+    peak=capacity_function({candidate['phase']:candidate},{},{})
+    require(set(peak)=={'cpus','gpus'} and all(type(v) is int and v>=0 for v in peak.values()),
+        'Original primary finite prospective capacity required')
+    hours=max(task['resources']['hours'] for task in candidate['tasks'])
+    require(type(hours) is int and hours>0,'Exact bounded candidate lifetime required')
+    return {**peak,'hours':hours}
+
+
 def install_primary(primary,binding,pins,native_reader,binding_path,binding_sha):
     original_module=primary.module;original_make=primary.make_consumer;original_child=primary.bounded_child
+    original_derive=getattr(primary,'derive_run',None)
     def load(path,sha,name):
         loaded=original_module(path,sha,name)
         if Path(path)==primary.CENSUS_SUPPORT/primary.OUTER_NAME:
@@ -331,6 +499,17 @@ def install_primary(primary,binding,pins,native_reader,binding_path,binding_sha)
             routed=command[:position]+prefix(binding_path,binding_sha,PRIMARY)+command[position+1:]
             return original_child(routed,**kwargs)
         return original_make(context,runner=child)
+    if original_derive is not None:
+        def derive(pipeline,consumer,**kwargs):
+            run,preservation=original_derive(pipeline,consumer,**kwargs)
+            guard=lambda *args:primary_capacity_guard(*args,native_reader=native_reader,
+                evidence_dir=SUPPORT/('native-'+os.environ['SLURM_JOB_ID']),capacity_function=pipeline.prospective_capacity)
+            tick,proof=derive_primary_capacity_tick(pipeline,guard,expected_sha=primary.PIPELINE_SHA)
+            namespace={**run.__globals__,'tick':tick}
+            private=FunctionType(run.__code__,namespace,run.__name__,run.__defaults__,run.__closure__)
+            private.__kwdefaults__=run.__kwdefaults__;preservation.update(proof)
+            return private,preservation
+        primary.derive_run=derive
     primary.module=load;primary.make_consumer=make
     return {'original_module':original_module,'original_make_consumer':original_make,'original_bounded_child':original_child}
 
@@ -392,15 +571,25 @@ def main(argv=None):
     if not verify:
         require(not area.exists(),'New envelope allocation cannot replay evidence');area.mkdir(mode=0o700)
     fields=native_fields(scheduler(job,area/('verify-native-'+str(request['sequence']).zfill(6) if verify else 'native-read')))
-    end=allocation(fields,job,task,kind)
-    from horsehair import slurm
+    end=allocation(fields,job,task,kind,startup=not verify)
+    if verify and time.time()+14700>=end:
+        print(json.dumps({'status':'pending_external_storage_census','job_id':job,
+            'reason':'Original shutdown reserve reached; defer verification to the next finite controller',
+            **legacy.FALSE_FLAGS,**FALSE_FLAGS},sort_keys=True),flush=True)
+        return 75
+    from horsehair import slurm,budget
     plan=json_packet(locator(flags['--native-plan']),namespace=ROOT/'plans')
     ledger=json_packet(locator(flags['--native-ledger']),namespace=ROOT/'state')
     chain_guard(plan,ledger,binding)
-    predecessor_guard(fields,task,ledger,binding,lambda job,**kw:slurm.completed_native_dependency(ROOT,job,**kw))
     # The new provider API takes the qualified accounting reader used by all
     # existing proof validators; it never submits or refreshes a census.
     native_reader=bounded_native_reader(end)
+    predecessor_proof=finalized_predecessors(fields,task,ledger,binding,
+        lambda job,**kw:slurm.completed_native_dependency(ROOT,job,**kw),native_reader,
+        lambda ids,**kw:budget.native_accounting(ROOT,ids,**kw),end)
+    if not verify:
+        with (area/'predecessor-accounting.json').open('x',encoding='utf8') as stream:
+            json.dump(predecessor_proof,stream,sort_keys=True);stream.write('\n')
     qualification=validate_qualification(binding['qualification'],binding['source_manifest'],native_reader)
     pins.update(qualification['checked_paths'])
     for flag in ('--native-plan','--native-ledger','--native-script'):pins[flags[flag]]=digest(flags[flag])

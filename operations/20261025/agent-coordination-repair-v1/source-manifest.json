@@ -1,12 +1,12 @@
 {
   "files": {
-    "coordination.py": "d4cc6c5d5c667165b7c1a3a8091ba3f565ae50cd60bfb8b4d1f481c5ec6af171",
+    "coordination.py": "54987e2ae11df2ede0f1bee88fc286a7c610404c9868094c23dbfcb12e2c5146",
     "registry-wait.py": "63735406494fae9c1417fe3a32396c03835ab9dc03332da3aab1ca1852558f96",
-    "test_acknowledgements.py": "a96123bbbf961e99fd16289622a29788d88aea1c07503a28ef7d6e54276f7b47",
-    "test_coordination.py": "799df5b0e86c04b4418d44107d2894672975ff70dc124fd5d86b7acd4adb446a",
+    "test_acknowledgements.py": "da24d3ba300edd9859ed565b2df31e97f8a16c77d70bcc802607db4c39099ba0",
+    "test_coordination.py": "33e53375a5616291bf15b2710a4aa329f046fb4e2e4250a48cf18ee2bdecdfd4",
     "test_registry.py": "e0208ae1f5c52c12c931942096e6a658c2bed210224775a21370513f94cbbad1"
   },
   "kind": "agent-coordination-repair-v1",
-  "roster_sha256": "4bb915beeab351a74eec5f1a3bdb67b09debcec0f889094c154655aa490d00b0",
-  "tests": 144
+  "roster_sha256": "fe8875c3e15a4372a283e795f1f3d4ac7b022f51ebe61dd4e65ec43ca6e50a2e",
+  "tests": 195
 }

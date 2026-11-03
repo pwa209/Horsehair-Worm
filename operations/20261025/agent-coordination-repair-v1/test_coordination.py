@@ -21,13 +21,34 @@ def fields(hours=8):
 
 @pytest.mark.parametrize('hours',[8,24,56,96])
 @pytest.mark.parametrize('delta',[-3600,0,3600])
-def test_backfill_never_extends_either_real_deadline(hours,delta):
+def test_verified_native_deadline_retains_reserve_despite_stale_environment(hours,delta):
     f=fields(hours);native=1893456000+hours*3600;environment=native+delta
     value=m.conservative_window(f,environment,now=1893456005)
-    assert value['allocation_end_unix']==min(native,environment)
-    assert value['work_deadline_unix']==min(native,environment)-14400
+    assert value['allocation_end_unix']==native
+    assert value['work_deadline_unix']==native-14400
     assert value['shutdown_reserve_seconds']==14400
     assert value['environment_end_unix']==environment
+
+def test_extended_native_allocation_does_not_end_at_old_backfill_environment():
+    f=fields(96);environment=1893456000+8*3600
+    value=m.conservative_window(f,environment,now=1893456000+7*3600)
+    assert value['allocation_end_unix']==1893456000+96*3600
+    assert value['work_deadline_unix']==1893456000+92*3600
+
+def test_environment_extension_never_extends_short_native_allocation():
+    value=m.conservative_window(fields(8),1893456000+96*3600,now=1893456005)
+    assert value['allocation_end_unix']==1893456000+8*3600
+
+def test_downstream_environment_uses_bound_current_end(monkeypatch):
+    monkeypatch.setenv('SLURM_JOB_END_TIME',str(1893456000+8*3600))
+    value=m.synchronize_native_deadline(fields(96),1893456000+8*3600,now=1893456005)
+    assert float(m.os.environ['SLURM_JOB_END_TIME'])==value['native_end_unix']
+
+def test_invalid_native_window_never_changes_environment(monkeypatch):
+    monkeypatch.setenv('SLURM_JOB_END_TIME','original')
+    f=fields(96);f['EndTime']=fields(8)['EndTime']
+    with pytest.raises(ValueError):m.synchronize_native_deadline(f,1893456000+8*3600,now=1893456005)
+    assert m.os.environ['SLURM_JOB_END_TIME']=='original'
 
 @pytest.mark.parametrize('environment',[float('nan'),float('inf'),None,'1893484800',1893455900])
 def test_missing_nonfinite_or_stale_environment_deadline_refused(environment):
