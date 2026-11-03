@@ -1,14 +1,8 @@
-This directory contains the existing coordination component for the unchanged
-synthetic agent campaign. The final source targets immutable deployment
-`maintenance/agent-coordination-repair-v8-20261103` in personal Narval scratch.
+This directory contains the existing coordination component for the unchanged synthetic campaign. Current immutable target: `maintenance/agent-coordination-repair-v9-20261103`.
 
-The final v8 source passes **195 local tests**, preserving the prior deadline
-and acknowledgement cases and adding coordinated-capacity and primary-visibility
-cases. Earlier v6 qualification **8390228 completed 0:0 in 56 seconds** with
-148 native tests. That earlier qualification does not qualify the changed v8
-source; v8 needs its own final native receipt before production handoff.
+Coordinator v9 passes **195 local tests**; native qualification **8423675** is registered/released and pending priority at the 3 November 18:15 CET check. The prior v8 qualification **8422565 completed 0:0 in 35 seconds**, with all 195 cases passing. The namespace-only v9 continuation binds primary consumer v6; it preserves that qualified deadline, accounting and total-capacity logic. Primary v6 passes 103 local cases and has native qualification **8423920** pending. Finite restart handoff **8423933** waits for the final pair plus fresh census **6983037**; accepted worker IDs remain unchanged.
 
-Final native qualifications **8422565** (agent v8) and **8422568** (primary v5) are registered/released and pending priority at the 3 November 17:37 CET check. The finite native restart handoff **8422882** is registered after successful completion of those exact two jobs and fresh census slot61 (**6983037**). Storage cleaner **8420757** passed all 50 native cases and reconciled the interrupted old archive; quota recovery and production restart remain unconfirmed. The complete final local closure passed **442 tests**, with two Windows link-permission skips. The corrected cross-platform handoff materializer passes seven fixture cases; native cleanup permits no skips.
+Corrected terminal diagnostic cleanup **8425411** is released/pending for 1 CPU, 16 GiB and twelve hours. Its measured predecessor guard cost implied roughly 12.9 hours for the first archive alone under a four-hour allocation. The new guard checks all bound leaves and unique ancestors once per checkpoint with `lstat`, preserving initial full SHA validation and every mutation/symlink/ownership check. All **86 native prechecks** must pass before removal. Quota/cadence handoff **8425418** verifies real recovery, anchors remaining census times to actual readiness, and releases the existing IDs. Headroom recovery, reconciliation and production restart remain unconfirmed.
 
 The existing coordinator checks the coordinated operational envelope before
 issuing a new submission: at most **four GPUs**, **53 HHW CPUs including

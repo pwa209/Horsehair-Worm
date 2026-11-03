@@ -13,13 +13,13 @@ import hashlib,importlib.util,json,os,shlex,subprocess,time
 from horsehair import slurm,budget
 from horsehair.core import atomic_json,read_json,canonical_hash,exclusive_file_lock
 assert os.geteuid()==3164768
-r=Path('/scratch/pwa209/horsehair-worm');s=r/'maintenance/study-census-resilience-consumers-v5-20261103'
-manifest_sha='4b043a5906385a05fd2c0ea4525a8a6b978f70dbae344b4e2a603a6d5f8315ab'
+r=Path('/scratch/pwa209/horsehair-worm');s=r/'maintenance/study-census-resilience-consumers-v6-20261103'
+manifest_sha='a1ee7f4be2d8b872e36ec9ba314d68c8b2fe8b2d149873638e6f094700a9bc2d'
 assert hashlib.sha256((s/'source-manifest.json').read_bytes()).hexdigest()==manifest_sha
 manifest=read_json(s/'source-manifest.json')
 for name,sha in manifest['files'].items():assert hashlib.sha256((s/name).read_bytes()).hexdigest()==sha
-spec=importlib.util.spec_from_file_location('qualified_consumer_v5',s/'run-census-resilience-consumer-v2-20261024.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
-spec=importlib.util.spec_from_file_location('qualified_consumer_builder_v5',s/'build-consumer-plan.py');builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
+spec=importlib.util.spec_from_file_location('qualified_consumer_v6',s/'run-census-resilience-consumer-v2-20261024.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+spec=importlib.util.spec_from_file_location('qualified_consumer_builder_v6',s/'build-consumer-plan.py');builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
 q=read_json(s/'qualification.json');qjob=q['native_job_id'];assert q['source_manifest']=={'path':str(s/'source-manifest.json'),'sha256':manifest_sha}
 actors=['7046213','7046249','7046368','7046404'];phase=builder.PHASES['primary']
 directory=r/'plans'/phase;planpath=directory/'plan.json';ledger=r/'state'/(phase+'-submission.json')
@@ -75,7 +75,7 @@ with exclusive_file_lock(r/'state/af-campaign-registration.mutex',timeout=180):
   assert f['NumCPUs']=='1' and f['MinMemoryNode'] in {'64G','65536M'} and m.seconds(f['TimeLimit'])==259200
   held[job]=f
  atomic_json(area/'held-native.json',held)
-print('PRIMARY_V5 registered held jobs '+','.join(jobs),flush=True)
+print('PRIMARY_V6 registered held jobs '+','.join(jobs),flush=True)
 verified={}
 for task,job in zip(tasks,jobs):
  runner(['scontrol','release',job],text=True,capture_output=True)
@@ -84,5 +84,5 @@ for task,job in zip(tasks,jobs):
  assert f['JobState'] in {'RUNNING','COMPLETING','COMPLETED'} or f['JobState']=='PENDING' and f['Reason'] not in {'JobHeldUser','JobHeldAdmin'} and int(f['Priority'])>0
  verified[job]=f;atomic_json(area/'verified-release.json',verified)
 receipt={'status':'four_primary_controllers_registered_and_released','jobs':jobs,'prior_terminal_controllers':actors,'qualification_job_id':qjob,'source_manifest_sha256':manifest_sha,'plan':str(planpath),'ledger':str(ledger),'scientific_workers_unchanged':True,'scientific_gates_changed':False}
-atomic_json(area/'registration.json',receipt);print('PRIMARY_V5 '+json.dumps(receipt),flush=True)
+atomic_json(area/'registration.json',receipt);print('PRIMARY_V6 '+json.dumps(receipt),flush=True)
 PY

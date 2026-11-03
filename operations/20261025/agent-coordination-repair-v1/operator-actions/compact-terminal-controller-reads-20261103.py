@@ -138,12 +138,25 @@ def validate_rows(source,rows,root):
     require(sum(r['bytes'] for r in rows)<=MAX_BYTES,'Finite diagnostic byte limit exceeded')
 
 def binding_guard(bindings,*,root):
-    pins={}
+    pins={};ancestors=set()
     for path,digest in bindings.items():
-        value=observed(path,root);require(value['sha256']==digest,'Bound source/proof bytes changed');pins[path]=value['identity']
+        value=observed(path,root);require(value['sha256']==digest,'Bound source/proof bytes changed')
+        pins[str(path)]=tuple(value['identity']);ancestors.update(Path(path).parents)
+    # Initial ordinary-path and full SHA checks above remain unchanged. Every
+    # checkpoint still inspects every lexical ancestor and every bound leaf,
+    # but shared ancestors are checked once instead of resolving them for each
+    # of thousands of leaves. Directory timestamps are deliberately not pinned:
+    # unlinking an eligible sibling must not invalidate an unchanged proof.
+    parents=tuple(sorted(map(str,ancestors),key=lambda path:(len(Path(path).parts),path)))
     def check():
+        for path in parents:
+            require(stat.S_ISDIR(os.lstat(path).st_mode),'Bound source/proof ancestor is not an ordinary directory')
+        owner=os.geteuid() if hasattr(os,'geteuid') else None
         for path,identity in pins.items():
-            p=ordinary(path,root);s=p.stat();require([s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns]==identity,'Bound source/proof changed during compaction')
+            s=os.lstat(path)
+            require(stat.S_ISREG(s.st_mode) and s.st_nlink==1 and (owner is None or s.st_uid==owner)
+                and (s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns)==identity,
+                'Bound source/proof changed during compaction')
     return check
 
 def verify_tar(archive,rows,expected_sha,*,checkpoint=lambda:None):
@@ -249,6 +262,19 @@ def source_registration(source,job,*,root):
         checked=registration_binding(registration,job,root=root)
     return {**checked,'source_document':{'path':str(document),'sha256':sha(document)}}
 
+def maintenance_allocation(fields,job,script,environment_end,*,wall=time.time):
+    from datetime import datetime,timezone
+    require(fields.get('JobId')==job and fields.get('UserId')=='pwa209(3164768)' and fields.get('JobState')=='RUNNING'
+        and fields.get('Account')=='def-ptewarie_cpu' and fields.get('NumCPUs')=='1' and fields.get('NumNodes') in {'1','1-1'}
+        and fields.get('MinMemoryNode') in {'16G','16384M'} and fields.get('TimeLimit') in {'12:00:00','0-12:00:00'}
+        and fields.get('Command')==str(script) and fields.get('JobName')=='hhw-terminal-controller-read-compaction-20261103'
+        and 'ArrayJobId' not in fields and all('gpu' not in fields.get(k,'').lower() for k in ('AllocTRES','ReqTRES','Gres','TresPerNode','TresPerTask')),
+        'Exact owned scalar1CPU16G12h controller diagnostic recovery required')
+    end=datetime.fromisoformat(fields['EndTime']).replace(tzinfo=timezone.utc).timestamp()
+    require(abs(end-environment_end)<=2 and wall()+600<end,'Actual finite maintenance end required')
+    return end
+
+
 def main(argv=None):
     from datetime import datetime,timezone
     import horsehair
@@ -263,8 +289,7 @@ def main(argv=None):
     def run(cmd,**kw):return subprocess.run(cmd,**{**kw,'timeout':90})
     observed_native=run(['scontrol','show','job',os.environ['SLURM_JOB_ID'],'-o'],capture_output=True,text=True);observed_native.check_returncode();require(not observed_native.stderr,'Actual own allocation required')
     fields=dict(s.split('=',1) for s in shlex.split(observed_native.stdout) if '=' in s)
-    require(fields.get('JobId')==os.environ['SLURM_JOB_ID'] and fields.get('UserId')=='pwa209(3164768)' and fields.get('JobState')=='RUNNING' and fields.get('Account')=='def-ptewarie_cpu' and fields.get('NumCPUs')=='1' and fields.get('NumNodes') in {'1','1-1'} and fields.get('MinMemoryNode') in {'16G','16384M'} and fields.get('TimeLimit') in {'04:00:00','4:00:00','0-04:00:00'} and fields.get('Command')==str(Path(__file__).with_name('controller-compact.sbatch')) and fields.get('JobName')=='hhw-terminal-controller-read-compaction-20261103' and 'ArrayJobId' not in fields and all('gpu' not in fields.get(k,'').lower() for k in ('AllocTRES','ReqTRES','Gres','TresPerNode','TresPerTask')),'Exact owned scalar1CPU16G4h controller diagnostic recovery required')
-    end=datetime.fromisoformat(fields['EndTime']).replace(tzinfo=timezone.utc).timestamp();env=float(os.environ['SLURM_JOB_END_TIME']);require(abs(end-env)<=2 and time.time()+600<end,'Actual finite maintenance end required')
+    end=maintenance_allocation(fields,os.environ['SLURM_JOB_ID'],Path(__file__).with_name('controller-compact.sbatch'),float(os.environ['SLURM_JOB_END_TIME']))
     def checkpoint():require(time.time()+300<end,'Finite maintenance finalization margin exhausted')
     framework=ROOT/'releases/20261021-6ed201653dfa-4f3903d7c26e';source='4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1'
     require(Path(horsehair.__file__).resolve()==framework/'src/horsehair/__init__.py' and core.source_identity(framework)['sha256']==source,'Original complete qualified execution framework required')
@@ -272,7 +297,7 @@ def main(argv=None):
     require(request['target_free_files']==300000 and 1<=len(request['sources'])<=1000,'Finite exact target/controller set required')
     minimum=request['minimum_files_removed'];recovery_goal(0,0,minimum)
     policy=load_resource_policy(ROOT/'maintenance/execution-resource-policies/af-expanded-20261021-v1/policy.json','f4445fb72d6a0fd8e62fb9a3c5ef43a6a6b1e7bf5a369254ff40d617e992b4e5',root=ROOT,config=core.read_json(framework/'configs/study.json'))
-    with budget.resource_lease(ROOT,core.read_json(framework/'configs/study.json'),cpus=1,gpus=0,max_hours=4,job_id=os.environ['SLURM_JOB_ID'],resource_policy=policy),core.exclusive_file_lock(CAMPAIGN/'coordination-controller.mutex',timeout=60):
+    with budget.resource_lease(ROOT,core.read_json(framework/'configs/study.json'),cpus=1,gpus=0,max_hours=12,job_id=os.environ['SLURM_JOB_ID'],resource_policy=policy),core.exclusive_file_lock(CAMPAIGN/'coordination-controller.mutex',timeout=60):
         state_sha=sha(CAMPAIGN/'state.json.gz');items=request['sources'];ids=[item['job'] for item in items];require(len(set(ids))==len(ids),'Duplicate terminal controller request')
         for item in items:require(re.fullmatch('[1-9][0-9]*',item['job']) and item['job']!=os.environ['SLURM_JOB_ID'],'Terminal scalar job required');controller_identity(item['path'],item['job'])
         budget.native_accounting(ROOT,ids,runner=run);native=repair._repair_native_states(ids,{},owner='pwa209',account='def-ptewarie_cpu',runner=run)
@@ -290,7 +315,17 @@ def main(argv=None):
             bound[registered['registration']['script']['path']]=registered['registration']['script']['sha256']
             require(str(CAMPAIGN/'state.json.gz') in bound,'Canonical campaign snapshot must be an explicitly pinned document')
             guard=binding_guard(bound,root=ROOT)
-            def bound_checkpoint():checkpoint();guard()
+            first_guard_reported=False
+            def bound_checkpoint():
+                nonlocal first_guard_reported
+                checkpoint()
+                started=time.monotonic() if not first_guard_reported else None
+                guard()
+                if started is not None:
+                    first_guard_reported=True
+                    print(json.dumps({'status':'first_bound_checkpoint_verified','source_controller_job_id':job,
+                        'bound_document_count':len(bound),'candidate_files':len(rows),
+                        'guard_wall_seconds':time.monotonic()-started,'scientific_result':False}),flush=True)
             authority={'kind':'actual_terminal_controller_diagnostics','native':owner,'completion':completion,'original_registration':registered,'source':str(source_path),'bound_documents':bound,'request_sha256':a.request_sha256,'wrapper_sha256':a.wrapper_sha256,'canonical_state_sha256':state_sha}
             destination=case/('controller-'+job);receipt=pack(source_path,destination,rows,authority,root=ROOT,checkpoint=bound_checkpoint)
             for path,digest in bound.items():require(sha(path)==digest,'Bound proof/source changed before removal')

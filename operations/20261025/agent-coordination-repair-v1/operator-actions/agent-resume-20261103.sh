@@ -13,8 +13,8 @@ import json,hashlib,subprocess,shlex,os,time,runpy,base64
 from horsehair import slurm,budget
 from horsehair.core import canonical_hash,source_identity,read_json,exclusive_file_lock,atomic_json
 assert os.geteuid()==3164768
-r=Path('/scratch/pwa209/horsehair-worm');s=r/'maintenance/agent-coordination-repair-v8-20261103'
-manifest_sha='e8a77557e9ffdbeb35c834b8aab6ad1b01874e381d677df1d3d7a6e8527ac725'
+r=Path('/scratch/pwa209/horsehair-worm');s=r/'maintenance/agent-coordination-repair-v9-20261103'
+manifest_sha='072ecc9685d5f9b88be0fd05acf87f5d5856a6b65576275d8a9b2bcebd5230be'
 assert hashlib.sha256((s/'source-manifest.json').read_bytes()).hexdigest()==manifest_sha
 manifest=read_json(s/'source-manifest.json')
 for name,pin in manifest['files'].items():assert hashlib.sha256((s/name).read_bytes()).hexdigest()==pin
@@ -28,11 +28,11 @@ case=r/'maintenance/study-af-campaign-v1-20261021/agent-final-f64-v1'
 actors=['7495474','7495475','7495476','7495477']
 area=s/'controller-registration-20261103'
 area.mkdir(exist_ok=False)
-assert not (r/'plans/agent-coordination-v8-resume-20261103').exists()
-assert not (r/'state/agent-coordination-v8-resume-20261103-submission.json').exists()
+assert not (r/'plans/agent-coordination-v9-resume-20261103').exists()
+assert not (r/'state/agent-coordination-v9-resume-20261103-submission.json').exists()
 counter=[0]
 def run(cmd,**kwargs):
- counter[0]+=1;p=area/('native-900-'+str(counter[0]).zfill(3));kwargs['timeout']=180
+ counter[0]+=1;p=area/('native-920-'+str(counter[0]).zfill(3));kwargs['timeout']=180
  with Path(str(p)+'-intent.json').open('x') as f:json.dump({'command':cmd},f);f.flush();os.fsync(f.fileno())
  response=subprocess.run(cmd,**kwargs)
  with Path(str(p)+'-response.json').open('x') as f:json.dump({'returncode':response.returncode,'stdout':response.stdout,'stderr':response.stderr},f);f.flush();os.fsync(f.fileno())
@@ -56,10 +56,10 @@ with exclusive_file_lock(case/'coordination-controller.mutex',timeout=180):
   budget.native_accounting(r,actors+[q['native_job_id']],runner=lambda cmd,**kw:subprocess.run(cmd,**{**kw,'timeout':90}))
   headroom=budget.require_storage_headroom(r,required_files=2000,required_bytes=10_000_000_000,reserve_files=248000,reserve_bytes=2_000_000_000_000)
   assert headroom['ready'] is True
-  phase='agent-coordination-v8-resume-20261103';directory=r/'plans'/phase;assert not directory.exists();directory.mkdir()
+  phase='agent-coordination-v9-resume-20261103';directory=r/'plans'/phase;assert not directory.exists();directory.mkdir()
   planpath=directory/'plan.json';ledger=r/'state'/(phase+'-submission.json');tasks=[]
   for index in range(4):
-   name='agent-coordination-v8-resume-20261103-controller-'+str(index);script=directory/(name+'.sbatch')
+   name='agent-coordination-v9-resume-20261103-controller-'+str(index);script=directory/(name+'.sbatch')
    argv=['python',str(s/'coordination.py'),'--mode','run','--source-manifest-sha256',manifest_sha,
      '--qualification',str(s/'qualification.json'),'--qualification-sha256',qsha,'--segment',str(index),
      '--native-plan',str(planpath),'--native-ledger',str(ledger),'--native-script',str(script),'--native-task',name]
@@ -83,7 +83,7 @@ with exclusive_file_lock(case/'coordination-controller.mutex',timeout=180):
    held[job]=f
   atomic_json(area/'held.json',held)
   assert hashlib.sha256((case/'state.json.gz').read_bytes()).hexdigest()==stable_sha
-print('CONTROLLER_RESUME_900 four replacements registered '+','.join(jobs),flush=True)
+print('CONTROLLER_RESUME_920 four replacements registered '+','.join(jobs),flush=True)
 verified={}
 for task,job in zip(tasks,jobs):
  response=run(['scontrol','release',job],text=True,capture_output=True)
@@ -97,5 +97,5 @@ receipt={'status':'registered_and_released_four_sequential_controllers','jobs':j
  'prior_terminal_controllers':actors,'no_worker_jobs_cancelled':True,'canonical_state_unchanged_during_registration':True,
  'release_acknowledgement_basis':'actual_owned_unheld_native_states','scientific_gates_changed':False}
 atomic_json(area/'registration.json',receipt)
-print('CONTROLLER_RESUME_900 '+json.dumps(receipt),flush=True)
+print('CONTROLLER_RESUME_920 '+json.dumps(receipt),flush=True)
 PY

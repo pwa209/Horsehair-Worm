@@ -25,9 +25,9 @@ import time
 import xml.etree.ElementTree as ET
 
 ROOT=Path('/scratch/pwa209/horsehair-worm')
-SUPPORT=ROOT/'maintenance/study-census-resilience-consumers-v5-20261103'
-COORDINATION=ROOT/'maintenance/agent-coordination-repair-v8-20261103/coordination.py'
-COORDINATION_SHA='54987e2ae11df2ede0f1bee88fc286a7c610404c9868094c23dbfcb12e2c5146'
+SUPPORT=ROOT/'maintenance/study-census-resilience-consumers-v6-20261103'
+COORDINATION=ROOT/'maintenance/agent-coordination-repair-v9-20261103/coordination.py'
+COORDINATION_SHA='eb5b0131c5a4c2948a31c73d8d6e643d40c8f06594652e256145d103a83066b9'
 SELF_NAME='run-census-resilience-consumer-v2-20261024.py'
 TEST_NAME='test_census_resilience_consumers_v2_20261024.py'
 QUALIFIER_NAME='qualify-census-resilience-consumers-v2-20261024.py'
@@ -185,7 +185,7 @@ def allocation(fields,job,task,kind,*,wall=time.time,startup=True):
 
 def chain_guard(plan,ledger,binding):
     kind=binding['consumer_kind'];tasks=plan.get('tasks',[])
-    phase='study-'+kind+'-census-resilience-consumers-v5-20261103'
+    phase='study-'+kind+'-census-resilience-consumers-v6-20261103'
     require(plan.get('phase')==phase and len(tasks)==4,'One exact new four-controller phase required')
     jobs=[]
     for index,task in enumerate(tasks):
@@ -461,8 +461,8 @@ def primary_capacity_guard(candidate,ledger_path,plan_records,ledgers,states,*,n
         # primary allocation or ambiguous phase defers the entire admission;
         # no invented native ID can make that commitment disappear.
         jobs={item['job_id']:item for item in af_capacity_state().values()}
-        c={'capacity_registration':{'plan':str(ROOT/'plans/agent-coordination-v8-resume-20261103/plan.json'),
-            'ledger':str(ROOT/'state/agent-coordination-v8-resume-20261103-submission.json')}}
+        c={'capacity_registration':{'plan':str(ROOT/'plans/agent-coordination-v9-resume-20261103/plan.json'),
+            'ledger':str(ROOT/'state/agent-coordination-v9-resume-20261103-submission.json')}}
         try:
             record=shared.coordinated_snapshot(proposed,state={'jobs':jobs},serial_chains=shared.capacity_chains(c),
                 native_reader=native_reader,evidence_dir=evidence_dir,intent_id='primary-'+candidate['phase'])

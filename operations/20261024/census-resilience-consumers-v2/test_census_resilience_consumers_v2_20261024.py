@@ -303,12 +303,32 @@ def test_primary_capacity_private_tick_defers_before_any_submission_journal(m,tm
     else:assert calls==[] and result['phase']['status']=='waiting_for_coordinated_capacity'
 
 
+def primary_pipeline_fixture_source(m,*,repository=None,legacy=None):
+    repository=HERE.parents[2]/'src/horsehair/pipeline.py' if repository is None else Path(repository)
+    if repository.is_file():return repository,m.digest(repository)
+    legacy=actual_legacy(m,'primary') if legacy is None else legacy
+    path=legacy.OLD_FRAMEWORK/'src/horsehair/pipeline.py'
+    assert path.is_file() and m.digest(path)==legacy.PIPELINE_SHA
+    return path,legacy.PIPELINE_SHA
+
+
 def test_actual_primary_tick_ast_and_original_functions_preserved(m):
-    path=HERE.parents[2]/'src/horsehair/pipeline.py'
+    path,source_sha=primary_pipeline_fixture_source(m)
     pipeline=SimpleNamespace(__file__=str(path),sentinel=lambda:None)
     original=pipeline.sentinel
-    private,proof=m.derive_primary_capacity_tick(pipeline,lambda *a:nullcontext({'allowed':False}),expected_sha=m.digest(path))
+    private,proof=m.derive_primary_capacity_tick(pipeline,lambda *a:nullcontext({'allowed':False}),expected_sha=source_sha)
     assert callable(private) and pipeline.sentinel is original and proof['normal_primary_tick_ast_preserved']
+
+
+@pytest.mark.parametrize('tamper',[False,True])
+def test_primary_pipeline_fixture_resolves_standalone_capsule_with_exact_frozen_hash(m,tmp_path,tamper):
+    path=tmp_path/'original-release/src/horsehair/pipeline.py';path.parent.mkdir(parents=True)
+    path.write_text('def tick(): return "original"\n')
+    legacy=SimpleNamespace(OLD_FRAMEWORK=tmp_path/'original-release',PIPELINE_SHA=m.digest(path))
+    if tamper:path.write_text('def tick(): return "changed"\n')
+    if tamper:
+        with pytest.raises(AssertionError):primary_pipeline_fixture_source(m,repository=tmp_path/'missing/src/horsehair/pipeline.py',legacy=legacy)
+    else:assert primary_pipeline_fixture_source(m,repository=tmp_path/'missing/src/horsehair/pipeline.py',legacy=legacy)==(path,legacy.PIPELINE_SHA)
 
 
 def test_primary_capacity_state_keeps_pending_held_array_commitments(m):
@@ -451,7 +471,7 @@ def chain_fixture(m):
         issued=['6950429'] if i==0 else [str(899+i)]
         rows[name]={'state':'submitted','job_id':job,'script_sha256':'a'*64,'dependency_kind':'afterany','issued_native_dependencies':issued,
             'completed_native_dependencies':[],'dependency_resolution_sha256':m.canonical({'kind':'afterany','issued':issued,'completed':[]})}
-    return {'phase':'study-af-census-resilience-consumers-v5-20261103','tasks':tasks},{'tasks':rows},binding
+    return {'phase':'study-af-census-resilience-consumers-v6-20261103','tasks':tasks},{'tasks':rows},binding
 
 
 def test_chain_and_native_predecessor_positive(m):

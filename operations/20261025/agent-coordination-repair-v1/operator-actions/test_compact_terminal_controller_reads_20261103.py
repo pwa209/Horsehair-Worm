@@ -1,5 +1,6 @@
 from pathlib import Path
-import hashlib,importlib.util,json,os,tarfile,copy
+import hashlib,importlib.util,json,os,tarfile,copy,stat
+from types import SimpleNamespace
 import pytest
 
 spec=importlib.util.spec_from_file_location('controller_compactor',Path(__file__).with_name('compact-terminal-controller-reads-20261103.py'));m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
@@ -205,6 +206,106 @@ def test_bound_proof_change_between_unlinks_stops_before_next_original(tree):
     with pytest.raises(ValueError,match='Bound source/proof changed'):m.remove(source,dest,rows,receipt,root=root,checkpoint=guard,after_unlink=change_proof)
     assert sum((source/n).exists() for n in names)==2
     m.verify_tar(dest/'evidence.tar',rows,receipt['archive_sha256'])
+
+
+def test_bound_guard_initial_sha_is_still_required(tree):
+    root,source,_=tree;doc=write(root/'proofs/bound.json',{'fixed':'original'})
+    with pytest.raises(ValueError,match='bytes changed'):m.binding_guard({doc['path']:'0'*64},root=root)
+
+
+def test_bound_guard_checks_every_leaf_once_and_shared_ancestor_once(tree,monkeypatch):
+    root,source,_=tree
+    docs=[write(root/'proofs/shared'/('bound-'+str(i)+'.json'),{'index':i}) for i in range(20)]
+    guard=m.binding_guard({x['path']:x['sha256'] for x in docs},root=root)
+    expected={str(p) for d in docs for p in Path(d['path']).parents}|{d['path'] for d in docs}
+    calls=[];original=os.lstat
+    def lstat(path,*a,**kw):calls.append(str(path));return original(path,*a,**kw)
+    def noresolve(*a,**kw):raise AssertionError('Repeated resolution makes the per-member guard nonlinear')
+    monkeypatch.setattr(m.os,'lstat',lstat);monkeypatch.setattr(Path,'resolve',noresolve)
+    guard();monkeypatch.undo()
+    assert len(calls)==len(expected) and set(calls)==expected
+
+
+def test_bound_guard_allows_unrelated_sibling_unlink_and_directory_timestamp_change(tree):
+    root,source,_=tree;doc=write(root/'proofs/bound.json',{'fixed':'original'})
+    sibling=root/'proofs/eligible-reader.txt';sibling.write_text('archived elsewhere')
+    guard=m.binding_guard({doc['path']:doc['sha256']},root=root)
+    sibling.unlink();os.utime(root/'proofs',None);guard()
+    assert m.sha(doc['path'])==doc['sha256']
+
+
+def test_bound_guard_refuses_changed_bytes(tree):
+    root,source,_=tree;doc=write(root/'proofs/bound.json',{'fixed':'original'})
+    guard=m.binding_guard({doc['path']:doc['sha256']},root=root)
+    Path(doc['path']).write_bytes(b'changed-bound-evidence')
+    with pytest.raises(ValueError,match='Bound source/proof changed'):guard()
+
+
+def test_bound_guard_refuses_replaced_leaf_symlink(tree):
+    root,source,_=tree;doc=write(root/'proofs/bound.json',{'fixed':'original'})
+    guard=m.binding_guard({doc['path']:doc['sha256']},root=root)
+    target=root/'same-bytes.json';target.write_bytes(Path(doc['path']).read_bytes());Path(doc['path']).unlink()
+    try:Path(doc['path']).symlink_to(target)
+    except OSError:pytest.skip('symlink creation unavailable on this host')
+    with pytest.raises(ValueError,match='Bound source/proof changed'):guard()
+
+
+def test_bound_guard_refuses_replaced_ancestor_symlink(tree):
+    root,source,_=tree;doc=write(root/'proofs/bound.json',{'fixed':'original'})
+    guard=m.binding_guard({doc['path']:doc['sha256']},root=root)
+    folder=root/'proofs';backup=root/'proofs-original';folder.rename(backup)
+    try:folder.symlink_to(backup,target_is_directory=True)
+    except OSError:pytest.skip('directory symlink creation unavailable on this host')
+    with pytest.raises(ValueError,match='ancestor'):guard()
+
+
+def test_bound_guard_refuses_new_hardlink(tree):
+    root,source,_=tree;doc=write(root/'proofs/bound.json',{'fixed':'original'})
+    guard=m.binding_guard({doc['path']:doc['sha256']},root=root)
+    try:os.link(doc['path'],root/'duplicate-bound.json')
+    except OSError:pytest.skip('hardlink creation unavailable on this host')
+    with pytest.raises(ValueError,match='Bound source/proof changed'):guard()
+
+
+@pytest.mark.parametrize('change',['uid','nlink','type'])
+def test_bound_guard_rechecks_owner_link_count_and_file_type(tree,monkeypatch,change):
+    root,source,_=tree;doc=write(root/'proofs/bound.json',{'fixed':'original'})
+    real=os.lstat;original=real(doc['path']);monkeypatch.setattr(m.os,'geteuid',lambda:original.st_uid,raising=False)
+    guard=m.binding_guard({doc['path']:doc['sha256']},root=root)
+    def observed(path,*args,**kwargs):
+        record=real(path,*args,**kwargs)
+        if str(path)!=doc['path']:return record
+        values={name:getattr(record,name) for name in ['st_dev','st_ino','st_size','st_mtime_ns','st_ctime_ns','st_mode','st_nlink','st_uid']}
+        if change=='uid':values['st_uid']+=1
+        elif change=='nlink':values['st_nlink']=2
+        else:values['st_mode']=stat.S_IFLNK|0o777
+        return SimpleNamespace(**values)
+    monkeypatch.setattr(m.os,'lstat',observed)
+    with pytest.raises(ValueError,match='Bound source/proof changed'):guard()
+
+
+def maintenance_fields():
+    return {'JobId':'100','UserId':'pwa209(3164768)','JobState':'RUNNING','Account':'def-ptewarie_cpu',
+        'NumCPUs':'1','NumNodes':'1','MinMemoryNode':'16G','TimeLimit':'12:00:00',
+        'Command':str(Path('/maintenance/controller-compact.sbatch')),'JobName':'hhw-terminal-controller-read-compaction-20261103',
+        'EndTime':'2030-01-01T12:00:00','AllocTRES':'cpu=1,mem=16G,node=1'}
+
+
+def test_native_maintenance_requires_twelve_hours_and_retains_finalization_margin():
+    fields=maintenance_fields();end=1893499200
+    assert m.maintenance_allocation(fields,'100',Path(fields['Command']),end,wall=lambda:end-43200)==end
+    with pytest.raises(ValueError,match='finite maintenance end'):
+        m.maintenance_allocation(fields,'100',Path(fields['Command']),end,wall=lambda:end-600)
+    with pytest.raises(ValueError,match='finite maintenance end'):
+        m.maintenance_allocation(fields,'100',Path(fields['Command']),end-5,wall=lambda:end-43200)
+
+
+@pytest.mark.parametrize('key,value',[('TimeLimit','04:00:00'),('NumCPUs','2'),('MinMemoryNode','64G'),
+    ('UserId','other(42)'),('JobId','101'),('Command','/other.sbatch'),('AllocTRES','cpu=1,gres/gpu=1')])
+def test_native_maintenance_refuses_wrong_allocation(key,value):
+    fields=maintenance_fields();fields[key]=value
+    with pytest.raises(ValueError,match='scalar1CPU16G12h'):
+        m.maintenance_allocation(fields,'100',Path('/maintenance/controller-compact.sbatch'),1893499200,wall=lambda:1893456000)
 
 def test_archive_symlink_member_refused_even_with_consistent_outer_digest(tree):
     root,source,names=tree;rows,_=m.roster(source,[],[],root=root);dest=root/'maintenance/archive';receipt=m.pack(source,dest,rows,{},root=root)

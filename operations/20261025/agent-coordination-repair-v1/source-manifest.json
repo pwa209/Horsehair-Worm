@@ -1,6 +1,6 @@
 {
   "files": {
-    "coordination.py": "54987e2ae11df2ede0f1bee88fc286a7c610404c9868094c23dbfcb12e2c5146",
+    "coordination.py": "eb5b0131c5a4c2948a31c73d8d6e643d40c8f06594652e256145d103a83066b9",
     "registry-wait.py": "63735406494fae9c1417fe3a32396c03835ab9dc03332da3aab1ca1852558f96",
     "test_acknowledgements.py": "da24d3ba300edd9859ed565b2df31e97f8a16c77d70bcc802607db4c39099ba0",
     "test_coordination.py": "33e53375a5616291bf15b2710a4aa329f046fb4e2e4250a48cf18ee2bdecdfd4",
