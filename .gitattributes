@@ -3,3 +3,10 @@
 *.sbatch text eol=lf
 *.ps1 text eol=crlf
 
+# Preserve the exact byte identities in these dated native execution records.
+operations/20261025/agent-coordination-repair-v1/operator-actions/archive-orthology-sequence-copies-20261104.py -text whitespace=cr-at-eol
+operations/20261025/agent-coordination-repair-v1/operator-actions/test_archive_orthology_sequence_copies_20261104.py -text whitespace=cr-at-eol
+operations/20261025/agent-coordination-repair-v1/operator-actions/prune-archived-diagnostic-directories-20261104.py -text whitespace=cr-at-eol
+operations/20261025/agent-coordination-repair-v1/operator-actions/test_prune_archived_diagnostic_directories_20261104.py -text whitespace=cr-at-eol
+operations/20261025/agent-coordination-repair-v1/operator-actions/build-orthology-storage-audit-20261104.py -text whitespace=cr-at-eol
+
