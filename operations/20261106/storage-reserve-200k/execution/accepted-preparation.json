@@ -1,15 +1,18 @@
 {
   "status": "finite_preparation_registered_and_released",
-  "job_id": "8631848",
-  "plan": "/scratch/pwa209/horsehair-worm/plans/storage-reserve-200k-v2-prepare-20261106/plan.json",
-  "ledger": "/scratch/pwa209/horsehair-worm/state/storage-reserve-200k-v2-prepare-20261106-submission.json",
+  "job_id": "8633285",
+  "plan": "/scratch/pwa209/horsehair-worm/plans/storage-reserve-200k-v3-prepare-20261106/plan.json",
+  "ledger": "/scratch/pwa209/horsehair-worm/state/storage-reserve-200k-v3-prepare-20261106-submission.json",
   "request": {
-    "path": "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v2-20261106/preparation-request.json",
-    "sha256": "e877f281f250dc0bf929d6807c71ecdf0e36148ebd1fa76533831003cee09aaf"
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v3-20261106/preparation-request.json",
+    "sha256": "10838229e19f06ca77c353bf72c642717abe7c58c3be9bdaa62f507ab47e254a"
   },
   "source": {
-    "path": "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v2-20261106/prepare_study.py",
-    "sha256": "41e5a9b10297c856a90b42a62cab30617e6e77f4aa0b7d42c8f1eaaf0574068f"
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v3-20261106/prepare_study.py",
+    "sha256": "c214852c23d4452ba36eb0152048ab5c93c4f036b0b1fead6a3321411aa43d2d"
   },
-  "request_id": "hhw-storage-reserve-prepare-20261106-1001"
+  "request_id": "hhw-storage-reserve-prepare-repair-20261106-1008",
+  "recovery_request_id": "hhw-recover-rejected-preparation-20261106-1010",
+  "prior_native_submission_explicitly_rejected": true,
+  "duplicate_submission_performed": false
 }

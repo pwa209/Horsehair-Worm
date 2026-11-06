@@ -1,11 +1,11 @@
 {
   "roster_sha256": "c753ac45ad247ed014cc374d80b81c5f4f19024ee06c201563b5781019d0dad8",
   "sources": {
-    "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v2-20261106/archive_continuation.py": "eee13f9f3c1a188c3a9d24d2d27afa4d3ef9e8fb76d2a87d76d9844d2acbd532",
-    "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v2-20261106/policy.json": "2e8e2bd2c1f70aa988a9414d2b44d9ffd0f768f8bc2e329747b7839b2855f2d9",
-    "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v2-20261106/storage_policy.py": "0e8691671a32e2b55cfcd626d461c2708d11d05b00c0491721c6c3be13107f7d",
-    "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v2-20261106/test_archive_continuation.py": "7c716b17c01546aa3b822912b7cce31bc21edf304bd25671c05e9f299816455d",
-    "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v2-20261106/test_storage_policy.py": "37a51f28c97c5ae5f147b8f088acc259ce00c583fe6130312248616edbbe0c32"
+    "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v3-20261106/archive_continuation.py": "eee13f9f3c1a188c3a9d24d2d27afa4d3ef9e8fb76d2a87d76d9844d2acbd532",
+    "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v3-20261106/policy.json": "2e8e2bd2c1f70aa988a9414d2b44d9ffd0f768f8bc2e329747b7839b2855f2d9",
+    "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v3-20261106/storage_policy.py": "0e8691671a32e2b55cfcd626d461c2708d11d05b00c0491721c6c3be13107f7d",
+    "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v3-20261106/test_archive_continuation.py": "7c716b17c01546aa3b822912b7cce31bc21edf304bd25671c05e9f299816455d",
+    "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v3-20261106/test_storage_policy.py": "37a51f28c97c5ae5f147b8f088acc259ce00c583fe6130312248616edbbe0c32"
   },
   "tests": 77
 }

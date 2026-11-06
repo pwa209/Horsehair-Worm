@@ -14,7 +14,7 @@ from horsehair.core import atomic_json,canonical_hash,read_json
 spec=importlib.util.spec_from_file_location('registry_guard_v5',Path(__file__).with_name('registry-wait.py'))
 g=importlib.util.module_from_spec(spec);spec.loader.exec_module(g)
 _NATIVE_DRIVER=Path('/scratch/pwa209/horsehair-worm/maintenance/sixth-repair-support-20261016/controller-primary-repair-sixth-20261016.py')
-DRIVER=_NATIVE_DRIVER if _NATIVE_DRIVER.exists() else next(p for p in Path(__file__).resolve().parents if (p/'operations').is_dir())/'operations/20261024/f2-backfill-controller-v2/qualification-assets/controller-primary-repair-sixth-20261016.py'
+DRIVER=_NATIVE_DRIVER if _NATIVE_DRIVER.exists() else Path(__file__).resolve().parents[4]/'operations/20261024/f2-backfill-controller-v2/qualification-assets/controller-primary-repair-sixth-20261016.py'
 
 
 @pytest.fixture

@@ -456,9 +456,9 @@ def test_real_base_loop_turns_deadline_cutoff_into_successful_finite_handoff(tmp
     import math
     from contextlib import nullcontext
     from types import SimpleNamespace
-    path=next(p for p in Path(__file__).resolve().parents if (p/'operations').is_dir())/'operations/20261024/f2-backfill-controller-v2/run-af-agent-controller-backfill-base-v2-20261024.py'
+    path=Path('/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v2-20261024/run-af-agent-controller-backfill-base-v2-20261024.py')
     if not path.is_file():
-        path=Path('/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v2-20261024/run-af-agent-controller-backfill-base-v2-20261024.py')
+        path=Path(__file__).resolve().parents[4]/'operations/20261024/f2-backfill-controller-v2/run-af-agent-controller-backfill-base-v2-20261024.py'
     source=path.read_bytes()
     assert hashlib.sha256(source).hexdigest()=='cbf01cffbbaa9a983ec1e8e6394b38ac04623483e768398c18f48b5e30e31445'
     # Exercise the exact frozen run function, while keeping its dependencies
@@ -594,7 +594,7 @@ def test_ambiguous_or_failed_final_accounting_never_writes_a_release(tmp_path,ch
 
 
 @pytest.mark.parametrize('phase,role,count,cpus,source,prefix',[
- ('storage-reserve-200k-v2-primary-20261106','controller',4,1,'d89b31180d4c4ffe9c4023dc5534b96f2d157a3a8e3aecaff30849283d00a705','primary-resilient-census-controller-'),
+ ('storage-reserve-200k-v3-primary-20261106','controller',4,1,'d89b31180d4c4ffe9c4023dc5534b96f2d157a3a8e3aecaff30849283d00a705','primary-resilient-census-controller-'),
  ('storage-reserve-200k-v2-census-20261106','provider',64,8,m.SOURCE,'rolling-storage-census-')])
 def test_new_source_bound_storage_policy_chains_reserve_concurrent_maximum(phase,role,count,cpus,source,prefix):
     tasks=[];rows={}

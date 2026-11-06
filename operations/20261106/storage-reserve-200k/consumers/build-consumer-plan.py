@@ -8,11 +8,11 @@ import json
 import shlex
 
 ROOT=Path('/scratch/pwa209/horsehair-worm')
-SUPPORT=ROOT/'maintenance/storage-reserve-200k-v2-20261106/consumers'
+SUPPORT=ROOT/'maintenance/storage-reserve-200k-v3-20261106/consumers'
 PRIOR_SUPPORT=ROOT/'maintenance/study-census-resilience-consumers-v2-20261024'
 SELF_NAME='run-census-resilience-consumer-v2-20261024.py'
 PARENTS={'af':'6950429','primary':'7046404'}
-PHASES={'primary':'storage-reserve-200k-v2-primary-20261106','af':'storage-reserve-200k-v2-af-20261106'}
+PHASES={'primary':'storage-reserve-200k-v3-primary-20261106','af':'storage-reserve-200k-v3-af-20261106'}
 
 
 def require(value,message):

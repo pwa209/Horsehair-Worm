@@ -12,23 +12,25 @@ import argparse,gzip,hashlib,importlib.util,json,os,re,shlex,stat,subprocess,sys
 import xml.etree.ElementTree as ET
 
 ROOT=Path('/scratch/pwa209/horsehair-worm')
-BASE=ROOT/'maintenance/storage-reserve-200k-v2-20261106'
+BASE=ROOT/'maintenance/storage-reserve-200k-v3-20261106'
+CENSUS_BASE=ROOT/'maintenance/storage-reserve-200k-v2-20261106/census'
+POLICY_BASE=ROOT/'maintenance/storage-reserve-200k-v2-20261106'
 FRAMEWORK=ROOT/'releases/20261021-6ed201653dfa-4f3903d7c26e'
 SOURCE='4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1'
 CONFIG='446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35'
 POLICY_MODULE='0e8691671a32e2b55cfcd626d461c2708d11d05b00c0491721c6c3be13107f7d'
 POLICY='2e8e2bd2c1f70aa988a9414d2b44d9ffd0f768f8bc2e329747b7839b2855f2d9'
-MANIFESTS={'consumers':'9326aae2e0bb3775b23efba2e61fef6a0365f070c18e03383a9f433bde31614b',
- 'coordination':'45feaea32e02fce2ca94ca841858920fd6342ec46ab4c7d9a17552775b0f9d53',
+MANIFESTS={'consumers':'a5dfc9c76ac2553de5bfa3c34068d4c38e0f04fb236d23768b9de6258ce4d78d',
+ 'coordination':'195be1555539e2894249660cf235bce0ee20d78d6554b632a825ef38882f17d5',
  'census':'288af211cad1ad186105e6b2dafa08d4195920b132ab9efef367af98c0fbdf6e'}
-PRIMARY_PHASE='storage-reserve-200k-v2-primary-20261106'
-AGENT_PHASE='agent-coordination-storage-reserve-200k-v2-20261106'
+PRIMARY_PHASE='storage-reserve-200k-v3-primary-20261106'
+AGENT_PHASE='agent-coordination-storage-reserve-200k-v3-20261106'
 OLD_PRIMARY=('8559679','8559680','8559681','8559683')
 OLD_AGENT=('8559704','8559707','8559708','8559725')
 RETIRE=OLD_PRIMARY+OLD_AGENT[2:]
 KEEP_HELD='6983060'
 TERMINAL={'COMPLETED','FAILED','CANCELLED','TIMEOUT','OUT_OF_MEMORY','NODE_FAIL','PREEMPTED','BOOT_FAIL','DEADLINE','REVOKED'}
-TEST_SOURCE_SHA='ac87698ac8afcb7d208955e4f875d77982b89576b220fd1598caf8d94380d34b'
+TEST_SOURCE_SHA='6e0a7f0fd93a7b77c4b2869aba2e4295511eae14b8307b54a555d25bad8210f9'
 TEST_COUNT=62
 TEST_ROSTER_SHA='d0009730c331db78767d9a40da0afaaad0adc7ee0c749d414adcf083febe7aef'
 
@@ -275,17 +277,17 @@ def main(argv=None):
  components=request['components'];require(set(components)==set(MANIFESTS),'All three qualified component closures required')
  modules={};manifests={};qjobs={}
  for kind,expected in MANIFESTS.items():
-  component=components[kind];require(component['manifest']=={'path':str(BASE/kind/'source-manifest.json'),'sha256':expected},'Exact qualified component manifest required')
+  component=components[kind];component_base=CENSUS_BASE if kind=='census' else BASE/kind;require(component['manifest']=={'path':str(component_base/'source-manifest.json'),'sha256':expected},'Exact qualified component manifest required')
   manifests[kind]=read(component['manifest']);q=read({k:component['qualification'][k] for k in ['path','sha256']});qjob=component['qualification']['job_id'];qualification_identity(kind,q,qjob);qjobs[qjob]=4
-  for name,digest in manifests[kind]['files'].items():pin({'path':str(BASE/kind/name),'sha256':digest})
+  for name,digest in manifests[kind]['files'].items():pin({'path':str(component_base/name),'sha256':digest})
   entry={'consumers':'run-census-resilience-consumer-v2-20261024.py','coordination':'coordination.py','census':'run-fresh-storage-census-resilience-v1-20261024.py'}[kind]
-  modules[kind]=module(BASE/kind/entry,manifests[kind]['files'][entry],'activation_'+kind)
+  modules[kind]=module(component_base/entry,manifests[kind]['files'][entry],'activation_'+kind)
  archive=request['archive'];required={**qjobs,archive['job_id']:1,request['first_census_job_id']:8,OLD_AGENT[0]:1,OLD_AGENT[1]:1}
  require(len(qjobs)==3 and len(required)==7,'Three qualifications, archive, first census and two old agents must be distinct actual jobs')
  positive=await_success(required);save(area/'positive-prerequisites.json',positive)
  continuation=archive_authority(archive)
  consumer=modules['consumers'];coordinator=modules['coordination'];provider=modules['census']
- storage=module(BASE/'storage_policy.py',POLICY_MODULE,'activation_storage_policy');policy=storage.verify_policy(BASE/'policy.json',POLICY,root=ROOT)
+ storage=module(POLICY_BASE/'storage_policy.py',POLICY_MODULE,'activation_storage_policy');policy=storage.verify_policy(POLICY_BASE/'policy.json',POLICY,root=ROOT)
  budget.native_accounting(ROOT,sorted(required),runner=lambda cmd,**kw:subprocess.run(cmd,**{**kw,'timeout':60}))
  native_reader=consumer.bounded_native_reader(end)
  consumer.validate_qualification(components['consumers']['qualification'],components['consumers']['manifest'],native_reader)

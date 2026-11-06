@@ -22,12 +22,12 @@ import sys
 import time
 
 ROOT=Path('/scratch/pwa209/horsehair-worm')
-SUPPORT=ROOT/'maintenance/storage-reserve-200k-v2-20261106/coordination'
+SUPPORT=ROOT/'maintenance/storage-reserve-200k-v3-20261106/coordination'
 PRIOR_SUPPORT=ROOT/'maintenance/agent-coordination-repair-v1-20261025'
 FRAMEWORK=ROOT/'releases/20261021-6ed201653dfa-4f3903d7c26e'
 CAMPAIGN=ROOT/'maintenance/study-af-campaign-v1-20261021/agent-final-f64-v1'
-CONSUMER=ROOT/'maintenance/storage-reserve-200k-v2-20261106/consumers/run-census-resilience-consumer-v2-20261024.py'
-CONSUMER_SHA='2b426ee2e3c03ecbfcc7f891a34cf364b5f40d02d8f080f52837bc8931aef98a'
+CONSUMER=ROOT/'maintenance/storage-reserve-200k-v3-20261106/consumers/run-census-resilience-consumer-v2-20261024.py'
+CONSUMER_SHA='2f8af54f0c2b158d45d884281ba9ccd0fb51d3d0cdc74bfd70276747723d5ccf'
 CONSUMER_BINDING=CONSUMER.parent/'af-consumer-binding.json'
 CONSUMER_BINDING_SHA=None # Explicit source-bound CLI locator, verified at actual registration.
 SOURCE='4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1'
@@ -150,7 +150,7 @@ def serial_capacity_chain(plan,ledger,role):
         and ledger['plan_sha256']==canonical(plan),'Source-bound serial capacity plan/ledger required')
     phase=plan['phase'];source=plan['release_identity']['sha256']
     provider=role=='provider' and phase in {'study-census-resilience-v1-20261024','storage-reserve-200k-v2-census-20261106'} and source==SOURCE
-    primary=role=='controller' and phase in {'study-primary-census-resilience-consumers-v6-20261103','storage-reserve-200k-v2-primary-20261106'} and source=='d89b31180d4c4ffe9c4023dc5534b96f2d157a3a8e3aecaff30849283d00a705'
+    primary=role=='controller' and phase in {'study-primary-census-resilience-consumers-v6-20261103','storage-reserve-200k-v3-primary-20261106'} and source=='d89b31180d4c4ffe9c4023dc5534b96f2d157a3a8e3aecaff30849283d00a705'
     agent=role=='controller' and phase.startswith('agent-coordination-') and source==SOURCE
     require(provider or primary or agent,'Only the exact existing workflow chain roles may reserve concurrency')
     tasks=plan['tasks'];require(len(tasks)==(4 if role=='controller' else 64),'Exact finite serial chain length required')
@@ -174,8 +174,8 @@ def capacity_chains(c):
           'ledger':str(ROOT/'state/study-primary-census-resilience-consumers-v6-20261103-submission.json')},'controller'),
         ({'plan':str(ROOT/'plans/study-census-resilience-v1-20261024/plan.json'),
           'ledger':str(ROOT/'state/study-census-resilience-v1-20261024-submission.json')},'provider'),
-        ({'plan':str(ROOT/'plans/storage-reserve-200k-v2-primary-20261106/plan.json'),
-          'ledger':str(ROOT/'state/storage-reserve-200k-v2-primary-20261106-submission.json')},'controller'),
+        ({'plan':str(ROOT/'plans/storage-reserve-200k-v3-primary-20261106/plan.json'),
+          'ledger':str(ROOT/'state/storage-reserve-200k-v3-primary-20261106-submission.json')},'controller'),
         ({'plan':str(ROOT/'plans/storage-reserve-200k-v2-census-20261106/plan.json'),
           'ledger':str(ROOT/'state/storage-reserve-200k-v2-census-20261106-submission.json')},'provider')]
     result=[];seen=set()

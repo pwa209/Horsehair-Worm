@@ -13,7 +13,14 @@ import sys
 import pytest
 
 HERE=Path(__file__).resolve().parent
-REPOSITORY=next((p for p in HERE.parents if (p/'src/horsehair').is_dir()),Path('/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e'))
+NATIVE_FRAMEWORK=Path('/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e')
+# The native source tree is explicit. Never probe ancestors of personal scratch.
+if (NATIVE_FRAMEWORK/'src/horsehair').is_dir():
+    REPOSITORY=NATIVE_FRAMEWORK
+else:
+    REPOSITORY=HERE.parents[3]
+    if not (REPOSITORY/'src/horsehair').is_dir():
+        raise RuntimeError('Expected the exact native framework or this local repository layout')
 OPERATIONS=REPOSITORY/'operations'
 
 
@@ -371,7 +378,7 @@ def test_primary_candidate_serial_dag_uses_original_peak_not_task_sum(m):
 
 def test_primary_uses_exact_shared_coordinator_capacity_contract(m):
     path=m.COORDINATION if m.COORDINATION.exists() else HERE.parent/'coordination/coordination.py'
-    assert m.COORDINATION==m.ROOT/'maintenance/storage-reserve-200k-v2-20261106/coordination/coordination.py'
+    assert m.COORDINATION==m.ROOT/'maintenance/storage-reserve-200k-v3-20261106/coordination/coordination.py'
     shared=load(path,'qualified_shared_primary_capacity')
     native='101|pwa209|hhw-primary-controller|RUNNING|1|N/A|/scratch/pwa209/horsehair-worm\n'
     native+='201|pwa209|hhw-census-provider|PENDING|8|N/A|/scratch/pwa209/horsehair-worm\n'
@@ -386,7 +393,7 @@ def test_primary_uses_exact_shared_coordinator_capacity_contract(m):
 
 def test_shared_snapshot_primary_ambiguity_blocks_before_capacity_math(m,tmp_path,monkeypatch):
     path=m.COORDINATION if m.COORDINATION.exists() else HERE.parent/'coordination/coordination.py'
-    assert m.COORDINATION==m.ROOT/'maintenance/storage-reserve-200k-v2-20261106/coordination/coordination.py'
+    assert m.COORDINATION==m.ROOT/'maintenance/storage-reserve-200k-v3-20261106/coordination/coordination.py'
     shared=load(path,'qualified_shared_primary_visibility');calls=[]
     def unresolved(*args,**kwargs):
         calls.append((args,kwargs));raise shared.PendingCapacity('Source-bound primary submitting phase awaits actual acceptance evidence')

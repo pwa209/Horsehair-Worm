@@ -3,11 +3,12 @@ from pathlib import Path
 import argparse,base64,hashlib,json,re,zlib
 
 ROOT='/scratch/pwa209/horsehair-worm'
-BASE=ROOT+'/maintenance/storage-reserve-200k-v2-20261106'
-JOBS={'census':'8630687','consumers':'8630826','coordination':'8630827'}
+BASE=ROOT+'/maintenance/storage-reserve-200k-v3-20261106'
+CENSUS_BASE=ROOT+'/maintenance/storage-reserve-200k-v2-20261106/census'
+JOBS={'census':'8630687','consumers':'8632769','coordination':'8632772'}
 MANIFESTS={'census':'288af211cad1ad186105e6b2dafa08d4195920b132ab9efef367af98c0fbdf6e',
-           'consumers':'9326aae2e0bb3775b23efba2e61fef6a0365f070c18e03383a9f433bde31614b',
-           'coordination':'45feaea32e02fce2ca94ca841858920fd6342ec46ab4c7d9a17552775b0f9d53'}
+           'consumers':'a5dfc9c76ac2553de5bfa3c34068d4c38e0f04fb236d23768b9de6258ce4d78d',
+           'coordination':'195be1555539e2894249660cf235bce0ee20d78d6554b632a825ef38882f17d5'}
 FILES=['storage_policy.py','policy.json','test_storage_policy.py','archive_continuation.py',
        'test_archive_continuation.py','archive-native-test-contract.json','release_census.py',
        'test_release_census.py','activate_controllers.py','test_activate_controllers.py',
@@ -23,16 +24,16 @@ def build(request_id,observation):
         if b'\r\n' in raw:raise ValueError('Freeze LF source before deployment: '+name)
         digest=hashlib.sha256(raw).hexdigest();pins[BASE+'/'+name]=digest
         payload[name]={'sha256':digest,'bytes':len(raw),'data':base64.b64encode(zlib.compress(raw,9)).decode()}
-    if payload['prepare_study.py']['sha256']!='41e5a9b10297c856a90b42a62cab30617e6e77f4aa0b7d42c8f1eaaf0574068f':raise ValueError('Preparation source differs from reviewed final source')
-    if payload['test_prepare_study.py']['sha256']!='a8d8cd89f5e145752e533950bad06b7e9b87ace8339a562d14192c0f18cc9a35':raise ValueError('Preparation tests differ from final qualification contract')
+    if payload['prepare_study.py']['sha256']!='c214852c23d4452ba36eb0152048ab5c93c4f036b0b1fead6a3321411aa43d2d':raise ValueError('Preparation source differs from reviewed final source')
+    if payload['test_prepare_study.py']['sha256']!='b408733ca92745627182adab792859c03b6c2cd3adecef1cc0a17f1f9128e119':raise ValueError('Preparation tests differ from final qualification contract')
     def old(relative):
         value=observation[relative]['locator']
         if value['path']!=ROOT+'/'+relative or not re.fullmatch('[0-9a-f]{64}',value['sha256']):raise ValueError('Original live locator does not match its exact authorized path')
         return value
     def pair(phase):return {'plan':old('plans/'+phase+'/plan.json'),'ledger':old('state/'+phase+'-submission.json')}
     request={'kind':'finite-storage-reserve-200k-study-preparation','root':ROOT,'source_pins':pins,
-             'components':{role:{'manifest':{'path':BASE+'/'+role+'/source-manifest.json','sha256':MANIFESTS[role]},
-                'qualification_job_id':JOBS[role],'qualification_path':BASE+'/'+role+('/qualification/qualification.json' if role=='census' else '/qualification.json')} for role in JOBS},
+             'components':{role:{'manifest':{'path':(CENSUS_BASE if role=='census' else BASE+'/'+role)+'/source-manifest.json','sha256':MANIFESTS[role]},
+                'qualification_job_id':JOBS[role],'qualification_path':(CENSUS_BASE if role=='census' else BASE+'/'+role)+('/qualification/qualification.json' if role=='census' else '/qualification.json')} for role in JOBS},
              'activation_inputs':{'legacy_bindings':{kind:old('maintenance/study-census-resilience-consumers-v2-20261024/'+kind+'-consumer-binding.json') for kind in ['af','primary']},
                 'primary_template':pair('study-primary-census-resilience-consumers-v2-20261024'),
                 'old_registrations':{'primary':pair('study-primary-census-resilience-consumers-v6-20261103'),'agent':pair('agent-coordination-v9-resume-20261103')},
@@ -55,10 +56,10 @@ export PYTHONDONTWRITEBYTECODE=1 TZ=UTC
 python -B -u - <<'PY'
 from pathlib import Path
 import base64,hashlib,json,os,shlex,subprocess,zlib
-from horsehair import slurm
+from horsehair import budget,slurm
 from horsehair.core import source_identity,canonical_hash,read_json,atomic_json,exclusive_file_lock
 assert os.geteuid()==3164768
-r=Path('/scratch/pwa209/horsehair-worm');area=r/'maintenance/storage-reserve-200k-v2-20261106'
+r=Path('/scratch/pwa209/horsehair-worm');area=r/'maintenance/storage-reserve-200k-v3-20261106'
 assert area.resolve()==area and area.is_dir() and area.stat().st_uid==3164768
 payload=__PAYLOAD__;request=__REQUEST__
 for name,item in payload.items():
@@ -80,7 +81,7 @@ request_sha=hashlib.sha256(request_path.read_bytes()).hexdigest()
 framework=r/'releases/20261021-6ed201653dfa-4f3903d7c26e';identity=source_identity(framework)
 assert identity['sha256']=='4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1'
 config=read_json(framework/'configs/study.json');assert canonical_hash(config)=='446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35'
-phase='storage-reserve-200k-v2-prepare-20261106';name='storage-reserve-200k-prepare'
+phase='storage-reserve-200k-v3-prepare-20261106';name='storage-reserve-200k-prepare'
 directory=r/'plans'/phase;ledger=r/'state'/(phase+'-submission.json');script=directory/(name+'.sbatch')
 assert not directory.exists() and not ledger.exists()
 flags=['--request',str(request_path),'--request-sha256',request_sha,'--source-sha256',payload['prepare_study.py']['sha256'],
@@ -109,7 +110,11 @@ def native(job):
 with exclusive_file_lock(r/'state/af-campaign-registration.mutex',timeout=180):
     directory.mkdir(mode=0o700)
     with script.open('x') as f:f.write(text);f.flush();os.fsync(f.fileno())
-    atomic_json(directory/'plan.json',plan);record=slurm.submit(directory/'plan.json',ledger,runner=runner);job=record['tasks'][name]['job_id'];f=native(job)
+    atomic_json(directory/'plan.json',plan)
+    # Completed parents may have left Slurm's live job table. Preserve their
+    # actual final accounting before resolving native dependency flags.
+    budget.native_accounting(r,task['external_dependencies'],runner=lambda cmd,**kw:subprocess.run(cmd,**{**kw,'timeout':60}))
+    record=slurm.submit(directory/'plan.json',ledger,runner=runner);job=record['tasks'][name]['job_id'];f=native(job)
     assert f['JobId']==job and f['UserId']=='pwa209(3164768)' and f['Account']=='def-ptewarie_cpu' and f['JobState']=='PENDING' and f['Reason']=='JobHeldUser'
     assert f['Command']==str(script) and f['JobName']=='hhw-'+name and f['NumCPUs']=='2' and f['NumNodes'] in {'1','1-1'} and f['MinMemoryNode'] in {'16G','16384M'} and f['TimeLimit']=='01:00:00' and f['Requeue']=='0' and 'ArrayJobId' not in f
     assert all('gpu' not in f.get(key,'').lower() for key in ['ReqTRES','AllocTRES','Gres','TresPerNode','TresPerTask'])

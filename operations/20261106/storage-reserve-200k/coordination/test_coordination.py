@@ -185,7 +185,8 @@ def test_worker_can_wait_past_previous_one_hour_budget(tmp_path,monkeypatch):
 
 def test_actual_af_storage_function_gets_only_private_approved_reserve(tmp_path,monkeypatch):
     here=Path(__file__).resolve().parent
-    shared=here.parent/'storage_policy.py'
+    native_policy=Path('/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v2-20261106/storage_policy.py')
+    shared=native_policy if native_policy.is_file() else here.parent/'storage_policy.py'
     spec=importlib.util.spec_from_file_location('actual_af_reserve_policy_test',shared)
     helper=importlib.util.module_from_spec(spec);spec.loader.exec_module(helper)
     root=tmp_path/'study';directory=root/'maintenance'/helper.POLICY_ID;directory.mkdir(parents=True)
@@ -194,8 +195,7 @@ def test_actual_af_storage_function_gets_only_private_approved_reserve(tmp_path,
     monkeypatch.setattr(helper,'ROOT',root)
     policy=helper.verify_policy(policy_file,helper.hashlib.sha256(policy_file.read_bytes()).hexdigest(),root=root)
     native=Path('/scratch/pwa209/horsehair-worm/maintenance/study-af-backfill-controller-support-v2-20261024/run-af-agent-controller-backfill-base-v2-20261024.py')
-    repository=next((p for p in here.parents if (p/'operations').is_dir()),None)
-    source=native if native.exists() else repository/'operations/20261024/f2-backfill-controller-v2'/native.name
+    source=native if native.is_file() else here.parents[3]/'operations/20261024/f2-backfill-controller-v2'/native.name
     spec=importlib.util.spec_from_file_location('actual_af_reserve_original_test',source)
     base=importlib.util.module_from_spec(spec);spec.loader.exec_module(base)
     original=base.storage_guard;original_code=original.__code__;old_storage=original.__globals__['_storage'];source_sha=helper.hashlib.sha256(source.read_bytes()).hexdigest()

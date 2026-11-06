@@ -5,16 +5,18 @@ import argparse,hashlib,importlib.util,json,os,re,shlex,stat,subprocess,sys,time
 import xml.etree.ElementTree as ET
 
 ROOT=Path('/scratch/pwa209/horsehair-worm')
-BASE=ROOT/'maintenance/storage-reserve-200k-v2-20261106'
+BASE=ROOT/'maintenance/storage-reserve-200k-v3-20261106'
+POLICY_BASE=ROOT/'maintenance/storage-reserve-200k-v2-20261106'
+CENSUS_BASE=POLICY_BASE/'census'
 FRAMEWORK=ROOT/'releases/20261021-6ed201653dfa-4f3903d7c26e'
 SOURCE='4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1'
 CONFIG='446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35'
 POLICY_MODULE='0e8691671a32e2b55cfcd626d461c2708d11d05b00c0491721c6c3be13107f7d'
 POLICY='2e8e2bd2c1f70aa988a9414d2b44d9ffd0f768f8bc2e329747b7839b2855f2d9'
 MANIFESTS={'census':'288af211cad1ad186105e6b2dafa08d4195920b132ab9efef367af98c0fbdf6e',
- 'consumers':'9326aae2e0bb3775b23efba2e61fef6a0365f070c18e03383a9f433bde31614b',
- 'coordination':'45feaea32e02fce2ca94ca841858920fd6342ec46ab4c7d9a17552775b0f9d53'}
-QUALIFIERS={'census':'8630687','consumers':'8630826','coordination':'8630827'}
+ 'consumers':'a5dfc9c76ac2553de5bfa3c34068d4c38e0f04fb236d23768b9de6258ce4d78d',
+ 'coordination':'195be1555539e2894249660cf235bce0ee20d78d6554b632a825ef38882f17d5'}
+QUALIFIERS={'census':'8630687','consumers':'8632769','coordination':'8632772'}
 
 def require(ok,message):
  if not ok:raise ValueError(message)
@@ -170,6 +172,7 @@ def main(argv=None):
   and ownledger['tasks'][args.native_task]['state']=='submitted' and ownledger['tasks'][args.native_task]['job_id']==job and tokens.count(str(Path(__file__)))==1 and tokens[tokens.index(str(Path(__file__)))+1:]==argv,'Source-bound actual preparation plan/ledger/invocation required')
  area=BASE/'preparation'/('native-'+job);area.mkdir(mode=0o700,parents=True,exist_ok=False);counter=[0]
  pins=dict(request['source_pins']);pins[str(args.request)]=args.request_sha256;pins[str(Path(__file__))]=args.source_sha256
+ pins[str(POLICY_BASE/'storage_policy.py')]=POLICY_MODULE;pins[str(POLICY_BASE/'policy.json')]=POLICY
  required_files={'prepare_study.py','test_prepare_study.py','archive_continuation.py','archive-native-test-contract.json','release_census.py','test_release_census.py',
   'activate_controllers.py','test_activate_controllers.py','storage_policy.py','test_storage_policy.py','policy.json'}
  require({str(BASE/name) for name in required_files}<=set(pins),'Every finite helper/test/policy source must be pinned before registration')
@@ -181,18 +184,18 @@ def main(argv=None):
   try:x=subprocess.run(command,**{**kwargs,'timeout':120})
   except BaseException as error:save(Path(str(prefix)+'-exception.json'),{'type':type(error).__name__,'automatic_replay_permitted':False});raise
   save(Path(str(prefix)+'-response.json'),{'returncode':x.returncode,'stdout':x.stdout,'stderr':x.stderr});return x
- policy=module(BASE/'storage_policy.py',POLICY_MODULE,'finite_prepare_storage_policy');approved=policy.verify_policy(BASE/'policy.json',POLICY,root=ROOT)
+ policy=module(POLICY_BASE/'storage_policy.py',POLICY_MODULE,'finite_prepare_storage_policy');approved=policy.verify_policy(POLICY_BASE/'policy.json',POLICY,root=ROOT)
  resource=load_resource_policy(ROOT/'maintenance/execution-resource-policies/af-expanded-20261021-v1/policy.json','f4445fb72d6a0fd8e62fb9a3c5ef43a6a6b1e7bf5a369254ff40d617e992b4e5',root=ROOT,config=config)
  components={};manifests={};require(set(request['components'])==set(MANIFESTS),'All three finite qualifications required')
  for role,expected in MANIFESTS.items():
-  c=request['components'][role];binding=c['manifest'];require(binding=={'path':str(BASE/role/'source-manifest.json'),'sha256':expected} and c['qualification_job_id']==QUALIFIERS[role],'Exact declared qualification job/source required')
+  c=request['components'][role];support=CENSUS_BASE if role=='census' else BASE/role;binding=c['manifest'];require(binding=={'path':str(support/'source-manifest.json'),'sha256':expected} and c['qualification_job_id']==QUALIFIERS[role],'Exact declared qualification job/source required')
   manifest=read(binding);manifests[role]=manifest
-  for name,digest in manifest['files'].items():require(Path(name).name==name,'Flat qualified source member required');pin({'path':str(BASE/role/name),'sha256':digest})
-  qp=BASE/role/('qualification/qualification.json' if role=='census' else 'qualification.json');require(c['qualification_path']==str(qp),'Exact finite qualification output required');report=json.loads(ordinary(qp).read_bytes());qb={**locator(qp),'job_id':c['qualification_job_id']}
+  for name,digest in manifest['files'].items():require(Path(name).name==name,'Flat qualified source member required');pin({'path':str(support/name),'sha256':digest})
+  qp=support/('qualification/qualification.json' if role=='census' else 'qualification.json');require(c['qualification_path']==str(qp),'Exact finite qualification output required');report=json.loads(ordinary(qp).read_bytes());qb={**locator(qp),'job_id':c['qualification_job_id']}
   junit=passing_report(role,report,manifest,qb['job_id'],binding);pins[qp.as_posix()]=qb['sha256'];pins[junit['path']]=junit['sha256'];components[role]={'manifest':binding,'qualification':qb}
  rows=wait_qualifications(lambda timeout:repair._repair_native_states(list(QUALIFIERS.values()),{},owner='pwa209',account='def-ptewarie_cpu',runner=lambda cmd,**kw:bounded_read_runner(cmd,**{**kw,'timeout':timeout})),list(QUALIFIERS.values()),end,guard=guard)
  budget.native_accounting(ROOT,list(QUALIFIERS.values()),runner=bounded_read_runner)
- provider=module(BASE/'census/run-fresh-storage-census-resilience-v1-20261024.py',manifests['census']['files']['run-fresh-storage-census-resilience-v1-20261024.py'],'finite_prepare_provider')
+ provider=module(CENSUS_BASE/'run-fresh-storage-census-resilience-v1-20261024.py',manifests['census']['files']['run-fresh-storage-census-resilience-v1-20261024.py'],'finite_prepare_provider')
  consumer=module(BASE/'consumers/run-census-resilience-consumer-v2-20261024.py',manifests['consumers']['files']['run-census-resilience-consumer-v2-20261024.py'],'finite_prepare_consumer')
  native_reader=lambda ids,rosters,**kw:repair._repair_native_states(ids,rosters,**{**kw,'runner':bounded_read_runner})
  consumer.validate_qualification(components['consumers']['qualification'],components['consumers']['manifest'],native_reader)
@@ -210,23 +213,23 @@ def main(argv=None):
   return ledger,ids,observed
  with budget.resource_lease(ROOT,config,cpus=2,gpus=0,max_hours=1,job_id=job,resource_policy=resource):
   guard();held_old();budget.require_storage_headroom(ROOT,required_files=2000,required_bytes=1_000_000_000,reserve_files=policy.reserve_for(2000,approved),reserve_bytes=2_000_000_000_000)
-  builder=module(BASE/'census/build-native-plans.py',manifests['census']['files']['build-native-plans.py'],'finite_prepare_census_builder');builder.PROVIDER_SHA=manifests['census']['files']['run-fresh-storage-census-resilience-v1-20261024.py'];builder.QUALIFIER_SHA=manifests['census']['files']['qualify-census-resilience-v1-20261024.py']
+  builder=module(CENSUS_BASE/'build-native-plans.py',manifests['census']['files']['build-native-plans.py'],'finite_prepare_census_builder');builder.PROVIDER_SHA=manifests['census']['files']['run-fresh-storage-census-resilience-v1-20261024.py'];builder.QUALIFIER_SHA=manifests['census']['files']['qualify-census-resilience-v1-20261024.py']
   q=components['census']['qualification'];proof=slurm.completed_native_dependency(ROOT,q['job_id']);require(proof is not None,'Positive persisted census qualification required')
   plan,scripts=builder.render(config,identity,MANIFESTS['census'],slurm._script,mode='provider',qualification=q,proof=proof,anchor=datetime.now(timezone.utc))
   for t in plan['tasks']:scripts[Path(t['script']).name]=held_text(scripts[Path(t['script']).name],6);t['script_sha256']=canonical(scripts[Path(t['script']).name])
   planpath=ROOT/'plans'/plan['phase']/'plan.json';ledgerpath=ROOT/'state'/(plan['phase']+'-submission.json')
   with exclusive_file_lock(ROOT/'state/af-campaign-registration.mutex',timeout=180):ledger,ids,held=publish(plan,scripts,planpath,ledgerpath)
-  schedule={'plan':locator(planpath),'ledger':locator(ledgerpath),'helper':locator(BASE/'census/run-fresh-storage-census-resilience-v1-20261024.py'),'source_manifest':components['census']['manifest'],'qualification':q,'case_root':str(BASE/'census/cases')}
+  schedule={'plan':locator(planpath),'ledger':locator(ledgerpath),'helper':locator(CENSUS_BASE/'run-fresh-storage-census-resilience-v1-20261024.py'),'source_manifest':components['census']['manifest'],'qualification':q,'case_root':str(CENSUS_BASE/'cases')}
   provider.validate_schedule_binding(schedule,q,native_reader);save(area/'census-schedule.json',schedule)
   archive_contract=json.loads(ordinary(BASE/'archive-native-test-contract.json').read_bytes());archive_source=locator(BASE/'archive_continuation.py');archive_request=BASE/'archive-continuation-request.json';archive_registration=BASE/'archive-continuation-registration.json'
   payload={'original':original_archive(),'new_registration_path':str(archive_registration),'continuation_directory':str(ROOT/'results/storage-archives/orthology-sequences-20261104/continuation-20261106'),'native_test_contract':archive_contract,'census_gate':census_gate(planpath,ledgerpath,plan,ledger)}
   save(archive_request,payload);ap=locator(archive_request);command=shlex.join(['python','-s','-B','-u',archive_source['path'],'--request',ap['path'],'--request-sha256',ap['sha256'],'--source-sha256',archive_source['sha256']])
   prefix='mkdir -m 700 "'+str(BASE)+'/native-${SLURM_JOB_ID}"\nexport TZ=UTC PYTHONDONTWRITEBYTECODE=1\n'+source_test_prefix(archive_contract['sources'],[str(BASE/'test_storage_policy.py'),str(BASE/'test_archive_continuation.py')],str(BASE)+'/native-${SLURM_JOB_ID}/tests.xml','$SLURM_TMPDIR/archive-tests')
-  archive=one_plan(config,identity,'storage-reserve-200k-v2-archive-continuation-20261106','orthology-archive-continuation-20261106',command,{'cpus':1,'memory':'8G','hours':12,'gpu':False,'array':None},[],slurm._script,prefix)
+  archive=one_plan(config,identity,'storage-reserve-200k-v3-archive-continuation-20261106','orthology-archive-continuation-20261106',command,{'cpus':1,'memory':'8G','hours':12,'gpu':False,'array':None},[],slurm._script,prefix)
   al,ai,ah=publish(*archive);cleanup=ai[0];script=Path(archive[0]['tasks'][0]['script']);save(archive_registration,{'job_id':cleanup,'request_sha256':ap['sha256'],'source_sha256':archive_source['sha256'],'script':locator(script),'script_sha256':sha(script),'actual_held_native':ah[cleanup]})
   cleanup_record={'job_id':cleanup,'source':archive_source,'request':ap,'registration':locator(archive_registration),'script':locator(script),'result_path':str(ROOT/'results/storage-archives/orthology-sequences-20261104/continuation-20261106/result.json')}
   release_request=BASE/'release-census-request.json';release_payload={'kind':'finite-held-census-release-after-verified-orthology-continuation','root':str(ROOT),'release_script':None,
-   'policy_module':locator(BASE/'storage_policy.py'),'policy':locator(BASE/'policy.json'),'census':{'plan':schedule['plan'],'ledger':schedule['ledger'],'helper':schedule['helper'],'manifest':schedule['source_manifest'],'jobs':ids},
+   'policy_module':locator(POLICY_BASE/'storage_policy.py'),'policy':locator(POLICY_BASE/'policy.json'),'census':{'plan':schedule['plan'],'ledger':schedule['ledger'],'helper':schedule['helper'],'manifest':schedule['source_manifest'],'jobs':ids},
    'old_census':{'job_id':'6983060','script':payload['census_gate']['held'][0]['script']},'cleanup':cleanup_record}
   # The request binds the script, so the script obtains the request hash from
   # its separately published immutable registration instead of hashing itself.
@@ -234,13 +237,13 @@ def main(argv=None):
   hash_reader=shlex.join(['python','-B','-c','import json;from pathlib import Path;print(json.loads(Path('+repr(str(regpath))+').read_bytes())["request_sha256"])'])
   rcommand=shlex.join(['python','-s','-B',release_source['path'],'--request',str(release_request),'--request-sha256','REGISTERED_REQUEST_SHA','--self-sha256',release_source['sha256']]).replace('REGISTERED_REQUEST_SHA','"$('+hash_reader+')"')
   release_tests={str(BASE/'test_release_census.py'):sha(BASE/'test_release_census.py')};rprefix='export TZ=UTC PYTHONDONTWRITEBYTECODE=1\n'+source_test_prefix(release_tests,list(release_tests),'$SLURM_TMPDIR/release-tests.xml','$SLURM_TMPDIR/release-tests')
-  release=one_plan(config,identity,'storage-reserve-200k-v2-census-release-20261106','storage-reserve-200k-census-release',rcommand,{'cpus':1,'memory':'8G','hours':.5,'gpu':False,'array':None},[cleanup],slurm._script,rprefix)
+  release=one_plan(config,identity,'storage-reserve-200k-v3-census-release-20261106','storage-reserve-200k-census-release',rcommand,{'cpus':1,'memory':'8G','hours':.5,'gpu':False,'array':None},[cleanup],slurm._script,rprefix)
   release_script=Path(release[0]['tasks'][0]['script']);release_payload['release_script']={'path':str(release_script),'sha256':hashlib.sha256(release[1][release_script.name].encode()).hexdigest()}
   save(release_request,release_payload);rp=locator(release_request)
   rl,ri,rh=publish(*release);release_job=ri[0];release_script=Path(release[0]['tasks'][0]['script']);save(BASE/'release-census-registration.json',{'job_id':release_job,'request_sha256':rp['sha256'],'source_sha256':release_source['sha256'],'script':locator(release_script),'script_sha256':sha(release_script),'actual_held_native':rh[release_job]})
   activation_payload={**request['activation_inputs'],'kind':'storage-reserve-200k-controller-activation-v1','components':components,'census_schedule':schedule,'archive':{k:cleanup_record[k] for k in ['job_id','source','request','registration','result_path']},'first_census_job_id':ids[0]}
   activation_request=BASE/'controller-activation-request.json';save(activation_request,activation_payload);cp=locator(activation_request);activation_source=locator(BASE/'activate_controllers.py')
-  phase='storage-reserve-200k-v2-activation-20261106';name='storage-reserve-200k-v2-controller-activation';directory=ROOT/'plans'/phase;script=directory/(name+'.sbatch');activation_ledger=ROOT/'state'/(phase+'-submission.json')
+  phase='storage-reserve-200k-v3-activation-20261106';name='storage-reserve-200k-v3-controller-activation';directory=ROOT/'plans'/phase;script=directory/(name+'.sbatch');activation_ledger=ROOT/'state'/(phase+'-submission.json')
   flags=['--request',cp['path'],'--request-sha256',cp['sha256'],'--source-sha256',activation_source['sha256'],'--native-plan',str(directory/'plan.json'),'--native-ledger',str(activation_ledger),'--native-script',str(script),'--native-task',name,'--native-tests-junit','activation-tests.xml']
   ccommand=shlex.join(['python','-s','-B',activation_source['path'],*flags])
   test=activation_payload['native_tests']['source'];cprefix='export TZ=UTC PYTHONDONTWRITEBYTECODE=1\n'+source_test_prefix({test['path']:test['sha256']},[test['path']],'$SLURM_TMPDIR/activation-tests.xml','$SLURM_TMPDIR/activation-tests')

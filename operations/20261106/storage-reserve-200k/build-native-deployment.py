@@ -16,6 +16,12 @@ def build(request_id,components=('census','consumers','coordination')):
         manifest=json.loads(manifest_path.read_bytes())
         expected.add(component+'/source-manifest.json')
         expected.update(component+'/'+name for name in manifest['files'])
+    # Mirror the qualified V2 census source only as bounded native test assets.
+    # Runtime and qualification authority continue to use its original V2 path.
+    if 'census' not in components:
+        fixture_manifest=json.loads((here/'census/source-manifest.json').read_bytes())
+        expected.add('census/source-manifest.json')
+        expected.update('census/'+name for name in fixture_manifest['files'])
     payload={}
     for name in sorted(expected):
         path=here/name
@@ -53,7 +59,7 @@ import base64,hashlib,importlib.util,json,os,shlex,subprocess,time,zlib
 from horsehair import slurm
 from horsehair.core import atomic_json,canonical_hash,exclusive_file_lock,read_json,source_identity
 assert os.geteuid()==3164768
-r=Path('/scratch/pwa209/horsehair-worm');area=r/'maintenance/storage-reserve-200k-v2-20261106'
+r=Path('/scratch/pwa209/horsehair-worm');area=r/'maintenance/storage-reserve-200k-v3-20261106'
 area.mkdir(mode=0o700,parents=True,exist_ok=True)
 framework=r/'releases/20261021-6ed201653dfa-4f3903d7c26e'
 identity=source_identity(framework);assert identity['sha256']=='4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1'
@@ -74,7 +80,7 @@ def module(path,name):
     import sys
     sys.modules[name]=m;spec.loader.exec_module(m);return m
 shared=module(area/'storage_policy.py','approved_storage_policy')
-approved=shared.verify_policy(area/'policy.json',payload['policy.json']['sha256'],root=r)
+approved=shared.verify_policy(r/'maintenance/storage-reserve-200k-v2-20261106/policy.json',payload['policy.json']['sha256'],root=r)
 assert shared.reserve_for(2000,approved)==197995
 deployment=area/'qualification-registration'/REGISTRATION_ID;deployment.mkdir(mode=0o700,parents=True,exist_ok=False)
 counter=[0]
@@ -102,7 +108,7 @@ with exclusive_file_lock(r/'state/af-campaign-registration.mutex',timeout=180):
             assert len(plan['tasks'])==1
             task=plan['tasks'][0];name=task['name'];script=Path(task['script']);text=scripts[script.name]
         else:
-            phase='storage-reserve-200k-v2-'+('consumer' if component=='consumers' else 'coordination')+'-qualification-20261106'
+            phase='storage-reserve-200k-v3-'+('consumer' if component=='consumers' else 'coordination')+'-qualification-20261106'
             directory=r/'plans'/phase;ledger=r/'state'/(phase+'-submission.json');assert not ledger.exists()
             if directory.exists():
                 assert directory.resolve()==directory and not directory.is_symlink() and directory.stat().st_uid==3164768 and not list(directory.iterdir()),'Only an empty never-submitted plan directory can be recovered'

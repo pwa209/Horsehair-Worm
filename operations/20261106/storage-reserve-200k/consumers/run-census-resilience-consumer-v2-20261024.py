@@ -25,8 +25,8 @@ import time
 import xml.etree.ElementTree as ET
 
 ROOT=Path('/scratch/pwa209/horsehair-worm')
-SUPPORT=ROOT/'maintenance/storage-reserve-200k-v2-20261106/consumers'
-COORDINATION=ROOT/'maintenance/storage-reserve-200k-v2-20261106/coordination/coordination.py'
+SUPPORT=ROOT/'maintenance/storage-reserve-200k-v3-20261106/consumers'
+COORDINATION=ROOT/'maintenance/storage-reserve-200k-v3-20261106/coordination/coordination.py'
 COORDINATION_SHA=None # Supplied by the exact immutable consumer binding; avoids a source-hash cycle.
 SELF_NAME='run-census-resilience-consumer-v2-20261024.py'
 TEST_NAME='test_census_resilience_consumers_v2_20261024.py'
@@ -486,8 +486,8 @@ def primary_capacity_guard(candidate,ledger_path,plan_records,ledgers,states,*,n
         # primary allocation or ambiguous phase defers the entire admission;
         # no invented native ID can make that commitment disappear.
         jobs={item['job_id']:item for item in af_capacity_state().values()}
-        c={'capacity_registration':{'plan':str(ROOT/'plans/agent-coordination-storage-reserve-200k-v2-20261106/plan.json'),
-            'ledger':str(ROOT/'state/agent-coordination-storage-reserve-200k-v2-20261106-submission.json')}}
+        c={'capacity_registration':{'plan':str(ROOT/'plans/agent-coordination-storage-reserve-200k-v3-20261106/plan.json'),
+            'ledger':str(ROOT/'state/agent-coordination-storage-reserve-200k-v3-20261106-submission.json')}}
         try:
             record=shared.coordinated_snapshot(proposed,state={'jobs':jobs},serial_chains=shared.capacity_chains(c),
                 native_reader=native_reader,evidence_dir=evidence_dir,intent_id='primary-'+candidate['phase'])

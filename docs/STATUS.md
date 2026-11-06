@@ -4,6 +4,16 @@ This page records public scientific and readiness facts. Source and native quali
 
 ## Qualification and workflow
 
+Reserve amendment verified, **6 November 2026, 11:35 CET**: the approved personal free-file minimum is **200,000 total slots**, including the existing five receipt inodes and retaining every larger prospective demand. Live personal quota has **247,306 free slots**, 47,306 above that floor. The study occupancy cap and byte limits remain unchanged.
+
+All **340 native qualification cases passed without skips**: census **8630687 completed 0:0** (30 cases), primary consumer **8632769 completed 0:0** (112), and agent coordinator **8632772 completed 0:0** (198). The failed earlier controller qualifications were traced to local-repository fixture discovery on Narval; exact native asset lookup corrected that fixture issue. The successful census provider and approved policy were retained unchanged. No failed receipt was promoted.
+
+Finite recovery preparation **8633285** is registered and released, pending scheduler priority. It uses the same original V3 plan after positive reconciliation of an explicit, unaccepted `sbatch` rejection: the older completed census parent had expired from Slurm's live dependency table, so actual final accounting was persisted before dependency resolution. The rejected attempt had no assigned job ID; its ledger/response remain archived. Scientific workers and canonical state were unchanged.
+
+On allocation, the finite preparation registers the 64 held census slots, the **12-hour one-CPU continuation of the existing verified archive**, the finite post-cleanup census release, and the controller activation after a successful fresh census. Their future IDs will be recorded at `maintenance/storage-reserve-200k-v3-20261106/preparation/native-8633285/complete.json`; they are not yet registered at this checkpoint. Existing controllers are revised, with no additional persistent supervisor. The old final census remains held during cleanup. Canonical progress is still **126 completed trainings / 122 policies**, revision **699**; scientific analysis has not yet resumed. See the [amendment and native queue evidence](../operations/20261106/storage-reserve-200k/README.md).
+
+The following 11:06 checkpoint is superseded:
+
 Reserve amendment checkpoint, **6 November 2026, 11:06 CET**: the user approved **200,000 total personal free-file slots** as sufficient. The explicit operational policy now uses `max(200000, prospective_files + 5)`, including the existing five receipt inodes. A fresh Narval call accepted that exact floor with **247,776 available** at 10:51 CET; the later 11:06 reading has **247,687 free slots**. This is point-in-time readiness, not a reservation against other projects. The 250,000 study-file cap, byte limits, source/configuration and scientific gates remain unchanged.
 
 The revised census, primary consumer and agent coordinator passed **340 local cases**. Shared policy, archive continuation, finite release, activation, preparation and deployment fixtures add **163 local passes and two Windows link-permission skips**. Source-matched native qualifications **8630687 / 8630826 / 8630827** are released and awaiting scheduler priority; native qualification success is not yet claimed.

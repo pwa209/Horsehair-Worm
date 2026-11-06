@@ -90,3 +90,14 @@ def test_activation_cli_is_fixed_literal_and_metadata_not_scientific():
  assert 'activation-tests.xml' in literals and '$SLURM_TMPDIR/activation-tests.xml' in literals
  assert "'$SLURM_TMPDIR/activation-tests.xml'" not in literals
  assert 'storage_snapshot(' not in source.decode() and "['scancel'" not in source.decode()
+
+def test_v3_runtime_routes_to_existing_approved_v2_census_and_policy():
+ import ast
+ assert m.BASE.name=='storage-reserve-200k-v3-20261106'
+ manifest=json.loads((AREA/'census/source-manifest.json').read_bytes())
+ assert m.MANIFESTS['census']==m.sha(AREA/'census/source-manifest.json')
+ assert manifest['operational_storage_policy']['policy']=={'path':(m.POLICY_BASE/'policy.json').as_posix(),'sha256':m.POLICY}
+ node=next(n for n in ast.parse((AREA/'census/run-fresh-storage-census-resilience-v1-20261024.py').read_bytes()).body
+  if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='SOURCE_SUPPORT' for t in n.targets))
+ actual=eval(compile(ast.Expression(node.value),'<sealed-census-namespace>','eval'),{'ROOT':m.ROOT})
+ assert actual==m.CENSUS_BASE and m.CENSUS_BASE.parent==m.POLICY_BASE and m.POLICY_BASE!=m.BASE

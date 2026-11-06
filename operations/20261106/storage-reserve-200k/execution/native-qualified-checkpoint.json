@@ -1,0 +1,25 @@
+{
+  "kind": "native_operational_qualification_checkpoint",
+  "checked_utc": "2026-11-06T10:35:20.885687+00:00",
+  "native_allocations": "8630687|hhw-storage-reserve-200k-v2-census-qualification|COMPLETED|0:0|27|4\n8632769|hhw-storage-reserve-200k-consumer-qualification|COMPLETED|0:0|24|4\n8632772|hhw-storage-reserve-200k-coordination-qualification|COMPLETED|0:0|21|4\n8633285|hhw-storage-reserve-200k-prepare|PENDING|0:0|0|0\n",
+  "tests": {
+    "8630687": 30,
+    "8632769": 112,
+    "8632772": 198
+  },
+  "all_native_tests_required_without_skips": true,
+  "minimum_personal_free_files": 200000,
+  "latest_personal_free_files": 247306,
+  "preparation_job_id": "8633285",
+  "preparation_state": "PENDING Priority",
+  "scientific_result": false,
+  "scientific_workers_changed": false,
+  "canonical_revision": 699,
+  "completed_trainings": 126,
+  "completed_policies": 122,
+  "superseded_controller_qualifications": [
+    "8630826",
+    "8630827"
+  ],
+  "superseded_preparation": "8631848"
+}
