@@ -4,6 +4,12 @@ This page records public scientific and readiness facts. Source and native quali
 
 ## Qualification and workflow
 
+Queue handoff completed, **6 November 2026, 11:44 CET**: preparation **8633285 completed 0:0 in 446 seconds**. It registered all 64 new census jobs and the actual recovery graph. Archive continuation **8634115** is released and pending Priority; census release **8634118** waits on successful cleanup; controller activation **8634125** waits on cleanup and the first successful fresh census. First census **8633757** and its 63 successors are intentionally held until the finite release action. The original census 6983060 stays held. The preparation is finished; it is not a persistent controller.
+
+Personal quota has **247,053 free slots**, above the approved 200,000 minimum. The 340 source-matched native qualification cases passed. Archive removal, fresh census completion, new controller startup and scientific resumption remain pending. Canonical results remain 126 trainings / 122 policies. See the [actual handoff receipt](../operations/20261106/storage-reserve-200k/execution/preparation-complete.json).
+
+The following 11:35 checkpoint is historical:
+
 Reserve amendment verified, **6 November 2026, 11:35 CET**: the approved personal free-file minimum is **200,000 total slots**, including the existing five receipt inodes and retaining every larger prospective demand. Live personal quota has **247,306 free slots**, 47,306 above that floor. The study occupancy cap and byte limits remain unchanged.
 
 All **340 native qualification cases passed without skips**: census **8630687 completed 0:0** (30 cases), primary consumer **8632769 completed 0:0** (112), and agent coordinator **8632772 completed 0:0** (198). The failed earlier controller qualifications were traced to local-repository fixture discovery on Narval; exact native asset lookup corrected that fixture issue. The successful census provider and approved policy were retained unchanged. No failed receipt was promoted.
