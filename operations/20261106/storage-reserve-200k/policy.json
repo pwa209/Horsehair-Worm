@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "kind": "approved-personal-scratch-file-reserve",
+  "policy_id": "storage-reserve-200k-v2-20261106",
+  "study_root": "/scratch/pwa209/horsehair-worm",
+  "minimum_personal_free_files": 200000,
+  "receipt_file_overhead": 5,
+  "unchanged_study_file_cap": 250000,
+  "unchanged_scratch_budget_bytes": 6000000000000,
+  "unchanged_scratch_reserve_bytes": 2000000000000,
+  "execution_source_sha256": "4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1",
+  "primary_scientific_source_sha256": "0e2b1ebce8bffe10799470b3ac20828e621f1415f3a18bca8cd67d502f1e8630",
+  "base_config_sha256": "446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35",
+  "approval": {
+    "source": "current_user",
+    "statement": "you can raise the bar, and make the free slots 200000 is sufficient",
+    "evidence_reference": "Current Horsehair Worm chat, user instruction on 6 November 2026",
+    "approved_at_utc": "2026-11-06T09:19:39Z",
+    "authorizes_personal_file_reserve_amendment": true,
+    "identity_verification": "instruction_provenance_only"
+  },
+  "scientific_gates_changed": false
+}

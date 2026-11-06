@@ -1,0 +1,49 @@
+{
+  "files": {
+    "README.md": "6d2c46423fc85879caca6f2d5d8499229a1135a0f2bab0068367cbcdd91a5b77",
+    "build-native-plans.py": "5e8c5a2486c64e0042540d6c816d0617f2da7be3dcd1cf71dac21c78b25a169f",
+    "original-registered-snapshot-read-guard-v4-20261022.py": "5f06fd63122392afc672952e396afbe6b90fab152f16b65430120c7f8d93648a",
+    "original-run-fresh-storage-census-resilience-v1-20261024.py": "94ac29d11da50412ba3c1f9269ed5762224f93635cd1fae505bfabc5f9b63a93",
+    "original-run-fresh-storage-census-v6-20261023.py": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3",
+    "preservation.json": "c8dd2a5ceec64bd000e24ea9f0ed5bfc62b0009d34e591615e3662fdf7886565",
+    "qualify-census-resilience-v1-20261024.py": "501e8d95055e3f96497366ae396beb4c3f91e42253c65cf353ba157c31d05ea0",
+    "registered-snapshot-read-guard-resilience-v1-20261024.py": "983ec0ca4c6fc9ff8f995ec6dc15f81adbf2e9205d0235964d8094bbbdb05fcc",
+    "run-fresh-storage-census-resilience-v1-20261024.py": "3ed26e6a2ec4a7683b880f593dfb172e86ff9cf8529424ccb047e543cc334927",
+    "seal-source.py": "5e5af91a2b05776467f4dc0482d8616aa001d687c77f3c7bd9d80c43eba0bdf4",
+    "test_census_resilience_v1_20261024.py": "cc41c4130103ea96bc84e85cb3745c740e3bd7ec73d187c6d7e469f76041b6ee"
+  },
+  "kind": "census-resilience-source-manifest-v1",
+  "legacy": {
+    "helper": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/run-fresh-storage-census-v6-20261023.py",
+      "sha256": "487bf2dea2f5c892c369586e11c4885e44e4c5bbddbda1e9e3b82f185666f9f3"
+    },
+    "qualification": {
+      "job_id": "6863966",
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-qualification-v5-20261023/qualification.json",
+      "sha256": "8b0dc612cee64461b991a9dfb9a975cf5afe1389a037b1357244d829f5aca76c"
+    },
+    "source_manifest": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/study-af-rolling-census-support-v4-20261023/source-manifest.json",
+      "sha256": "1b21742f6ad5b7b48899a4890988da7ddba439798ba8b12a2bad57c7f1898e6e"
+    }
+  },
+  "operational_storage_policy": {
+    "module": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v2-20261106/storage_policy.py",
+      "sha256": "0e8691671a32e2b55cfcd626d461c2708d11d05b00c0491721c6c3be13107f7d"
+    },
+    "policy": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v2-20261106/policy.json",
+      "sha256": "2e8e2bd2c1f70aa988a9414d2b44d9ffd0f768f8bc2e329747b7839b2855f2d9"
+    }
+  },
+  "suites": {
+    "resilience": {
+      "roster_sha256": "2d7c989cfc63d0d7a5bec63ce2d6a2de33a05a6044fb4965bf2743c57d321b7b",
+      "source": "test_census_resilience_v1_20261024.py",
+      "source_sha256": "cc41c4130103ea96bc84e85cb3745c740e3bd7ec73d187c6d7e469f76041b6ee",
+      "tests": 30
+    }
+  }
+}

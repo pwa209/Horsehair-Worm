@@ -1,0 +1,15 @@
+{
+  "status": "finite_preparation_registered_and_released",
+  "job_id": "8631848",
+  "plan": "/scratch/pwa209/horsehair-worm/plans/storage-reserve-200k-v2-prepare-20261106/plan.json",
+  "ledger": "/scratch/pwa209/horsehair-worm/state/storage-reserve-200k-v2-prepare-20261106-submission.json",
+  "request": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v2-20261106/preparation-request.json",
+    "sha256": "e877f281f250dc0bf929d6807c71ecdf0e36148ebd1fa76533831003cee09aaf"
+  },
+  "source": {
+    "path": "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v2-20261106/prepare_study.py",
+    "sha256": "41e5a9b10297c856a90b42a62cab30617e6e77f4aa0b7d42c8f1eaaf0574068f"
+  },
+  "request_id": "hhw-storage-reserve-prepare-20261106-1001"
+}

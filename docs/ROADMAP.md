@@ -10,6 +10,16 @@ The [metadata and compute resolution extension](COMPUTE_AND_METADATA_RESOLUTION.
 
 Latest verified checkpoint:
 
+Reserve amendment checkpoint, **6 November 2026, 11:06 CET**: the user approved **200,000 total personal free-file slots** as sufficient. The explicit operational policy now uses `max(200000, prospective_files + 5)`, including the existing five receipt inodes. A fresh Narval call accepted that exact floor with **247,776 available** at 10:51 CET; the later 11:06 reading has **247,687 free slots**. This is point-in-time readiness, not a reservation against other projects. The 250,000 study-file cap, byte limits, source/configuration and scientific gates remain unchanged.
+
+The revised census, primary consumer and agent coordinator passed **340 local cases**. Shared policy, archive continuation, finite release, activation, preparation and deployment fixtures add **163 local passes and two Windows link-permission skips**. Source-matched native qualifications **8630687 / 8630826 / 8630827** are released and awaiting scheduler priority; native qualification success is not yet claimed.
+
+Finite preparation **8631848** is registered and released with `afterok` dependencies on those three qualifications. It will register the 64 held census slots, a **12-hour, one-CPU continuation of the existing verified archive**, a finite census release after successful cleanup, and a controller activation after the first successful new census. Child IDs will be assigned and journaled by that finite job; they are not yet registered at this checkpoint. There is no additional persistent supervisor. The original final census stays held during cleanup, and scientific worker IDs/checkpoints remain preserved.
+
+The earlier archive 8510943 passed its 43,145-copy tar roundtrip but exhausted its three-hour allocation before removal; zero copies have been credited as reclaimed. Census 61 and 62 completed 0:0. Census 63 finished scanning but failed its final 250,005-free check at 249,976; its unfinalized receipt is not promoted. Both prior active agent controller segments completed 0:0. The six old pending controllers are held for controlled replacement. Canonical progress remains **126 completed trainings / 122 policies**, revision **699**; scientific analysis has not resumed yet. See the [reserve amendment and finite queue](../operations/20261106/storage-reserve-200k/README.md).
+
+The following earlier checkpoints are historical.
+
 Storage follow-up, **4 November 2026, 16:26 CET**: the completed directory cleanup removed **7,177 empty directories**, and personal quota currently has **250,678 free slots**. The 250,005-free guard and 250,000-study-file cap remain unchanged. A6 has retired the separate 60,000-deletion requirement; increasing the cap alone would also increase the cap-derived free-space requirement.
 
 Read-only audit **8508393 completed 0:0 in 11 seconds**, counting **55,758 regular files** in the two completed orthology result trees. Source and reference review identified **43,145 generated FASTA copies** in four flat `Orthogroup_Sequences` and `Single_Copy_Orthologue_Sequences` directories. Canonical consumers use the retained tables, mappings, original proteomes and receipts. Gene trees, working directories and every other result remain in place.
