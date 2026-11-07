@@ -30,9 +30,9 @@ OLD_AGENT=('8559704','8559707','8559708','8559725')
 RETIRE=OLD_PRIMARY+OLD_AGENT[2:]
 KEEP_HELD='6983060'
 TERMINAL={'COMPLETED','FAILED','CANCELLED','TIMEOUT','OUT_OF_MEMORY','NODE_FAIL','PREEMPTED','BOOT_FAIL','DEADLINE','REVOKED'}
-TEST_SOURCE_SHA='6e0a7f0fd93a7b77c4b2869aba2e4295511eae14b8307b54a555d25bad8210f9'
-TEST_COUNT=62
-TEST_ROSTER_SHA='d0009730c331db78767d9a40da0afaaad0adc7ee0c749d414adcf083febe7aef'
+TEST_SOURCE_SHA='d68d2f17fe72adc727977b028e07f2d994167447bf6052e8d0c7bca77ceebf35'
+TEST_COUNT=66
+TEST_ROSTER_SHA='4a75325931f3f8a0e9ebaeee06d0ccd719cc2ca94a99075760cf2c024b30e971'
 
 class PendingActivationCensus(ValueError):
  """A live publication/finality race admits no controller release."""
@@ -240,6 +240,13 @@ def disable_primary_requeue(rendered):
   rendered['scripts'][task['script']]=text;task['script_sha256']=canonical(text)
  return rendered
 
+def current_consumer_binding(builder,kind,old,components,schedule,coordination):
+ require(old['consumer_kind']==kind and old['kind']=='census-resilience-consumer-binding-v2','Exact inherited consumer identity required')
+ bound=builder.binding(kind,manifest=components['manifest'],qualification=components['qualification'],
+  provider_schedule=schedule,legacy_policy=old['legacy_policy'],coordination=coordination)
+ require(bound['legacy_entry']==old['legacy_entry'] and bound['flags']==old['flags'],'Original scientific entry and flags must be preserved')
+ return bound
+
 def main(argv=None):
  argv=list(sys.argv[1:] if argv is None else argv);p=argparse.ArgumentParser()
  for name in ['request','native-plan','native-ledger','native-script','native-tests-junit']:p.add_argument('--'+name,type=Path,required=True)
@@ -288,7 +295,7 @@ def main(argv=None):
  continuation=archive_authority(archive)
  consumer=modules['consumers'];coordinator=modules['coordination'];provider=modules['census']
  storage=module(POLICY_BASE/'storage_policy.py',POLICY_MODULE,'activation_storage_policy');policy=storage.verify_policy(POLICY_BASE/'policy.json',POLICY,root=ROOT)
- budget.native_accounting(ROOT,sorted(required),runner=lambda cmd,**kw:subprocess.run(cmd,**{**kw,'timeout':60}))
+ budget.native_accounting(ROOT,sorted(set(required)|{'6950429','7046404'}),runner=lambda cmd,**kw:subprocess.run(cmd,**{**kw,'timeout':60}))
  native_reader=consumer.bounded_native_reader(end)
  consumer.validate_qualification(components['consumers']['qualification'],components['consumers']['manifest'],native_reader)
  cq=read({k:components['coordination']['qualification'][k] for k in ['path','sha256']})
@@ -303,10 +310,10 @@ def main(argv=None):
   require(tuple(ledger['tasks'][t['name']]['job_id'] for t in plan['tasks'])==wanted,'Exact old accepted controller roster required');old[kind]=plan
   retire_tasks.update({ledger['tasks'][t['name']]['job_id']:t for t in plan['tasks'] if ledger['tasks'][t['name']]['job_id'] in RETIRE})
  oldbindings={kind:read(request['legacy_bindings'][kind]) for kind in ['af','primary']}
+ builder=module(BASE/'consumers/build-consumer-plan.py',manifests['consumers']['files']['build-consumer-plan.py'],'activation_original_primary_builder')
  created={};pins={};coord_binding={'entry':locator(BASE/'coordination/coordination.py'),'source_manifest':components['coordination']['manifest']}
  for kind in ['af','primary']:
-  bound={**oldbindings[kind],'source_manifest':components['consumers']['manifest'],'qualification':components['consumers']['qualification'],
-   'provider_schedule':request['census_schedule'],'coordination':coord_binding}
+  bound=current_consumer_binding(builder,kind,oldbindings[kind],components['consumers'],request['census_schedule'],coord_binding)
   path=BASE/'consumers'/(kind+'-consumer-binding.json')
   if path.exists():require(read_json(ordinary(path))==bound,'Existing immutable binding differs; no overwrite permitted')
   else:save(path,bound)
@@ -329,7 +336,6 @@ def main(argv=None):
   return budget.require_storage_headroom(ROOT,**metadata_forecast(record),reserve_files=storage.reserve_for(512,policy),
     runner=lambda cmd,**kw:subprocess.run(cmd,**{**kw,'timeout':45}))
  metadata_headroom();template=read(request['primary_template']['plan']);tl=read(request['primary_template']['ledger']);require(tl['plan_sha256']==canonical(template),'Original primary template identity required')
- builder=module(BASE/'consumers/build-consumer-plan.py',manifests['consumers']['files']['build-consumer-plan.py'],'activation_original_primary_builder')
  primary=disable_primary_requeue(builder.render(template,'primary',created['primary'],read(created['primary']),manifests['consumers'],script_reader=lambda p:ordinary(p).read_text()))
  agent=render_agent(old['agent'],components['coordination']['manifest'],components['coordination']['qualification'],created['af'],lambda p:ordinary(p).read_text())
  require(primary['plan']['phase']==PRIMARY_PHASE,'Exact new primary phase required')

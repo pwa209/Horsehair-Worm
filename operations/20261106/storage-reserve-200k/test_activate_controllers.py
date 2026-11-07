@@ -6,6 +6,28 @@ import pytest
 spec=importlib.util.spec_from_file_location('finite_activation_test_runtime',Path(__file__).with_name('activate_controllers.py'))
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 
+@pytest.mark.parametrize('kind,stale,current',[('primary','6873101','7046404'),('af','6950429','6950429')])
+def test_binding_uses_qualified_builder_parent_with_original_scientific_policy(monkeypatch,kind,stale,current):
+ path=Path(__file__).parent/'consumers/build-consumer-plan.py'
+ spec=importlib.util.spec_from_file_location('actual_binding_builder',path)
+ builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
+ runtime=SimpleNamespace(AF=Path('/af.py'),AF_SHA='a'*64,PRIMARY=Path('/primary.py'),PRIMARY_SHA='b'*64,FALSE_FLAGS={'scientific_result':False})
+ monkeypatch.setattr(builder,'runtime',lambda:runtime)
+ old={'kind':'census-resilience-consumer-binding-v2','consumer_kind':kind,'afterany_parent':stale,
+  'legacy_entry':{'path':str(runtime.AF if kind=='af' else runtime.PRIMARY),'sha256':('a' if kind=='af' else 'b')*64},
+  'legacy_policy':{'path':'/original-policy.json','sha256':'c'*64},'flags':runtime.FALSE_FLAGS}
+ before=copy.deepcopy(old);parts={'manifest':{'path':'/manifest.json'},'qualification':{'job_id':'8632769'}}
+ result=m.current_consumer_binding(builder,kind,old,parts,{'new':'schedule'},{'new':'coordination'})
+ assert old==before and result['afterany_parent']==current
+ assert result['legacy_policy']==old['legacy_policy'] and result['legacy_entry']==old['legacy_entry']
+ assert result['source_manifest']==parts['manifest'] and result['qualification']==parts['qualification']
+
+@pytest.mark.parametrize('field,value',[('legacy_entry',{'path':'/other.py','sha256':'d'*64}),('flags',{'scientific_result':True})])
+def test_binding_factory_cannot_change_original_scientific_entry_or_flags(field,value):
+ old={'kind':'census-resilience-consumer-binding-v2','consumer_kind':'primary','legacy_entry':{'path':'/primary.py'},'legacy_policy':{},'flags':{'scientific_result':False}}
+ result={'legacy_entry':old['legacy_entry'],'flags':old['flags'],field:value}
+ with pytest.raises(ValueError):m.current_consumer_binding(SimpleNamespace(binding=lambda *a,**kw:result),'primary',old,{'manifest':{},'qualification':{}},{},{})
+
 def test_exact_retirement_roster_protects_workers_and_held_census():
  assert m.RETIRE==('8559679','8559680','8559681','8559683','8559708','8559725')
  assert m.KEEP_HELD=='6983060' and not set(m.OLD_AGENT[:2])&set(m.RETIRE)

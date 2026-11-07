@@ -1,5 +1,9 @@
 # Study validation and source readiness
 
+Controller binding repair, **7 November 2026, 14:05 CET**: cleanup **8634115 completed 0:0**, reclaiming **43,145 generated sequence copies** with original inputs preserved. Census release **8634118 completed 0:0**; the first two fresh censuses completed successfully, and the third is running. Personal scratch has **288,667 free file slots**, above the approved 200,000 floor. Activation **8634125** failed before registering any replacements because it copied historical primary parent 6873101 instead of the qualified builder's required 7046404. Activation now uses that existing builder and preserves the original scientific entry/policy. **66 local activation cases passed**. The single finite retry **8709687** is registered, released and pending scheduler priority; replacement startup and scientific resumption are not yet verified. Canonical results remain **126 trainings / 122 policies**, revision 699. See the [binding repair record](../operations/20261107/controller-binding-repair/README.md).
+
+The following earlier checkpoints are historical.
+
 This page records public scientific and readiness facts. Source and native qualification milestones are summarized here; detailed execution receipts remain in ignored local artifacts and Narval research storage. The managed workflow code is available; successful deployment and queue registration of any revised release require its own verified receipts.
 
 ## Qualification and workflow
