@@ -10,6 +10,12 @@ The [metadata and compute resolution extension](COMPUTE_AND_METADATA_RESOLUTION.
 
 Latest verified checkpoint:
 
+Native owner verification, **8 November 2026, 03:10 CET**: binding repair **8709687 completed 0:0 in 104 seconds** after **66 native tests passed**. All eight replacements were registered/released. Agent segment 0 **8710009 completed 0:0**; segment 1 **8710010 is running**. Primary **8710005** and evaluations **8748596/8750493** await scheduler Priority; remaining controller segments wait on dependencies. No new HHW defect or duplicate submission was observed, so no jobs were cancelled/resubmitted.
+
+The active study stage is **F2**, with **137/240 trainings complete (103 left)** and **130/240 policies complete (110 left, including seven trained but not fully evaluated)**, revision **741**. These are completion units, not job counts. H4 inference and its validation bridge remain unfinished. Personal scratch has **276,214 free slots**; the 200,000 floor and all scientific settings are preserved. Original RNA-full and Mantis ORF/orthology allocations have positive final accounting. The primary pipeline status is older, so its unresolved scientific gates are not presented as a fresh status check. See the [one-time audit](../operations/20261108/progress-audit/checkpoint.json). Automatic monitoring remains off.
+
+The following checkpoints are historical.
+
 Controller binding repair, **7 November 2026, 14:05 CET**: cleanup **8634115 completed 0:0**, reclaiming **43,145 generated sequence copies** with original inputs preserved. Census release **8634118 completed 0:0**; the first two fresh censuses completed successfully, and the third is running. Personal scratch has **288,667 free file slots**, above the approved 200,000 floor. Activation **8634125** failed before registering any replacements because it copied historical primary parent 6873101 instead of the qualified builder's required 7046404. Activation now uses that existing builder and preserves the original scientific entry/policy. **66 local activation cases passed**. The single finite retry **8709687** is registered, released and pending scheduler priority; replacement startup and scientific resumption are not yet verified. Canonical results remain **126 trainings / 122 policies**, revision 699. See the [binding repair record](../operations/20261107/controller-binding-repair/README.md).
 
 The following earlier checkpoints are historical.

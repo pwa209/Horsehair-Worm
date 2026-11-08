@@ -1,0 +1,205 @@
+{
+  "checked_utc": "2026-11-08T02:10:35.014638+00:00",
+  "native_stage_system": "A-G, with E1-E3 and F1-F2; no O-number mapping",
+  "active_scientific_stage": "F2",
+  "status": {
+    "H4_inference_status": "pending_separate_validated_analysis_and_bridge",
+    "admission_authority": false,
+    "audit_outside_registration_mutex": true,
+    "coordination_source": {
+      "path": "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v3-20261106/coordination/coordination.py",
+      "sha256": "4fc7dc2b6caa2805218f34f7da47ba999fe0edb3be841ea41b5f3b1523bd86f5"
+    },
+    "freshness_timestamp_rewritten": false,
+    "jobs": 402,
+    "native_controller_job": "8710010",
+    "numeric_functions_replaced": false,
+    "policies_complete": 130,
+    "reconciled_existing_jobs": [
+      "assembly-0125",
+      "assembly-0126",
+      "assembly-0127",
+      "assembly-0128",
+      "assembly-0129",
+      "training-0135",
+      "training-0136"
+    ],
+    "resumed_intentions": 1,
+    "revision": 741,
+    "scientific_gates_changed": false,
+    "scientific_result": false,
+    "segment": 1,
+    "state_sha256": "dad6b44a64e715aa568f941aa42eb5494c98466865db8125eab8babc278d8d90",
+    "status": "active",
+    "storage_pending": null,
+    "training_complete": 137
+  },
+  "remaining": {
+    "final_policies_target": 240,
+    "successful_trainings": 137,
+    "trainings_left": 103,
+    "complete_policies": 130,
+    "policies_left": 110,
+    "trained_not_policy_complete": 7,
+    "unit_note": "These are policy/fit units, not native job counts or CPU evaluation trial counts.",
+    "post_policy_completion": [
+      "validated H4 inference bridge",
+      "complete frozen-grid inference and correction",
+      "figures and synthesis/archive"
+    ]
+  },
+  "native": {
+    "code": 0,
+    "stdout": "8709687|hhw-storage-reserve-binding-repair|COMPLETED|0:0|104|2\n8710005|hhw-primary-resilient-census-controller-0|PENDING|0:0|0|0\n8710006|hhw-primary-resilient-census-controller-1|PENDING|0:0|0|0\n8710007|hhw-primary-resilient-census-controller-2|PENDING|0:0|0|0\n8710008|hhw-primary-resilient-census-controller-3|PENDING|0:0|0|0\n8710009|hhw-agent-coordination-storage-reserve-200k-v3-20261106-controller-0|COMPLETED|0:0|29058|1\n8710010|hhw-agent-coordination-storage-reserve-200k-v3-20261106-controller-1|RUNNING|0:0|8913|1\n8710011|hhw-agent-coordination-storage-reserve-200k-v3-20261106-controller-2|PENDING|0:0|0|0\n8710013|hhw-agent-coordination-storage-reserve-200k-v3-20261106-controller-3|PENDING|0:0|0|0\n8748596|hhw-af-f2-evaluation-0132-01|PENDING|0:0|0|0\n8750493|hhw-af-f2-evaluation-0133-01|PENDING|0:0|0|0",
+    "stderr": ""
+  },
+  "quota": {
+    "code": 0,
+    "stdout": "Disk quotas for usr 3164768 (uid 3164768):\n     Filesystem  kbytes   quota   limit   grace   files   quota   limit   grace\n/scratch/pwa209 8079425581  20000000000 20000000000       -  723786  1000000 1000000       -",
+    "stderr": ""
+  },
+  "queue": {
+    "code": 0,
+    "stdout": "8710010|hhw-agent-coordination-storage-reserve-200k-v3-20261106-controller-1|RUNNING|nl31101\n6983060|hhw-rolling-storage-census-64|PENDING|(JobHeldUser)\n8633790|hhw-rolling-storage-census-08|PENDING|(Priority)\n8633792|hhw-rolling-storage-census-09|PENDING|(Dependency)\n8633796|hhw-rolling-storage-census-10|PENDING|(Dependency)\n8710005|hhw-primary-resilient-census-controller-0|PENDING|(Priority)\n8710006|hhw-primary-resilient-census-controller-1|PENDING|(Dependency)\n8710007|hhw-primary-resilient-census-controller-2|PENDING|(Dependency)\n8710008|hhw-primary-resilient-census-controller-3|PENDING|(Dependency)\n8710011|hhw-agent-coordination-storage-reserve-200k-v3-20261106-controller-2|PENDING|(Dependency)\n8710013|hhw-agent-coordination-storage-reserve-200k-v3-20261106-controller-3|PENDING|(Dependency)\n8748596|hhw-af-f2-evaluation-0132-01|PENDING|(Priority)\n8750493|hhw-af-f2-evaluation-0133-01|PENDING|(Priority)\n8633798|hhw-rolling-storage-census-11|PENDING|(Dependency)\n8633801|hhw-rolling-storage-census-12|PENDING|(Dependency)\n8633805|hhw-rolling-storage-census-13|PENDING|(Dependency)\n8633807|hhw-rolling-storage-census-14|PENDING|(Dependency)\n8633809|hhw-rolling-storage-census-15|PENDING|(Dependency)\n8633811|hhw-rolling-storage-census-16|PENDING|(Dependency)\n8633815|hhw-rolling-storage-census-17|PENDING|(Dependency)\n8633816|hhw-rolling-storage-census-18|PENDING|(Dependency)\n8633820|hhw-rolling-storage-census-19|PENDING|(Dependency)\n8633821|hhw-rolling-storage-census-20|PENDING|(Dependency)\n8633825|hhw-rolling-storage-census-21|PENDING|(Dependency)\n8633826|hhw-rolling-storage-census-22|PENDING|(Dependency)\n8633831|hhw-rolling-storage-census-23|PENDING|(Dependency)\n8633837|hhw-rolling-storage-census-24|PENDING|(Dependency)\n8633845|hhw-rolling-storage-census-25|PENDING|(Dependency)\n8633850|hhw-rolling-storage-census-26|PENDING|(Dependency)\n8633851|hhw-rolling-storage-census-27|PENDING|(Dependency)\n8633858|hhw-rolling-storage-census-28|PENDING|(Dependency)\n8633860|hhw-rolling-storage-census-29|PENDING|(Dependency)\n8633862|hhw-rolling-storage-census-30|PENDING|(Dependency)\n8633863|hhw-rolling-storage-census-31|PENDING|(Dependency)\n8633864|hhw-rolling-storage-census-32|PENDING|(Dependency)\n8633869|hhw-rolling-storage-census-33|PENDING|(Dependency)\n8633874|hhw-rolling-storage-census-34|PENDING|(Dependency)\n8633876|hhw-rolling-storage-census-35|PENDING|(Dependency)\n8633882|hhw-rolling-storage-census-36|PENDING|(Dependency)\n8633916|hhw-rolling-storage-census-37|PENDING|(Dependency)\n8633923|hhw-rolling-storage-census-38|PENDING|(Dependency)\n8633928|hhw-rolling-storage-census-39|PENDING|(Dependency)\n8633931|hhw-rolling-storage-census-40|PENDING|(Dependency)\n8633934|hhw-rolling-storage-census-41|PENDING|(Dependency)\n8633937|hhw-rolling-storage-census-42|PENDING|(Dependency)\n8633942|hhw-rolling-storage-census-43|PENDING|(Dependency)\n8633956|hhw-rolling-storage-census-44|PENDING|(Dependency)\n8633960|hhw-rolling-storage-census-45|PENDING|(Dependency)\n8633962|hhw-rolling-storage-census-46|PENDING|(Dependency)\n8633964|hhw-rolling-storage-census-47|PENDING|(Dependency)\n8633966|hhw-rolling-storage-census-48|PENDING|(Dependency)\n8633968|hhw-rolling-storage-census-49|PENDING|(Dependency)\n8633971|hhw-rolling-storage-census-50|PENDING|(Dependency)\n8633983|hhw-rolling-storage-census-51|PENDING|(Dependency)\n8633986|hhw-rolling-storage-census-52|PENDING|(Dependency)\n8633990|hhw-rolling-storage-census-53|PENDING|(Dependency)\n8633991|hhw-rolling-storage-census-54|PENDING|(Dependency)\n8633993|hhw-rolling-storage-census-55|PENDING|(Dependency)\n8633997|hhw-rolling-storage-census-56|PENDING|(Dependency)\n8634009|hhw-rolling-storage-census-57|PENDING|(Dependency)\n8634039|hhw-rolling-storage-census-58|PENDING|(Dependency)\n8634044|hhw-rolling-storage-census-59|PENDING|(Dependency)\n8634051|hhw-rolling-storage-census-60|PENDING|(Dependency)\n8634053|hhw-rolling-storage-census-61|PENDING|(Dependency)\n8634103|hhw-rolling-storage-census-62|PENDING|(Dependency)\n8634109|hhw-rolling-storage-census-63|PENDING|(Dependency)\n8634114|hhw-rolling-storage-census-64|PENDING|(Dependency)",
+    "stderr": ""
+  },
+  "activation": {
+    "canonical_state_sha256_during_registration": "51207bcceb4e8b126b9a335975fa0399d30ed2a1c8285350ea65cce6dc0e0ced",
+    "full_scientific_forecast_retained_in_controllers": true,
+    "metadata_forecast_files": 512,
+    "minimum_personal_free_files": 200000,
+    "native_job_id": "8709687",
+    "native_tests": {
+      "junit": {
+        "path": "/localscratch/pwa209.8709687.0/activation-tests.xml",
+        "sha256": "1ba0b7c93730b6910ad37e50809acc40b14b772c1d7b9aabcc4eecba38234522"
+      },
+      "roster_sha256": "4a75325931f3f8a0e9ebaeee06d0ccd719cc2ca94a99075760cf2c024b30e971",
+      "source": {
+        "path": "/scratch/pwa209/horsehair-worm/maintenance/storage-reserve-200k-v3-20261106/test_activate_controllers.py",
+        "sha256": "d68d2f17fe72adc727977b028e07f2d994167447bf6052e8d0c7bca77ceebf35"
+      },
+      "tests": 66
+    },
+    "old_census64_kept_held": "6983060",
+    "registrations": {
+      "agent": {
+        "jobs": [
+          "8710009",
+          "8710010",
+          "8710011",
+          "8710013"
+        ],
+        "ledger": "/scratch/pwa209/horsehair-worm/state/agent-coordination-storage-reserve-200k-v3-20261106-submission.json",
+        "plan": "/scratch/pwa209/horsehair-worm/plans/agent-coordination-storage-reserve-200k-v3-20261106/plan.json"
+      },
+      "primary": {
+        "jobs": [
+          "8710005",
+          "8710006",
+          "8710007",
+          "8710008"
+        ],
+        "ledger": "/scratch/pwa209/horsehair-worm/state/storage-reserve-200k-v3-primary-20261106-submission.json",
+        "plan": "/scratch/pwa209/horsehair-worm/plans/storage-reserve-200k-v3-primary-20261106/plan.json"
+      }
+    },
+    "request_sha256": "f66b3ec175ffb4c3cacde387c8af8381cf7bed76714afe8a6a4ca4ffb11a8ebe",
+    "retired_controller_jobs": [
+      "8559679",
+      "8559680",
+      "8559681",
+      "8559683",
+      "8559708",
+      "8559725"
+    ],
+    "scientific_admission_claimed": false,
+    "scientific_gates_changed": false,
+    "source_sha256": "c78149a58bf66832c3d908b857b52ec991b5803d3793ca4a521eda0a04afe573",
+    "status": "eight_qualified_replacement_controllers_registered_and_released",
+    "worker_jobs_cancelled": false
+  },
+  "stage_verification": {
+    "rna_full": "7 registered phase tasks have positive COMPLETED0:0 accounting; count array aggregate plus frozen phase audit covers 60 ant samples",
+    "agent_development": "native root allocation and aggregator completed; frozen stage contract has 180 fits in 60 development cells",
+    "mantis_corroboration": "6632012 ORFs and6632058 orthology COMPLETED0:0",
+    "primary_controller": "8710005 PENDINGPriority;8710006-8 PENDINGDependency",
+    "pipeline_metadata_checked_utc": "2026-11-02T16:19:55.659111+00:00",
+    "pipeline_metadata_is_current": false,
+    "primary_scientific_stages": {
+      "agents-development": {
+        "ledger": "/scratch/pwa209/horsehair-worm/state/20261013-829e3817bee1-0e2b1ebce8bf-agents-development-submission.json",
+        "status": "complete"
+      },
+      "agents-final": {
+        "reasons": [
+          "CPU evaluation grid contains explicit unavailable numerical evidence; complete finite cost coverage is pending"
+        ],
+        "status": "resource_pending"
+      },
+      "behaviour": {
+        "dependencies": [
+          "behaviour-benchmark"
+        ],
+        "status": "waiting_for_dependencies"
+      },
+      "behaviour-benchmark": {
+        "ledger": "/scratch/pwa209/horsehair-worm/state/20261013-829e3817bee1-0e2b1ebce8bf-behaviour-benchmark-submission.json",
+        "reason": "Full numerical workload coverage has not been measured",
+        "status": "pending_scientific_completion"
+      },
+      "interventions": {
+        "dependencies": [
+          "behaviour"
+        ],
+        "status": "waiting_for_dependencies"
+      },
+      "molecular-benchmark": {
+        "dependencies": [
+          "screen"
+        ],
+        "status": "waiting_for_dependencies"
+      },
+      "molecular-corroboration": {
+        "ledger": "/scratch/pwa209/horsehair-worm/state/20261013-829e3817bee1-0e2b1ebce8bf-molecular-corroboration-submission.json",
+        "status": "complete"
+      },
+      "molecular-transfer": {
+        "dependencies": [
+          "molecular-benchmark"
+        ],
+        "status": "waiting_for_dependencies"
+      },
+      "rna-full": {
+        "ledger": "/scratch/pwa209/horsehair-worm/state/20261013-829e3817bee1-0e2b1ebce8bf-rna-full-submission.json",
+        "status": "complete"
+      },
+      "screen": {
+        "dependencies": [
+          "behaviour"
+        ],
+        "status": "waiting_for_dependencies"
+      },
+      "synthesis": {
+        "dependencies": [
+          "behaviour",
+          "interventions",
+          "molecular-transfer",
+          "agents-final"
+        ],
+        "status": "waiting_for_dependencies"
+      }
+    },
+    "auxiliary_scientific_gates": [
+      "mantis_choice: Deposited choice endpoint ambiguity remains unresolved",
+      "mantis_choice: Independent choice validation/confirmatory readiness remains pending",
+      "mantis_choice: Choice source-ambiguity sensitivity does not establish reconciled inputs",
+      "mantis_mating: Mating individual reuse/independence remains unresolved"
+    ]
+  },
+  "repairs_this_audit": [],
+  "jobs_cancelled_or_resubmitted": false,
+  "policy_changed": false,
+  "monitoring_enabled": false,
+  "cross_chat_report": "blocked by automatic approval review; explicit direct human authorization required before sending"
+}
