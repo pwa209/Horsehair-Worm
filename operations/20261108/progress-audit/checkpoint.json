@@ -201,5 +201,641 @@
   "jobs_cancelled_or_resubmitted": false,
   "policy_changed": false,
   "monitoring_enabled": false,
-  "cross_chat_report": "blocked by automatic approval review; explicit direct human authorization required before sending"
+  "cross_chat_report": "blocked by automatic approval review; explicit direct human authorization required before sending",
+  "capacity": {
+    "checked_utc": "2026-11-08T02:14:43.563549+00:00",
+    "coordinator_sha256": "4fc7dc2b6caa2805218f34f7da47ba999fe0edb3be841ea41b5f3b1523bd86f5",
+    "hhw_combined_cpu_ceiling": 53,
+    "hhw_scientific_gpu_ceiling": 4,
+    "whole_user_narval_cpu_ceiling": 120,
+    "policy_changed": false,
+    "fresh_visible_hhw_queue": [
+      {
+        "job_id": "8710010",
+        "user": "pwa209",
+        "name": "hhw-agent-coordination-storage-reserve-200k-v3-20261106-controller-1",
+        "state": "RUNNING",
+        "cpus": "1",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "6983060",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-64",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/home/pwa209"
+      },
+      {
+        "job_id": "8633790",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-08",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633792",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-09",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633796",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-10",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8710005",
+        "user": "pwa209",
+        "name": "hhw-primary-resilient-census-controller-0",
+        "state": "PENDING",
+        "cpus": "1",
+        "gres": "N/A",
+        "workdir": "/lustre06/project/6101854/pwa209/horsehair-worm/releases/20261021-57e0eb8c4c6c-d89b31180d4c"
+      },
+      {
+        "job_id": "8710006",
+        "user": "pwa209",
+        "name": "hhw-primary-resilient-census-controller-1",
+        "state": "PENDING",
+        "cpus": "1",
+        "gres": "N/A",
+        "workdir": "/lustre06/project/6101854/pwa209/horsehair-worm/releases/20261021-57e0eb8c4c6c-d89b31180d4c"
+      },
+      {
+        "job_id": "8710007",
+        "user": "pwa209",
+        "name": "hhw-primary-resilient-census-controller-2",
+        "state": "PENDING",
+        "cpus": "1",
+        "gres": "N/A",
+        "workdir": "/lustre06/project/6101854/pwa209/horsehair-worm/releases/20261021-57e0eb8c4c6c-d89b31180d4c"
+      },
+      {
+        "job_id": "8710008",
+        "user": "pwa209",
+        "name": "hhw-primary-resilient-census-controller-3",
+        "state": "PENDING",
+        "cpus": "1",
+        "gres": "N/A",
+        "workdir": "/lustre06/project/6101854/pwa209/horsehair-worm/releases/20261021-57e0eb8c4c6c-d89b31180d4c"
+      },
+      {
+        "job_id": "8710011",
+        "user": "pwa209",
+        "name": "hhw-agent-coordination-storage-reserve-200k-v3-20261106-controller-2",
+        "state": "PENDING",
+        "cpus": "1",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8710013",
+        "user": "pwa209",
+        "name": "hhw-agent-coordination-storage-reserve-200k-v3-20261106-controller-3",
+        "state": "PENDING",
+        "cpus": "1",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8748596",
+        "user": "pwa209",
+        "name": "hhw-af-f2-evaluation-0132-01",
+        "state": "PENDING",
+        "cpus": "4",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8750493",
+        "user": "pwa209",
+        "name": "hhw-af-f2-evaluation-0133-01",
+        "state": "PENDING",
+        "cpus": "4",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633798",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-11",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633801",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-12",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633805",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-13",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633807",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-14",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633809",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-15",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633811",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-16",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633815",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-17",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633816",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-18",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633820",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-19",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633821",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-20",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633825",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-21",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633826",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-22",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633831",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-23",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633837",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-24",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633845",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-25",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633850",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-26",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633851",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-27",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633858",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-28",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633860",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-29",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633862",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-30",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633863",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-31",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633864",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-32",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633869",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-33",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633874",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-34",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633876",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-35",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633882",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-36",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633916",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-37",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633923",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-38",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633928",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-39",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633931",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-40",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633934",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-41",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633937",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-42",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633942",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-43",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633956",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-44",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633960",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-45",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633962",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-46",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633964",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-47",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633966",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-48",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633968",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-49",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633971",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-50",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633983",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-51",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633986",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-52",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633990",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-53",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633991",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-54",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633993",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-55",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8633997",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-56",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8634009",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-57",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8634039",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-58",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8634044",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-59",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8634051",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-60",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8634053",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-61",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8634103",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-62",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8634109",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-63",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      },
+      {
+        "job_id": "8634114",
+        "user": "pwa209",
+        "name": "hhw-rolling-storage-census-64",
+        "state": "PENDING",
+        "cpus": "8",
+        "gres": "N/A",
+        "workdir": "/scratch/pwa209/horsehair-worm/releases/20261021-6ed201653dfa-4f3903d7c26e"
+      }
+    ],
+    "currently_allocated_hhw_cpus": 1,
+    "currently_allocated_hhw_gpus": 0,
+    "queued_evaluations": {
+      "jobs": [
+        "8748596",
+        "8750493"
+      ],
+      "cpus_each": 4,
+      "sum_cpus": 8
+    },
+    "serial_controller_chains": {
+      "agent": 1,
+      "primary": 1
+    },
+    "serial_provider_chains": {
+      "current_census_chain": 8,
+      "old_deliberately_held_census64": 8
+    },
+    "visible_chain_collapsed_cpus_including_old_held_provider": 26,
+    "visible_chain_collapsed_cpus_excluding_old_held_provider": 18,
+    "future_safety_envelope_still_53_cpus_and_4_gpus": true,
+    "atomic_cross_project_reservation": false,
+    "interpretation": "Visible current queue commitments are not the maximum future admission envelope. Do not lend NCT the difference to53 while HHW can admit new work under the unchanged ceiling. Serial successor jobs are collapsed per proven existing chain, not summed as simultaneous allocations."
+  }
 }
