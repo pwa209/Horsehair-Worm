@@ -10,6 +10,8 @@ The [metadata and compute resolution extension](COMPUTE_AND_METADATA_RESOLUTION.
 
 Latest verified checkpoint:
 
+Restart verified on Narval, **14 November 2026, 13:23 CET**. Primary controller **9351536** passed its phase and predecessor checks and entered the original pipeline. F2 controller **9351543** reopened revision 860, archived the eleven failed attempts, and continued from the saved campaign. Ten retries were running. The remaining training retry, **0160**, was waiting for room within the 53-CPU admission ceiling. Worker jobs **9352292** and **9352390** each passed fresh quota checks with 2,000 requested slots, 197,995 reserve slots and five receipt slots, for the approved **200,000-slot** total. The last full progress summary still reports **157/240 trainings** and **148/240 policies**.
+
 Restart checkpoint, **14 November 2026, 12:48 CET**. The F2 worker launcher now applies the approved **200,000 total free-file slots** at the worker quota check. The primary plan builder and startup validator use the same phase definition. All **378 native tests** passed across qualifications **9348980**, **9348981** and handoff **9348984**. Census **8633864** completed successfully. The handoff registered and released four primary and four agent controller segments.
 
 Primary controller **9351536** awaits priority. F2 controller **9351543** awaits eligible nodes. The saved campaign is at revision **860**, with **157/240 trainings** and **148/240 policies** in the last full controller summary. The F2 controller will validate and retry the eleven quota-failed attempts from this checkpoint when it starts. Scientific execution has yet to resume.
