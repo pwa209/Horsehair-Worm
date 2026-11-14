@@ -165,6 +165,58 @@ def test_worker_guard_change_is_scoped_to_new_plans():
     assert c['registry_overlay']['guard'] is guard and calls[0][0]['registry_overlay']['guard']['sha256']=='b'*64
     assert calls[0][1]=={'original_intent':True}
 
+def test_original_worker_entry_uses_approved_reserve(tmp_path, monkeypatch):
+    import hashlib
+    import runpy
+
+    launcher=load(m.WORKER_LAUNCHER.removesuffix('.py'))
+    here=Path(__file__).resolve().parent
+    source=launcher.WORKER
+    if not source.is_file():
+        source=here.parents[3]/'work/observed-f00d-native-worker-20261114.py'
+    worker_sha=launcher.WORKER_SHA
+    if not source.is_file():
+        source=tmp_path/'worker_fixture.py'
+        source.write_text('def main():\n    return read_quota(required_files=2000, reserve_files=248000, reserve_bytes=2000000000000)\n')
+        worker_sha=hashlib.sha256(source.read_bytes()).hexdigest()
+    original=runpy.run_path(str(source))['main']
+
+    native_policy=launcher.POLICY_DIR/'storage_policy.py'
+    shared=native_policy if native_policy.is_file() else here.parent/'storage_policy.py'
+    spec=importlib.util.spec_from_file_location('actual_worker_test_policy',shared)
+    helper=importlib.util.module_from_spec(spec);spec.loader.exec_module(helper)
+    root=tmp_path/'study';directory=root/'maintenance'/helper.POLICY_ID;directory.mkdir(parents=True)
+    record=json.loads(shared.with_name('policy.json').read_bytes());record['study_root']=str(root)
+    policy_file=directory/'policy.json';policy_file.write_text(json.dumps(record))
+    monkeypatch.setattr(helper,'ROOT',root)
+    policy=helper.verify_policy(policy_file,hashlib.sha256(policy_file.read_bytes()).hexdigest(),root=root)
+    amended,proof=launcher.apply_worker_reserve(original,helper,policy,worker_sha=worker_sha)
+    assert proof['reverse_transform_ast_equal'] and proof['quota_reserve_expressions_changed']==1
+    assert amended.__globals__['__verified_file_reserve'](2000)==197995
+    assert 2000+197995+helper.RECEIPT_FILE_OVERHEAD==200000
+    assert '__verified_file_reserve' not in original.__globals__
+    if worker_sha!=launcher.WORKER_SHA:
+        amended.__globals__['read_quota']=lambda **fields:fields
+        assert amended()=={'required_files':2000,'reserve_files':197995,'reserve_bytes':2000000000000}
+
+
+def test_quota_retry_keeps_intentions_and_completed_peers():
+    failed={'training-0157':'8814042','evaluation-0141-02':'8813933','assembly-0149':'8813983'}
+    jobs={ident:{'job_id':job,'intent':{'intent_id':ident},'status':'needs_repair','receipt':None,
+                 'native_proof':{'state':'FAILED','exit_code':'1:0'}} for ident,job in failed.items()}
+    jobs['training-0000']={'job_id':'1','status':'complete','receipt':{'checkpoint':'saved'}}
+    state={'state_sha256':m.QUOTA_FAILURE_STATE,'revision':860,'status':'needs_repair',
+           'needs_repair':list(failed),'jobs':jobs,'cells':[{'conditions':{'old':'retained'}}]}
+    dispatch=SimpleNamespace(_state=lambda plan,value:copy.deepcopy(value),
+        _finish=lambda value:{**value,'revision':value['revision']+1})
+    repaired=m.requeue_quota_failures(dispatch,{},state,failed)
+    assert repaired['cells']==state['cells'] and repaired['jobs']['training-0000']==jobs['training-0000']
+    assert repaired['revision']==861 and repaired['needs_repair']==[]
+    for ident in failed:
+        assert repaired['jobs'][ident]['intent']==jobs[ident]['intent']
+        assert repaired['jobs'][ident]['job_id'] is None and repaired['jobs'][ident]['status']=='ambiguous'
+
+
 def test_worker_can_wait_past_previous_one_hour_budget(tmp_path,monkeypatch):
     g=load('registry-wait');monkeypatch.setattr(g,'ROOT',tmp_path)
     clock=[0.];attempts=[];held=[False]

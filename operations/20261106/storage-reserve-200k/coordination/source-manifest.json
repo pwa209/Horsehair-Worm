@@ -1,12 +1,13 @@
 {
   "files": {
-    "coordination.py": "4fc7dc2b6caa2805218f34f7da47ba999fe0edb3be841ea41b5f3b1523bd86f5",
+    "coordination.py": "eb66113d3c1dbd12e6920a988aae2efa402adc75b15a6eb03649726883425baa",
     "registry-wait.py": "63735406494fae9c1417fe3a32396c03835ab9dc03332da3aab1ca1852558f96",
+    "run-f00d-worker-registry-overlay-20261021.py": "22278154c84b7b18da606ffb70a9c9caa60802fbb5984632e1553aaaeffe85a3",
     "test_acknowledgements.py": "20d33b6aeab31dc294d3a509139bdfeb82d44b90bc86512cd2fd20ca13920f02",
-    "test_coordination.py": "6c11e1767b39666c77b10bf0a478288ba9bc6faad06057e821a36058685142fc",
+    "test_coordination.py": "963b2e169ebe811ae33f7849ca7124d284ddd58a6c62336aceffa2b57a11788d",
     "test_registry.py": "3fd91ddf6af23971935523a712e1cc6f4f4af8c55a6b29aadc50e1e5e959bde9"
   },
   "kind": "agent-coordination-repair-v1",
-  "roster_sha256": "35dd3a3497f6720b03fcbfe4e3eae8036fb50b2ffbe71b9b17aca1209a0fe3ba",
-  "tests": 198
+  "roster_sha256": "1aca0da6713adc921ba23ae1f32f446e38ce17eda15190f39d54902704c1f22e",
+  "tests": 200
 }

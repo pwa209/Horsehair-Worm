@@ -25,8 +25,8 @@ import time
 import xml.etree.ElementTree as ET
 
 ROOT=Path('/scratch/pwa209/horsehair-worm')
-SUPPORT=ROOT/'maintenance/storage-reserve-200k-v3-20261106/consumers'
-COORDINATION=ROOT/'maintenance/storage-reserve-200k-v3-20261106/coordination/coordination.py'
+SUPPORT=ROOT/'maintenance/storage-reserve-200k-v4-20261114/consumers'
+COORDINATION=ROOT/'maintenance/storage-reserve-200k-v4-20261114/coordination/coordination.py'
 COORDINATION_SHA=None # Supplied by the exact immutable consumer binding; avoids a source-hash cycle.
 SELF_NAME='run-census-resilience-consumer-v2-20261024.py'
 TEST_NAME='test_census_resilience_consumers_v2_20261024.py'
@@ -193,9 +193,14 @@ def allocation(fields,job,task,kind,*,wall=time.time,startup=True):
     return min(end,env)
 
 
+def controller_phase(kind):
+    require(kind in {'primary', 'af'}, 'Unknown consumer kind')
+    return f'storage-reserve-200k-v4-{kind}-20261114'
+
+
 def chain_guard(plan,ledger,binding):
     kind=binding['consumer_kind'];tasks=plan.get('tasks',[])
-    phase='study-'+kind+'-census-resilience-consumers-v6-20261103'
+    phase=controller_phase(kind)
     require(plan.get('phase')==phase and len(tasks)==4,'One exact new four-controller phase required')
     jobs=[]
     for index,task in enumerate(tasks):
@@ -351,7 +356,8 @@ def check_binding(binding,sha):
         'Exact new owned coordinator entry/manifest locators required')
     shared=json_packet(coordination['source_manifest'],namespace=COORDINATION.parent)
     require(shared.get('kind')=='agent-coordination-repair-v1'
-        and set(shared.get('files',{}))=={'coordination.py','registry-wait.py','test_coordination.py','test_registry.py','test_acknowledgements.py'}
+        and set(shared.get('files',{}))=={'coordination.py','registry-wait.py','test_coordination.py','test_registry.py','test_acknowledgements.py',
+            'run-f00d-worker-registry-overlay-20261021.py'}
         and shared.get('files',{}).get('coordination.py')==coordination['entry']['sha256'],
         'Actual coordinator source manifest must bind its complete helper closure')
     for name,digest_value in shared['files'].items():
@@ -486,8 +492,8 @@ def primary_capacity_guard(candidate,ledger_path,plan_records,ledgers,states,*,n
         # primary allocation or ambiguous phase defers the entire admission;
         # no invented native ID can make that commitment disappear.
         jobs={item['job_id']:item for item in af_capacity_state().values()}
-        c={'capacity_registration':{'plan':str(ROOT/'plans/agent-coordination-storage-reserve-200k-v3-20261106/plan.json'),
-            'ledger':str(ROOT/'state/agent-coordination-storage-reserve-200k-v3-20261106-submission.json')}}
+        c={'capacity_registration':{'plan':str(ROOT/'plans/agent-coordination-storage-reserve-200k-v4-20261114/plan.json'),
+            'ledger':str(ROOT/'state/agent-coordination-storage-reserve-200k-v4-20261114-submission.json')}}
         try:
             record=shared.coordinated_snapshot(proposed,state={'jobs':jobs},serial_chains=shared.capacity_chains(c),
                 native_reader=native_reader,evidence_dir=evidence_dir,intent_id='primary-'+candidate['phase'])

@@ -12,7 +12,7 @@ import argparse,gzip,hashlib,importlib.util,json,os,re,shlex,stat,subprocess,sys
 import xml.etree.ElementTree as ET
 
 ROOT=Path('/scratch/pwa209/horsehair-worm')
-BASE=ROOT/'maintenance/storage-reserve-200k-v3-20261106'
+BASE=ROOT/'maintenance/storage-reserve-200k-v4-20261114'
 CENSUS_BASE=ROOT/'maintenance/storage-reserve-200k-v2-20261106/census'
 POLICY_BASE=ROOT/'maintenance/storage-reserve-200k-v2-20261106'
 FRAMEWORK=ROOT/'releases/20261021-6ed201653dfa-4f3903d7c26e'
@@ -20,17 +20,21 @@ SOURCE='4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1'
 CONFIG='446b5d62fc206cf1392b90ff9cf16adafc66c57a6d38e84c029cd3b2ebbf1f35'
 POLICY_MODULE='0e8691671a32e2b55cfcd626d461c2708d11d05b00c0491721c6c3be13107f7d'
 POLICY='2e8e2bd2c1f70aa988a9414d2b44d9ffd0f768f8bc2e329747b7839b2855f2d9'
-MANIFESTS={'consumers':'a5dfc9c76ac2553de5bfa3c34068d4c38e0f04fb236d23768b9de6258ce4d78d',
- 'coordination':'195be1555539e2894249660cf235bce0ee20d78d6554b632a825ef38882f17d5',
+MANIFESTS={'consumers':'e6e6a819b5e1fca8c007fce33c2958af6b76794d94be0bad5e52eda37bca74ec',
+ 'coordination':'b556a993419b93fa8f183b6e31cd7faea7428f313c8511409f4daaf0d477e3ef',
  'census':'288af211cad1ad186105e6b2dafa08d4195920b132ab9efef367af98c0fbdf6e'}
-PRIMARY_PHASE='storage-reserve-200k-v3-primary-20261106'
-AGENT_PHASE='agent-coordination-storage-reserve-200k-v3-20261106'
+PRIMARY_PHASE='storage-reserve-200k-v4-primary-20261114'
+AGENT_PHASE='agent-coordination-storage-reserve-200k-v4-20261114'
 OLD_PRIMARY=('8559679','8559680','8559681','8559683')
 OLD_AGENT=('8559704','8559707','8559708','8559725')
 RETIRE=OLD_PRIMARY+OLD_AGENT[2:]
+TERMINAL_RESTART={
+ 'primary':('8710005','8710006','8710007','8710008'),
+ 'agent':('8710009','8710010','8710011','8710013'),
+}
 KEEP_HELD='6983060'
 TERMINAL={'COMPLETED','FAILED','CANCELLED','TIMEOUT','OUT_OF_MEMORY','NODE_FAIL','PREEMPTED','BOOT_FAIL','DEADLINE','REVOKED'}
-TEST_SOURCE_SHA='d68d2f17fe72adc727977b028e07f2d994167447bf6052e8d0c7bca77ceebf35'
+TEST_SOURCE_SHA='db90dc8d348fef170896c3d44efaa8ea21303a340c9070c389f310cc4e3ee973'
 TEST_COUNT=66
 TEST_ROSTER_SHA='4a75325931f3f8a0e9ebaeee06d0ccd719cc2ca94a99075760cf2c024b30e971'
 
@@ -178,7 +182,7 @@ def native_test_path(value,temporary):
 def archive_authority(binding):
  result=json.loads(ordinary(binding['result_path']).read_bytes());registration=read(binding['registration'])
  source=pin(binding['source']);request=pin(binding['request']);submitted=json.loads(request.read_bytes())
- require(source==BASE/'archive_continuation.py' and submitted.get('new_registration_path')==binding['registration']['path']
+ require(source==ROOT/'maintenance/storage-reserve-200k-v3-20261106/archive_continuation.py' and submitted.get('new_registration_path')==binding['registration']['path']
   and registration.get('job_id')==binding['job_id'] and registration.get('source_sha256')==binding['source']['sha256']
   and registration.get('request_sha256')==binding['request']['sha256'],'Actual archive continuation registration/source/request join required')
  script=pin(registration['script']);held=registration['actual_held_native']
@@ -257,6 +261,9 @@ def main(argv=None):
  os.environ['TZ']='UTC'
  if hasattr(time,'tzset'):time.tzset()
  job=os.environ['SLURM_JOB_ID'];request=json.loads(args.request.read_bytes());require(request['kind']=='storage-reserve-200k-controller-activation-v1','Exact one-off activation request required')
+ restart=request.get('restart_terminal_controllers',False)
+ require(type(restart) is bool,'Explicit controller handoff mode required')
+ retirement=() if restart else RETIRE
  def readonly(cmd):
   result=subprocess.run(cmd,capture_output=True,text=True,timeout=45);result.check_returncode();return result
  fields=native_fields(readonly(['scontrol','show','job',job,'-o']));end,ownplan,ownledger=own_registration(args,argv,job,fields)
@@ -285,11 +292,17 @@ def main(argv=None):
  modules={};manifests={};qjobs={}
  for kind,expected in MANIFESTS.items():
   component=components[kind];component_base=CENSUS_BASE if kind=='census' else BASE/kind;require(component['manifest']=={'path':str(component_base/'source-manifest.json'),'sha256':expected},'Exact qualified component manifest required')
+  if restart and kind!='census':
+   qualification=component['qualification']
+   path=component_base/'qualification.json'
+   require(qualification['path']==str(path) and set(qualification)=={'path','job_id'},'Exact dependency-bound qualification path required')
+   component['qualification']={**qualification,**locator(ordinary(path))}
   manifests[kind]=read(component['manifest']);q=read({k:component['qualification'][k] for k in ['path','sha256']});qjob=component['qualification']['job_id'];qualification_identity(kind,q,qjob);qjobs[qjob]=4
   for name,digest in manifests[kind]['files'].items():pin({'path':str(component_base/name),'sha256':digest})
   entry={'consumers':'run-census-resilience-consumer-v2-20261024.py','coordination':'coordination.py','census':'run-fresh-storage-census-resilience-v1-20261024.py'}[kind]
   modules[kind]=module(component_base/entry,manifests[kind]['files'][entry],'activation_'+kind)
- archive=request['archive'];required={**qjobs,archive['job_id']:1,request['first_census_job_id']:8,OLD_AGENT[0]:1,OLD_AGENT[1]:1}
+ agent_parents=TERMINAL_RESTART['agent'] if restart else OLD_AGENT
+ archive=request['archive'];required={**qjobs,archive['job_id']:1,request['first_census_job_id']:8,agent_parents[0]:1,agent_parents[1]:1}
  require(len(qjobs)==3 and len(required)==7,'Three qualifications, archive, first census and two old agents must be distinct actual jobs')
  positive=await_success(required);save(area/'positive-prerequisites.json',positive)
  continuation=archive_authority(archive)
@@ -305,7 +318,7 @@ def main(argv=None):
  require(len(cases)==len(set(roster))==cq['tests'] and canonical(roster)==cq['roster_sha256'] and not any(list(c.iter(t)) for c in cases for t in ['failure','error','skipped']),'Complete actual coordinator native test roster required')
  provider.validate_schedule_binding(request['census_schedule'],components['census']['qualification'],native_reader)
  old={};retire_tasks={}
- for kind,wanted in [('primary',OLD_PRIMARY),('agent',OLD_AGENT)]:
+ for kind,wanted in (TERMINAL_RESTART if restart else {'primary':OLD_PRIMARY,'agent':OLD_AGENT}).items():
   pair=request['old_registrations'][kind];plan=read(pair['plan']);ledger=read(pair['ledger']);require(ledger['plan_sha256']==canonical(plan),'Original controller plan/ledger identity required')
   require(tuple(ledger['tasks'][t['name']]['job_id'] for t in plan['tasks'])==wanted,'Exact old accepted controller roster required');old[kind]=plan
   retire_tasks.update({ledger['tasks'][t['name']]['job_id']:t for t in plan['tasks'] if ledger['tasks'][t['name']]['job_id'] in RETIRE})
@@ -339,13 +352,23 @@ def main(argv=None):
  primary=disable_primary_requeue(builder.render(template,'primary',created['primary'],read(created['primary']),manifests['consumers'],script_reader=lambda p:ordinary(p).read_text()))
  agent=render_agent(old['agent'],components['coordination']['manifest'],components['coordination']['qualification'],created['af'],lambda p:ordinary(p).read_text())
  require(primary['plan']['phase']==PRIMARY_PHASE,'Exact new primary phase required')
+ synthetic_ledger={'tasks':{task['name']:{'state':'submitted','job_id':str(900000000+i),
+  'script_sha256':task['script_sha256']} for i,task in enumerate(primary['plan']['tasks'])}}
+ consumer.chain_guard(primary['plan'],synthetic_ledger,read(created['primary']))
  case=ROOT/'maintenance/study-af-campaign-v1-20261021/agent-final-f64-v1';stable=sha(case/'state.json.gz')
  with exclusive_file_lock(case/'coordination-controller.mutex',timeout=180):
-  require(successful(accounting(OLD_AGENT[:2]),{j:1 for j in OLD_AGENT[:2]}),'Old active agent controller must have ended successfully')
+  require(successful(accounting(agent_parents[:2]),{j:1 for j in agent_parents[:2]}),'Old active agent controller must have ended successfully')
+  if restart:
+   previous=accounting(TERMINAL_RESTART['primary']+TERMINAL_RESTART['agent'])
+   expected={**dict.fromkeys(TERMINAL_RESTART['primary'],'FAILED'),'8710009':'COMPLETED','8710010':'COMPLETED',
+             '8710011':'FAILED','8710013':'CANCELLED'}
+   require(set(previous)==set(expected) and all(previous[j]['state']==state for j,state in expected.items()),
+    'Every replaced controller must have the verified terminal state')
+   save(area/'terminal-controller-proof.json',previous)
   require(sha(case/'state.json.gz')==stable,'Canonical state changed before activation')
   held=native_fields(readonly(['scontrol','show','job',KEEP_HELD,'-o']));require(held.get('JobId')==KEEP_HELD and held.get('UserId')=='pwa209(3164768)' and held.get('JobState')=='PENDING' and held.get('Reason')=='JobHeldUser','Old census64 must stay held; activation never cancels it')
-  old_held={j:native_fields(readonly(['scontrol','show','job',j,'-o'])) for j in RETIRE}
-  for j in RETIRE:held_controller(old_held[j],j,retire_tasks[j])
+  old_held={j:native_fields(readonly(['scontrol','show','job',j,'-o'])) for j in retirement}
+  for j in retirement:held_controller(old_held[j],j,retire_tasks[j])
   save(area/'old-held-controller-proof.json',old_held)
   registrations={}
   with exclusive_file_lock(ROOT/'state/af-campaign-registration.mutex',timeout=180):
@@ -355,18 +378,20 @@ def main(argv=None):
     for path,text in rendered['scripts'].items():
      with Path(path).open('x',encoding='utf-8',newline='\n') as f:f.write(text)
     save(rendered['plan_path'],rendered['plan']);ledger=slurm.submit(rendered['plan_path'],rendered['ledger_path'],runner=run)
-    jobs=[ledger['tasks'][t['name']]['job_id'] for t in rendered['plan']['tasks']];require(len(set(jobs))==4 and not set(jobs)&set(RETIRE),'Four distinct replacement controllers required')
+    jobs=[ledger['tasks'][t['name']]['job_id'] for t in rendered['plan']['tasks']];require(len(set(jobs))==4 and not set(jobs)&set(retirement),'Four distinct replacement controllers required')
+    if kind=='primary':consumer.chain_guard(rendered['plan'],ledger,read(created['primary']))
     for task,ident in zip(rendered['plan']['tasks'],jobs):
      observed=native_fields(readonly(['scontrol','show','job',ident,'-o']));held_replacement(observed,ident,task,ledger['tasks'][task['name']])
     registrations[kind]={'jobs':jobs,'plan':rendered['plan_path'],'ledger':rendered['ledger_path']};save(area/(kind+'-held-registration.json'),registrations[kind])
   require(sha(case/'state.json.gz')==stable,'Canonical state changed during registration')
-  for ident in RETIRE:
+  for ident in retirement:
    held_controller(native_fields(readonly(['scontrol','show','job',ident,'-o'])),ident,retire_tasks[ident]);response=run(['scancel',ident],capture_output=True,text=True);response.check_returncode()
   stop=min(time.time()+720,end-600)
-  while True:
-   retired=accounting(RETIRE)
-   if all(retired.get(j,{}).get('state')=='CANCELLED' and retired[j]['elapsed_seconds']==0 for j in RETIRE):break
-   require(all(j not in retired or retired[j]['state'] not in TERMINAL or retired[j]['state']=='CANCELLED' for j in RETIRE),'Unexpected final old-controller state')
+  retired={}
+  while retirement:
+   retired=accounting(retirement)
+   if all(retired.get(j,{}).get('state')=='CANCELLED' and retired[j]['elapsed_seconds']==0 for j in retirement):break
+   require(all(j not in retired or retired[j]['state'] not in TERMINAL or retired[j]['state']=='CANCELLED' for j in retirement),'Unexpected final old-controller state')
    require(time.time()+5<stop,'Finite cancellation finality wait exhausted');time.sleep(5)
   save(area/'positive-controller-retirement.json',retired);require(sha(case/'state.json.gz')==stable,'Canonical state changed before release')
  # The permanent controller mutex is released before any replacement can run.
@@ -377,7 +402,7 @@ def main(argv=None):
    observed=native_fields(readonly(['scontrol','show','job',ident,'-o']));require(observed.get('JobId')==ident and observed.get('UserId')=='pwa209(3164768)' and observed.get('Command')==task['script'] and observed.get('JobName')=='hhw-'+task['name'] and (observed.get('JobState') in {'RUNNING','COMPLETING','COMPLETED'} or observed.get('JobState')=='PENDING' and observed.get('Reason') not in {'JobHeldUser','JobHeldAdmin'} and int(observed.get('Priority','0'))>0),'Positive actual unheld replacement proof required')
    releases[ident]=observed;atomic_json(area/'verified-release.json',releases)
  result={'status':'eight_qualified_replacement_controllers_registered_and_released','native_job_id':job,'registrations':registrations,
-  'retired_controller_jobs':list(RETIRE),'old_census64_kept_held':KEEP_HELD,'canonical_state_sha256_during_registration':stable,
+  'retired_controller_jobs':list(retirement),'old_census64_kept_held':KEEP_HELD,'canonical_state_sha256_during_registration':stable,
   'worker_jobs_cancelled':False,'scientific_admission_claimed':False,'metadata_forecast_files':512,'minimum_personal_free_files':200000,
   'full_scientific_forecast_retained_in_controllers':True,'scientific_gates_changed':False,'source_sha256':args.source_sha256,'request_sha256':args.request_sha256}
  result['native_tests']=tests

@@ -276,6 +276,8 @@ def test_plan_new_chain_held_afterany_exact_old_parent(builder,kind):
     old,scripts,bound,loc,manifest=old_plan_fixture(builder,kind);snapshot=copy.deepcopy(old)
     result=builder.render(old,kind,loc,bound,manifest,script_reader=scripts.__getitem__)
     tasks=result['plan']['tasks'];assert old==snapshot and len(tasks)==4
+    rows={task['name']:{'state':'submitted','job_id':str(900+i),'script_sha256':task['script_sha256']} for i,task in enumerate(tasks)}
+    assert builder.runtime().chain_guard(result['plan'],{'tasks':rows},bound)==['900','901','902','903']
     for i,task in enumerate(tasks):
         assert task['dependency_kind']=='afterany' and task['external_dependencies']==([builder.PARENTS[kind]] if i==0 else [])
         assert task['depends']==([] if i==0 else [tasks[i-1]['name']])
@@ -378,7 +380,7 @@ def test_primary_candidate_serial_dag_uses_original_peak_not_task_sum(m):
 
 def test_primary_uses_exact_shared_coordinator_capacity_contract(m):
     path=m.COORDINATION if m.COORDINATION.exists() else HERE.parent/'coordination/coordination.py'
-    assert m.COORDINATION==m.ROOT/'maintenance/storage-reserve-200k-v3-20261106/coordination/coordination.py'
+    assert m.COORDINATION==m.ROOT/'maintenance/storage-reserve-200k-v4-20261114/coordination/coordination.py'
     shared=load(path,'qualified_shared_primary_capacity')
     native='101|pwa209|hhw-primary-controller|RUNNING|1|N/A|/scratch/pwa209/horsehair-worm\n'
     native+='201|pwa209|hhw-census-provider|PENDING|8|N/A|/scratch/pwa209/horsehair-worm\n'
@@ -393,7 +395,7 @@ def test_primary_uses_exact_shared_coordinator_capacity_contract(m):
 
 def test_shared_snapshot_primary_ambiguity_blocks_before_capacity_math(m,tmp_path,monkeypatch):
     path=m.COORDINATION if m.COORDINATION.exists() else HERE.parent/'coordination/coordination.py'
-    assert m.COORDINATION==m.ROOT/'maintenance/storage-reserve-200k-v3-20261106/coordination/coordination.py'
+    assert m.COORDINATION==m.ROOT/'maintenance/storage-reserve-200k-v4-20261114/coordination/coordination.py'
     shared=load(path,'qualified_shared_primary_visibility');calls=[]
     def unresolved(*args,**kwargs):
         calls.append((args,kwargs));raise shared.PendingCapacity('Source-bound primary submitting phase awaits actual acceptance evidence')
@@ -480,7 +482,7 @@ def chain_fixture(m):
         issued=['6950429'] if i==0 else [str(899+i)]
         rows[name]={'state':'submitted','job_id':job,'script_sha256':'a'*64,'dependency_kind':'afterany','issued_native_dependencies':issued,
             'completed_native_dependencies':[],'dependency_resolution_sha256':m.canonical({'kind':'afterany','issued':issued,'completed':[]})}
-    return {'phase':'study-af-census-resilience-consumers-v6-20261103','tasks':tasks},{'tasks':rows},binding
+    return {'phase':m.controller_phase('af'),'tasks':tasks},{'tasks':rows},binding
 
 
 def test_chain_and_native_predecessor_positive(m):
@@ -680,7 +682,7 @@ def test_actual_main_registration_native_qualification_and_dispatch(m,tmp_path,m
     m.COORDINATION=tmp_path/'maintenance/new-coordination/coordination.py';m.COORDINATION.parent.mkdir()
     m.COORDINATION.write_text('# immutable fixture coordinator\n')
     shared_files={'coordination.py':m.digest(m.COORDINATION)}
-    for name in ['registry-wait.py','test_coordination.py','test_registry.py','test_acknowledgements.py']:
+    for name in ['registry-wait.py','test_coordination.py','test_registry.py','test_acknowledgements.py','run-f00d-worker-registry-overlay-20261021.py']:
         path=m.COORDINATION.parent/name;path.write_text('# immutable source fixture\n');shared_files[name]=m.digest(path)
     shared=write(m.COORDINATION.parent/'source-manifest.json',{'kind':'agent-coordination-repair-v1','files':shared_files})
     bound['coordination']={'entry':m.locator(m.COORDINATION),'source_manifest':m.locator(shared)}

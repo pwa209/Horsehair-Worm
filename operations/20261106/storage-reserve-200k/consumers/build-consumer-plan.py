@@ -8,11 +8,10 @@ import json
 import shlex
 
 ROOT=Path('/scratch/pwa209/horsehair-worm')
-SUPPORT=ROOT/'maintenance/storage-reserve-200k-v3-20261106/consumers'
+SUPPORT=ROOT/'maintenance/storage-reserve-200k-v4-20261114/consumers'
 PRIOR_SUPPORT=ROOT/'maintenance/study-census-resilience-consumers-v2-20261024'
 SELF_NAME='run-census-resilience-consumer-v2-20261024.py'
 PARENTS={'af':'6950429','primary':'7046404'}
-PHASES={'primary':'storage-reserve-200k-v3-primary-20261106','af':'storage-reserve-200k-v3-af-20261106'}
 
 
 def require(value,message):
@@ -53,7 +52,7 @@ def render(old_plan,kind,binding_locator,binding_value,manifest,*,script_reader)
         'Exact old active parent and finite consumer kind required')
     require(binding_locator['path']==str(SUPPORT/(kind+'-consumer-binding.json')),'Exact new binding path required')
     tasks=old_plan.get('tasks');require(type(tasks) is list and len(tasks)==4,'Exactly four inherited finite controller segments required')
-    phase=PHASES[kind];directory=ROOT/'plans'/phase;plan_path=directory/'plan.json';ledger_path=ROOT/'state'/(phase+'-submission.json')
+    phase=r.controller_phase(kind);directory=ROOT/'plans'/phase;plan_path=directory/'plan.json';ledger_path=ROOT/'state'/(phase+'-submission.json')
     own=str(SUPPORT/SELF_NAME);entry=binding_value['legacy_entry']['path'];new_tasks=[];scripts={}
     old_names=[t['name'] for t in tasks];require(len(set(old_names))==4,'Distinct old finite controller names required')
     for index,old in enumerate(tasks):

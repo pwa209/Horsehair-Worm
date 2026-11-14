@@ -11,6 +11,8 @@ def build(request_id,components=('census','consumers','coordination')):
     if not components or len(set(components))!=len(components) or set(components)-{'census','consumers','coordination'}:
         raise ValueError('Select distinct existing components')
     expected={'storage_policy.py','policy.json','test_storage_policy.py'}
+    if 'census' not in components:
+        expected.update({'activate_controllers.py','test_activate_controllers.py'})
     for component in components:
         manifest_path=here/component/'source-manifest.json'
         manifest=json.loads(manifest_path.read_bytes())
@@ -59,7 +61,7 @@ import base64,hashlib,importlib.util,json,os,shlex,subprocess,time,zlib
 from horsehair import slurm
 from horsehair.core import atomic_json,canonical_hash,exclusive_file_lock,read_json,source_identity
 assert os.geteuid()==3164768
-r=Path('/scratch/pwa209/horsehair-worm');area=r/'maintenance/storage-reserve-200k-v3-20261106'
+r=Path('/scratch/pwa209/horsehair-worm');area=r/'maintenance/storage-reserve-200k-v4-20261114'
 area.mkdir(mode=0o700,parents=True,exist_ok=True)
 framework=r/'releases/20261021-6ed201653dfa-4f3903d7c26e'
 identity=source_identity(framework);assert identity['sha256']=='4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1'
@@ -108,7 +110,7 @@ with exclusive_file_lock(r/'state/af-campaign-registration.mutex',timeout=180):
             assert len(plan['tasks'])==1
             task=plan['tasks'][0];name=task['name'];script=Path(task['script']);text=scripts[script.name]
         else:
-            phase='storage-reserve-200k-v3-'+('consumer' if component=='consumers' else 'coordination')+'-qualification-20261106'
+            phase='storage-reserve-200k-v4-'+('consumer' if component=='consumers' else 'coordination')+'-qualification-20261114'
             directory=r/'plans'/phase;ledger=r/'state'/(phase+'-submission.json');assert not ledger.exists()
             if directory.exists():
                 assert directory.resolve()==directory and not directory.is_symlink() and directory.stat().st_uid==3164768 and not list(directory.iterdir()),'Only an empty never-submitted plan directory can be recovered'
@@ -141,6 +143,53 @@ with exclusive_file_lock(r/'state/af-campaign-registration.mutex',timeout=180):
         contracts[component]={'job_id':job,'plan':str(directory/'plan.json'),'ledger':str(ledger),'source_manifest_sha256':manifest_sha,'held_native':f}
         atomic_json(deployment/(component+'-accepted-held.json'),contracts[component])
     atomic_json(deployment/'all-accepted-held.json',contracts)
+    if set(contracts)=={'consumers','coordination'}:
+        prior=area.parent/'storage-reserve-200k-v3-20261106'
+        request_path=area/'controller-activation-request.json'
+        original=prior/'controller-activation-request.json'
+        assert hashlib.sha256(original.read_bytes()).hexdigest()=='4adb14ff3f620c152503fa4a1c4ed6e3f3609f4e2241e4bb9e258344aa260b85'
+        request=read_json(original)
+        request['restart_terminal_controllers']=True
+        for kind in contracts:
+            support=area/kind
+            request['components'][kind]={
+                'manifest':{'path':str(support/'source-manifest.json'),'sha256':contracts[kind]['source_manifest_sha256']},
+                'qualification':{'path':str(support/'qualification.json'),'job_id':contracts[kind]['job_id']}}
+        for kind,old_phase in [('primary','storage-reserve-200k-v3-primary-20261106'),
+                               ('agent','agent-coordination-storage-reserve-200k-v3-20261106')]:
+            files={'plan':r/'plans'/old_phase/'plan.json','ledger':r/'state'/(old_phase+'-submission.json')}
+            request['old_registrations'][kind]={kind:{'path':str(path),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()} for kind,path in files.items()}
+        activation=module(area/'activate_controllers.py','restart_activation')
+        request['native_tests']={'source':activation.locator(area/'test_activate_controllers.py'),
+                                 'tests':activation.TEST_COUNT,'roster_sha256':activation.TEST_ROSTER_SHA}
+        activation.save(request_path,request)
+        phase='storage-reserve-200k-v4-activation-20261114';name='storage-reserve-v4-controller-activation'
+        directory=r/'plans'/phase;ledger=r/'state'/(phase+'-submission.json');script=directory/(name+'.sbatch')
+        helper=area/'activate_controllers.py';test=area/'test_activate_controllers.py'
+        command=shlex.join(['python','-s','-B',str(helper),'--request',str(request_path),
+            '--request-sha256',activation.sha(request_path),'--source-sha256',activation.sha(helper),
+            '--native-plan',str(directory/'plan.json'),'--native-ledger',str(ledger),'--native-script',str(script),
+            '--native-task',name,'--native-tests-junit','activation-tests.xml'])
+        text=slurm._script(config,framework,name,command,cpus=2,memory='16G',hours=1,gpu=False)
+        text=text.replace('set -euo pipefail','#SBATCH --hold\\n#SBATCH --no-requeue\\nset -euo pipefail',1)
+        prefix='export TZ=UTC PYTHONDONTWRITEBYTECODE=1\\n'
+        prefix+='python -B -m pytest '+shlex.quote(str(test))+' -q -p no:cacheprovider --basetemp "$SLURM_TMPDIR/activation-tests" --junitxml "$SLURM_TMPDIR/activation-tests.xml"\\n'
+        assert text.count(command)==1
+        text=text.replace(command,prefix+command,1)
+        subprocess.run(['bash','-n'],input=text,text=True,check=True,timeout=20)
+        task={'name':name,'command':command,'script':str(script),'script_sha256':canonical_hash(text),
+              'resources':{'cpus':2,'memory':'16G','hours':1,'gpu':False,'array':None},'depends':[],
+              'external_dependencies':[contracts[k]['job_id'] for k in ('consumers','coordination')],
+              'dependency_kind':'afterok'}
+        plan={'schema_version':2,'root':str(r),'phase':phase,'release_identity':identity,'config_sha256':canonical_hash(config),'tasks':[task]}
+        assert not directory.exists() and not ledger.exists()
+        directory.mkdir()
+        with script.open('x') as stream:stream.write(text);stream.flush();os.fsync(stream.fileno())
+        atomic_json(directory/'plan.json',plan)
+        submitted=slurm.submit(directory/'plan.json',ledger,runner=runner);job=submitted['tasks'][name]['job_id'];fields=native(job)
+        assert fields['UserId']=='pwa209(3164768)' and fields['JobState']=='PENDING' and fields['Reason']=='JobHeldUser' and fields['Command']==str(script)
+        contracts['activation']={'job_id':job,'plan':str(directory/'plan.json'),'ledger':str(ledger),'held_native':fields}
+        atomic_json(deployment/'activation-accepted-held.json',contracts['activation'])
     for component,contract in contracts.items():
         job=contract['job_id'];f=native(job);assert f['JobState']=='PENDING' and f['Reason']=='JobHeldUser' and f['Command']==contract['held_native']['Command']
         response=runner(['scontrol','release',job],text=True,capture_output=True);response.check_returncode()

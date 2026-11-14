@@ -31,7 +31,7 @@ def test_binding_factory_cannot_change_original_scientific_entry_or_flags(field,
 def test_exact_retirement_roster_protects_workers_and_held_census():
  assert m.RETIRE==('8559679','8559680','8559681','8559683','8559708','8559725')
  assert m.KEEP_HELD=='6983060' and not set(m.OLD_AGENT[:2])&set(m.RETIRE)
- assert m.BASE==m.ROOT/'maintenance/storage-reserve-200k-v3-20261106'
+ assert m.BASE==m.ROOT/'maintenance/storage-reserve-200k-v4-20261114'
  assert m.CENSUS_BASE==m.ROOT/'maintenance/storage-reserve-200k-v2-20261106/census'
  assert m.POLICY_BASE==m.ROOT/'maintenance/storage-reserve-200k-v2-20261106'
 
@@ -121,7 +121,7 @@ def test_agent_plan_rejects_unbound_or_changed_originals(change):
  with pytest.raises(ValueError):render(old,scripts)
 
 def registration_fixture(tmp_path,monkeypatch):
- root=tmp_path/'study';base=root/'maintenance/storage-reserve-200k-v3-20261106';directory=root/'plans/finite-handoff';directory.mkdir(parents=True)
+ root=tmp_path/'study';base=root/'maintenance/storage-reserve-200k-v4-20261114';directory=root/'plans/finite-handoff';directory.mkdir(parents=True)
  monkeypatch.setattr(m,'ROOT',root);monkeypatch.setattr(m,'BASE',base);ordinary=m.ordinary;monkeypatch.setattr(m,'ordinary',lambda path:ordinary(path,root=root))
  temporary=tmp_path/'node-local';temporary.mkdir();monkeypatch.setenv('SLURM_TMPDIR',str(temporary));monkeypatch.setenv('SLURM_JOB_END_TIME','10000')
  sp=directory/'activate.sbatch';pp=directory/'plan.json';lp=root/'state/activation-submission.json';lp.parent.mkdir()

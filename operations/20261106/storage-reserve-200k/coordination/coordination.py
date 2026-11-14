@@ -22,12 +22,19 @@ import sys
 import time
 
 ROOT=Path('/scratch/pwa209/horsehair-worm')
-SUPPORT=ROOT/'maintenance/storage-reserve-200k-v3-20261106/coordination'
+SUPPORT=ROOT/'maintenance/storage-reserve-200k-v4-20261114/coordination'
 PRIOR_SUPPORT=ROOT/'maintenance/agent-coordination-repair-v1-20261025'
 FRAMEWORK=ROOT/'releases/20261021-6ed201653dfa-4f3903d7c26e'
 CAMPAIGN=ROOT/'maintenance/study-af-campaign-v1-20261021/agent-final-f64-v1'
-CONSUMER=ROOT/'maintenance/storage-reserve-200k-v3-20261106/consumers/run-census-resilience-consumer-v2-20261024.py'
-CONSUMER_SHA='2f8af54f0c2b158d45d884281ba9ccd0fb51d3d0cdc74bfd70276747723d5ccf'
+WORKER_LAUNCHER='run-f00d-worker-registry-overlay-20261021.py'
+QUOTA_FAILURES={
+    'training-0157':'8814042','training-0158':'8814045','training-0159':'8814077','training-0160':'8814108',
+    'assembly-0149':'8813983','assembly-0150':'8814003','assembly-0151':'8814025','assembly-0152':'8814039',
+    'evaluation-0141-02':'8813933','evaluation-0153-01':'8814134','evaluation-0154-01':'8814464',
+}
+QUOTA_FAILURE_STATE='a29a4a3e94b947c4623058bf531158a519e1b13110a3e334106984fdc61ea834'
+CONSUMER=ROOT/'maintenance/storage-reserve-200k-v4-20261114/consumers/run-census-resilience-consumer-v2-20261024.py'
+CONSUMER_SHA='04c0e05868b010446860d8d60d4c524fc1d755fe9d4ce2862df0603f4347b158'
 CONSUMER_BINDING=CONSUMER.parent/'af-consumer-binding.json'
 CONSUMER_BINDING_SHA=None # Explicit source-bound CLI locator, verified at actual registration.
 SOURCE='4f3903d7c26e334a75c8f7f81ad8b865fac4e5a447ff83a8bfeae8774891d9d1'
@@ -150,7 +157,7 @@ def serial_capacity_chain(plan,ledger,role):
         and ledger['plan_sha256']==canonical(plan),'Source-bound serial capacity plan/ledger required')
     phase=plan['phase'];source=plan['release_identity']['sha256']
     provider=role=='provider' and phase in {'study-census-resilience-v1-20261024','storage-reserve-200k-v2-census-20261106'} and source==SOURCE
-    primary=role=='controller' and phase in {'study-primary-census-resilience-consumers-v6-20261103','storage-reserve-200k-v3-primary-20261106'} and source=='d89b31180d4c4ffe9c4023dc5534b96f2d157a3a8e3aecaff30849283d00a705'
+    primary=role=='controller' and phase in {'study-primary-census-resilience-consumers-v6-20261103','storage-reserve-200k-v3-primary-20261106','storage-reserve-200k-v4-primary-20261114'} and source=='d89b31180d4c4ffe9c4023dc5534b96f2d157a3a8e3aecaff30849283d00a705'
     agent=role=='controller' and phase.startswith('agent-coordination-') and source==SOURCE
     require(provider or primary or agent,'Only the exact existing workflow chain roles may reserve concurrency')
     tasks=plan['tasks'];require(len(tasks)==(4 if role=='controller' else 64),'Exact finite serial chain length required')
@@ -176,6 +183,8 @@ def capacity_chains(c):
           'ledger':str(ROOT/'state/study-census-resilience-v1-20261024-submission.json')},'provider'),
         ({'plan':str(ROOT/'plans/storage-reserve-200k-v3-primary-20261106/plan.json'),
           'ledger':str(ROOT/'state/storage-reserve-200k-v3-primary-20261106-submission.json')},'controller'),
+        ({'plan':str(ROOT/'plans/storage-reserve-200k-v4-primary-20261114/plan.json'),
+          'ledger':str(ROOT/'state/storage-reserve-200k-v4-primary-20261114-submission.json')},'controller'),
         ({'plan':str(ROOT/'plans/storage-reserve-200k-v2-census-20261106/plan.json'),
           'ledger':str(ROOT/'state/storage-reserve-200k-v2-census-20261106-submission.json')},'provider')]
     result=[];seen=set()
@@ -794,7 +803,8 @@ def coordinated_tick(base,c):
 def verify_sources(manifest_sha):
     manifest=packet({'path':str(SUPPORT/'source-manifest.json'),'sha256':manifest_sha})
     require(manifest['kind']=='agent-coordination-repair-v1'
-            and set(manifest['files'])=={'coordination.py','registry-wait.py','test_coordination.py','test_registry.py','test_acknowledgements.py'},'Exact repair closure required')
+            and set(manifest['files'])=={'coordination.py','registry-wait.py','test_coordination.py','test_registry.py',
+                'test_acknowledgements.py',WORKER_LAUNCHER},'Exact repair closure required')
     for name,sha in manifest['files'].items():read(SUPPORT/name,sha)
     require(Path(__file__)==SUPPORT/'coordination.py','Only the frozen repair entry may execute')
     return manifest
@@ -871,6 +881,79 @@ def recover_native(base,c,manifest_sha):
     return
 
 
+def requeue_quota_failures(dispatch, plan, state, attempts):
+    result=dispatch._state(plan,state)
+    require(result['state_sha256']==QUOTA_FAILURE_STATE and result['revision']==860
+            and result['status']=='needs_repair' and set(result['needs_repair'])==set(attempts),
+            'Only the saved quota failure state may enter this recovery')
+    for ident, job_id in attempts.items():
+        job=result['jobs'][ident]
+        require(job['job_id']==job_id and job['status']=='needs_repair' and job['receipt'] is None
+                and job['native_proof']['state']=='FAILED' and job['native_proof']['exit_code']=='1:0',
+                'Only proven failed quota attempts may be retried')
+        job.update(job_id=None,status='ambiguous',native_proof=None)
+    result['status']='active'
+    result['needs_repair']=[]
+    return dispatch._state(plan,dispatch._finish(result))
+
+
+def recover_worker_quota_failures(base,c):
+    """Retry the same eleven intentions while preserving their completed peers and history."""
+    location=SUPPORT/'worker-quota-recovery'
+    marker=location/'transition.json'
+    with base.registration_guard(c,'controller-start'):
+        plan,state=base.initialize(c)
+        if marker.exists():
+            transition=json.loads(read(marker))
+            require(transition['before']==QUOTA_FAILURE_STATE and transition['attempts']==QUOTA_FAILURES
+                    and transition['plan']==plan['plan_sha256'], 'Quota recovery receipt differs from saved campaign')
+            read(location/'state-before.json.gz',transition['compressed_before'])
+            if state['state_sha256']!=QUOTA_FAILURE_STATE:
+                require(state['state_sha256']==transition['after'] or (state['revision']>transition['after_revision']
+                        and all(state['jobs'][ident]['job_id']!=job for ident,job in QUOTA_FAILURES.items())),
+                        'Cannot establish that the saved quota recovery was applied')
+                return
+        repaired=requeue_quota_failures(base.dispatch,plan,state,QUOTA_FAILURES)
+        raw=c['native_reader'](list(QUOTA_FAILURES.values()),{},owner='pwa209',account=None)
+        require(set(raw)==set(QUOTA_FAILURES.values()),'All failed worker allocations need final accounting')
+        evidence={}
+        for ident, job in QUOTA_FAILURES.items():
+            native=base.normalized_native(job,raw[job])
+            require(native==state['jobs'][ident]['native_proof'],'Failed worker final accounting changed')
+            namespace='af-f2-'+ident
+            receipt=Path(c['descriptor']['case'])/('native-'+job)/'receipt.json'
+            value=json.loads(read(receipt))
+            mode={'training':'agent-train','evaluation':'agent-evaluation','assembly':'agent-assembly'}[state['jobs'][ident]['intent']['kind']]
+            require(value['status']=='running' and value['native_job_id']==job and value['mode']==mode
+                    and value['index']==state['jobs'][ident]['intent']['cell_index'] and 'result' not in value,
+                    'Failed worker must have stopped before scientific execution')
+            log=ROOT/'logs'/(namespace+'-'+job+'_4294967294.log')
+            tail=read(log).decode()
+            require('native-worker.py' in tail and 'StorageHeadroomError:' in tail
+                    and re.search(r'inode headroom is insufficient: [0-9]+ available, 250005 required including reserve',tail),
+                    'Proven legacy worker quota failure required')
+            ledger=ROOT/'state'/(namespace+'-submission.json')
+            journal=CAMPAIGN/('submission-'+ident+'.json')
+            require(json.loads(read(ledger))['tasks'][namespace]['job_id']==job
+                    and json.loads(read(journal))['job_id']==job,'Original failed registration differs')
+            evidence[ident]={label:locator(path) for label,path in [('log',log),('ledger',ledger),('journal',journal),('receipt',receipt)]}
+        location.mkdir(mode=0o700,exist_ok=True)
+        backup=location/'state-before.json.gz'
+        original=read(CAMPAIGN/'state.json.gz')
+        if backup.exists():
+            require(read(backup)==original,'Original compressed checkpoint backup differs')
+        else:
+            with backup.open('xb') as output:
+                output.write(original);output.flush();os.fsync(output.fileno())
+        if not marker.exists():
+            exclusive(marker,{'before':state['state_sha256'],'after':repaired['state_sha256'],
+                'after_revision':repaired['revision'],'plan':plan['plan_sha256'],'attempts':QUOTA_FAILURES,
+                'compressed_before':digest(backup),'failed_history':evidence})
+        else:
+            require(transition['after']==repaired['state_sha256'],'Prepared recovery state differs')
+        base.save_state(c,repaired)
+
+
 def install_coordination(base,manifest,*,storage_source_sha=None):
     if storage_source_sha is not None:
         helper,policy=checked_storage_policy()
@@ -881,12 +964,22 @@ def install_coordination(base,manifest,*,storage_source_sha=None):
         require(proof['reverse_transform_ast_equal'] and proof['original_module_unchanged']
             and proof['study_occupancy_and_byte_checks_preserved'],'Only explicit private inode reserve may differ')
     old_namespace=base.native_namespace;old_journal=base.submission_journal;old_plan=base.native_plan
+    retry_quota_attempts=WORKER_LAUNCHER in manifest['files']
+    def native_namespace(c,ident):
+        if ident in QUOTA_FAILURES and retry_quota_attempts:return 'af-f2-quota-retry-'+ident
+        return 'af-f2-r3-training-0080' if ident==TARGET else old_namespace(c,ident)
+    def submission_journal(c,ident):
+        if ident in QUOTA_FAILURES and retry_quota_attempts:return CAMPAIGN/('submission-quota-retry-'+ident+'.json')
+        return CAMPAIGN/'submission-r3-training-0080.json' if ident==TARGET else old_journal(c,ident)
     base.native_backfill_window=conservative_window
-    base.native_namespace=lambda c,ident:'af-f2-r3-training-0080' if ident==TARGET else old_namespace(c,ident)
-    base.submission_journal=lambda c,ident:CAMPAIGN/'submission-r3-training-0080.json' if ident==TARGET else old_journal(c,ident)
+    base.native_namespace=native_namespace
+    base.submission_journal=submission_journal
     def native_plan(c,intent):
         alternate={**c,'registry_overlay':{**c['registry_overlay'],'guard':{
             'path':str(SUPPORT/'registry-wait.py'),'sha256':manifest['files']['registry-wait.py']}}}
+        if retry_quota_attempts:
+            alternate['registry_overlay']['worker_shim']={'path':str(SUPPORT/WORKER_LAUNCHER),
+                'sha256':manifest['files'][WORKER_LAUNCHER]}
         return old_plan(alternate,intent)
     base.native_plan=native_plan
     base.submit_intentions=lambda c,p,s,i,**kw:submit_intentions(base,c,p,s,i,**kw)
@@ -961,6 +1054,7 @@ def run_controller(a,manifest,area,fields):
         exclusive(area/'startup.json',{'status':'verified_repaired_controller_startup','window':c['backfill_window'],
             'source_manifest_sha256':a.source_manifest_sha256,'old_controllers_final':list(OLD_CONTROLLERS),**FLAGS})
         recover_native(base,c,a.source_manifest_sha256)
+        recover_worker_quota_failures(base,c)
         return base.run(c)
 
 
